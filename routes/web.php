@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,5 +16,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return (Auth::check()) ?  redirect()->intended(route('dashboard.index')) : redirect()->route('login');
+});
+
+Route::prefix('login')->middleware('guest')->controller(LoginController::class)->group(function () {
+    Route::get('/', 'index')->name('login');
+    Route::post('/', 'authenticate');
+});
+
+Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function() {
+
 });
