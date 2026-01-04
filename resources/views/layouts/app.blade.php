@@ -52,7 +52,17 @@
             <!-- Sidebar Menu -->
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-
+                    @foreach(config('menu') as $menu)
+                        @if(empty($menu['module_name']) || app(\App\Services\AccessControl\PermissionService::class)->checkAccess(auth()->user(), \App\Enums\Portal\PortalPermission::from($menu['module_name'] . '.read')->value))
+                            <li class="nav-item">
+                                <a href="{{ route($menu['route']) }}"
+                                class="nav-link {{ request()->routeIs($menu['route']) ? 'active' : '' }}">
+                                    <i class="nav-icon {{ $menu['icon'] }}"></i>
+                                    <p>{{ $menu['label'] }}</p>
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
                 </ul>
             </nav>
             <!-- /.sidebar-menu -->
