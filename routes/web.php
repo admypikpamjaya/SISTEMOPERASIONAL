@@ -24,6 +24,31 @@ Route::prefix('login')->middleware('guest')->controller(LoginController::class)-
     Route::post('/', 'authenticate');
 });
 
-Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function() {
+Route::middleware('auth')->get('logout', function() {
+    Auth::logout();
+    return redirect()->route('login');
+})->name('logout');
 
+Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function() {
+    Route::get('/', function() {
+        return view('dashboard.index');
+    })->name('index');
+});
+
+Route::prefix('asset-management')->name('asset-management.')->middleware(['auth', 'check_access:asset_management.read'])->group(function() {
+    Route::get('/', function() {
+        return 'Asset Management';
+    })->name('index');
+});
+
+Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['auth', 'check_access:maintenance_report.read'])->group(function() {
+    Route::get('/', function() {
+        return 'Maintenance Report';
+    })->name('index');
+});
+
+Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'check_access:user_management.read'])->group(function() {
+    Route::get('/', function() {
+        return 'User Database';
+    })->name('index');
 });
