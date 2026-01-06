@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\User\UserManagementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -47,8 +48,13 @@ Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['a
     })->name('index');
 });
 
-Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'check_access:user_management.read'])->group(function() {
-    Route::get('/', function() {
-        return 'User Database';
-    })->name('index');
+Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'check_access:user_management.read'])->controller(UserManagementController::class)->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/{id}', 'show')->name('show');
+
+    Route::post('/', 'store')->name('store');
+    Route::post('/reset-password/{id}', 'sendResetPasswordLink')->name('send-reset-password-link');
+    Route::put('/', 'update')->name('update');
+
+    Route::delete('/{id}', 'delete')->name('delete');
 });
