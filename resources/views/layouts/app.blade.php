@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Sistem Operasional Yayasan YPIK</title>
 
     <!-- Google Font: Source Sans Pro -->
@@ -13,8 +14,15 @@
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
     <!-- Theme style -->
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
+    <!-- Sweetalert 2 -->
+    <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.css') }}">
+    <!-- Extras -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
+<div id="loading-overlay">
+    <i class="fas fa-2x fa-spinner fa-spin"></i>
+</div>
 <!-- Site wrapper -->
 <div class="wrapper">
     <!-- Navbar -->
@@ -105,6 +113,10 @@
 <script src="{{ asset('vendor/adminlte/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
 <!-- AdminLTE App -->
 <script src="{{ asset('vendor/adminlte/dist/js/adminlte.min.js') }}"></script>
+<!-- SweetALert2 -->
+<script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
+<!-- Extras -->
+<script src="{{ asset('js/helper.js') }}"></script>
 <!-- Component JS -->
 @stack('component_js')
 <!-- Section JS -->
