@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Asset\AssetManagementController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\User\UserManagementController;
 use Illuminate\Support\Facades\Auth;
@@ -36,10 +37,18 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
     })->name('index');
 });
 
-Route::prefix('asset-management')->name('asset-management.')->middleware(['auth', 'check_access:asset_management.read'])->group(function() {
-    Route::get('/', function() {
-        return 'Asset Management';
-    })->name('index');
+Route::prefix('asset-management')->name('asset-management.')->middleware(['auth', 'check_access:asset_management.read'])->controller(AssetManagementController::class)->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/register', 'showRegisterForm')->name('register-form');
+    Route::get('/edit/{id}', 'showEditForm')->name('edit-form');
+    Route::get('/download-qr-code', 'downloadQrCode')->name('download-qr-code');
+
+    Route::post('/', 'store')->name('store');
+    Route::post('/file', 'storeWithFile')->name('store-with-file');
+
+    Route::put('/', 'update')->name('update');
+
+    Route::delete('/{id}', 'delete')->name('delete');
 });
 
 Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['auth', 'check_access:maintenance_report.read'])->group(function() {
@@ -58,3 +67,6 @@ Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'che
 
     Route::delete('/{id}', 'delete')->name('delete');
 });
+
+// Public View
+Route::get('assets/{id}', [AssetManagementController::class, 'showDetail'])->name('assets.detail');
