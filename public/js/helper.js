@@ -101,6 +101,20 @@ function getErrorMessage(res) {
     return errorMsg
 }
 
-function refreshUI(delay = 500) {
+function refreshUI(delay = 0) {
     setTimeout(() => location.reload(), delay);
+}
+
+function chunkArray(array, size) {
+    const chunkedArray = [];
+    if (size <= 0) {
+        return [array];
+    }
+
+    for (let i = 0; i < array.length; i += size) {
+        const chunk = array.slice(i, i + size);
+        chunkedArray.push(chunk);
+    }
+
+    return chunkedArray;
 }

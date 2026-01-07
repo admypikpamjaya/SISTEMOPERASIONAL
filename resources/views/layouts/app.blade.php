@@ -15,7 +15,7 @@
     <!-- Theme style -->
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
     <!-- Sweetalert 2 -->
-    <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
     <!-- Extras -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
@@ -121,5 +121,11 @@
 @stack('component_js')
 <!-- Section JS -->
 @yield('js')
+
+@if(session()->has('success'))
+<script>
+    Notification.success("{{ session()->get('success') }}");
+</script>
+@endif
 </body>
 </html>
