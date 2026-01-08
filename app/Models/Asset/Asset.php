@@ -3,11 +3,13 @@
 namespace App\Models\Asset;
 
 use App\Enums\Asset\AssetCategory;
+use App\Models\Log\MaintenanceLog;
 use App\Services\Asset\AssetFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -86,7 +88,7 @@ class Asset extends Model
     public function loadWithRelation()
     {
         $handler = AssetFactory::createHandler($this->category);
-        return $this->load($handler->getRelationName());
+        return $this->load([$handler->getRelationName(), 'maintenanceLogs']);
     }
 
     public function generateQRCode()
@@ -101,5 +103,10 @@ class Asset extends Model
         Storage::disk('public')->put($filePath, $qr);
 
         return $filePath;
+    }
+
+    public function maintenanceLogs(): HasMany
+    {
+        return $this->hasMany(MaintenanceLog::class, 'asset_id');
     }
 }

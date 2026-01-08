@@ -112,9 +112,7 @@ class AssetManagementController extends Controller
         }
         catch(\Throwable $e) 
         {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], $e->getCode() ? $e->getCode() : 500);
+            return redirect()->route('asset-management.index')->with('error', $e->getMessage());
         }
     }
 }

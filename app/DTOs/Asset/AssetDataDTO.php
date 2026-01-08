@@ -15,7 +15,8 @@ class AssetDataDTO
         public ?string $serialNumber,
         public string $location,
         public ?int $purchaseYear,
-        public array $detail
+        public array $detail,
+        public array $maintenanceLogs
     ) {}
 
     public static function fromArray(array $data): self 
@@ -27,7 +28,8 @@ class AssetDataDTO
             $data['asset_serial_number'],
             $data['location'],
             $data['purchase_year'],
-            $data['detail']
+            $data['detail'],
+            $data['maintenance_logs']
         );
     }
 
@@ -43,7 +45,8 @@ class AssetDataDTO
             $asset->serial_number,
             $asset->location,
             $asset->purchase_year,
-            $asset->{$relationName}?->toArray()
+            $asset->{$relationName}?->toArray(),
+            $asset->maintenanceLogs->toArray()
         );
     }
 }

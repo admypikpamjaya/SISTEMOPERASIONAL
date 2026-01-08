@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Asset\AssetManagementController;
+use App\Http\Controllers\Asset\PublicAssetController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -51,10 +53,11 @@ Route::prefix('asset-management')->name('asset-management.')->middleware(['auth'
     Route::delete('/{id}', 'delete')->name('delete');
 });
 
-Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['auth', 'check_access:maintenance_report.read'])->group(function() {
+Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['auth', 'check_access:maintenance_report.read'])->controller(MaintenanceReportController::class)->group(function() {
     Route::get('/', function() {
         return 'Maintenance Report';
     })->name('index');
+    Route::post('/submit', 'store')->name('submit');
 });
 
 Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'check_access:user_management.read'])->controller(UserManagementController::class)->group(function() {
@@ -69,4 +72,4 @@ Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'che
 });
 
 // Public View
-Route::get('assets/{id}', [AssetManagementController::class, 'showDetail'])->name('assets.detail');
+Route::get('assets/{id}', [PublicAssetController::class, 'show'])->name('assets.detail');

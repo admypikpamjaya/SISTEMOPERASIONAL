@@ -66,7 +66,7 @@ use App\Enums\Asset\AssetCategory;
                             <a id="download-qr-anchor" href="#" class="d-none"></a>
                             <button id="download-qr-code-button" type="button" class="btn btn-sm btn-primary" title="Download Semua QR Aset">
                                 <i class="fas fa-qrcode"></i>
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -97,7 +97,7 @@ use App\Enums\Asset\AssetCategory;
                         <td>{{ $asset->created_at->format('d M Y') }}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ route('assets.detail', $asset->id) }}" class="btn btn-outline-info">
+                                <a href="{{ route('assets.detail', $asset->id) }}" target="_blank" class="btn btn-outline-info">
                                     <div class="fas fa-eye"></div>
                                 </a>
                                 <a href="{{ route('asset-management.edit-form', $asset->id) }}" class="btn btn-outline-warning" >
@@ -114,7 +114,7 @@ use App\Enums\Asset\AssetCategory;
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center">Tidak ada data aset</td>
+                        <td colspan="5" class="text-center">Tidak ada data aset</td>
                     </tr>
                 @endforelse
             </tbody>
