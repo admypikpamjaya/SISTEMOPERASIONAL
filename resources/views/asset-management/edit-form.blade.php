@@ -20,7 +20,7 @@
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="asset_serial_number">Nomor Serial {{ empty($asset->detail) ? 'yes' : 'no' }}</label>
+                                    <label for="asset_serial_number">Nomor Serial</label>
                                     <input type="text" name="asset_serial_number" class="form-control" id="asset_serial_number" value="{{ $asset->serialNumber }}" placeholder="Masukkan nomor serial">
                                 </div>
                             </div>
