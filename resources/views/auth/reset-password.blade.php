@@ -16,8 +16,13 @@
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
+  <!-- Extras -->
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body class="hold-transition login-page">
+<div id="loading-overlay">
+    <i class="fas fa-2x fa-spinner fa-spin"></i>
+</div>
 <div class="login-box">
     <div class="login-logo">
         <img src="{{ asset('images/logo_ypik.webp') }}" alt="logo_ypik" height="100" />
@@ -30,14 +35,15 @@
         </div>
         <div class="card-body login-card-body">
 
-            <form id="login-form" action="{{ url()->current() }}" method="post">
+            <form id="reset-password-form" action="{{ route('password.update') }}" method="post">
                 @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
                 <div class="form-group">
                     <label for="email">
                         <i class="fas fa-user"></i>    
                         Email
                     </label>
-                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email">
+                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ $email }}" readonly>
                     @error('email')
                         <div class="invalid-feedback">
                             {{ $message }}
@@ -62,26 +68,33 @@
                             {{ $message }}
                         </div>
                     @enderror
-                    @if(session('auth_failed'))
+                </div>
+                <div class="form-group">
+                    <label for="password_confirmation">
+                        <i class="fas fa-key"></i>
+                        Konfirmasi Password
+                    </label>
+                    <input 
+                        type="password"
+                        class="form-control
+                            @error('password_confirmation') is-invalid @enderror
+                            @if(session('auth_failed')) is-invalid @endif"
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        placeholder="Masukkan password"
+                        >
+                    @error('token')
                         <div class="invalid-feedback">
-                            {{ session('auth_failed') }}
+                            {{ $message }}
                         </div>
-                    @endif
+                    @enderror
                 </div>
                 <div class="row d-flex align-items-center">
-                    <div class="col-8">
-                        <div class="icheck-primary">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">
-                                Remember Me
-                            </label>
-                        </div>
-                    </div>
                     <!-- /.col -->
-                    <div class="col-4">
+                    <div class="col">
                         <button id="submit-form-button" type="submit" class="btn btn-sm btn-primary btn-block">
                             <i class="fas fa-sign-in-alt"></i>    
-                            Sign In
+                            Reset Password
                         </button>
                     </div>
                 </div>
@@ -103,13 +116,13 @@
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 <!-- Extra JS -->
 <script src="{{ asset('js/helper.js') }}"></script>
-@if(session()->has('success'))
+@if(session()->has('error'))
 <script>
-    Notification.success("{{ session()->get('success') }}");
+    Notification.error("{{ session()->get('error') }}");
 </script>
 @endif
 <script>
-    $('#login-form').on('submit', function() {
+    $('#reset-password-form').on('submit', function() {
         $('#submit-form-button')
             .prop('disabled', true)
             .html('<i class="fas fa-spinner fa-spin"></i>');

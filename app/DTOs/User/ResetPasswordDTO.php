@@ -1,23 +1,21 @@
-<?php 
+<?php
 
 namespace App\DTOs\User;
 
-use App\Enums\User\UserRole;
-
-class RegisterUserDTO 
+class ResetPasswordDTO 
 {
     public function __construct(
-        public string $name,
+        public string $token,
         public string $email,
-        public UserRole $role
+        public string $password
     ) {}
 
     public static function fromArray(array $data): self 
     {
         return new self(
-            $data['name'],
+            $data['token'],
             $data['email'],
-            UserRole::from($data['role'])
+            $data['password']
         );
     }
 }

@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Http\Requests\User;
+namespace App\Http\Requests\auth;
 
-use App\Enums\User\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class EditUserRequest extends FormRequest
+class ResetPasswordRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,26 +22,25 @@ class EditUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'required|string',
-            'name' => 'required|string',
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($this->id)],
-            'role' => ['required', Rule::enum(UserRole::class)]
+            'token' => 'required|string',
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|string|confirmed'
         ];
     }
 
     public function messages(): array 
     {
         return [
-            'id.required' => 'Field id wajib disertakan',
-
-            'name.required' => 'Field nama wajib diisi',
+            'token.required' => 'Field token wajib disertakan',
+            'token.string' => 'Field token harus berupa string',
 
             'email.required' => 'Field email wajib diisi',
             'email.email' => 'Field email harus berupa email.',
-            'email.unique' => 'Email sudah digunakan',
+            'email.exists' => 'Email tidak valid',
 
-            'role.required' => 'Field role wajib diisi',
-            'role.*' => 'Role tidak valid'
+            'password.required' => 'Field password wajib diisi',
+            'password.string' => 'Field password harus berupa string',
+            'password.confirmed' => 'Password tidak cocok'
         ];
     }
 }

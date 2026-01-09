@@ -48,6 +48,23 @@ class UserManagementController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function sendResetPasswordLink(string $id)
+    {
+        try 
+        {
+            $this->service->sendResetPasswordLink($id);
+
+            session()->flash('success', 'Link reset password berhasil dikirim');
+            return response()->json(['success' => true]);
+        }
+        catch(\Exception $e)
+        {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], $e->getCode() ? $e->getCode() : 500);
+        }
+    }
+
     public function update(EditUserRequest $request)
     {
         try 

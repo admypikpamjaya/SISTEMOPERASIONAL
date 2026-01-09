@@ -21,8 +21,8 @@ class LoginController extends Controller
         if(!Auth::attempt($credentials, $remember))
             return redirect()
                 ->route('login')
-                ->with('auth_failed', 'Username atau password salah!')
-                ->withInput($request->only('username'));
+                ->with('auth_failed', 'Email atau password salah!')
+                ->withInput($request->only('email'));
 
         $request->session()->regenerate();
         return redirect()->intended('/');
