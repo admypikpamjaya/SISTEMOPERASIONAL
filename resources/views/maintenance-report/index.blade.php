@@ -26,7 +26,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                 <div class="row align-items-center">
                     <div class="col">
                         <div class="input-group input-group-sm">
-                            <select name="category" id="filter-category-select" class="form-control">
+                            <select name="status" id="filter-status-select" class="form-control">
                                 <option value="">Semua Status</option>
                                 @foreach (AssetMaintenanceReportStatus::cases() as $status)
                                     <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->name }}</option>
@@ -69,7 +69,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                     <tr>
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td class="text-left">
-                            <a href="{{ route('assets.detail', $report->asset->id) }}">{{ $report->asset->account_code }}</a>
+                            <a href="{{ route('assets.detail', $report->asset->id) }}" target="_blank">{{ $report->asset->account_code }}</a>
                         </td>
                         <td>
                             <span class="badge badge-{{ $badgeMap[$report->status->value] ?? 'secondary' }}">
@@ -129,7 +129,10 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
     }
 
     $(function() {
-        console.log(isUserCanUpdate);
+        $('#filter-status-select').on('change', function() {
+            $(this).closest('form').submit(); 
+        });
+
         $('#toggle-maintenance-report-detail-button').on('click', async function() {
             Loading.show();
             try 

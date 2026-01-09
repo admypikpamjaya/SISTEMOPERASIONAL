@@ -66,6 +66,11 @@ class AssetService
         return $dtos;
     }
 
+    private function makeSafeFilename(string $name): string
+    {
+        return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
+    }
+
     public function getAssets(?string $keyword = null, ?AssetCategory $category = null, ?int $page = 1)
     {
         $query = Asset::query();
@@ -227,8 +232,9 @@ class AssetService
             if(!$disk->exists($asset->qr_code_path))
                 throw new \Exception('QR Code tidak ditemukan');
 
+            $filename = $this->makeSafeFilename($asset->account_code) . '.svg';
             return new DownloadFileDTO(
-                filename: basename($asset->qr_code_path),
+                filename: $filename,
                 mimeType: 'image/svg+xml',
                 content: $disk->get($asset->qr_code_path)
             );
@@ -248,8 +254,9 @@ class AssetService
         {
             if($disk->exists($asset->qr_code_path)) 
             {
+                $filename = $this->makeSafeFilename($asset->account_code) . '.svg';
                 $zip->addFromString(
-                    basename($asset->qr_code_path),
+                    $filename,
                     $disk->get($asset->qr_code_path)
                 );
             }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Report;
 use App\DTOs\Report\CreateMaintenanceReportDTO;
 use App\DTOs\Report\UpdateMaintenanceReportDTO;
 use App\DTOs\Report\UpdateMaintenanceReportStatusDTO;
+use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Report\CreateMaintenanceReportRequest;
 use App\Http\Requests\Report\UpdateMaintenanceReportRequest;
@@ -20,7 +21,7 @@ class MaintenanceReportController extends Controller
 
     public function index(Request $request)
     {
-        $reports = $this->service->getLogs($request->keyword, $request->page);
+        $reports = $this->service->getLogs($request->keyword, ($request->status) ? AssetMaintenanceReportStatus::from($request->status) : null, $request->page);
         return view('maintenance-report.index', [
             'reports' => $reports
         ]);

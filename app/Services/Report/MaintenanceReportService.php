@@ -12,19 +12,31 @@ use Illuminate\Support\Facades\Log;
 
 class MaintenanceReportService
 {
-    public function getLogs(?string $keyword = null, ?int $page = 1)
+    public function getLogs(?string $keyword = null, ?AssetMaintenanceReportStatus $status = null, ?int $page = 1)
     {
-        $logs = MaintenanceLog::where(function ($query) use ($keyword) {
-                $query->where('worker_name', 'like', "%{$keyword}%")
-                    ->orWhere('issue_description', 'like', "%{$keyword}%")
-                    ->orWhere('working_description', 'like', "%{$keyword}%");
-            })
-            ->orWhereHas('asset', function ($query) use ($keyword) {
-                $query->where('account_code', 'like', "%{$keyword}%");
-            })
-            ->paginate(5, ['*'], 'page', $page);
+        $query = MaintenanceLog::query();
+        if($keyword)
+        {
+            $query->where(function($q) use ($keyword) {
+                $q->where('worker_name', 'like', "%{$keyword}%")
+                ->orWhere('issue_description', 'like', "%{$keyword}%")
+                ->orWhere('working_description', 'like', "%{$keyword}%");
+            });
+        }
 
-        return $logs;
+        if($status)
+        {
+            $query->where('status', $status->value);
+        }
+
+
+        return $query
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'page', $page)
+            ->appends(array_filter([
+                'keyword' => $keyword,
+                'status' => $status?->value
+            ]));
     }
 
     public function getLog(string $id)
