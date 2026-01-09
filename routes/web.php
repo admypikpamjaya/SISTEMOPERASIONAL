@@ -3,6 +3,7 @@
 use App\Http\Controllers\Asset\AssetManagementController;
 use App\Http\Controllers\Asset\PublicAssetController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
 use Illuminate\Support\Facades\Auth;
@@ -78,3 +79,5 @@ Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'che
 
 // Public View
 Route::get('assets/{id}', [PublicAssetController::class, 'show'])->name('assets.detail');
+Route::get('reset-password/{token}', [ResetPasswordController::class, 'index'])->name('password.reset');
+Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
