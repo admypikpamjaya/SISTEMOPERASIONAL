@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ env('APP_NAME') }}</title>
 
   <!-- Google Font: Source Sans Pro -->
@@ -11,6 +12,8 @@
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/fontawesome-free/css/all.min.css') }}">
   <!-- icheck bootstrap -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
+  <!-- Sweetalert 2 -->
+  <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
 </head>
@@ -30,12 +33,12 @@
             <form id="login-form" action="{{ url()->current() }}" method="post">
                 @csrf
                 <div class="form-group">
-                    <label for="username">
+                    <label for="email">
                         <i class="fas fa-user"></i>    
-                        Username
+                        Email
                     </label>
-                    <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username') }}" placeholder="Masukkan username">
-                    @error('username')
+                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email">
+                    @error('email')
                         <div class="invalid-feedback">
                             {{ $message }}
                         </div>
@@ -98,9 +101,13 @@
 <script src="{{ asset('vendor/adminlte/dist/js/adminlte.min.js') }}"></script>
 <!-- SweetAlert2 -->
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
-</body>
-</html>
-
+<!-- Extra JS -->
+<script src="{{ asset('js/helper.js') }}"></script>
+@if(session()->has('success'))
+<script>
+    Notification.success("{{ session()->get('success') }}");
+</script>
+@endif
 <script>
     $('#login-form').on('submit', function() {
         $('#submit-form-button')
@@ -108,3 +115,5 @@
             .html('<i class="fas fa-spinner fa-spin"></i>');
     });
 </script>
+</body>
+</html>

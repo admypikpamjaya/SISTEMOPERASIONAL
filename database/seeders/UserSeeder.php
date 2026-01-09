@@ -19,22 +19,10 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'name' => 'Ariya',
-                'username' => 'ariya',
+                'email' => 'ariyapanna@outlook.com',
                 'password' => bcrypt('password'),
                 'role' => 'IT Support'
             ],
-            [
-                'name' => 'Erick',
-                'username' => 'erick',
-                'password' => bcrypt('password'),
-                'role' => 'Asset Manager'
-            ],
-            [
-                'name' => 'Dio',
-                'username' => 'dio',
-                'password' => bcrypt('password'),
-                'role' => 'Finance'
-            ]
         ];
 
         foreach($users as $user)

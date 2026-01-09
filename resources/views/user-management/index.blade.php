@@ -42,7 +42,7 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">NAMA</th>
-                    <th scope="col">USERNAME</th>
+                    <th scope="col">EMAIL</th>
                     <th scope="col">ROLE</th>
                 </tr>
             </thead>
@@ -51,35 +51,37 @@
                     <tr>
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td class="text-left">{{ $user->name }}</td>
-                        <td>{{ $user->username }}</td>
+                        <td>{{ $user->email }}</td>
                         <td>{{ $user->role }}</td>
                         <td>
                             @if($user->id != auth()->user()->id)
-                                <button 
-                                    type="button"
-                                    id="send-reset-password-link-button"
-                                    data-url="{{ route('user-database.send-reset-password-link', $user->id) }}"
-                                    class="btn btn-sm btn-outline-info"
-                                >
-                                    <i class="fas fa-link"></i>
-                                </button>
-                                <button 
-                                    type="button" 
-                                    id="toggle-update-user-button" 
-                                    data-user-id="{{ $user->id }}" 
-                                    data-url="{{ route('user-database.show', $user->id) }}"
-                                    class="btn btn-sm btn-outline-warning"
-                                >
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                                <button 
-                                    type="button" 
-                                    id="delete-user-button" 
-                                    data-user-id="{{ $user->id }}" 
-                                    data-url="{{ route('user-database.delete', $user->id) }}"
-                                    class="btn btn-sm btn-outline-danger">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                <div class="btn-group btn-group-sm">
+                                    <button 
+                                        type="button"
+                                        id="send-reset-password-link-button"
+                                        data-url="{{ route('user-database.send-reset-password-link', $user->id) }}"
+                                        class="btn btn-outline-info"
+                                    >
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        id="toggle-update-user-button" 
+                                        data-user-id="{{ $user->id }}" 
+                                        data-url="{{ route('user-database.show', $user->id) }}"
+                                        class="btn btn-outline-warning"
+                                    >
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        id="delete-user-button" 
+                                        data-user-id="{{ $user->id }}" 
+                                        data-url="{{ route('user-database.delete', $user->id) }}"
+                                        class="btn btn-outline-danger">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
                             @endif
                         </td>
                     </tr>
@@ -114,8 +116,8 @@
                     <input type="text" name="name" class="form-control" value="${user ? user.name : ''}" placeholder="Masukkan nama" required>
                 </div>
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" name="username" class="form-control" value="${user ? user.username : ''}" placeholder="Masukkan username" required>
+                    <label for="email">Email</label>
+                    <input type="email" name="email" class="form-control" value="${user ? user.email : ''}" placeholder="Masukkan email" required>
                 </div>
                 <div class="form-group">
                     <label for="role">Role</label>
@@ -150,6 +152,28 @@
                 const { message } = await Http.post("{{ route('user-database.store') }}", formData);
 
                 modal.hide(); 
+                refreshUI();
+            }
+            catch(error)
+            {
+                Notification.error(error);
+            }
+            finally
+            {
+                Loading.hide();
+            }
+        });
+
+        $(document).on('click', '#send-reset-password-link-button', async function() {
+            try 
+            {
+                const confirmation = await Notification.confirmation('Anda yakin ingin mengirimkan link reset password?');
+                if(!confirmation.isConfirmed)
+                    return;
+
+                Loading.show();
+                
+                await Http.post($(this).data('url'));
                 refreshUI();
             }
             catch(error)

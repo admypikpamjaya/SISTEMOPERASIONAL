@@ -26,7 +26,7 @@ class EditUserRequest extends FormRequest
         return [
             'id' => 'required|string',
             'name' => 'required|string',
-            'username' => ['required', 'string', Rule::unique('users', 'username')->ignore($this->id)],
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($this->id)],
             'role' => ['required', Rule::enum(UserRole::class)]
         ];
     }
@@ -38,8 +38,9 @@ class EditUserRequest extends FormRequest
 
             'name.required' => 'Field nama wajib diisi',
 
-            'username.required' => 'Field username wajib diisi',
-            'username.unique' => 'Username sudah digunakan',
+            'email.required' => 'Field email wajib diisi',
+            'email.email' => 'Field email harus berupa email.',
+            'email.unique' => 'Email sudah digunakan',
 
             'role.required' => 'Field role wajib diisi',
             'role.*' => 'Role tidak valid'

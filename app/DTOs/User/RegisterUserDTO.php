@@ -8,7 +8,7 @@ class RegisterUserDTO
 {
     public function __construct(
         public string $name,
-        public string $username,
+        public string $email,
         public UserRole $role
     ) {}
 
@@ -16,7 +16,7 @@ class RegisterUserDTO
     {
         return new self(
             $data['name'],
-            $data['username'],
+            $data['email'],
             UserRole::from($data['role'])
         );
     }

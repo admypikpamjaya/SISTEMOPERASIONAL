@@ -22,7 +22,7 @@ class AuthenticationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => 'required|string',
+            'email' => 'required|email',
             'password' => 'required|string',
             'remember_me' => 'boolean'
         ];
@@ -31,8 +31,8 @@ class AuthenticationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'username.required' => 'Field username wajib diisi.',
-            'username.string' => 'Field username harus berupa string.',
+            'email.required' => 'Field email wajib diisi.',
+            'email.email' => 'Field email harus berupa email.',
 
             'password.required' => 'Field password wajib diisi.',
             'password.string' => 'Field password harus berupa string.',

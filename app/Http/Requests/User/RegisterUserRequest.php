@@ -25,7 +25,7 @@ class RegisterUserRequest extends FormRequest
     {
         return [
             'name' => 'required|string',
-            'username' => 'required|string|unique:users',
+            'email' => 'required|email|unique:users',
             'role' => ['required', Rule::enum(UserRole::class)]
         ];
     }
@@ -35,8 +35,9 @@ class RegisterUserRequest extends FormRequest
         return [
             'name.required' => 'Field nama wajib diisi',
 
-            'username.required' => 'Field username wajib diisi',
-            'username.unique' => 'Username sudah digunakan',
+            'email.required' => 'Field email wajib diisi',
+            'email.email' => 'Field email harus berupa email.',
+            'email.unique' => 'Email sudah digunakan',
 
             'role.required' => 'Field role wajib diisi',
             'role.*' => 'Role tidak valid'
