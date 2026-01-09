@@ -118,3 +118,8 @@ function chunkArray(array, size) {
 
     return chunkedArray;
 }
+
+function formatDateForInput(date) 
+{
+    return new Date(date).toISOString().split('T')[0];
+}
