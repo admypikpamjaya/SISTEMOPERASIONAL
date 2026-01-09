@@ -54,10 +54,15 @@ Route::prefix('asset-management')->name('asset-management.')->middleware(['auth'
 });
 
 Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['auth', 'check_access:maintenance_report.read'])->controller(MaintenanceReportController::class)->group(function() {
-    Route::get('/', function() {
-        return 'Maintenance Report';
-    })->name('index');
+    Route::get('/', 'index')->name('index');
+    Route::get('/{id}', 'show')->name('detail');
+
     Route::post('/submit', 'store')->name('submit');
+
+    Route::put('/', 'update')->name('update');
+    Route::put('/update/status', 'updateStatus')->name('update-status');
+
+    Route::delete('/{id}', 'delete')->name('delete');
 });
 
 Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'check_access:user_management.read'])->controller(UserManagementController::class)->group(function() {
