@@ -88,7 +88,7 @@ class Asset extends Model
     public function loadWithRelation()
     {
         $handler = AssetFactory::createHandler($this->category);
-        return $this->load([$handler->getRelationName(), 'maintenanceLogs']);
+        return $this->load([$handler->getRelationName(), 'maintenanceLogs.maintenanceDocumentations']);
     }
 
     public function generateQRCode()

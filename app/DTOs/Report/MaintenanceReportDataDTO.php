@@ -2,7 +2,6 @@
 
 namespace App\DTOs\Report;
 
-use App\DTOs\Asset\AssetDataDTO;
 use App\DTOs\Asset\MinimalAssetDataDTO;
 use App\Models\Log\MaintenanceLog;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
@@ -17,7 +16,9 @@ class MaintenanceReportDataDTO
         public Carbon $workingDate,
         public string $issueDescription,
         public string $workingDescription,
-        public AssetMaintenanceReportStatus $status
+        public string $pic,
+        public AssetMaintenanceReportStatus $status,
+        public array $evidencePhotos
     ) {}
 
     public static function fromModel(MaintenanceLog $data): self 
@@ -29,7 +30,11 @@ class MaintenanceReportDataDTO
             $data->date,
             $data->issue_description,
             $data->working_description,
-            $data->status
+            $data->pic,
+            $data->status,
+            $data->maintenanceDocumentations
+                ->map(fn ($doc) => $doc->url)
+                ->toArray()
         );
     }
 }

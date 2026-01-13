@@ -28,4 +28,9 @@ class MaintenanceLog extends Model
     {
         return $this->belongsTo(Asset::class);
     }
+
+    public function maintenanceDocumentations()
+    {
+        return $this->hasMany(MaintenanceDocumentation::class);
+    }
 }

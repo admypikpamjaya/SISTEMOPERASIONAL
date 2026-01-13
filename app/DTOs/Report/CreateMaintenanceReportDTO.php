@@ -3,6 +3,7 @@
 namespace App\DTOs\Report;
 
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 
 class CreateMaintenanceReportDTO
 {
@@ -11,7 +12,9 @@ class CreateMaintenanceReportDTO
         public string $workerName,
         public Carbon $workingDate,
         public string $issueDescription,
-        public string $workingDescription
+        public string $workingDescription,
+        public string $pic,
+        public UploadedFile $evidencePhoto
     ) {}
 
     public static function fromArray(array $data): self 
@@ -21,7 +24,9 @@ class CreateMaintenanceReportDTO
             $data['worker_name'],
             Carbon::parse($data['working_date']),
             $data['issue_description'],
-            $data['working_description']
+            $data['working_description'],
+            $data['pic'],
+            $data['evidence_photo']
         );
     }
 }

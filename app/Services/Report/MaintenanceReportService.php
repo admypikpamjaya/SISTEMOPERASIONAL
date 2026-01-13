@@ -7,7 +7,9 @@ use App\DTOs\Report\MaintenanceReportDataDTO;
 use App\DTOs\Report\UpdateMaintenanceReportDTO;
 use App\DTOs\Report\UpdateMaintenanceReportStatusDTO;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
+use App\Models\Log\MaintenanceDocumentation;
 use App\Models\Log\MaintenanceLog;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MaintenanceReportService
@@ -50,13 +52,25 @@ class MaintenanceReportService
 
     public function createLog(CreateMaintenanceReportDTO $dto)
     {
-        $log = MaintenanceLog::create([
-            'asset_id' => $dto->assetId,
-            'worker_name' => $dto->workerName,
-            'date' => $dto->workingDate,
-            'issue_description' => $dto->issueDescription,
-            'working_description' => $dto->workingDescription
-        ])->refresh();
+        $log = DB::transaction(function () use ($dto) {
+            $path = MaintenanceDocumentation::store($dto->evidencePhoto);    
+
+            $log = MaintenanceLog::create([
+                'asset_id' => $dto->assetId,
+                'worker_name' => $dto->workerName,
+                'date' => $dto->workingDate,
+                'issue_description' => $dto->issueDescription,
+                'working_description' => $dto->workingDescription,
+                'pic' => $dto->pic
+            ]);
+
+            $log->maintenanceDocumentations()->create([
+                'document_path' => $path
+            ]);
+
+            return $log->refresh();
+        });
+
         return MaintenanceReportDataDTO::fromModel($log);
     }
 

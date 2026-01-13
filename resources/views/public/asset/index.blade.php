@@ -146,10 +146,9 @@
                     <tbody>
                         @php
                             $approvedMaintenances = collect($asset->maintenanceLogs)
-                                ->where('status', AssetMaintenanceReportStatus::APPROVED->value)
+                                ->where('status', AssetMaintenanceReportStatus::APPROVED)
                                 ->values(); // reset index
                         @endphp
-
                         @forelse($approvedMaintenances as $index => $maintenance)
                             @php
                                 $collapseId = 'maintenance-detail-' . $asset->id . '-' . $index;
@@ -157,8 +156,8 @@
 
                             {{-- ROW UTAMA --}}
                             <tr>
-                                <td>{{ Carbon::parse($maintenance['date'])->format('d M Y') }}</td>
-                                <td>{{ $maintenance['worker_name'] }}</td>
+                                <td>{{ $maintenance->workingDate->format('d M Y') }}</td>
+                                <td>{{ $maintenance->workerName }}</td>
                                 <td class="text-center">
                                     <button
                                         type="button"
@@ -177,10 +176,17 @@
                                 <td colspan="3">
                                     <div class="p-3 border rounded bg-light">
                                         <strong>Permasalahan:</strong>
-                                        <p class="mb-2">{{ $maintenance['issue_description'] }}</p>
+                                        <p class="mb-2">{{ $maintenance->issueDescription }}</p>
 
                                         <strong>Deskripsi Pekerjaan:</strong>
-                                        <p class="mb-0">{{ $maintenance['working_description'] }}</p>
+                                        <p class="mb-0">{{ $maintenance->workingDescription }}</p>
+
+                                        <details>
+                                            <summary class="font-weight-bold">Gambar Dokumentasi Pengerjaan</summary>
+                                            @foreach($maintenance->evidencePhotos as $photo)
+                                                <img src="{{ $photo }}" alt="dokumentasi pengerjaan" class="img-fluid" />
+                                            @endforeach                                
+                                        </details>
                                     </div>
                                 </td>
                             </tr>
@@ -241,6 +247,33 @@
                     <label for="name">Deskripsi Pengerjaan</label>
                     <textarea name="working_description" class="form-control" rows='3' required></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="pic">Nama PIC (Pemanggil Pekerja)</label>
+                    <input type="text" name="pic" class="form-control" placeholder="Masukkan nama PIC / pemanggil pekerja" required>
+                </div>
+                <div class="form-group">
+                    <label for="evidence-photo-input" class="font-weight-bold">
+                        Gambar Dokumentasi Pengerjaan
+                    </label>
+
+                    <div class="custom-file">
+                        <input
+                            type="file"
+                            id="evidence-photo-input"
+                            class="custom-file-input"
+                            name="evidence_photo"
+                            accept=".jpg,.jpeg,.png"
+                            required
+                        >
+                        <label class="custom-file-label" for="evidence-photo-input">
+                            Pilih gambar (JPG / JPEG / PNG, max 5MB)
+                        </label>
+                    </div>
+
+                    <small class="form-text text-muted">
+                        Upload foto bukti pengerjaan maksimal 5MB.
+                    </small>
+                </div>
             </form>
         `
     }
@@ -253,6 +286,11 @@
                 </button>
             `;
             modal.show('Form Laporan Maintenance', constructMaintenanceReportForm(), buttons);
+        });
+
+        $(document).on('change', '#evidence-photo-input', function(e) {
+            const fileName = e.target.files[0]?.name || 'Pilih gambar';
+            e.target.nextElementSibling.innerText = fileName;
         });
 
         $(document).on('click', '#submit-maintenance-report-form-button', async function() {
