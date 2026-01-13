@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('date');
             $table->text('issue_description');
             $table->text('working_description');
+            $table->string('pic');
             $table->enum('status', ['Pending', 'Approved', 'Rejected'])->default('Pending');
             $table->timestamps();
         });
