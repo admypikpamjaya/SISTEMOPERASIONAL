@@ -54,16 +54,18 @@ Route::prefix('asset-management')->name('asset-management.')->middleware(['auth'
     Route::delete('/{id}', 'delete')->name('delete');
 });
 
-Route::prefix('maintenance-report')->name('maintenance-report.')->middleware(['auth', 'check_access:maintenance_report.read'])->controller(MaintenanceReportController::class)->group(function() {
-    Route::get('/', 'index')->name('index');
-    Route::get('/{id}', 'show')->name('detail');
+Route::prefix('maintenance-report')->name('maintenance-report.')->controller(MaintenanceReportController::class)->group(function() {
+    Route::middleware(['auth', 'check_access:maintenance_report.read'])->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{id}', 'show')->name('detail');      
+        
+        Route::put('/', 'update')->middleware('check_access:maintenance_report.update')->name('update');
+        Route::put('/update/status', 'updateStatus')->middleware('check_access:maintenance_report.update_status')->name('update-status');
+
+        Route::delete('/{id}', 'delete')->middleware('check_access:maintenance_report.delete')->name('delete');
+    });
 
     Route::post('/submit', 'store')->name('submit');
-
-    Route::put('/', 'update')->name('update');
-    Route::put('/update/status', 'updateStatus')->name('update-status');
-
-    Route::delete('/{id}', 'delete')->name('delete');
 });
 
 Route::prefix('user-database')->name('user-database.')->middleware(['auth', 'check_access:user_management.read'])->controller(UserManagementController::class)->group(function() {
