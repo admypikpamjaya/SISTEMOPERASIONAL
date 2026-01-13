@@ -26,7 +26,9 @@ class CreateMaintenanceReportRequest extends FormRequest
             'worker_name' => 'required|string',
             'working_date' => 'required|date',
             'issue_description' => 'required|string',
-            'working_description' => 'required|string'
+            'working_description' => 'required|string',
+            'pic' => 'required|string',
+            'evidence_photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120'
         ];
     }
 
@@ -42,7 +44,14 @@ class CreateMaintenanceReportRequest extends FormRequest
             'working_date.date' => 'Tanggal Pengerjaan tidak valid',
 
             'issue_description.required' => 'Masalah Aset tidak boleh kosong',
-            'working_description.required' => 'Deskripsi Pengerjaan tidak boleh kosong'
+            'working_description.required' => 'Deskripsi Pengerjaan tidak boleh kosong',
+
+            'pic.required' => 'PIC tidak boleh kosong',
+
+            'evidence_photo.required' => 'Foto bukti pengerjaan tidak boleh kosong',
+            'evidence_photo.image' => 'Foto bukti pengerjaan harus berupa gambar yang valid',
+            'evidence_photo.mimes' => 'Foto bukti pengerjaan harus berupa file JPEG, PNG, JPG, atau WEBP',
+            'evidence_photo.max' => 'Foto bukti pengerjaan maksimal 5MB'
         ];
     }
 }

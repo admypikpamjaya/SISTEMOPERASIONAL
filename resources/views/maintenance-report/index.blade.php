@@ -61,6 +61,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">KODE ASET</th>
+                    <th scope="col">PIC</th>
                     <th scope="col">STATUS</th>
                 </tr>
             </thead>
@@ -70,6 +71,11 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td class="text-left">
                             <a href="{{ route('assets.detail', $report->asset->id) }}" target="_blank">{{ $report->asset->account_code }}</a>
+                        </td>
+                        <td>
+                            <span>
+                                {{ $report->pic }}
+                            </span>
                         </td>
                         <td>
                             <span class="badge badge-{{ $badgeMap[$report->status->value] ?? 'secondary' }}">
@@ -102,6 +108,17 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
 
     function constructMaintenanceReportForm(data) 
     {
+        const constructEvidencePhoto = () => {
+            let html = '';
+            data.evidencePhotos.forEach((photo, index) => {
+                html += `
+                    <img src="${photo}" alt="evidence-${index}" class="img-fluid">
+                `
+            });
+
+            return html;
+        }
+
         return `
             <form id="maintenance-report">
                 <div class="form-group">
@@ -124,6 +141,16 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                     <label for="name">Deskripsi Pengerjaan</label>
                     <textarea name="working_description" class="form-control" rows='3' ${!isUserCanUpdate ? 'readonly' : ''} required>${data.workingDescription}</textarea>
                 </div>
+                <div class="form-group">
+                    <label for="pic">Nama PIC (Pemanggil Pekerja)</label>
+                    <input type="text" name="pic" class="form-control" placeholder="Masukkan nama PIC / pemanggil pekerja" value="${data.pic}" ${!isUserCanUpdate ? 'readonly' : ''} required>
+                </div>
+                <div class="form-group">
+                    <details>
+                        <summary class="font-weight-bold">Gambar Dokumentasi Pengerjaan</summary>
+                        ${constructEvidencePhoto()}
+                    </details>
+                </div>
             </form>
         `;
     }
@@ -133,7 +160,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
             $(this).closest('form').submit(); 
         });
 
-        $('#toggle-maintenance-report-detail-button').on('click', async function() {
+        $(document).on('click', '#toggle-maintenance-report-detail-button', async function() {
             Loading.show();
             try 
             {
