@@ -2,6 +2,7 @@
 
 namespace App\DTOs\Asset;
 
+use App\DTOs\Report\MaintenanceReportDataDTO;
 use App\Enums\Asset\AssetCategory;
 use App\Models\Asset\Asset;
 use App\Services\Asset\AssetFactory;
@@ -46,7 +47,9 @@ class AssetDataDTO
             $asset->location,
             $asset->purchase_year,
             $asset->{$relationName}?->toArray(),
-            $asset->maintenanceLogs->toArray()
+            $asset->maintenanceLogs
+                ->map(fn ($log) => MaintenanceReportDataDTO::fromModel($log))
+                ->toArray()
         );
     }
 }
