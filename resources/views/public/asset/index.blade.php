@@ -256,6 +256,7 @@
         });
 
         $(document).on('click', '#submit-maintenance-report-form-button', async function() {
+            $(this).prop('disabled', true);
             try 
             {
                 const form = document.getElementById('maintenance-form');
@@ -284,6 +285,7 @@
             finally
             {
                 Loading.hide();
+                $(this).prop('disabled', false);
             }
         });
     });
