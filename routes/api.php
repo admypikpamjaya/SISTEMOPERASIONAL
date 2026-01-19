@@ -1,19 +1,39 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthApiController;
+use App\Http\Controllers\Api\AnnouncementApiController;
+use App\Http\Controllers\Api\BillingApiController;
+use App\Http\Controllers\Api\ReminderApiController;
+use App\Http\Controllers\Api\BlastApiController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
+| JSON ONLY – Sanctum Bearer Token
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// AUTH
+Route::post('/login', [AuthApiController::class, 'login']);
+
+// PROTECTED API
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/logout', [AuthApiController::class, 'logout']);
+
+    // Announcements
+    Route::get('/announcements', [AnnouncementApiController::class, 'index']);
+    Route::post('/announcements', [AnnouncementApiController::class, 'store']);
+
+    // Billings
+    Route::get('/billings', [BillingApiController::class, 'index']);
+    Route::post('/billings/{billingId}/confirm', [BillingApiController::class, 'confirmPayment']);
+
+    // Reminders
+    Route::get('/reminders/preview', [ReminderApiController::class, 'preview']);
+    Route::post('/reminders/send', [ReminderApiController::class, 'send']);
+
+    // Blast
+    Route::post('/blast/send', [BlastApiController::class, 'send']);
 });

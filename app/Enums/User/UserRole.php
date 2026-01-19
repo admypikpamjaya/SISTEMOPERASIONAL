@@ -1,9 +1,12 @@
-<?php 
+<?php
 
 namespace App\Enums\User;
 
-enum UserRole: string 
+enum UserRole: string
 {
+    case USER = 'User';
+    case ADMIN = 'Admin';
+
     case IT_SUPPORT = 'IT Support';
     case ASSET_MANAGER = 'Asset Manager';
     case FINANCE = 'Finance';

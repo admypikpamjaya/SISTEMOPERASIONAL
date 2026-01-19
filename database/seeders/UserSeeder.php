@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\User\UserRole;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -14,19 +16,27 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('👥 Seeding user data...');
-        
-        User::truncate();
+
+        // ❌ JANGAN TRUNCATE USERS
+        // User::truncate(); // ← INI PENYEBAB ERROR FK (HARUS DIHAPUS)
+
         $users = [
             [
-                'name' => 'Ariya',
                 'email' => 'ariyapanna@outlook.com',
-                'password' => bcrypt('password'),
-                'role' => 'IT Support'
+                'name'  => 'Ariya',
+                'password' => Hash::make('password'),
+                'role' => UserRole::IT_SUPPORT, // aman + konsisten
             ],
         ];
 
-        foreach($users as $user)
-            User::create($user);
+        foreach ($users as $user) {
+            User::firstOrCreate(
+                ['email' => $user['email']], // unique key
+                array_merge($user, [
+                    'id' => Str::uuid(), // UUID wajib
+                ])
+            );
+        }
 
         $this->command->info('👥 User data successfully seeded.');
     }

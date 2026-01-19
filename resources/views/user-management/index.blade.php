@@ -122,10 +122,27 @@
                 <div class="form-group">
                     <label for="role">Role</label>
                     <select name="role" class="form-control" required>
-                        <option value="IT Support" ${user && user.role === 'IT Support' ? 'selected' : ''}>IT Support</option>
-                        <option value="Asset Manager" ${user && user.role === 'Asset Manager' ? 'selected' : ''}>Asset Manager</option>
-                        <option value="Finance" ${user && user.role === 'Finance' ? 'selected' : ''}>Finance</option>
-                    </select>
+    <option value="User" {{ old('role', $user->role ?? '') === 'User' ? 'selected' : '' }}>
+        User
+    </option>
+
+    <option value="Admin" {{ old('role', $user->role ?? '') === 'Admin' ? 'selected' : '' }}>
+        Admin
+    </option>
+
+    <option value="IT Support" {{ old('role', $user->role ?? '') === 'IT Support' ? 'selected' : '' }}>
+        IT Support
+    </option>
+
+    <option value="Asset Manager" {{ old('role', $user->role ?? '') === 'Asset Manager' ? 'selected' : '' }}>
+        Asset Manager
+    </option>
+
+    <option value="Finance" {{ old('role', $user->role ?? '') === 'Finance' ? 'selected' : '' }}>
+        Finance
+    </option>
+</select>
+
                 </div>
             </form>
         `;
