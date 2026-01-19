@@ -9,7 +9,7 @@ class DummyWhatsappProvider implements WhatsappProviderInterface
 {
     public function send(string $to, string $message): bool
     {
-        Log::info('[DUMMY WA]', [
+        Log::info('[DUMMY WHATSAPP]', [
             'to' => $to,
             'message' => $message,
         ]);
