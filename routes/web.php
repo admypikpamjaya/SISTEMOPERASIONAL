@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
 
-// === ADMIN COMMUNICATION & BILLING (PHASE 6.1 – WEB ONLY) ===
+// ADMIN COMMUNICATION & BILLING
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ReminderController;
@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return (Auth::check())
-        ? redirect()->intended(route('dashboard.index'))
+    return Auth::check()
+        ? redirect()->route('dashboard.index')
         : redirect()->route('login');
 });
 
@@ -41,7 +41,7 @@ Route::prefix('login')
         Route::post('/', 'authenticate');
     });
 
-Route::middleware('auth')->get('logout', function () {
+Route::middleware('auth')->get('/logout', function () {
     Auth::logout();
     return redirect()->route('login');
 })->name('logout');
@@ -55,9 +55,7 @@ Route::prefix('dashboard')
     ->name('dashboard.')
     ->middleware('auth')
     ->group(function () {
-        Route::get('/', function () {
-            return view('dashboard.index');
-        })->name('index');
+        Route::get('/', fn () => view('dashboard.index'))->name('index');
     });
 
 /*
@@ -70,7 +68,6 @@ Route::prefix('asset-management')
     ->middleware(['auth', 'check_access:asset_management.read'])
     ->controller(AssetManagementController::class)
     ->group(function () {
-
         Route::get('/', 'index')->name('index');
         Route::get('/register', 'showRegisterForm')->name('register-form');
         Route::get('/edit/{id}', 'showEditForm')->name('edit-form');
@@ -115,7 +112,7 @@ Route::prefix('maintenance-report')
 
 /*
 |--------------------------------------------------------------------------
-| User Management
+| User Management (IT SUPPORT ONLY)
 |--------------------------------------------------------------------------
 */
 Route::prefix('user-database')
@@ -123,7 +120,6 @@ Route::prefix('user-database')
     ->middleware(['auth', 'check_access:user_management.read'])
     ->controller(UserManagementController::class)
     ->group(function () {
-
         Route::get('/', 'index')->name('index');
         Route::get('/{id}', 'show')->name('show');
 
@@ -149,62 +145,65 @@ Route::get('reset-password/{token}', [ResetPasswordController::class, 'index'])
 Route::post('reset-password', [ResetPasswordController::class, 'reset'])
     ->name('password.update');
 
-
+/*
+|--------------------------------------------------------------------------
+| ADMIN – COMMUNICATION & BILLING (PHASE 6 – LOCKED)
+|--------------------------------------------------------------------------
+*/
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'check_access:admin_communication.read'])
+    ->middleware(['auth'])
     ->group(function () {
 
         // ANNOUNCEMENTS
-        Route::get('/announcements', [AnnouncementController::class, 'index'])
-            ->name('announcements.index');
-        Route::get('/announcements/create', [AnnouncementController::class, 'create'])
-            ->name('announcements.create');
-        Route::post('/announcements', [AnnouncementController::class, 'store'])
-            ->name('announcements.store');
+        Route::prefix('announcements')
+            ->middleware('check_access:admin_announcement.read')
+            ->group(function () {
+                Route::get('/', [AnnouncementController::class, 'index'])
+                    ->name('announcements.index');
+
+                Route::get('/create', [AnnouncementController::class, 'create'])
+                    ->middleware('check_access:admin_announcement.create')
+                    ->name('announcements.create');
+
+                Route::post('/', [AnnouncementController::class, 'store'])
+                    ->middleware('check_access:admin_announcement.create')
+                    ->name('announcements.store');
+            });
 
         // BILLINGS
-        // Billings
-Route::get('/billings', [BillingController::class, 'index']);
-Route::post('/billings/{billingId}/confirm', [BillingController::class, 'confirmPayment']);
+        Route::prefix('billings')
+            ->middleware('check_access:admin_billing.read')
+            ->group(function () {
+                Route::get('/', [BillingController::class, 'index'])
+                    ->name('billings.index');
 
+                Route::post('/{billingId}/confirm', [BillingController::class, 'confirmPayment'])
+                    ->middleware('check_access:admin_billing.confirm')
+                    ->name('billings.confirm');
+            });
 
         // REMINDERS
-        Route::get('/reminders/preview', [ReminderController::class, 'preview'])
-            ->name('reminders.preview');
-        Route::post('/reminders/send', [ReminderController::class, 'send'])
-            ->name('reminders.send');
+        Route::prefix('reminders')
+            ->middleware('check_access:admin_reminder.read')
+            ->group(function () {
+                Route::get('/', [ReminderController::class, 'index'])
+                    ->name('reminders.index');
+
+                Route::post('/send', [ReminderController::class, 'send'])
+                    ->middleware('check_access:admin_reminder.send')
+                    ->name('reminders.send');
+            });
 
         // BLAST
-        Route::get('/blast/create', [BlastController::class, 'create'])
-            ->name('blast.create');
-        Route::post('/blast/send', [BlastController::class, 'send'])
-            ->name('blast.send');
-    });
-/*
-|-------------------------------------------------------------------------- 
-| ADMIN – COMMUNICATION & BILLING (PHASE 6.2.2)
-|-------------------------------------------------------------------------- 
-| STATUS:
-| ✔ Sidebar bisa diklik
-| ✔ Halaman aktif
-| ✔ Tanpa logic bisnis
-| ✔ WEB ONLY
-*/
-Route::prefix('admin')
-    ->middleware(['auth',])
-    ->name('admin.')
-    ->group(function () {
+        Route::prefix('blast')
+            ->middleware('check_access:admin_blast.read')
+            ->group(function () {
+                Route::get('/', [BlastController::class, 'index'])
+                    ->name('blast.index');
 
-        Route::get('/announcements', [AnnouncementController::class, 'index'])
-            ->name('announcements.index');
-
-        Route::get('/billings', [BillingController::class, 'index'])
-            ->name('billings.index');
-
-        Route::get('/reminders', [ReminderController::class, 'index'])
-            ->name('reminders.index');
-
-        Route::get('/blast', [BlastController::class, 'index'])
-            ->name('blast.index');
+                Route::post('/send', [BlastController::class, 'send'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('blast.send');
+            });
     });
