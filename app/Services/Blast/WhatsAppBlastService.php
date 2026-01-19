@@ -2,16 +2,16 @@
 
 namespace App\Services\Blast;
 
-use App\DTOs\BlastMessageDTO;
-use Illuminate\Support\Facades\Log;
+use App\Contracts\Messaging\WhatsappProviderInterface;
 
-class WhatsAppBlastService
+class WhatsappBlastService
 {
-    public function send(BlastMessageDTO $dto): void
+    public function __construct(
+        protected WhatsappProviderInterface $provider
+    ) {}
+
+    public function send(string $to, string $message): bool
     {
-        Log::info('[WHATSAPP BLAST]', [
-            'to' => $dto->phone,
-            'message' => $dto->message,
-        ]);
+        return $this->provider->send($to, $message);
     }
 }

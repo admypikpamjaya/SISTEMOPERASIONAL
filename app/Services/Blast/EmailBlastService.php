@@ -2,16 +2,16 @@
 
 namespace App\Services\Blast;
 
-use App\DTOs\BlastMessageDTO;
-use Illuminate\Support\Facades\Log;
+use App\Contracts\Messaging\EmailProviderInterface;
 
 class EmailBlastService
 {
-    public function send(BlastMessageDTO $dto): void
+    public function __construct(
+        protected EmailProviderInterface $provider
+    ) {}
+
+    public function send(string $to, string $subject, string $message): bool
     {
-        Log::info('[EMAIL BLAST]', [
-            'to' => $dto->email,
-            'message' => $dto->message,
-        ]);
+        return $this->provider->send($to, $subject, $message);
     }
 }
