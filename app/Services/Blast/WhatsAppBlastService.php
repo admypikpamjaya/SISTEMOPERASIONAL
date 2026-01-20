@@ -3,6 +3,7 @@
 namespace App\Services\Blast;
 
 use App\Contracts\Messaging\WhatsappProviderInterface;
+use App\DataTransferObjects\BlastPayload;
 
 class WhatsappBlastService
 {
@@ -10,8 +11,8 @@ class WhatsappBlastService
         protected WhatsappProviderInterface $provider
     ) {}
 
-    public function send(string $to, string $message): bool
+    public function send(string $phone, BlastPayload $payload): bool
     {
-        return $this->provider->send($to, $message);
+        return $this->provider->send($phone, $payload);
     }
 }

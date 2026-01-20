@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Blast;
 
+use App\DataTransferObjects\BlastPayload;
 use App\Services\Blast\WhatsappBlastService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,12 +15,12 @@ class SendWhatsappBlastJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected string $to,
-        protected string $message
+        protected string $phone,
+        protected BlastPayload $payload
     ) {}
 
     public function handle(WhatsappBlastService $service): void
     {
-        $service->send($this->to, $this->message);
+        $service->send($this->phone, $this->payload);
     }
 }

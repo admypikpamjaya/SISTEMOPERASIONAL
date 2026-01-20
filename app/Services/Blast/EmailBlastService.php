@@ -3,6 +3,7 @@
 namespace App\Services\Blast;
 
 use App\Contracts\Messaging\EmailProviderInterface;
+use App\DataTransferObjects\BlastPayload;
 
 class EmailBlastService
 {
@@ -10,8 +11,8 @@ class EmailBlastService
         protected EmailProviderInterface $provider
     ) {}
 
-    public function send(string $to, string $subject, string $message): bool
+    public function send(string $email, BlastPayload $payload): bool
     {
-        return $this->provider->send($to, $subject, $message);
+        return $this->provider->send($email, $payload);
     }
 }

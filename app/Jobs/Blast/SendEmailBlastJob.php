@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Blast;
 
+use App\DataTransferObjects\BlastPayload;
 use App\Services\Blast\EmailBlastService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,13 +15,12 @@ class SendEmailBlastJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected string $to,
-        protected string $subject,
-        protected string $message
+        protected string $email,
+        protected BlastPayload $payload
     ) {}
 
     public function handle(EmailBlastService $service): void
     {
-        $service->send($this->to, $this->subject, $this->message);
+        $service->send($this->email, $this->payload);
     }
 }
