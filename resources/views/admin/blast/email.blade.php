@@ -1,31 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-4">
-    <h3>Blast</h3>
+<form method="POST" action="{{ route('admin.blast.email.send') }}">
+    @csrf
 
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
+    <div class="form-group">
+        <label>Targets (comma separated)</label>
+        <textarea name="targets" class="form-control"></textarea>
+    </div>
 
-    <form method="POST" action="/admin/blast/send">
-        @csrf
+    <div class="form-group">
+        <label>Subject</label>
+        <input name="subject" class="form-control">
+    </div>
 
-        <div class="mb-3">
-            <label class="form-label">Blast Content</label>
-            <textarea
-                name="content"
-                class="form-control"
-                rows="4"
-                required
-            ></textarea>
-        </div>
+    <div class="form-group">
+        <label>Message</label>
+        <textarea name="message" class="form-control"></textarea>
+    </div>
 
-        <button class="btn btn-danger">
-            Send Blast
-        </button>
-    </form>
-</div>
+    <button class="btn btn-primary">Send Email Blast</button>
+</form>
 @endsection
