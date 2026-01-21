@@ -1,44 +1,54 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="blast-wrapper">
+<div class="blast-page">
 
+    {{-- Header --}}
+    <div class="blast-header">
+        <a href="http://127.0.0.1:8000/admin/blast" class="btn-back">
+            ← Kembali
+        </a>
+
+        <div>
+            <h1 class="blast-title">WhatsApp Blast</h1>
+            <p class="blast-subtitle">
+                Kirim pesan WhatsApp ke banyak penerima secara efisien
+            </p>
+        </div>
+    </div>
+
+    {{-- Card --}}
     <div class="blast-card">
-        <h2 class="blast-title">WhatsApp Blast</h2>
-        <p class="blast-subtitle">
-            Kirim pesan WhatsApp ke banyak nomor sekaligus
-        </p>
-
         <form method="POST" action="{{ route('admin.blast.whatsapp.send') }}">
             @csrf
 
             {{-- Targets --}}
-            <div class="form-group">
-                <label class="form-label">
-                    Target Nomor
-                    <span class="form-hint">(pisahkan dengan koma)</span>
-                </label>
+            <div class="field">
+                <label class="field-label">Target Nomor</label>
                 <textarea
                     name="targets"
-                    class="form-control"
-                    placeholder="Contoh: 6281234567890,6289876543210"
+                    class="field-input"
+                    placeholder="6281234567890, 6289876543210"
                 ></textarea>
+                <small class="field-hint">
+                    Pisahkan nomor menggunakan koma
+                </small>
             </div>
 
             {{-- Message --}}
-            <div class="form-group">
-                <label class="form-label">Pesan</label>
+            <div class="field">
+                <label class="field-label">Pesan</label>
                 <textarea
                     name="message"
-                    class="form-control"
+                    class="field-input"
                     placeholder="Tulis pesan WhatsApp di sini..."
                 ></textarea>
             </div>
 
             {{-- Action --}}
-            <div class="form-action">
-                <button type="submit" class="btn-submit">
-                    🚀 Kirim WhatsApp Blast
+            <div class="blast-action">
+                <button type="submit" class="btn-primary">
+                    Kirim Pesan
                 </button>
             </div>
         </form>
@@ -47,107 +57,159 @@
 </div>
 
 <style>
-/* WRAPPER */
-.blast-wrapper{
-    max-width:700px;
+/* RESET */
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:'Inter','Segoe UI',sans-serif;
+}
+
+/* PAGE */
+.blast-page{
+    max-width:760px;
     margin:40px auto;
-    padding:0 16px;
+    padding:0 20px;
+    color:#1F2937;
+}
+
+/* HEADER */
+.blast-header{
+    display:flex;
+    align-items:flex-start;
+    gap:20px;
+    margin-bottom:32px;
+}
+
+.btn-back{
+    text-decoration:none;
+    font-size:14px;
+    padding:8px 14px;
+    border-radius:10px;
+    background:#F3F4F6;
+    color:#4B5563;
+    transition:background .2s;
+}
+
+.btn-back:hover{
+    background:#E5E7EB;
+}
+
+/* TITLE */
+.blast-title{
+    font-size:28px;
+    font-weight:700;
+    background:linear-gradient(90deg,#4F46E5,#9333EA);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin-bottom:4px;
+}
+
+.blast-subtitle{
+    font-size:14px;
+    color:#6B7280;
 }
 
 /* CARD */
 .blast-card{
-    background:#fff;
-    border-radius:16px;
-    padding:28px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    background:linear-gradient(
+        180deg,
+        #FFFFFF 0%,
+        #F9FAFB 100%
+    );
+    border-radius:20px;
+    padding:34px;
+    box-shadow:
+        0 20px 40px rgba(79,70,229,.08),
+        0 4px 10px rgba(0,0,0,.05);
 }
 
-/* HEADER */
-.blast-title{
-    font-size:26px;
-    font-weight:700;
-    margin-bottom:6px;
-    color:#1D1D41;
-}
-.blast-subtitle{
-    font-size:14px;
-    color:#666;
-    margin-bottom:28px;
+/* FIELD */
+.field{
+    margin-bottom:26px;
 }
 
-/* FORM */
-.form-group{
-    margin-bottom:22px;
-}
-
-.form-label{
+.field-label{
     display:block;
+    font-size:14px;
     font-weight:600;
-    margin-bottom:8px;
-    color:#1D1D41;
+    margin-bottom:10px;
+    color:#111827;
 }
 
-.form-hint{
-    font-weight:400;
-    font-size:12px;
-    color:#888;
-    margin-left:6px;
-}
-
-/* INPUT */
-.form-control{
+.field-input{
     width:100%;
     min-height:120px;
-    padding:14px 16px;
+    padding:16px 18px;
+    border-radius:14px;
+    border:1px solid #E5E7EB;
     font-size:14px;
-    border-radius:10px;
-    border:1px solid #DDD;
     resize:vertical;
-    transition:border-color .2s, box-shadow .2s;
+    background:#FFFFFF;
+    transition:border .2s, box-shadow .2s;
 }
 
-.form-control:focus{
+.field-input:focus{
     outline:none;
-    border-color:#25D366;
-    box-shadow:0 0 0 3px rgba(37,211,102,.15);
+    border-color:#6366F1;
+    box-shadow:0 0 0 4px rgba(99,102,241,.18);
+}
+
+.field-hint{
+    display:block;
+    margin-top:6px;
+    font-size:12px;
+    color:#6B7280;
 }
 
 /* ACTION */
-.form-action{
-    text-align:right;
-    margin-top:30px;
+.blast-action{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:36px;
 }
 
-.btn-submit{
-    background:#25D366;
-    color:#fff;
+.btn-primary{
+    background:linear-gradient(
+        90deg,
+        #4F46E5,
+        #7C3AED
+    );
+    color:#FFFFFF;
     border:none;
-    padding:12px 26px;
+    padding:14px 36px;
     font-size:15px;
     font-weight:600;
-    border-radius:10px;
+    border-radius:14px;
     cursor:pointer;
-    transition:background .2s, transform .1s;
+    transition:transform .1s, box-shadow .2s;
 }
 
-.btn-submit:hover{
-    background:#1EBE5A;
+.btn-primary:hover{
+    box-shadow:0 10px 28px rgba(124,58,237,.35);
 }
 
-.btn-submit:active{
+.btn-primary:active{
     transform:scale(.97);
 }
 
 /* RESPONSIVE */
-@media (max-width:600px){
+@media (max-width:640px){
     .blast-card{
-        padding:22px;
+        padding:26px;
     }
-    .form-action{
-        text-align:stretch;
+
+    .blast-action{
+        justify-content:stretch;
     }
-    .btn-submit{
+
+    .btn-primary{
         width:100%;
+    }
+
+    .blast-header{
+        flex-direction:column;
+        gap:14px;
     }
 }
 </style>
