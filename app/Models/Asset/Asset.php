@@ -52,7 +52,7 @@ class Asset extends Model
                 'account_code' => ['required', 'string', 'unique:assets,account_code'],
                 'location' => ['required', 'string'],
                 'serial_number' => ['nullable', 'string', 'unique:assets,serial_number'],
-                'purchase_year'=> ['nullable', 'integer', 'min:2000', 'max:' . date('Y')],
+                'purchase_year'=> ['nullable', 'string'],
             ],
             [
                 'category.required' => 'Kategori aset wajib diisi.',
@@ -68,9 +68,7 @@ class Asset extends Model
                 'serial_number.*' => 'Nomor seri tidak valid.',
                 'serial_number.unique' => 'Nomor seri sudah terdaftar.',
 
-                'purchase_year.integer' => 'Tahun pembelian harus berupa angka.',
-                'purchase_year.min' => 'Tahun pembelian tidak valid.',
-                'purchase_year.max' => 'Tahun pembelian tidak valid.',
+                'purchase_year.string' => 'Input tahun pembelian harus berupa teks.',
             ]
         );
 

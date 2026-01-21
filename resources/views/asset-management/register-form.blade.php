@@ -54,7 +54,7 @@ use App\Enums\Asset\AssetCategory;
                             <div class="col">
                                 <div class="form-group">
                                     <label for="location">Tahun Pembelian</label>
-                                    <input type="number" name="purchase_year" class="form-control" id="purchase_year" min="2000" max="{{ date('Y') }}" placeholder="Masukkan tahun pembelian">
+                                    <input type="text" name="purchase_year" class="form-control" id="purchase_year" placeholder="Masukkan tahun pembelian">
                                 </div>
                             </div>
                         </div>
