@@ -1,0 +1,222 @@
+
+
+# 📖 Dokumentasi Sistem Operasional Yayasan YPIK Al-Azhar PAM Jaya
+
+**Sistem Operasional Yayasan YPIK Al-Azhar PAM Jaya (SOY YPIK)** adalah aplikasi internal yang dirancang untuk mengelola berbagai aspek operasional yayasan secara terintegrasi. Modul yang tersedia meliputi manajemen aset, manajemen pengguna, keuangan, dokumen, hingga komunikasi/blasting.
+
+Aplikasi ini dibangun menggunakan **Laravel 10** dengan pendekatan **clean architecture** agar sistem mudah dikembangkan, scalable, dan maintainable.
+
+---
+
+## 🚀 Fitur Utama
+
+- **Manajemen Aset**  
+  Pencatatan, pelacakan, dan riwayat lifecycle aset yayasan.
+- **Manajemen Keuangan**  
+  Laporan maintenance, pencatatan transaksi perawatan, serta alur approval.
+- **Manajemen Pengguna**  
+  Sistem permission granular tanpa ketergantungan role; akses dapat diatur per modul dan per aksi.
+- **Sistem Blasting Tagihan**  
+  Pengiriman informasi tagihan kepada orang tua.
+
+---
+
+## 📦 Tech Stack
+
+- **Backend**: Laravel 10 (PHP 8.2+)  
+- **Database**: MySQL / MariaDB  
+- **Frontend**: Blade + Bootstrap  
+- **Deployment**: Linux server / cPanel / Laravel Forge  
+
+---
+
+## 🛠️ Setup Project (Local Development)
+
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/ariyapanna/soy-ypik.git
+   cd soy-ypik
+   ```
+
+2. **Install Dependencies**  
+   Pastikan PHP 8.2+, Composer, dan ekstensi standar Laravel sudah terpasang.
+   ```bash
+   composer install
+   ```
+
+3. **Konfigurasi Environment**
+   ```bash
+   cp .env.example .env
+   ```
+   Sesuaikan parameter dasar:
+   ```env
+   APP_NAME="Sistem Operasional Yayasan YPIK Al-Azhar PAM Jaya"
+   APP_ENV=local
+   APP_KEY=
+   APP_DEBUG=true
+   APP_URL=http://localhost:8000
+
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=soy_ypik
+   DB_USERNAME=root
+   DB_PASSWORD=
+
+   QUEUE_CONNECTION=database
+   CACHE_DRIVER=file
+   SESSION_DRIVER=file
+   ```
+
+   Generate application key:
+   ```bash
+   php artisan key:generate
+   ```
+
+4. **Migrasi Database**
+   ```bash
+   php artisan migrate
+   ```
+   Jika menggunakan seeder:
+   ```bash
+   php artisan db:seed
+   ```
+
+5. **Jalankan Server Lokal**
+   ```bash
+   php artisan serve
+   ```
+
+---
+
+## 🧪 Testing
+
+Menjalankan seluruh test:
+```bash
+php artisan test
+```
+
+Testing model dengan Tinker:
+```bash
+php artisan tinker
+\App\Models\Announcement::with('creator')->first();
+```
+
+---
+
+## 🗂️ Struktur Folder (High-Level)
+
+```
+app/
+ ├── Http/
+ │    ├── Controllers/
+ │    ├── Requests/
+ │    └── Middleware/
+ ├── Models/
+ ├── Services/
+ ├── Repositories/
+ ├── DTOs/
+ └── Helpers/
+
+routes/
+ ├── web.php
+ ├── api.php
+
+resources/
+ ├── views/
+ ├── css/
+ └── js/
+```
+
+---
+
+## 📂 Struktur Modul Blasting
+
+```
+app/
+ ├── Http/
+ │   ├── Controllers/
+ │   │   ├── Admin/
+ │   │   │   ├── AnnouncementController.php
+ │   │   │   ├── BillingController.php
+ │   │   │   └── BlastController.php
+ │   │   └── Webhook/
+ │   │       └── PaymentWebhookController.php
+ │   ├── Requests/
+ │   │   ├── AnnouncementRequest.php
+ │   │   ├── BillingRequest.php
+ │   │   └── BlastRequest.php
+ │   └── Middleware/
+ │       ├── RoleMiddleware.php
+ │       └── AuditLogMiddleware.php
+ ├── Models/
+ │   ├── ParentUser.php
+ │   ├── Announcement.php
+ │   ├── Billing.php
+ │   ├── Payment.php
+ │   ├── BlastLog.php
+ │   └── AuditLog.php
+ ├── Services/
+ │   ├── Blast/
+ │   │   ├── BlastService.php
+ │   │   ├── EmailBlastService.php
+ │   │   └── WhatsAppBlastService.php
+ │   ├── Payment/
+ │   │   └── PaymentStatusService.php
+ │   └── Reminder/
+ │       └── ReminderService.php
+ ├── Repositories/
+ │   ├── AnnouncementRepository.php
+ │   ├── BillingRepository.php
+ │   ├── PaymentRepository.php
+ │   └── ParentRepository.php
+ ├── DTOs/
+ │   ├── BlastMessageDTO.php
+ │   ├── BillingDTO.php
+ │   └── PaymentStatusDTO.php
+ └── Helpers/
+     ├── FileHelper.php
+     └── PhoneFormatter.php
+```
+
+---
+
+## 📘 Deployment Guide (Singkat)
+
+1. Upload source ke server / lakukan `git pull`  
+2. Jalankan:
+   ```bash
+   composer install --optimize-autoloader --no-dev
+   ```
+3. Setup `.env`  
+4. Generate key:
+   ```bash
+   php artisan key:generate
+   ```
+5. Migrasi database:
+   ```bash
+   php artisan migrate --force
+   ```
+6. Optimasi:
+   ```bash
+   php artisan optimize
+   ```
+7. Pastikan queue worker berjalan (gunakan Supervisor)
+
+---
+
+## 🔒 Catatan Keamanan
+
+- Gunakan **HTTPS** untuk produksi  
+- Pastikan permission folder `storage/` dan `bootstrap/cache/` benar  
+- Terapkan **role-based access control**  
+- Audit log untuk semua aksi penting  
+
+---
+
+## 📄 Lisensi
+
+Proyek ini bersifat **internal** dan hanya digunakan dalam lingkungan Yayasan YPIK Al-Azhar PAM Jaya.
+
+---
+
