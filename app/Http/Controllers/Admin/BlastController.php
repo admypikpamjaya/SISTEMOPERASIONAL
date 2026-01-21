@@ -9,66 +9,82 @@ use App\Jobs\Blast\SendWhatsappBlastJob;
 use App\Jobs\Blast\SendEmailBlastJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class BlastController extends Controller
 {
+    /* =======================
+     |  VIEW (JANGAN DIUBAH)
+     ======================= */
+
     public function index()
     {
         return view('admin.blast.index');
     }
 
-    public function send(Request $request)
+    public function whatsapp()
     {
-        $request->validate([
-            'channel'      => 'required|in:WHATSAPP,EMAIL',
-            'targets'      => 'required|string',
-            'message'      => 'required|string',
-            'attachments.*'=> 'file|max:10240', // max 10MB
+        return view('admin.blast.whatsapp');
+    }
+
+    public function email()
+    {
+        return view('admin.blast.email');
+    }
+
+    /* =======================
+     |  ACTION (UPDATED 8.2)
+     ======================= */
+
+    public function sendWhatsapp(Request $request)
+    {
+        $validated = $request->validate([
+            'targets' => 'required|string',
+            'message' => 'required|string',
         ]);
 
-        // ===============================
-        // Build Payload
-        // ===============================
-        $payload = new BlastPayload($request->message);
-        $payload->setMeta('source', 'manual_blast');
-        $payload->setMeta('created_by', Auth::id());
+        $payload = new BlastPayload($validated['message']);
+        $payload->setMeta('channel', 'WHATSAPP');
+        $payload->setMeta('sent_by', Auth::id());
 
-        // ===============================
-        // Handle Attachments
-        // ===============================
-        if ($request->hasFile('attachments')) {
-            $uuid = (string) Str::uuid();
-            $basePath = "blasts/{$uuid}";
-
-            foreach ($request->file('attachments') as $file) {
-                $storedPath = $file->store($basePath);
-
-                $payload->addAttachment(
-                    new BlastAttachment(
-                        storage_path("app/{$storedPath}"),
-                        $file->getClientOriginalName(),
-                        $file->getMimeType()
-                    )
-                );
-            }
-        }
-
-        // ===============================
-        // Dispatch Jobs
-        // ===============================
-        $targets = array_map('trim', explode(',', $request->targets));
+        $targets = array_filter(
+            array_map('trim', explode(',', $validated['targets']))
+        );
 
         foreach ($targets as $target) {
-            if ($request->channel === 'WHATSAPP') {
-                dispatch(new SendWhatsappBlastJob($target, $payload));
-            } else {
-                dispatch(new SendEmailBlastJob($target, $payload));
-            }
+            dispatch(
+                new SendWhatsappBlastJob($target, $payload)
+            );
         }
 
-        return redirect()
-            ->back()
-            ->with('success', 'Blast berhasil dikirim ke queue.');
+        return back()->with('success', 'WhatsApp blast queued.');
+    }
+
+    public function sendEmail(Request $request)
+    {
+        $validated = $request->validate([
+            'targets' => 'required|string',
+            'subject' => 'required|string',
+            'message' => 'required|string',
+        ]);
+
+        $payload = new BlastPayload($validated['message']);
+        $payload->setMeta('channel', 'EMAIL');
+        $payload->setMeta('sent_by', Auth::id());
+
+        $targets = array_filter(
+            array_map('trim', explode(',', $validated['targets']))
+        );
+
+        foreach ($targets as $target) {
+            dispatch(
+                new SendEmailBlastJob(
+                    $target,
+                    $validated['subject'],
+                    $payload
+                )
+            );
+        }
+
+        return back()->with('success', 'Email blast queued.');
     }
 }

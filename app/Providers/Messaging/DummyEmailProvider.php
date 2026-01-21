@@ -8,13 +8,17 @@ use Illuminate\Support\Facades\Log;
 
 class DummyEmailProvider implements EmailProviderInterface
 {
-    public function send(string $to, BlastPayload $payload): bool
-    {
+    public function send(
+        string $to,
+        string $subject,
+        BlastPayload $payload
+    ): bool {
         Log::info('[DUMMY EMAIL]', [
             'to' => $to,
-            'subject' => $payload->meta['subject'] ?? '(no subject)',
+            'subject' => $subject,
             'message' => $payload->message,
-            'attachments' => collect($payload->attachments)->map(fn ($a) => $a->filename),
+            'attachments' => $payload->attachments,
+            'meta' => $payload->meta,
         ]);
 
         return true;

@@ -6,5 +6,9 @@ use App\DataTransferObjects\BlastPayload;
 
 interface EmailProviderInterface
 {
-    public function send(string $to, BlastPayload $payload): bool;
+    public function send(
+        string $to,
+        string $subject,
+        BlastPayload $payload
+    ): bool;
 }
