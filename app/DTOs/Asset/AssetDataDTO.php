@@ -15,9 +15,9 @@ class AssetDataDTO
         public string $accountCode,
         public ?string $serialNumber,
         public string $location,
-        public ?int $purchaseYear,
+        public ?string $purchaseYear,
         public array $detail,
-        public array $maintenanceLogs
+        public ?array $maintenanceLogs
     ) {}
 
     public static function fromArray(array $data): self 
@@ -26,11 +26,11 @@ class AssetDataDTO
             $data['id'],
             AssetCategory::from($data['category']),
             $data['account_code'],
-            $data['asset_serial_number'],
+            $data['asset_serial_number'] ?? null,
             $data['location'],
-            $data['purchase_year'],
+            $data['purchase_year'] ?? null,
             $data['detail'],
-            $data['maintenance_logs']
+            $data['maintenance_logs'] ?? null
         );
     }
 
@@ -38,6 +38,10 @@ class AssetDataDTO
     {
         $handler = AssetFactory::createHandler($asset->category);
         $relationName = $handler->getRelationName();
+
+        $logs = $asset->relationLoaded('maintenanceLogs') 
+                ? $asset->maintenanceLogs->map(fn ($log) => MaintenanceReportDataDTO::fromModel($log))->toArray()
+                : null;
 
         return new self(
             $asset->id,
@@ -47,9 +51,7 @@ class AssetDataDTO
             $asset->location,
             $asset->purchase_year,
             $asset->{$relationName}?->toArray(),
-            $asset->maintenanceLogs
-                ->map(fn ($log) => MaintenanceReportDataDTO::fromModel($log))
-                ->toArray()
+            $logs
         );
     }
 }
