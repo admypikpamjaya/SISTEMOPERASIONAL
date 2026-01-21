@@ -11,7 +11,7 @@ class RegisterAssetDTO
         public string $accountCode,
         public ?string $serialNumber,
         public string $location,
-        public ?int $purchaseYear,
+        public ?string $purchaseYear,
         public array $detail
     ) {}
 

@@ -10,7 +10,7 @@ class MinimalAssetDataDTO
         public string $id,
         public string $accountCode,
         public string $location,
-        public ?int $purchaseYear
+        public ?string $purchaseYear
     ) {}
 
     public static function fromModel(Asset $data): self 

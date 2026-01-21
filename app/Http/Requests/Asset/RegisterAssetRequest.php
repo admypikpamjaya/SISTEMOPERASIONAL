@@ -28,7 +28,7 @@ class RegisterAssetRequest extends FormRequest
             'account_code' => ['required', 'unique:assets,account_code'],
             'asset_serial_number' => ['nullable', 'unique:assets,serial_number'],
             'location' => ['required', 'string'],
-            'purchase_year'=> ['nullable', 'integer', 'min:2000', 'max:' . date('Y')],
+            'purchase_year'=> ['nullable', 'string'],
             'detail' => ['required', 'array']
         ];
     }
@@ -46,9 +46,7 @@ class RegisterAssetRequest extends FormRequest
 
             'location.required' => 'Lokasi tidak boleh kosong',
 
-            'purchase_year.integer' => 'Tahun pembelian harus berupa angka',
-            'purchase_year.min' => 'Tahun pembelian minimal 2000',
-            'purchase_year.max' => 'Tahun pembelian maksimal ' . date('Y'),
+            'purchase_year.string' => 'Tahun pembelian harus berupa teks',
 
             'detail.required' => 'Detail tidak boleh kosong',
             'detail.*' => 'Detail tidak valid'

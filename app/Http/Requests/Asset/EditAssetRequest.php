@@ -29,7 +29,7 @@ class EditAssetRequest extends FormRequest
             'account_code' => ['required', 'unique:assets,account_code,' . $this->id],
             'asset_serial_number' => ['nullable', 'unique:assets,serial_number,' . $this->id],
             'location' => 'required|string',
-            'purchase_year'=> ['nullable', 'integer', 'min:2000', 'max:' . date('Y')],
+            'purchase_year'=> ['nullable', 'string'],
             'detail' => 'required|array'
         ];
     }
@@ -49,9 +49,7 @@ class EditAssetRequest extends FormRequest
 
             'location.required' => 'Field lokasi wajib diisi',
 
-            'purchase_year.integer' => 'Tahun pembelian harus berupa angka',
-            'purchase_year.min' => 'Tahun pembelian minimal 2000',
-            'purchase_year.max' => 'Tahun pembelian maksimal ' . date('Y'),
+            'purchase_year.string' => 'Tahun pembelian harus berupa teks.',
 
             'detail.required' => 'Field detail wajib diisi'
         ];
