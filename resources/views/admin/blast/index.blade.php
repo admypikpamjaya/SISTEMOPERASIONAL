@@ -3,15 +3,19 @@
 @section('content')
 <div class="whatsapp-blasting-container">
 
-    {{-- Page Title --}}
-    <div class="page-title">Blasting WhatsApp</div>
-    <div class="page-subtitle">Pesan massal ke banyak kontak WhatsApp</div>
-
-    {{-- Search Bar Card --}}
-    <div class="white-card search-card">
-        <div class="search-container">
-            <div class="search-icon">🔍</div>
-            <input type="text" class="search-input" placeholder="Cari apapun di sini...">
+    {{-- Page Title and Search Bar Row --}}
+    <div class="title-search-row">
+        <div class="title-section">
+            <div class="page-title">Blasting WhatsApp</div>
+            <div class="page-subtitle">Kirim pesan massal ke banyak kontak WhatsApp</div>
+        </div>
+        
+        {{-- Search Bar Card --}}
+        <div class="white-card search-card">
+            <div class="search-container">
+                <div class="search-icon">🔍</div>
+                <input type="text" class="search-input" placeholder="Cari yang Anda inginkan di sini...">
+            </div>
         </div>
     </div>
 
@@ -21,10 +25,14 @@
         <div class="white-card recipient-card">
             <div class="section-title">Penerima</div>
             
-            {{-- Phone Number Input --}}
-            <div class="input-container">
-                <div class="input-placeholder">Masukkan nomor telepon</div>
-                <div class="input-prefix">+</div>
+            {{-- Phone Number Input with Add Button --}}
+            <div class="phone-input-section">
+                <div class="input-container">
+                    <input type="text" class="phone-input" placeholder="Masukkan nomor telepon" id="phoneInput">
+                </div>
+                <button class="add-button" id="addPhoneBtn">
+                    <span class="add-icon">+</span>
+                </button>
             </div>
 
             {{-- Excel Import --}}
@@ -33,8 +41,10 @@
                 <div class="excel-text">Impor dari Excel</div>
             </div>
 
-            {{-- Recipient Status --}}
-            <div class="recipient-status">Belum ada penerima</div>
+            {{-- Recipient List --}}
+            <div class="recipient-list" id="recipientList">
+                <div class="recipient-status">Belum ada penerima</div>
+            </div>
         </div>
 
         {{-- Message Card --}}
@@ -42,13 +52,13 @@
             <div class="section-title">Kotak Pesan</div>
             
             <div class="message-editor">
-                <div class="message-placeholder">Ketik pesan Anda di sini...</div>
+                <textarea class="message-textarea" placeholder="Ketik pesan Anda di sini..." id="messageTextarea"></textarea>
             </div>
 
             {{-- Message Controls --}}
             <div class="message-controls">
-                <div class="char-count">0 karakter</div>
-                <div class="sms-segments">0 segmen SMS</div>
+                <div class="char-count" id="charCount">0 karakter</div>
+                <div class="sms-segments" id="smsSegments">0 segmen SMS</div>
             </div>
 
             {{-- Attachment Buttons --}}
@@ -64,7 +74,7 @@
             </div>
 
             {{-- Send Button --}}
-            <button class="send-button">
+            <button class="send-button" id="sendButton">
                 Kirim Pesan
             </button>
         </div>
@@ -103,11 +113,24 @@
         position: relative;
     }
 
+    /* Title and Search Row */
+    .title-search-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-top: 30px;
+        margin-bottom: 30px;
+        gap: 30px;
+    }
+
+    .title-section {
+        flex: 1;
+    }
+
     /* Page Title Styles */
     .page-title {
         font-size: 32px;
         font-weight: 700;
-        margin-top: 30px;
         color: #1D1D41;
     }
 
@@ -115,7 +138,6 @@
         font-size: 18px;
         color: rgba(29, 29, 65, 0.7);
         margin-top: 5px;
-        margin-bottom: 30px;
     }
 
     /* White Card Styles */
@@ -130,9 +152,9 @@
     /* Search Card */
     .search-card {
         width: 100%;
-        max-width: 400px;
+        max-width: 604px;
         padding: 15px 25px;
-        margin-bottom: 30px;
+        align-self: flex-start;
     }
 
     /* Search Bar Styles */
@@ -155,6 +177,7 @@
         color: #1D1D41;
         width: 100%;
         font-size: 16px;
+        outline: none;
     }
 
     .search-input::placeholder {
@@ -169,7 +192,6 @@
     .main-content {
         display: flex;
         gap: 30px;
-        margin-top: 10px;
     }
 
     /* Recipient Card */
@@ -186,6 +208,8 @@
         min-height: 500px;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        max-width: 604px;
     }
 
     /* Section Title */
@@ -196,34 +220,74 @@
         color: #1D1D41;
     }
 
+    /* Phone Input Section */
+    .phone-input-section {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
     /* Input Container */
     .input-container {
         width: 100%;
         height: 50px;
-        background-color: #F5F5F5;
+        background-color: #F4F6F9;
         border-radius: 10px;
         position: relative;
-        margin-bottom: 20px;
         border: 1px solid #E0E0E0;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
     }
 
-    .input-placeholder {
-        position: absolute;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%);
+    .input-prefix {
+        color: #1D1D41;
+        font-size: 18px;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+
+    .phone-input {
+        background: transparent;
+        border: none;
+        color: #1D1D41;
+        font-size: 16px;
+        width: 100%;
+        outline: none;
+        height: 100%;
+    }
+
+    .phone-input::placeholder {
         color: rgba(29, 29, 65, 0.7);
         font-size: 14px;
     }
 
-    .input-prefix {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #1D1D41;
-        font-size: 18px;
+    /* Add Button */
+    .add-button {
+        width: 50px;
+        height: 50px;
+        background-color: #007BFF;
+        border: none;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        flex-shrink: 0;
+    }
+
+    .add-button:hover {
+        background-color: #0056b3;
+    }
+
+    .add-icon {
+        color: white;
+        font-size: 24px;
         font-weight: bold;
+        line-height: 1;
     }
 
     /* Excel Import */
@@ -257,13 +321,53 @@
         font-weight: 500;
     }
 
-    /* Recipient Status */
+    /* Recipient List */
+    .recipient-list {
+        margin-top: auto;
+        padding: 20px 0;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
     .recipient-status {
         text-align: center;
         color: rgba(29, 29, 65, 0.5);
         font-size: 14px;
-        margin-top: auto;
-        padding: 20px 0;
+    }
+
+    .recipient-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: #F5F5F5;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #E0E0E0;
+    }
+
+    .recipient-number {
+        color: #1D1D41;
+        font-size: 14px;
+    }
+
+    .remove-recipient {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+
+    .remove-recipient:hover {
+        background-color: rgba(220, 53, 69, 0.1);
     }
 
     /* Message Editor */
@@ -272,17 +376,33 @@
         height: 300px;
         background-color: #F5F5F5;
         border-radius: 10px;
-        position: relative;
         margin-bottom: 20px;
         border: 1px solid #E0E0E0;
+        overflow: hidden;
     }
 
-    .message-placeholder {
-        position: absolute;
-        left: 25px;
-        top: 25px;
+    .message-textarea {
+        width: 100%;
+        height: 100%;
+        padding: 20px;
+        border: none;
+        border-radius: 10px;
+        background-color: #F5F5F5;
+        color: #1D1D41;
+        font-size: 16px;
+        resize: none;
+        font-family: inherit;
+        outline: none;
+    }
+
+    .message-textarea::placeholder {
         color: rgba(29, 29, 65, 0.7);
-        font-size: 14px;
+    }
+
+    .message-textarea:focus {
+        outline: none;
+        background-color: #FFFFFF;
+        border: 1px solid #007BFF;
     }
 
     /* Message Controls */
@@ -405,6 +525,16 @@
             padding: 20px;
         }
 
+        .title-search-row {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-card {
+            max-width: 100%;
+            width: 100%;
+        }
+
         .main-content {
             flex-direction: column;
             gap: 20px;
@@ -412,6 +542,7 @@
 
         .recipient-card, .message-card {
             min-height: auto;
+            max-width: 100%;
         }
 
         .logout {
@@ -423,32 +554,34 @@
         }
     }
 
-    /* Textarea Styling for Message Editor */
-    .message-textarea {
-        width: 100%;
-        height: 100%;
-        padding: 25px;
-        border: none;
-        border-radius: 10px;
-        background-color: #F5F5F5;
-        color: #1D1D41;
-        font-size: 16px;
-        resize: none;
-        font-family: inherit;
+    /* Input Focus Effects */
+    .input-container:focus-within {
+        border-color: #007BFF;
+        background-color: #FFFFFF;
     }
 
-    .message-textarea:focus {
-        outline: none;
-        background-color: #FFFFFF;
-        border: 1px solid #007BFF;
+    .search-card:focus-within {
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
     }
 </style>
 
 <script>
     // JavaScript untuk interaksi dasar
     document.addEventListener('DOMContentLoaded', function() {
-        // Fokus ke input pencarian
+        // Elements
         const searchInput = document.querySelector('.search-input');
+        const phoneInput = document.getElementById('phoneInput');
+        const addPhoneBtn = document.getElementById('addPhoneBtn');
+        const recipientList = document.getElementById('recipientList');
+        const messageTextarea = document.getElementById('messageTextarea');
+        const charCount = document.getElementById('charCount');
+        const smsSegments = document.getElementById('smsSegments');
+        const sendButton = document.getElementById('sendButton');
+        const logoutBtn = document.querySelector('.logout');
+        const excelImport = document.querySelector('.excel-import');
+        const attachButtons = document.querySelectorAll('.attach-btn');
+
+        // Fokus efek untuk search input
         if (searchInput) {
             searchInput.addEventListener('focus', function() {
                 this.parentElement.parentElement.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.2)';
@@ -459,17 +592,154 @@
             });
         }
 
+        // Fokus efek untuk phone input
+        if (phoneInput) {
+            phoneInput.addEventListener('focus', function() {
+                this.parentElement.style.borderColor = '#007BFF';
+                this.parentElement.style.backgroundColor = '#FFFFFF';
+            });
+            
+            phoneInput.addEventListener('blur', function() {
+                this.parentElement.style.borderColor = '#E0E0E0';
+                this.parentElement.style.backgroundColor = '#F5F5F5';
+            });
+
+            // Enter key untuk menambahkan nomor
+            phoneInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addRecipient();
+                }
+            });
+        }
+
+        // Fungsi untuk menambahkan penerima
+        function addRecipient() {
+            let phoneNumber = phoneInput.value.trim();
+            
+            // Validasi nomor telepon
+            if (!phoneNumber) {
+                alert('Masukkan nomor telepon terlebih dahulu!');
+                return;
+            }
+
+            // Tambahkan + jika belum ada
+            if (!phoneNumber.startsWith('+')) {
+                phoneNumber = '+' + phoneNumber;
+            }
+
+            // Cek apakah nomor sudah ada di list
+            const existingNumbers = Array.from(recipientList.querySelectorAll('.recipient-number'))
+                .map(el => el.textContent);
+            
+            if (existingNumbers.includes(phoneNumber)) {
+                alert('Nomor ini sudah ditambahkan!');
+                return;
+            }
+
+            // Hapus status "Belum ada penerima"
+            const statusElement = recipientList.querySelector('.recipient-status');
+            if (statusElement) {
+                statusElement.remove();
+            }
+
+            // Buat elemen penerima baru
+            const recipientItem = document.createElement('div');
+            recipientItem.className = 'recipient-item';
+            recipientItem.innerHTML = `
+                <span class="recipient-number">${phoneNumber}</span>
+                <button class="remove-recipient" title="Hapus">×</button>
+            `;
+
+            // Tambahkan ke list
+            recipientList.appendChild(recipientItem);
+
+            // Reset input
+            phoneInput.value = '';
+
+            // Tambahkan event untuk tombol hapus
+            const removeBtn = recipientItem.querySelector('.remove-recipient');
+            removeBtn.addEventListener('click', function() {
+                recipientItem.remove();
+                
+                // Jika tidak ada penerima lagi, tampilkan status
+                if (recipientList.children.length === 0) {
+                    const newStatus = document.createElement('div');
+                    newStatus.className = 'recipient-status';
+                    newStatus.textContent = 'Belum ada penerima';
+                    recipientList.appendChild(newStatus);
+                }
+            });
+        }
+
+        // Interaksi untuk tombol tambah nomor
+        if (addPhoneBtn) {
+            addPhoneBtn.addEventListener('click', addRecipient);
+        }
+
+        // Interaksi untuk textarea pesan
+        if (messageTextarea) {
+            // Update karakter dan segmen SMS
+            function updateMessageStats() {
+                const charLength = messageTextarea.value.length;
+                charCount.textContent = `${charLength} karakter`;
+                
+                // Hitung segmen SMS (asumsi 160 karakter per segmen)
+                const segments = Math.ceil(charLength / 160);
+                smsSegments.textContent = `${segments} segmen SMS`;
+            }
+
+            messageTextarea.addEventListener('input', updateMessageStats);
+            
+            // Inisialisasi statistik
+            updateMessageStats();
+        }
+
         // Interaksi untuk tombol kirim
-        const sendButton = document.querySelector('.send-button');
         if (sendButton) {
             sendButton.addEventListener('click', function() {
-                alert('Pesan akan dikirim ke semua penerima!');
-                // Di sini bisa ditambahkan logika pengiriman pesan
+                // Ambil semua nomor penerima
+                const recipientNumbers = Array.from(recipientList.querySelectorAll('.recipient-number'))
+                    .map(el => el.textContent);
+                
+                const message = messageTextarea.value.trim();
+                
+                // Validasi
+                if (recipientNumbers.length === 0) {
+                    alert('Tambahkan setidaknya satu penerima terlebih dahulu!');
+                    return;
+                }
+                
+                if (!message) {
+                    alert('Masukkan pesan terlebih dahulu!');
+                    return;
+                }
+                
+                // Tampilkan konfirmasi
+                const confirmation = confirm(
+                    `Pesan akan dikirim ke ${recipientNumbers.length} penerima:\n\n` +
+                    `${recipientNumbers.join(', ')}\n\n` +
+                    `Pesan: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}\n\n` +
+                    `Apakah Anda yakin?`
+                );
+                
+                if (confirmation) {
+                    // Simulasi pengiriman
+                    sendButton.disabled = true;
+                    sendButton.textContent = 'Mengirim...';
+                    sendButton.style.backgroundColor = '#6c757d';
+                    
+                    // Simulasi proses pengiriman
+                    setTimeout(() => {
+                        alert(`Pesan berhasil dikirim ke ${recipientNumbers.length} penerima!`);
+                        sendButton.disabled = false;
+                        sendButton.textContent = 'Kirim Pesan';
+                        sendButton.style.backgroundColor = '#007BFF';
+                    }, 2000);
+                }
             });
         }
 
         // Interaksi untuk tombol keluar
-        const logoutBtn = document.querySelector('.logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function() {
                 if (confirm('Apakah Anda yakin ingin keluar?')) {
@@ -478,48 +748,7 @@
             });
         }
 
-        // Interaksi untuk area pesan
-        const messageEditor = document.querySelector('.message-editor');
-        const messagePlaceholder = document.querySelector('.message-placeholder');
-        const charCount = document.querySelector('.char-count');
-        
-        if (messageEditor && messagePlaceholder) {
-            messageEditor.addEventListener('click', function() {
-                // Cek apakah sudah ada textarea
-                if (this.querySelector('.message-textarea')) return;
-                
-                // Buat textarea untuk editing
-                const textarea = document.createElement('textarea');
-                textarea.className = 'message-textarea';
-                textarea.placeholder = 'Ketik pesan Anda di sini...';
-                
-                // Tambahkan event untuk menghitung karakter
-                textarea.addEventListener('input', function() {
-                    const charLength = this.value.length;
-                    charCount.textContent = `${charLength} karakter`;
-                    
-                    // Hitung segmen SMS (asumsi 160 karakter per segmen)
-                    const segments = Math.ceil(charLength / 160);
-                    document.querySelector('.sms-segments').textContent = `${segments} segmen SMS`;
-                });
-                
-                // Ganti placeholder dengan textarea
-                messagePlaceholder.style.display = 'none';
-                this.appendChild(textarea);
-                textarea.focus();
-                
-                // Event ketika textarea kehilangan fokus
-                textarea.addEventListener('blur', function() {
-                    if (this.value.trim() === '') {
-                        messagePlaceholder.style.display = 'block';
-                        this.remove();
-                    }
-                });
-            });
-        }
-
         // Interaksi untuk import Excel
-        const excelImport = document.querySelector('.excel-import');
         if (excelImport) {
             excelImport.addEventListener('click', function() {
                 // Buat input file tersembunyi
@@ -531,8 +760,47 @@
                 fileInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
                         const fileName = e.target.files[0].name;
-                        alert(`File "${fileName}" berhasil dipilih untuk diimpor.`);
-                        // Di sini bisa ditambahkan logika upload file
+                        
+                        // Simulasi import dari Excel (dummy data)
+                        const dummyNumbers = [
+                            '+6281234567890',
+                            '+6289876543210',
+                            '+6281122334455'
+                        ];
+                        
+                        // Hapus status "Belum ada penerima"
+                        const statusElement = recipientList.querySelector('.recipient-status');
+                        if (statusElement) {
+                            statusElement.remove();
+                        }
+                        
+                        // Tambahkan nomor dummy
+                        dummyNumbers.forEach(number => {
+                            const recipientItem = document.createElement('div');
+                            recipientItem.className = 'recipient-item';
+                            recipientItem.innerHTML = `
+                                <span class="recipient-number">${number}</span>
+                                <button class="remove-recipient" title="Hapus">×</button>
+                            `;
+                            
+                            recipientList.appendChild(recipientItem);
+                            
+                            // Tambahkan event untuk tombol hapus
+                            const removeBtn = recipientItem.querySelector('.remove-recipient');
+                            removeBtn.addEventListener('click', function() {
+                                recipientItem.remove();
+                                
+                                // Jika tidak ada penerima lagi, tampilkan status
+                                if (recipientList.children.length === 0) {
+                                    const newStatus = document.createElement('div');
+                                    newStatus.className = 'recipient-status';
+                                    newStatus.textContent = 'Belum ada penerima';
+                                    recipientList.appendChild(newStatus);
+                                }
+                            });
+                        });
+                        
+                        alert(`File "${fileName}" berhasil diimpor. Menambahkan ${dummyNumbers.length} kontak.`);
                     }
                 });
                 
@@ -543,11 +811,32 @@
         }
 
         // Interaksi untuk tombol lampiran
-        const attachButtons = document.querySelectorAll('.attach-btn');
         attachButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const text = this.querySelector('.attach-text').textContent;
-                alert(`Fitur "${text}" akan segera tersedia.`);
+                
+                // Buat input file untuk lampiran
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                
+                if (text.includes('Gambar')) {
+                    fileInput.accept = 'image/*';
+                } else {
+                    fileInput.accept = '*/*';
+                }
+                
+                fileInput.style.display = 'none';
+                
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        const fileName = e.target.files[0].name;
+                        alert(`File "${fileName}" berhasil dipilih untuk dilampirkan.`);
+                    }
+                });
+                
+                document.body.appendChild(fileInput);
+                fileInput.click();
+                document.body.removeChild(fileInput);
             });
         });
     });
