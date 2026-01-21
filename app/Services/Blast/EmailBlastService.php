@@ -11,8 +11,14 @@ class EmailBlastService
         protected EmailProviderInterface $provider
     ) {}
 
-    public function send(string $to, string $subject, BlastPayload $payload): bool
+    public function send(string $email, BlastPayload $payload): bool
     {
-        return $this->provider->send($to, $subject, $payload);
+        $subject = $payload->meta['subject'] ?? 'Notification';
+
+        return $this->provider->send(
+            $email,
+            $subject,
+            $payload
+        );
     }
 }

@@ -16,16 +16,11 @@ class SendEmailBlastJob implements ShouldQueue
 
     public function __construct(
         public string $email,
-        public string $subject,
         public BlastPayload $payload
     ) {}
 
     public function handle(EmailBlastService $service): void
     {
-        $service->send(
-            $this->email,
-            $this->subject,
-            $this->payload
-        );
+        $service->send($this->email, $this->payload);
     }
 }

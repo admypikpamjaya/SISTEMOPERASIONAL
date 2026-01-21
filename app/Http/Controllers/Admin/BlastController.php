@@ -32,7 +32,7 @@ class BlastController extends Controller
     }
 
     /* =======================
-     |  ACTION (UPDATED 8.2)
+     |  ACTION
      ======================= */
 
     public function sendWhatsapp(Request $request)
@@ -51,9 +51,7 @@ class BlastController extends Controller
         );
 
         foreach ($targets as $target) {
-            dispatch(
-                new SendWhatsappBlastJob($target, $payload)
-            );
+            dispatch(new SendWhatsappBlastJob($target, $payload));
         }
 
         return back()->with('success', 'WhatsApp blast queued.');
@@ -65,23 +63,39 @@ class BlastController extends Controller
             'targets' => 'required|string',
             'subject' => 'required|string',
             'message' => 'required|string',
+            'attachments.*' => 'nullable|file|max:5120',
         ]);
 
         $payload = new BlastPayload($validated['message']);
         $payload->setMeta('channel', 'EMAIL');
+        $payload->setMeta('subject', $validated['subject']);
         $payload->setMeta('sent_by', Auth::id());
+
+        // Handle attachments (Phase 8)
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store(
+                    'blasts/' . uniqid(),
+                    'local'
+                );
+
+                $payload->addAttachment(
+                    new BlastAttachment(
+                        storage_path('app/' . $path),
+                        $file->getClientOriginalName(),
+                        $file->getMimeType()
+                    )
+                );
+            }
+        }
 
         $targets = array_filter(
             array_map('trim', explode(',', $validated['targets']))
         );
 
-        foreach ($targets as $target) {
+        foreach ($targets as $email) {
             dispatch(
-                new SendEmailBlastJob(
-                    $target,
-                    $validated['subject'],
-                    $payload
-                )
+                new SendEmailBlastJob($email, $payload)
             );
         }
 

@@ -4,11 +4,11 @@ namespace App\Providers;
 
 use App\Contracts\Messaging\EmailProviderInterface;
 use App\Contracts\Messaging\WhatsappProviderInterface;
-use App\Providers\Messaging\DummyEmailProvider;
+use App\Providers\Messaging\SmtpEmailProvider;
 use App\Providers\Messaging\DummyWhatsappProvider;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\ServiceProvider;
 use App\Services\AccessControl\PermissionService;
 use App\Enums\Portal\PortalPermission;
 
@@ -16,14 +16,16 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // REAL EMAIL PROVIDER
+        $this->app->bind(
+            EmailProviderInterface::class,
+            SmtpEmailProvider::class
+        );
+
+        // WhatsApp tetap dummy (Phase 8.4)
         $this->app->bind(
             WhatsappProviderInterface::class,
             DummyWhatsappProvider::class
-        );
-
-        $this->app->bind(
-            EmailProviderInterface::class,
-            DummyEmailProvider::class
         );
     }
 
