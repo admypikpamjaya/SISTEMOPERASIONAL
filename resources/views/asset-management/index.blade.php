@@ -13,7 +13,7 @@ use App\Enums\Asset\AssetCategory;
             📢
             Informasi Pengelolaan Aset
         </h5>
-        <p>Penambahan aset dapat dilakukan dengan 2 metode, yakni pengisian formulir atau import data aset (file .csv). Apabila metode yang dipilih adalah import data, maka file harus mengikuti format yang telah ditentukan. Silakan untuk download template sesuai kategori aset <a href="" class="text-primary">di sini</a></p>
+        <p>Penambahan aset dapat dilakukan dengan 2 metode, yakni pengisian formulir atau import data aset (file .csv). Apabila metode yang dipilih adalah import data, maka file harus mengikuti format yang telah ditentukan. Silakan untuk download template sesuai kategori aset <a href="https://drive.google.com/drive/folders/1_dySG9XdJB3GPiVATUzAvzjSvoDNvIBC?usp=drive_link" target="_blank" class="text-primary">di sini</a></p>
     </div>
 </div>
 </div>

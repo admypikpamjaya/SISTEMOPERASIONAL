@@ -197,6 +197,7 @@ Route::prefix('admin')
 
         // BLAST
         Route::prefix('blast')
+        
             ->middleware('check_access:admin_blast.read')
             ->group(function () {
                 Route::get('/', [BlastController::class, 'index'])
@@ -205,5 +206,16 @@ Route::prefix('admin')
                 Route::post('/send', [BlastController::class, 'send'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('blast.send');
+                     Route::get('/blast/whatsapp', [BlastController::class, 'whatsapp'])
+            ->name('blast.whatsapp');
+
+        Route::post('/blast/whatsapp/send', [BlastController::class, 'sendWhatsapp'])
+            ->name('blast.whatsapp.send');
+
+        Route::get('/blast/email', [BlastController::class, 'email'])
+            ->name('blast.email');
+
+        Route::post('/blast/email/send', [BlastController::class, 'sendEmail'])
+            ->name('blast.email.send');
             });
     });

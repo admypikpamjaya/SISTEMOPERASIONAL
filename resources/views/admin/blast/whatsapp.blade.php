@@ -1,48 +1,38 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="email-page">
+<div class="blast-page">
 
     {{-- Header --}}
-    <div class="email-header">
+    <div class="blast-header">
         <a href="http://127.0.0.1:8000/admin/blast" class="btn-back">
             ← Kembali
         </a>
 
         <div>
-            <h1 class="email-title">Email Blast</h1>
-            <p class="email-subtitle">
-                Kirim email ke banyak penerima dengan cepat dan aman
+            <h1 class="blast-title">WhatsApp Blast</h1>
+            <p class="blast-subtitle">
+                Kirim pesan WhatsApp ke banyak penerima secara efisien
             </p>
         </div>
     </div>
 
     {{-- Card --}}
-    <div class="email-card">
-        <form method="POST" action="{{ route('admin.blast.email.send') }}">
+    <div class="blast-card">
+        <form method="POST" action="{{ route('admin.blast.whatsapp.send') }}">
             @csrf
 
             {{-- Targets --}}
             <div class="field">
-                <label class="field-label">Target Email</label>
+                <label class="field-label">Target Nomor</label>
                 <textarea
                     name="targets"
                     class="field-input"
-                    placeholder="email1@example.com, email2@example.com"
+                    placeholder="6281234567890, 6289876543210"
                 ></textarea>
                 <small class="field-hint">
-                    Pisahkan email menggunakan koma
+                    Pisahkan nomor menggunakan koma
                 </small>
-            </div>
-
-            {{-- Subject --}}
-            <div class="field">
-                <label class="field-label">Subject</label>
-                <input
-                    name="subject"
-                    class="field-input field-input-single"
-                    placeholder="Judul email"
-                />
             </div>
 
             {{-- Message --}}
@@ -51,14 +41,14 @@
                 <textarea
                     name="message"
                     class="field-input"
-                    placeholder="Tulis isi email di sini..."
+                    placeholder="Tulis pesan WhatsApp di sini..."
                 ></textarea>
             </div>
 
             {{-- Action --}}
-            <div class="email-action">
+            <div class="blast-action">
                 <button type="submit" class="btn-primary">
-                    Kirim Email
+                    Kirim Pesan
                 </button>
             </div>
         </form>
@@ -76,27 +66,28 @@
 }
 
 /* PAGE */
-.email-page{
-    max-width:780px;
+.blast-page{
+    max-width:760px;
     margin:40px auto;
     padding:0 20px;
     color:#1F2937;
 }
 
 /* HEADER */
-.email-header{
+.blast-header{
     display:flex;
+    align-items:flex-start;
     gap:20px;
     margin-bottom:32px;
 }
 
 .btn-back{
     text-decoration:none;
-    color:#4B5563;
     font-size:14px;
     padding:8px 14px;
     border-radius:10px;
     background:#F3F4F6;
+    color:#4B5563;
     transition:background .2s;
 }
 
@@ -104,21 +95,23 @@
     background:#E5E7EB;
 }
 
-.email-title{
+/* TITLE */
+.blast-title{
     font-size:28px;
     font-weight:700;
     background:linear-gradient(90deg,#4F46E5,#9333EA);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
+    margin-bottom:4px;
 }
 
-.email-subtitle{
+.blast-subtitle{
     font-size:14px;
     color:#6B7280;
 }
 
 /* CARD */
-.email-card{
+.blast-card{
     background:linear-gradient(
         180deg,
         #FFFFFF 0%,
@@ -156,11 +149,6 @@
     transition:border .2s, box-shadow .2s;
 }
 
-.field-input-single{
-    min-height:auto;
-    height:48px;
-}
-
 .field-input:focus{
     outline:none;
     border-color:#6366F1;
@@ -175,7 +163,7 @@
 }
 
 /* ACTION */
-.email-action{
+.blast-action{
     display:flex;
     justify-content:flex-end;
     margin-top:36px;
@@ -207,11 +195,11 @@
 
 /* RESPONSIVE */
 @media (max-width:640px){
-    .email-card{
+    .blast-card{
         padding:26px;
     }
 
-    .email-action{
+    .blast-action{
         justify-content:stretch;
     }
 
@@ -219,7 +207,7 @@
         width:100%;
     }
 
-    .email-header{
+    .blast-header{
         flex-direction:column;
         gap:14px;
     }
