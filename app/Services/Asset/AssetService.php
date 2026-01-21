@@ -147,7 +147,6 @@ class AssetService
                 {
                     try 
                     {
-                        Log::info($assetDTO->toArray());
                         $this->registerAsset($assetDTO);
                     } 
                     catch (\Throwable $e) 
