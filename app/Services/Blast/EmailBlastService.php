@@ -4,6 +4,8 @@ namespace App\Services\Blast;
 
 use App\Contracts\Messaging\EmailProviderInterface;
 use App\DataTransferObjects\BlastPayload;
+use App\Mail\BlastMail;
+use Illuminate\Support\Facades\Mail;
 
 class EmailBlastService
 {
@@ -11,12 +13,14 @@ class EmailBlastService
         protected EmailProviderInterface $provider
     ) {}
 
-    public function send(string $email, BlastPayload $payload): bool
+    /**
+     * KIRIM EMAIL BLAST (SYNC)
+     */
+    public function send(string $to, string $subject, BlastPayload $payload): bool
     {
-        $subject = $payload->meta['subject'] ?? 'Notification';
-
+        // PAKAI PROVIDER (DUMMY / REAL)
         return $this->provider->send(
-            $email,
+            $to,
             $subject,
             $payload
         );

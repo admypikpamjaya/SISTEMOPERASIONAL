@@ -4,6 +4,8 @@ namespace App\Providers\Messaging;
 
 use App\Contracts\Messaging\EmailProviderInterface;
 use App\DataTransferObjects\BlastPayload;
+use App\Mail\BlastMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
 class DummyEmailProvider implements EmailProviderInterface
@@ -13,12 +15,13 @@ class DummyEmailProvider implements EmailProviderInterface
         string $subject,
         BlastPayload $payload
     ): bool {
-        Log::info('[DUMMY EMAIL]', [
+        Mail::to($to)->send(
+            new BlastMail($subject, $payload)
+        );
+
+        Log::info('[EMAIL BLAST SENT]', [
             'to' => $to,
             'subject' => $subject,
-            'message' => $payload->message,
-            'attachments' => $payload->attachments,
-            'meta' => $payload->meta,
         ]);
 
         return true;
