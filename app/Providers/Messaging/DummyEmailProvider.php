@@ -5,22 +5,39 @@ namespace App\Providers\Messaging;
 use App\Contracts\Messaging\EmailProviderInterface;
 use App\DataTransferObjects\BlastPayload;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BlastMail;
 
 class DummyEmailProvider implements EmailProviderInterface
 {
+    /**
+     * BARU (Phase 8.4.1)
+     * - REAL SEND via Mail::send
+     * - Attachments supported
+     */
     public function send(
         string $to,
         string $subject,
         BlastPayload $payload
     ): bool {
-        Log::info('[DUMMY EMAIL]', [
-            'to' => $to,
-            'subject' => $subject,
-            'message' => $payload->message,
-            'attachments' => $payload->attachments,
-            'meta' => $payload->meta,
-        ]);
+        try {
+            Mail::to($to)->send(
+                new BlastMail($subject, $payload)
+            );
 
-        return true;
+            Log::info('[EMAIL SENT]', [
+                'to' => $to,
+                'subject' => $subject,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('[EMAIL FAILED]', [
+                'to' => $to,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

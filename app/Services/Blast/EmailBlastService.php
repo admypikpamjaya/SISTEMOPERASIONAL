@@ -11,12 +11,18 @@ class EmailBlastService
         protected EmailProviderInterface $provider
     ) {}
 
-    public function send(string $email, BlastPayload $payload): bool
-    {
-        $subject = $payload->meta['subject'] ?? 'Notification';
-
+    /**
+     * BARU (Phase 8.4.1)
+     * - Support SYNC execution
+     * - Payload lengkap (message + attachment)
+     */
+    public function send(
+        string $to,
+        string $subject,
+        BlastPayload $payload
+    ): bool {
         return $this->provider->send(
-            $email,
+            $to,
             $subject,
             $payload
         );
