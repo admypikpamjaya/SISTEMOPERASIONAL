@@ -4,6 +4,8 @@ namespace App\Services\Blast;
 
 use App\Contracts\Messaging\EmailProviderInterface;
 use App\DataTransferObjects\BlastPayload;
+use App\Mail\BlastMail;
+use Illuminate\Support\Facades\Mail;
 
 class EmailBlastService
 {
@@ -12,15 +14,11 @@ class EmailBlastService
     ) {}
 
     /**
-     * BARU (Phase 8.4.1)
-     * - Support SYNC execution
-     * - Payload lengkap (message + attachment)
+     * KIRIM EMAIL BLAST (SYNC)
      */
-    public function send(
-        string $to,
-        string $subject,
-        BlastPayload $payload
-    ): bool {
+    public function send(string $to, string $subject, BlastPayload $payload): bool
+    {
+        // PAKAI PROVIDER (DUMMY / REAL)
         return $this->provider->send(
             $to,
             $subject,

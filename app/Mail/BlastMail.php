@@ -11,22 +11,17 @@ class BlastMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public BlastPayload $payload;
-    public string $subjectText;
-
-    public function __construct(string $subject, BlastPayload $payload)
-    {
-        $this->subjectText = $subject;
-        $this->payload = $payload;
-    }
+    public function __construct(
+        public string $subjectText,
+        public BlastPayload $payload
+    ) {}
 
     public function build()
     {
-        $mail = $this->subject($this->subjectText)
-            ->view('emails.blast')
-            ->with([
-                'messageBody' => $this->payload->message,
-                'meta' => $this->payload->meta,
+        $mail = $this
+            ->subject($this->subjectText)
+            ->view('emails.blast', [
+                'messageContent' => $this->payload->message,
             ]);
 
         foreach ($this->payload->attachments as $attachment) {
