@@ -1,26 +1,25 @@
 <?php
 
-namespace App\Jobs\Blast;
+namespace App\Services\Blast;
 
+use App\Contracts\Messaging\EmailProviderInterface;
 use App\DataTransferObjects\BlastPayload;
-use App\Services\Blast\WhatsappBlastService;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
-class SendWhatsappBlastJob implements ShouldQueue
+class EmailBlastService
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
     public function __construct(
-        protected string $phone,
-        protected BlastPayload $payload
+        protected EmailProviderInterface $provider
     ) {}
 
-    public function handle(WhatsappBlastService $service): void
+    /**
+     * KIRIM EMAIL BLAST
+     */
+    public function send(string $to, string $subject, BlastPayload $payload): bool
     {
-        $service->send($this->phone, $this->payload);
+        return $this->provider->send(
+            $to,
+            $subject,
+            $payload
+        );
     }
 }

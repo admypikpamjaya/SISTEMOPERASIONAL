@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use App\Contracts\Messaging\WhatsappProviderInterface;
-use App\Providers\Messaging\FonnteWhatsappProvider;
 use App\Contracts\Messaging\EmailProviderInterface;
+use App\Contracts\Messaging\WhatsappProviderInterface;
 use App\Providers\Messaging\SmtpEmailProvider;
+use App\Providers\Messaging\FonnteWhatsappProvider;
+
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
@@ -14,20 +15,20 @@ use App\Enums\Portal\PortalPermission;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        // REAL EMAIL PROVIDER
-        $this->app->bind(
-            EmailProviderInterface::class,
-            SmtpEmailProvider::class
-        );
+   public function register(): void
+{
+    // EMAIL
+    $this->app->bind(
+        EmailProviderInterface::class,
+        SmtpEmailProvider::class
+    );
 
-        // WhatsApp Fonnte
-        $this->app->bind(
+    // WHATSAPP
+    $this->app->bind(
         WhatsappProviderInterface::class,
         FonnteWhatsappProvider::class
     );
-    }
+}
 
     public function boot(): void
     {
