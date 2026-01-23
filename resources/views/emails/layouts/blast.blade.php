@@ -29,12 +29,7 @@
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="50" valign="middle">
-                            <img
-                                src="{{ asset('images/logo_ypik.webp') }}"
-                                alt="YPIK Logo"
-                                width="40"
-                                style="display:block;border-radius:6px;"
-                            >
+                           <img src="{{ asset('images/logo_ypik.webp') }}" alt="logo_ypik" height="100" />
                         </td>
                         <td valign="middle" style="padding-left:12px;">
                             <div style="font-size:16px;font-weight:bold;color:#ffffff;">

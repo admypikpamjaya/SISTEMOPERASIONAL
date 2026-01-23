@@ -28,27 +28,33 @@ return [
         'route'       => 'user-database.index',
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | ADMIN – COMMUNICATION & BILLING (PHASE 6.2)
-    |--------------------------------------------------------------------------
-    | STATUS:
-    | ✔ Routing & Controller ready
-    | ✔ Dummy UI
-    | ✔ Shared access (Admin / Finance / Superadmin)
-    | ✖ Permission detail (PHASE 6.3+)
-    */
-
     [
         'label' => 'Announcements',
         'icon'  => 'fas fa-bullhorn',
         'route' => 'admin.announcements.index',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | BLAST MESSAGE (PARENT + DROPDOWN) — FIXED
+    |--------------------------------------------------------------------------
+    */
     [
         'label' => 'Blast Message',
         'icon'  => 'fas fa-paper-plane',
-        'route' => 'admin.blast.index',
+        'route' => 'admin.blast.index', // ✅ ROUTE VALID
+        'children' => [
+            [
+                'label' => 'WhatsApp Blast',
+                'icon'  => 'fab fa-whatsapp',
+                'route' => 'admin.blast.whatsapp',
+            ],
+            [
+                'label' => 'Email Blast',
+                'icon'  => 'fas fa-envelope',
+                'route' => 'admin.blast.email',
+            ],
+        ],
     ],
 
     [
