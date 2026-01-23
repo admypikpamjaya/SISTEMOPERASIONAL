@@ -9,6 +9,7 @@ use App\Jobs\Blast\SendWhatsappBlastJob;
 use App\Jobs\Blast\SendEmailBlastJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class BlastController extends Controller
 {
@@ -40,11 +41,30 @@ class BlastController extends Controller
         $validated = $request->validate([
             'targets' => 'required|string',
             'message' => 'required|string',
+            'attachments.*' => 'nullable|file|max:5120',
         ]);
 
         $payload = new BlastPayload($validated['message']);
         $payload->setMeta('channel', 'WHATSAPP');
         $payload->setMeta('sent_by', Auth::id());
+
+        // HANDLE ATTACHMENT (PHASE 8.6)
+        if ($request->hasFile('attachments')) {
+            $folder = 'blasts/' . Str::uuid();
+
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store($folder, 'public');
+
+                $payload->addAttachment(
+                    new BlastAttachment(
+                        public_path('storage/' . $path),
+                        $file->getClientOriginalName(),
+                        $file->getMimeType()
+                    )
+                );
+            }
+        }
+     
 
         $targets = array_filter(
             array_map('trim', explode(',', $validated['targets']))
@@ -71,17 +91,15 @@ class BlastController extends Controller
         $payload->setMeta('subject', $validated['subject']);
         $payload->setMeta('sent_by', Auth::id());
 
-        // Handle attachments (Phase 8)
         if ($request->hasFile('attachments')) {
+            $folder = 'blasts/' . Str::uuid();
+
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store(
-                    'blasts/' . uniqid(),
-                    'local'
-                );
+                $path = $file->store($folder, 'public');
 
                 $payload->addAttachment(
                     new BlastAttachment(
-                        storage_path('app/' . $path),
+                        public_path('storage/' . $path),
                         $file->getClientOriginalName(),
                         $file->getMimeType()
                     )
@@ -95,7 +113,11 @@ class BlastController extends Controller
 
         foreach ($targets as $email) {
             dispatch(
-                new SendEmailBlastJob($email, $payload)
+                new SendEmailBlastJob(
+                    $email,
+                    $validated['subject'],
+                    $payload
+                )
             );
         }
 

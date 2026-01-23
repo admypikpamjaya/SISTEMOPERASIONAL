@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use App\Contracts\Messaging\EmailProviderInterface;
 use App\Contracts\Messaging\WhatsappProviderInterface;
+use App\Providers\Messaging\FonnteWhatsappProvider;
+use App\Contracts\Messaging\EmailProviderInterface;
 use App\Providers\Messaging\SmtpEmailProvider;
-use App\Providers\Messaging\DummyWhatsappProvider;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
@@ -22,11 +22,11 @@ class AppServiceProvider extends ServiceProvider
             SmtpEmailProvider::class
         );
 
-        // WhatsApp tetap dummy (Phase 8.4)
+        // WhatsApp Fonnte
         $this->app->bind(
-            WhatsappProviderInterface::class,
-            DummyWhatsappProvider::class
-        );
+        WhatsappProviderInterface::class,
+        FonnteWhatsappProvider::class
+    );
     }
 
     public function boot(): void

@@ -30,5 +30,11 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    
+    'fonnte' => [
+    'token' => env('FONNTE_TOKEN'),
+    'base_url' => env('FONNTE_BASE_URL', 'https://api.fonnte.com'),
+],
+
 
 ];
