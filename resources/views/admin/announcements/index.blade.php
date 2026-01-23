@@ -48,7 +48,7 @@
                         ></textarea>
                     </div>
 
-                    {{-- Priority and Department --}}
+                    {{-- Priority, Category and Department --}}
                     <div class="form-row">
                         {{-- Prioritas --}}
                         <div class="form-group">
@@ -62,6 +62,19 @@
                             </div>
                         </div>
 
+                        {{-- Kategori --}}
+                        <div class="form-group">
+                            <label class="form-label">Kategori</label>
+                            <div class="select-wrapper">
+                                <select class="form-select" id="categorySelect">
+                                    <option value="reminder" selected>Reminder</option>
+                                    <option value="payment_info">Informasi Pembayaran</option>
+                                    <option value="system_update">Update Sistem</option>
+                                    <option value="general">Pengumuman Umum</option>
+                                </select>
+                            </div>
+                        </div>
+
                         {{-- Departemen --}}
                         <div class="form-group">
                             <label class="form-label">Departemen</label>
@@ -70,6 +83,7 @@
                                     <option value="IT" selected>IT Support</option>
                                     <option value="Finance">Finance</option>
                                     <option value="Secretariat">Secretariat</option>
+                                    <option value="Maintenance">Maintenance</option>
                                 </select>
                             </div>
                         </div>
@@ -87,23 +101,36 @@
 
         {{-- Right Column: Daftar Pengumuman --}}
         <div class="right-column">
-            {{-- List Header --}}
-            <div class="list-header">
-                <div class="list-title-container">
-                    <h2 class="list-title">Daftar Pengumuman</h2>
+            <div class="right-content">
+                {{-- List Header --}}
+                <div class="list-header">
+                    <div class="list-title-container">
+                        <h2 class="list-title">Daftar Pengumuman</h2>
+                    </div>
+                    <div class="counter-badge">
+                        <span id="announcementCount">0</span> pengumuman
+                    </div>
                 </div>
-                <div class="counter-badge">
-                    <span id="announcementCount">0</span> pengumuman
-                </div>
-            </div>
 
-            {{-- Announcement List --}}
-            <div class="announcement-list" id="announcementList">
-                {{-- Empty State --}}
-                <div class="empty-state">
-                    <div class="empty-icon">📢</div>
-                    <p class="empty-title">Belum ada pengumuman</p>
-                    <p class="empty-subtitle">Pengumuman yang dibuat akan muncul di sini</p>
+                {{-- Filter Section --}}
+                <div class="filter-section">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Semua</button>
+                        <button class="filter-btn" data-filter="reminder">Reminder</button>
+                        <button class="filter-btn" data-filter="payment_info">Pembayaran</button>
+                        <button class="filter-btn" data-filter="system_update">Sistem</button>
+                        <button class="filter-btn" data-filter="general">Umum</button>
+                    </div>
+                </div>
+
+                {{-- Announcement List --}}
+                <div class="announcement-list" id="announcementList">
+                    {{-- Empty State --}}
+                    <div class="empty-state">
+                        <div class="empty-icon">📢</div>
+                        <p class="empty-title">Belum ada pengumuman</p>
+                        <p class="empty-subtitle">Pengumuman yang dibuat akan muncul di sini</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,7 +162,7 @@
     /* Header Section */
     .header-section {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Membuat grid 2 kolom yang sama lebar */
+        grid-template-columns: 1fr 1fr;
         gap: 30px;
         margin-bottom: 40px;
         align-items: start;
@@ -159,9 +186,9 @@
         font-weight: 400;
     }
 
-    /* Search Section - Diperbaiki agar sejajar dengan card */
+    /* Search Section */
     .search-section {
-        width: 100%; /* Mengisi lebar kolom grid */
+        width: 100%;
     }
 
     .search-wrapper {
@@ -169,12 +196,12 @@
         align-items: center;
         background: white;
         border: 1px solid #e0e0e0;
-        border-radius: 12px; /* Border radius sama dengan card */
-        padding: 12px 20px; /* Padding lebih besar agar sesuai dengan card */
+        border-radius: 12px;
+        padding: 12px 20px;
         transition: all 0.2s ease;
-        height: 56px; /* Tinggi yang sesuai dengan card form */
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Shadow sama dengan card */
-        border: 1px solid #eaeaea; /* Border sama dengan card */
+        height: 56px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #eaeaea;
     }
 
     .search-wrapper:focus-within {
@@ -202,22 +229,33 @@
         color: #8e8e93;
     }
 
-    /* Main Content */
+    /* Main Content - UPDATED FOR ALIGNMENT */
     .main-content {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 30px;
         margin-bottom: 60px;
+        align-items: stretch; /* Ini yang membuat kedua kolom sama tinggi */
+        min-height: calc(100vh - 200px); /* Minimum height */
     }
 
-    /* Form Card */
+    /* Left Column */
+    .left-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Form Card - UPDATED FOR ALIGNMENT */
     .form-card {
         background: white;
         border-radius: 12px;
         padding: 32px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         border: 1px solid #eaeaea;
-        height: fit-content;
+        flex: 1; /* Ini yang membuat card memenuhi tinggi parent */
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Memastikan tinggi penuh */
     }
 
     .form-title {
@@ -274,13 +312,15 @@
         resize: vertical;
         min-height: 120px;
         line-height: 1.6;
+        flex: 1; /* Membuat textarea bisa mengembang */
     }
 
-    /* Form Row */
+    /* Form Row - Updated for 3 columns */
     .form-row {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
     }
 
     .select-wrapper {
@@ -304,9 +344,9 @@
         padding-right: 40px;
     }
 
-    /* Submit Button */
+    /* Submit Button - UPDATED FOR BOTTOM ALIGNMENT */
     .form-submit {
-        margin-top: 32px;
+        margin-top: auto; /* Ini yang membuat button selalu di bawah */
         padding-top: 24px;
         border-top: 1px solid #f0f0f0;
     }
@@ -331,17 +371,26 @@
         box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
     }
 
-    /* Right Column */
+    /* Right Column - UPDATED FOR ALIGNMENT */
     .right-column {
         display: flex;
         flex-direction: column;
+        height: 100%;
+    }
+
+    .right-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex: 1;
     }
 
     .list-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+        flex-shrink: 0; /* Mencegah header menyusut */
     }
 
     .list-title-container {
@@ -368,16 +417,60 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
-    /* Announcement List */
+    /* Filter Section */
+    .filter-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #eaeaea;
+        flex-shrink: 0; /* Mencegah filter menyusut */
+    }
+
+    .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filter-btn {
+        padding: 8px 16px;
+        border: 1px solid #e0e0e0;
+        background: white;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+        background: #f0f0f0;
+        border-color: #007AFF;
+        color: #007AFF;
+    }
+
+    .filter-btn.active {
+        background: #007AFF;
+        border-color: #007AFF;
+        color: white;
+    }
+
+    /* Announcement List - UPDATED FOR ALIGNMENT */
     .announcement-list {
-        flex: 1;
-        min-height: 500px;
+        flex: 1; /* Ini yang membuat list mengisi sisa ruang */
         background: white;
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         border: 1px solid #eaeaea;
         overflow-y: auto;
+        min-height: 500px; /* Minimum height */
+        display: flex;
+        flex-direction: column;
     }
 
     /* Empty State */
@@ -386,8 +479,9 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 400px;
+        height: 100%;
         text-align: center;
+        flex: 1;
     }
 
     .empty-icon {
@@ -418,6 +512,7 @@
         margin-bottom: 16px;
         border: 1px solid #eaeaea;
         transition: all 0.2s ease;
+        position: relative;
     }
 
     .announcement-card:hover {
@@ -446,6 +541,7 @@
         font-size: 12px;
         font-weight: 600;
         margin-left: 12px;
+        white-space: nowrap;
     }
 
     .priority-low {
@@ -461,6 +557,39 @@
     .priority-high {
         background: rgba(220, 53, 69, 0.1);
         color: #721c24;
+    }
+
+    /* Category Badge */
+    .category-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+
+    .category-reminder {
+        background: rgba(52, 199, 89, 0.1);
+        color: #155724;
+    }
+
+    .category-payment_info {
+        background: rgba(0, 122, 255, 0.1);
+        color: #004085;
+    }
+
+    .category-system_update {
+        background: rgba(88, 86, 214, 0.1);
+        color: #3d3b94;
+    }
+
+    .category-general {
+        background: rgba(142, 142, 147, 0.1);
+        color: #4a4a4a;
     }
 
     .card-content {
@@ -504,51 +633,12 @@
         font-size: 12px;
     }
 
-    /* User Info */
-    .user-info {
-        position: fixed;
-        left: 40px;
-        bottom: 40px;
+    /* Category Tags */
+    .category-tags {
         display: flex;
-        align-items: center;
-        gap: 12px;
-        background: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border: 1px solid #eaeaea;
-        min-width: 180px;
-    }
-
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #007AFF, #34C759);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
-    }
-
-    .user-details {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .user-name {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-
-    .user-role {
-        font-size: 13px;
-        color: #666;
-        font-weight: 400;
-        margin-top: 2px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+        gap: 8px;
     }
 
     /* Responsive Design */
@@ -560,6 +650,7 @@
         .main-content {
             grid-template-columns: 1fr;
             gap: 30px;
+            min-height: auto;
         }
 
         .header-section {
@@ -572,12 +663,14 @@
             gap: 20px;
         }
 
-        .user-info {
-            position: relative;
-            left: 0;
-            bottom: 0;
-            margin-top: 40px;
-            width: fit-content;
+        .form-textarea {
+            min-height: 150px; /* Lebih tinggi di mobile */
+        }
+    }
+
+    @media (max-width: 992px) {
+        .form-row {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
@@ -609,9 +702,18 @@
             align-self: flex-end;
         }
 
-        .user-info {
-            width: 100%;
-            justify-content: center;
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-buttons {
+            overflow-x: auto;
+            padding-bottom: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .filter-btn {
+            flex-shrink: 0;
         }
     }
 
@@ -664,14 +766,17 @@
         const titleInput = document.getElementById('titleInput');
         const contentInput = document.getElementById('contentInput');
         const prioritySelect = document.getElementById('prioritySelect');
+        const categorySelect = document.getElementById('categorySelect');
         const departmentSelect = document.getElementById('departmentSelect');
         const submitButton = document.getElementById('submitButton');
         const announcementList = document.getElementById('announcementList');
         const announcementCount = document.getElementById('announcementCount');
+        const filterButtons = document.querySelectorAll('.filter-btn');
         
-        // State - TIDAK ADA DATA SAMPEL AWAL
+        // State
         let announcements = [];
         let nextId = 1;
+        let currentFilter = 'all';
 
         // Priority Labels
         const priorityLabels = {
@@ -680,11 +785,20 @@
             high: { text: 'Tinggi', class: 'priority-high' }
         };
 
+        // Category Labels
+        const categoryLabels = {
+            reminder: { text: 'Reminder', class: 'category-reminder', icon: '⏰' },
+            payment_info: { text: 'Informasi Pembayaran', class: 'category-payment_info', icon: '💰' },
+            system_update: { text: 'Update Sistem', class: 'category-system_update', icon: '🔄' },
+            general: { text: 'Pengumuman Umum', class: 'category-general', icon: '📢' }
+        };
+
         // Department Labels
         const departmentLabels = {
             IT: 'IT Support',
             Finance: 'Finance',
-            Secretariat: 'Secretariat'
+            Secretariat: 'Secretariat',
+            Maintenance: 'Maintenance',
         };
 
         // Time Format
@@ -707,8 +821,10 @@
         function createAnnouncementCard(announcement) {
             const card = document.createElement('div');
             card.className = 'announcement-card';
+            card.dataset.category = announcement.category;
             
             const priority = priorityLabels[announcement.priority];
+            const category = categoryLabels[announcement.category];
             const department = departmentLabels[announcement.department];
             const timeAgo = formatTime(announcement.createdAt);
 
@@ -716,6 +832,11 @@
                 <div class="card-header">
                     <h3 class="card-title">${announcement.title}</h3>
                     <span class="priority-badge ${priority.class}">${priority.text}</span>
+                </div>
+                <div class="category-tags">
+                    <span class="category-badge ${category.class}">
+                        ${category.icon} ${category.text}
+                    </span>
                 </div>
                 <div class="card-content">
                     ${announcement.content.replace(/\n/g, '<br>')}
@@ -736,25 +857,35 @@
         }
 
         // Render Announcements
-        function renderAnnouncements(filterText = '') {
+        function renderAnnouncements(filterText = '', categoryFilter = currentFilter) {
             announcementList.innerHTML = '';
             
             const filteredAnnouncements = announcements.filter(announcement => {
-                if (!filterText) return true;
-                const searchText = filterText.toLowerCase();
-                return (
-                    announcement.title.toLowerCase().includes(searchText) ||
-                    announcement.content.toLowerCase().includes(searchText) ||
-                    departmentLabels[announcement.department].toLowerCase().includes(searchText)
-                );
+                // Filter by category
+                if (categoryFilter !== 'all' && announcement.category !== categoryFilter) {
+                    return false;
+                }
+                
+                // Filter by search text
+                if (filterText) {
+                    const searchText = filterText.toLowerCase();
+                    return (
+                        announcement.title.toLowerCase().includes(searchText) ||
+                        announcement.content.toLowerCase().includes(searchText) ||
+                        departmentLabels[announcement.department].toLowerCase().includes(searchText) ||
+                        categoryLabels[announcement.category].text.toLowerCase().includes(searchText)
+                    );
+                }
+                
+                return true;
             });
 
             if (filteredAnnouncements.length === 0) {
                 announcementList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">📢</div>
-                        <p class="empty-title">${filterText ? 'Tidak ditemukan' : 'Belum ada pengumuman'}</p>
-                        <p class="empty-subtitle">${filterText ? 'Coba kata kunci lain' : 'Pengumuman yang dibuat akan muncul di sini'}</p>
+                        <p class="empty-title">${filterText || categoryFilter !== 'all' ? 'Tidak ditemukan' : 'Belum ada pengumuman'}</p>
+                        <p class="empty-subtitle">${filterText ? 'Coba kata kunci lain' : categoryFilter !== 'all' ? 'Tidak ada pengumuman dengan kategori ini' : 'Pengumuman yang dibuat akan muncul di sini'}</p>
                     </div>
                 `;
             } else {
@@ -769,24 +900,26 @@
         }
 
         // Add New Announcement
-        function addAnnouncement(title, content, priority, department) {
+        function addAnnouncement(title, content, priority, category, department) {
             const newAnnouncement = {
                 id: nextId++,
                 title,
                 content,
                 priority,
+                category,
                 department,
                 createdAt: new Date()
             };
 
-            announcements.unshift(newAnnouncement); // Add to beginning
-            renderAnnouncements(searchInput.value);
+            announcements.unshift(newAnnouncement);
+            renderAnnouncements(searchInput.value, currentFilter);
             
             // Clear form
             titleInput.value = '';
             contentInput.value = '';
             prioritySelect.value = 'medium';
-            departmentSelect.value = 'IT Support';
+            categorySelect.value = 'reminder';
+            departmentSelect.value = 'IT';
             
             return newAnnouncement;
         }
@@ -799,6 +932,7 @@
                 const title = titleInput.value.trim();
                 const content = contentInput.value.trim();
                 const priority = prioritySelect.value;
+                const category = categorySelect.value;
                 const department = departmentSelect.value;
 
                 // Validation
@@ -820,7 +954,7 @@
                 
                 // Simulate API call
                 setTimeout(() => {
-                    addAnnouncement(title, content, priority, department);
+                    addAnnouncement(title, content, priority, category, department);
                     showAlert('Pengumuman berhasil dibuat!', 'success');
                     
                     // Reset button
@@ -836,9 +970,26 @@
         // Search Functionality
         if (searchInput) {
             searchInput.addEventListener('input', function() {
-                renderAnnouncements(this.value.trim());
+                renderAnnouncements(this.value.trim(), currentFilter);
             });
         }
+
+        // Filter Buttons
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Update current filter
+                currentFilter = this.dataset.filter;
+                
+                // Re-render announcements
+                renderAnnouncements(searchInput.value, currentFilter);
+            });
+        });
 
         // Alert System
         function showAlert(message, type) {
@@ -986,7 +1137,7 @@
             }, 5000);
         }
 
-        // Inisialisasi tanpa data sampel - hanya "belum ada pengumuman"
+        // Initialize
         renderAnnouncements();
     });
 </script>

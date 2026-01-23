@@ -3,6 +3,7 @@
 @section('section_name', 'Email Blast')
 
 @section('content')
+<<<<<<< HEAD
 <div class="email-page">
 
     {{-- Header --}}
@@ -16,6 +17,22 @@
             <p class="email-subtitle">
                 Kirim email ke banyak penerima dengan lampiran opsional
             </p>
+=======
+<div class="email-blasting-container">
+
+    {{-- Header dengan Info dan Stats --}}
+    <div class="header-section">
+        <div class="header-left">
+            <div class="app-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <path d="M28 6H4C2.9 6 2 6.9 2 8V24C2 25.1 2.9 26 4 26H28C29.1 26 30 25.1 30 24V8C30 6.9 29.1 6 28 6ZM28 8L16 15L4 8H28ZM28 24H4V10L16 17L28 10V24Z" fill="#4285F4"/>
+                </svg>
+            </div>
+            <div class="app-info">
+                <div class="app-title">Email Blast</div>
+                <div class="app-subtitle">Kirim email ke banyak penerima</div>
+            </div>
+>>>>>>> 31397a22dc0f3a7385201979cf9cb536b864f5b3
         </div>
     </div>
 
@@ -26,91 +43,221 @@
         </div>
     @endif
 
-    {{-- Card --}}
-    <div class="email-card">
+    {{-- Stats Cards --}}
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-label">Total</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-icon blue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-label">Terkirim</div>
+                <div class="stat-value" id="statSent">0</div>
+            </div>
+            <div class="stat-icon green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7088 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-label">Gagal</div>
+                <div class="stat-value" id="statFailed">0</div>
+            </div>
+            <div class="stat-icon red">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15 9L9 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-content">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+            <div class="stat-icon yellow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    {{-- Main Content Grid --}}
+    <div class="main-grid">
+        {{-- Top Row - Penerima and Kotak Pesan --}}
         <form
             method="POST"
             action="{{ route('admin.blast.email.send') }}"
             enctype="multipart/form-data"
+            class="email-form"
         >
             @csrf
+            <div class="top-row">
+                {{-- Left Column - Penerima Email --}}
+                <div class="white-card recipient-card">
+                    <div class="section-title">Penerima Email</div>
+                    
+                    <div class="chip-input-section">
+                        <div id="emailChips" class="chip-list"></div>
+                        <input
+                            type="email"
+                            id="emailInput"
+                            class="email-input-main"
+                            placeholder="Ketik email lalu tekan Enter"
+                        >
+                    </div>
 
-            {{-- TARGET EMAIL (CHIP INPUT) --}}
-            <div class="field">
-                <label class="field-label">Target Email</label>
+                    <small class="field-hint">
+                        Tekan Enter untuk menambahkan email
+                    </small>
 
-                <div class="chip-input-wrapper">
-                    <div id="emailChips" class="chip-list"></div>
-                    <input
-                        type="email"
-                        id="emailInput"
-                        class="chip-input"
-                        placeholder="Ketik email lalu tekan Enter"
-                    >
+                    {{-- HIDDEN TEXTAREA (BACKEND COMPATIBLE) --}}
+                    <textarea
+                        name="targets"
+                        id="targetsField"
+                        hidden
+                        required
+                    ></textarea>
+
+                    <div class="excel-import" id="excelImport">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 2V8H20" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Impor Excel</span>
+                    </div>
+
                 </div>
 
-                <small class="field-hint">
-                    Tekan Enter untuk menambahkan email
-                </small>
+                {{-- Middle Column - Kotak Pesan Email --}}
+                <div class="white-card message-card">
+                    <div class="section-header">
+                        <div class="section-title">Kotak Pesan Email</div>
+                    </div>
 
-                {{-- HIDDEN TEXTAREA (BACKEND COMPATIBLE) --}}
-                <textarea
-                    name="targets"
-                    id="targetsField"
-                    hidden
-                    required
-                ></textarea>
-            </div>
+                    {{-- Subject --}}
+                    <div class="form-group">
+                        <label class="form-label">Subject Email:</label>
+                        <input
+                            name="subject"
+                            class="form-input"
+                            placeholder="Masukkan subject email"
+                            required
+                        >
+                    </div>
 
-            {{-- Subject --}}
-            <div class="field">
-                <label class="field-label">Subject</label>
-                <input
-                    name="subject"
-                    class="field-input field-input-single"
-                    placeholder="Judul email"
-                    required
-                >
-            </div>
+                    {{-- Message --}}
+                    <div class="form-group">
+                        <label class="form-label">Isi Pesan:</label>
+                        <textarea
+                            name="message"
+                            class="message-textarea"
+                            placeholder="Tulis isi email di sini..."
+                            rows="8"
+                            required
+                        ></textarea>
+                    </div>
 
-            {{-- Message --}}
-            <div class="field">
-                <label class="field-label">Message</label>
-                <textarea
-                    name="message"
-                    class="field-input"
-                    rows="6"
-                    placeholder="Tulis isi email di sini..."
-                    required
-                ></textarea>
-            </div>
+                    <div class="message-footer">
+                        <div class="attachment-buttons">
+                            <label class="attach-btn" for="fileAttachment">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59723 21.9983 8.005 21.9983C6.41277 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0991 2.00667 15.16 2.00667C16.2209 2.00667 17.2394 2.42944 17.99 3.18C18.7406 3.93056 19.1633 4.94908 19.1633 6.01C19.1633 7.07092 18.7406 8.08944 17.99 8.84L9.41 17.41C9.03472 17.7853 8.52548 17.9967 7.995 17.9967C7.46452 17.9967 6.95528 17.7853 6.58 17.41C6.20472 17.0347 5.99333 16.5255 5.99333 15.995C5.99333 15.4645 6.20472 14.9553 6.58 14.58L15.07 6.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>Lampirkan File</span>
+                            </label>
+                            <input
+                                type="file"
+                                name="attachments[]"
+                                id="fileAttachment"
+                                class="field-input-file"
+                                multiple
+                                style="display: none;"
+                            >
+                        </div>
+                        <div class="char-count" id="charCount">0 karakter</div>
+                    </div>
 
-            {{-- Attachments --}}
-            <div class="field">
-                <label class="field-label">Attachments (optional)</label>
-                <input
-                    type="file"
-                    name="attachments[]"
-                    class="field-input field-input-file"
-                    multiple
-                >
-                <small class="field-hint">
-                    Anda dapat memilih lebih dari satu file
-                </small>
-            </div>
+                    <div class="form-hint">
+                        Anda dapat memilih lebih dari satu file
+                    </div>
 
-            {{-- Action --}}
-            <div class="email-action">
-                <button type="submit" class="btn-primary">
-                    Kirim Email
-                </button>
+                    <button type="submit" class="send-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Kirim Email</span>
+                    </button>
+                </div>
             </div>
         </form>
+<<<<<<< HEAD
+=======
+
+        {{-- Bottom Row - Activity Log (Full Width) --}}
+        <div class="white-card activity-card">
+            <div class="activity-header">
+                <div class="section-title">Activity Log</div>
+                <div class="search-small">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <circle cx="11" cy="11" r="8" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 21L16.65 16.65" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <input type="text" placeholder="Cari..." class="search-input-small" id="searchInput">
+                </div>
+            </div>
+
+            <div class="activity-table">
+                <div class="activity-table-header">
+                    <div class="col-waktu">Detail Waktu</div>
+                    <div class="col-email">Email Penerima</div>
+                    <div class="col-subject">Subject</div>
+                    <div class="col-attachment">Lampiran</div>
+                    <div class="col-status">Status</div>
+                </div>
+                <div class="activity-table-body" id="activityLog">
+                    <div class="activity-empty">Belum ada aktivitas</div>
+                </div>
+            </div>
+        </div>
+>>>>>>> 31397a22dc0f3a7385201979cf9cb536b864f5b3
     </div>
 
+    {{-- Tips Section --}}
+    <div class="tips-section">
+        <div class="tips-icon">💡</div>
+        <div class="tips-content-wrapper">
+            <div class="tips-title">Tips</div>
+            <div class="tips-list">
+                <div class="tip-item">Pastikan email yang dimasukkan valid dan aktif.</div>
+                <div class="tip-item">Gunakan subject yang jelas dan menarik untuk meningkatkan open rate.</div>
+                <div class="tip-item">Personalisasi pesan menggunakan variabel untuk engagement lebih baik.</div>
+                <div class="tip-item">Hindari penggunaan kata-kata yang masuk spam filter.</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
+<<<<<<< HEAD
 /* RESET */
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',sans-serif}
 
@@ -255,3 +402,994 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endsection
+=======
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .email-blasting-container {
+        width: 100%;
+        min-height: 100vh;
+        padding: 30px;
+        background: #f5f7fa;
+    }
+
+    /* Header Section */
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .app-icon {
+        width: 50px;
+        height: 50px;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .app-info {
+        color: #1D1D41;
+    }
+
+    .app-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 2px;
+        background: linear-gradient(90deg,#4F46E5,#9333EA);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .app-subtitle {
+        font-size: 14px;
+        color: #6B7280;
+    }
+
+    .btn-back {
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #F3F4F6;
+        color: #4B5563;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+    .btn-back:hover {
+        background: #E5E7EB;
+    }
+
+    /* Success Alert */
+    .success-alert {
+        margin-bottom: 25px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: linear-gradient(90deg,#ECFEFF,#F0F9FF);
+        color: #0369A1;
+        font-size: 14px;
+    }
+
+    /* Stats Container */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1D1D41;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon.blue {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .stat-icon.green {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .stat-icon.red {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .stat-icon.yellow {
+        background: rgba(251, 191, 36, 0.1);
+        color: #fbbf24;
+    }
+
+    /* Main Grid */
+    .main-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    /* Top Row - Penerima and Kotak Pesan */
+    .top-row {
+        display: grid;
+        grid-template-columns: 1fr 1.8fr;
+        gap: 20px;
+    }
+
+    .white-card {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 20px 40px rgba(79,70,229,.08);
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1D1D41;
+        margin-bottom: 20px;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        color: #666;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .form-input {
+        width: 100%;
+        height: 48px;
+        border: 1px solid #E5E7EB;
+        border-radius: 14px;
+        padding: 0 16px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+        border-color: #4F46E5;
+    }
+
+    /* Recipient Card - Chip Input Styling */
+    .chip-input-section {
+        border: 1px solid #E5E7EB;
+        border-radius: 14px;
+        padding: 12px;
+        min-height: 60px;
+        background: #FFFFFF;
+        margin-bottom: 8px;
+    }
+
+    .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .chip {
+        background: linear-gradient(90deg, #4F46E5, #7C3AED);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .chip button {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+
+    .chip button:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .email-input-main {
+        width: 100%;
+        border: none;
+        padding: 8px 0;
+        font-size: 14px;
+        outline: none;
+        background: transparent;
+    }
+
+    .field-hint {
+        font-size: 12px;
+        color: #6B7280;
+        margin-top: 6px;
+        display: block;
+        margin-bottom: 15px;
+    }
+
+    .excel-import {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        background: #f8f9fa;
+        border: 1px dashed #d0d0d0;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: all 0.2s;
+    }
+
+    .excel-import:hover {
+        background: #e9ecef;
+        border-color: #4F46E5;
+    }
+
+    .excel-import span {
+        font-size: 14px;
+        color: #1D1D41;
+        font-weight: 500;
+    }
+
+    .recipient-list {
+        min-height: 150px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px;
+        background: #f8f9fa;
+    }
+
+    .recipient-status {
+        text-align: center;
+        color: #999;
+        padding: 40px 20px;
+        font-size: 14px;
+    }
+
+    .recipient-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .recipient-email {
+        font-size: 13px;
+        color: #1D1D41;
+        word-break: break-all;
+    }
+
+    .remove-recipient {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 20px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .remove-recipient:hover {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Message Card */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .message-textarea {
+        width: 100%;
+        height: 200px;
+        border: 1px solid #E5E7EB;
+        border-radius: 14px;
+        padding: 16px;
+        font-size: 14px;
+        resize: vertical;
+        outline: none;
+        font-family: inherit;
+        transition: border-color 0.2s;
+        line-height: 1.5;
+    }
+
+    .message-textarea:focus {
+        border-color: #4F46E5;
+    }
+
+    .variable-buttons {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .var-btn {
+        padding: 8px 16px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid #E5E7EB;
+    }
+
+    .var-btn:hover {
+        background: #4F46E5;
+        color: white;
+        border-color: #4F46E5;
+    }
+
+    .message-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .attachment-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .attach-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background: #f8f9fa;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 13px;
+        color: #666;
+    }
+
+    .attach-btn:hover {
+        background: #e9ecef;
+        border-color: #4F46E5;
+        color: #4F46E5;
+    }
+
+    .attach-btn svg {
+        stroke: currentColor;
+    }
+
+    .char-count {
+        font-size: 12px;
+        color: #999;
+    }
+
+    .form-hint {
+        font-size: 12px;
+        color: #6B7280;
+        margin-top: 6px;
+        margin-bottom: 20px;
+    }
+
+    .send-button {
+        width: 100%;
+        height: 48px;
+        background: linear-gradient(90deg,#4F46E5,#7C3AED);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .send-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(124,58,237,.35);
+    }
+
+    .send-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Activity Card */
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .search-small {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        width: 255px;
+    }
+
+    .search-input-small {
+        flex: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 13px;
+    }
+
+    .activity-table {
+        font-size: 12px;
+    }
+
+    .activity-table-header {
+        display: grid;
+        grid-template-columns: 120px 1fr 1fr 100px 100px;
+        gap: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 8px;
+        font-size: 12px;
+    }
+
+    .activity-table-body {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .activity-empty {
+        text-align: center;
+        color: #999;
+        padding: 60px 20px;
+        font-size: 14px;
+    }
+
+    .activity-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 1fr 100px 100px;
+        gap: 12px;
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .activity-row:hover {
+        background: #f8f9fa;
+    }
+
+    .waktu-date {
+        font-size: 11px;
+        color: #1D1D41;
+        margin-bottom: 2px;
+        font-weight: 500;
+    }
+
+    .waktu-time {
+        font-size: 10px;
+        color: #999;
+    }
+
+    .col-email {
+        font-size: 11px;
+        color: #666;
+        word-break: break-all;
+        line-height: 1.4;
+    }
+
+    .col-subject {
+        font-size: 12px;
+        color: #1D1D41;
+        font-weight: 500;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+
+    .col-attachment {
+        font-size: 11px;
+        color: #666;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-badge.success {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .status-badge.failed {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .status-badge.pending {
+        background: rgba(251, 191, 36, 0.1);
+        color: #fbbf24;
+    }
+
+    .status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Tips Section */
+    .tips-section {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 25px;
+        display: flex;
+        gap: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: calc(100% - 0px);
+    }
+
+    .tips-icon {
+        font-size: 28px;
+        flex-shrink: 0;
+    }
+
+    .tips-content-wrapper {
+        flex: 1;
+    }
+
+    .tips-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1D1D41;
+        margin-bottom: 10px;
+    }
+
+    .tips-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .tip-item {
+        font-size: 13px;
+        color: #666;
+        padding-left: 12px;
+        position: relative;
+    }
+
+    .tip-item::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: #667eea;
+        font-weight: bold;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+        .top-row {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .activity-table-header,
+        .activity-row {
+            grid-template-columns: 100px 1fr 1fr 90px 90px;
+            font-size: 11px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .email-blasting-container {
+            padding: 20px;
+        }
+
+        .header-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .btn-back {
+            align-self: flex-start;
+        }
+
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+
+        .app-title {
+            font-size: 22px;
+        }
+
+        .activity-table-header {
+            display: none;
+        }
+
+        .activity-row {
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .col-waktu::before { content: 'Detail Waktu: '; font-weight: 600; }
+        .col-email::before { content: 'Email Penerima: '; font-weight: 600; }
+        .col-subject::before { content: 'Subject: '; font-weight: 600; }
+        .col-attachment::before { content: 'Lampiran: '; font-weight: 600; }
+        .col-status::before { content: 'Status: '; font-weight: 600; }
+    }
+
+    /* Scrollbar Styling */
+    .recipient-list::-webkit-scrollbar,
+    .activity-table-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .recipient-list::-webkit-scrollbar-track,
+    .activity-table-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .recipient-list::-webkit-scrollbar-thumb,
+    .activity-table-body::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .recipient-list::-webkit-scrollbar-thumb:hover,
+    .activity-table-body::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Chip Input functionality from Code 1
+        const emailInput = document.getElementById('emailInput');
+        const chipList = document.getElementById('emailChips');
+        const targetsField = document.getElementById('targetsField');
+        let emails = [];
+
+        function syncTargets() {
+            targetsField.value = emails.join(',');
+        }
+
+        function addChip(email) {
+            if (emails.includes(email)) return;
+
+            emails.push(email);
+            syncTargets();
+
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.innerHTML = `${email} <button type="button">×</button>`;
+
+            chip.querySelector('button').onclick = () => {
+                emails = emails.filter(e => e !== email);
+                chip.remove();
+                syncTargets();
+            };
+
+            chipList.appendChild(chip);
+        }
+
+        if (emailInput) {
+            emailInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = emailInput.value.trim();
+                    if (value && value.includes('@')) {
+                        addChip(value);
+                        emailInput.value = '';
+                    }
+                }
+            });
+        }
+
+        // Character count functionality
+        const messageTextarea = document.querySelector('textarea[name="message"]');
+        const charCount = document.getElementById('charCount');
+
+        if (messageTextarea && charCount) {
+            function updateCharCount() {
+                const charLength = messageTextarea.value.length;
+                charCount.textContent = `${charLength} karakter`;
+            }
+
+            messageTextarea.addEventListener('input', updateCharCount);
+            updateCharCount();
+        }
+
+        // Variable buttons functionality
+        const varButtons = document.querySelectorAll('.var-btn');
+        
+        varButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const variable = this.textContent.trim();
+                const cursorPos = messageTextarea.selectionStart;
+                const textBefore = messageTextarea.value.substring(0, cursorPos);
+                const textAfter = messageTextarea.value.substring(cursorPos);
+                
+                messageTextarea.value = textBefore + ' {' + variable.replace('+', '').trim() + '} ' + textAfter;
+                messageTextarea.focus();
+                
+                const newPos = cursorPos + variable.length + 3;
+                messageTextarea.setSelectionRange(newPos, newPos);
+                
+                messageTextarea.dispatchEvent(new Event('input'));
+            });
+        });
+
+        // File attachment button
+        const attachBtn = document.querySelector('.attach-btn');
+        const fileAttachment = document.getElementById('fileAttachment');
+
+        if (attachBtn && fileAttachment) {
+            attachBtn.addEventListener('click', function() {
+                fileAttachment.click();
+            });
+
+            fileAttachment.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const fileNames = Array.from(e.target.files).map(file => file.name).join(', ');
+                    alert(`${e.target.files.length} file berhasil dilampirkan: ${fileNames}`);
+                }
+            });
+        }
+
+        // Excel import button
+        const excelImport = document.getElementById('excelImport');
+
+        if (excelImport) {
+            excelImport.addEventListener('click', function() {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.xlsx,.xls,.csv';
+                
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        const fileName = e.target.files[0].name;
+                        alert(`File "${fileName}" berhasil diimpor!`);
+                    }
+                });
+                
+                fileInput.click();
+            });
+        }
+
+        // Stats variables
+        const statTotal = document.getElementById('statTotal');
+        const statSent = document.getElementById('statSent');
+        const statFailed = document.getElementById('statFailed');
+        const statPending = document.getElementById('statPending');
+
+        // Activity log functionality
+        const activityLog = document.getElementById('activityLog');
+        const searchInput = document.getElementById('searchInput');
+        let activities = [];
+
+        // Update stats
+        function updateStats() {
+            const total = activities.length;
+            const sent = activities.filter(a => a.status === 'success').length;
+            const failed = activities.filter(a => a.status === 'failed').length;
+            const pending = activities.filter(a => a.status === 'pending').length;
+
+            if (statTotal) statTotal.textContent = total;
+            if (statSent) statSent.textContent = sent;
+            if (statFailed) statFailed.textContent = failed;
+            if (statPending) statPending.textContent = pending;
+        }
+
+        // Render activities
+        function renderActivities(filteredActivities = activities) {
+            activityLog.innerHTML = '';
+
+            if (filteredActivities.length === 0) {
+                const emptyElement = document.createElement('div');
+                emptyElement.className = 'activity-empty';
+                emptyElement.textContent = activities.length === 0 ? 'Belum ada aktivitas' : 'Tidak ada hasil pencarian';
+                activityLog.appendChild(emptyElement);
+                return;
+            }
+
+            filteredActivities.forEach(activity => {
+                const row = document.createElement('div');
+                row.className = 'activity-row';
+                
+                const statusClass = activity.status === 'success' ? 'success' : 
+                                  activity.status === 'failed' ? 'failed' : 'pending';
+                const statusText = activity.status === 'success' ? 'Terkirim' : 
+                                 activity.status === 'failed' ? 'Gagal' : 'Pending';
+                
+                row.innerHTML = `
+                    <div class="col-waktu">
+                        <div class="waktu-date">${activity.date}</div>
+                        <div class="waktu-time">${activity.time}</div>
+                    </div>
+                    <div class="col-email">${activity.email}</div>
+                    <div class="col-subject">${activity.subject}</div>
+                    <div class="col-attachment">${activity.attachments}</div>
+                    <div class="col-status">
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+                
+                activityLog.appendChild(row);
+            });
+        }
+
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const filtered = activities.filter(activity => {
+                    return activity.email.toLowerCase().includes(searchTerm) ||
+                           activity.subject.toLowerCase().includes(searchTerm);
+                });
+                renderActivities(filtered);
+            });
+        }
+
+        // Form submission
+        const emailForm = document.querySelector('.email-form');
+        
+        if (emailForm) {
+            emailForm.addEventListener('submit', function(e) {
+                if (emails.length === 0) {
+                    e.preventDefault();
+                    alert('Tambahkan setidaknya satu penerima email terlebih dahulu!');
+                    emailInput.focus();
+                    return;
+                }
+
+                // Add to activity log
+                const now = new Date();
+                const date = now.toLocaleDateString('id-ID', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                }).replace(/\//g, '/');
+                
+                const time = now.toLocaleTimeString('id-ID', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                });
+
+                const subject = document.querySelector('input[name="subject"]').value;
+                const attachments = document.querySelector('input[name="attachments[]"]');
+                const attachmentCount = attachments ? attachments.files.length : 0;
+
+                emails.forEach(email => {
+                    activities.unshift({
+                        date: date,
+                        time: time,
+                        email: email,
+                        subject: subject,
+                        attachments: attachmentCount > 0 ? `${attachmentCount} file` : 'Tidak ada',
+                        status: 'pending'
+                    });
+                });
+
+                renderActivities();
+                updateStats();
+            });
+        }
+
+        // Initial render
+        renderActivities();
+        updateStats();
+    });
+</script>
+@endsection
+>>>>>>> 31397a22dc0f3a7385201979cf9cb536b864f5b3
