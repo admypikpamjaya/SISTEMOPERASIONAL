@@ -14,19 +14,25 @@ class SendEmailBlastJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    protected string $email;
+    protected string $subject;
+    protected BlastPayload $payload;
+
     public function __construct(
-        protected string $target,
-        protected BlastPayload $payload
-    ) {}
+        string $email,
+        string $subject,
+        BlastPayload $payload
+    ) {
+        $this->email   = $email;
+        $this->subject = $subject;
+        $this->payload = $payload;
+    }
 
-    public function handle(
-        EmailBlastService $service
-    ): void {
-        $subject = $this->payload->meta['subject'] ?? '(No Subject)';
-
+    public function handle(EmailBlastService $service): void
+    {
         $service->send(
-            $this->target,
-            $subject,
+            $this->email,
+            $this->subject,
             $this->payload
         );
     }

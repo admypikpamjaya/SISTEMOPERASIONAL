@@ -48,7 +48,7 @@ class BlastController extends Controller
         $payload->setMeta('channel', 'WHATSAPP');
         $payload->setMeta('sent_by', Auth::id());
 
-        // HANDLE ATTACHMENT (PHASE 8.6)
+        // Attachment (Phase 8.6 – optional)
         if ($request->hasFile('attachments')) {
             $folder = 'blasts/' . Str::uuid();
 
@@ -64,14 +64,15 @@ class BlastController extends Controller
                 );
             }
         }
-     
 
         $targets = array_filter(
             array_map('trim', explode(',', $validated['targets']))
         );
 
         foreach ($targets as $target) {
-            dispatch(new SendWhatsappBlastJob($target, $payload));
+            dispatch(
+                new SendWhatsappBlastJob($target, $payload)
+            );
         }
 
         return back()->with('success', 'WhatsApp blast queued.');
@@ -88,9 +89,9 @@ class BlastController extends Controller
 
         $payload = new BlastPayload($validated['message']);
         $payload->setMeta('channel', 'EMAIL');
-        $payload->setMeta('subject', $validated['subject']);
         $payload->setMeta('sent_by', Auth::id());
 
+        // Attachment
         if ($request->hasFile('attachments')) {
             $folder = 'blasts/' . Str::uuid();
 
