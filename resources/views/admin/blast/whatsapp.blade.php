@@ -3,7 +3,6 @@
 @section('section_name', 'WhatsApp Blast')
 
 @section('content')
-<<<<<<< HEAD
 <form
     method="POST"
     action="{{ route('admin.blast.whatsapp.send') }}"
@@ -51,7 +50,6 @@
     </button>
 </form>
 @endsection
-=======
 <div class="whatsapp-blasting-container">
 
     {{-- Header dengan Info dan Stats --}}
@@ -1485,4 +1483,3 @@
     });
 </script>
 @endsection
->>>>>>> 0a211d1251df5995ca3b9abc4199f60042741a2f
