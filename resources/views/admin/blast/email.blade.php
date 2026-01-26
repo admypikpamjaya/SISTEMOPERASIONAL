@@ -1,4 +1,3 @@
-ganti kode ini ya, biar satu kode ama gua
 @extends('layouts.app')
 
 @section('title', 'Email Blast')
