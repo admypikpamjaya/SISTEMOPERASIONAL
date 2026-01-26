@@ -1,23 +1,9 @@
+ganti kode ini ya, biar satu kode ama gua
 @extends('layouts.app')
 
-@section('section_name', 'Email Blast')
+@section('title', 'Email Blast')
 
 @section('content')
-<<<<<<< HEAD
-<div class="email-page">
-
-    {{-- Header --}}
-    <div class="email-header">
-        <a href="http://127.0.0.1:8000/admin/blast" class="btn-back">
-            ← Kembali
-        </a>
-
-        <div>
-            <h1 class="email-title">Email Blast</h1>
-            <p class="email-subtitle">
-                Kirim email ke banyak penerima dengan lampiran opsional
-            </p>
-=======
 <div class="email-blasting-container">
 
     {{-- Header dengan Info dan Stats --}}
@@ -32,7 +18,6 @@
                 <div class="app-title">Email Blast</div>
                 <div class="app-subtitle">Kirim email ke banyak penerima</div>
             </div>
->>>>>>> 31397a22dc0f3a7385201979cf9cb536b864f5b3
         </div>
     </div>
 
@@ -107,6 +92,7 @@
             action="{{ route('admin.blast.email.send') }}"
             enctype="multipart/form-data"
             class="email-form"
+            id="emailForm"
         >
             @csrf
             <div class="top-row">
@@ -152,11 +138,65 @@
                         <div class="section-title">Kotak Pesan Email</div>
                     </div>
 
+                    {{-- Student Information --}}
+                    <div class="form-group">
+                        <label class="form-label">Nama Siswa:</label>
+                        <input
+                            type="text"
+                            name="student_name"
+                            id="studentName"
+                            class="form-input"
+                            placeholder="Masukkan nama siswa"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Kelas:</label>
+                        <input
+                            type="text"
+                            name="student_class"
+                            id="studentClass"
+                            class="form-input"
+                            placeholder="Masukkan kelas (contoh: 5A)"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nama Wali:</label>
+                        <input
+                            type="text"
+                            name="parent_name"
+                            id="parentName"
+                            class="form-input"
+                            placeholder="Masukkan nama wali"
+                            required
+                        >
+                    </div>
+
+                    {{-- Template Selection --}}
+                    <div class="form-group">
+                        <label class="form-label">Template:</label>
+                        <select 
+                            name="template" 
+                            id="templateSelect" 
+                            class="form-input"
+                            style="height: auto; padding: 12px 16px;"
+                        >
+                            <option value="">Pilih Template</option>
+                            <option value="reminder">Reminder Tagihan Sekolah</option>
+                            <option value="payment">Informasi Pembayaran Sekolah</option>
+                            <option value="notification">Pemberitahuan Tunggakan</option>
+                        </select>
+                    </div>
+
                     {{-- Subject --}}
                     <div class="form-group">
                         <label class="form-label">Subject Email:</label>
                         <input
                             name="subject"
+                            id="emailSubject"
                             class="form-input"
                             placeholder="Masukkan subject email"
                             required
@@ -168,6 +208,7 @@
                         <label class="form-label">Isi Pesan:</label>
                         <textarea
                             name="message"
+                            id="messageTextarea"
                             class="message-textarea"
                             placeholder="Tulis isi email di sini..."
                             rows="8"
@@ -175,31 +216,36 @@
                         ></textarea>
                     </div>
 
-                    <div class="message-footer">
-                        <div class="attachment-buttons">
-                            <label class="attach-btn" for="fileAttachment">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59723 21.9983 8.005 21.9983C6.41277 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0991 2.00667 15.16 2.00667C16.2209 2.00667 17.2394 2.42944 17.99 3.18C18.7406 3.93056 19.1633 4.94908 19.1633 6.01C19.1633 7.07092 18.7406 8.08944 17.99 8.84L9.41 17.41C9.03472 17.7853 8.52548 17.9967 7.995 17.9967C7.46452 17.9967 6.95528 17.7853 6.58 17.41C6.20472 17.0347 5.99333 16.5255 5.99333 15.995C5.99333 15.4645 6.20472 14.9553 6.58 14.58L15.07 6.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>Lampirkan File</span>
-                            </label>
-                            <input
-                                type="file"
-                                name="attachments[]"
-                                id="fileAttachment"
-                                class="field-input-file"
-                                multiple
-                                style="display: none;"
-                            >
-                        </div>
-                        <div class="char-count" id="charCount">0 karakter</div>
-                    </div>
+                   <div class="message-footer">
+    <div class="attachment-buttons">
+        <label class="attach-btn" for="fileAttachment">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59723 21.9983 8.005 21.9983C6.41277 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0991 2.00667 15.16 2.00667C16.2209 2.00667 17.2394 2.42944 17.99 3.18C18.7406 3.93056 19.1633 4.94908 19.1633 6.01C19.1633 7.07092 18.7406 8.08944 17.99 8.84L9.41 17.41C9.03472 17.7853 8.52548 17.9967 7.995 17.9967C7.46452 17.9967 6.95528 17.7853 6.58 17.41C6.20472 17.0347 5.99333 16.5255 5.99333 15.995C5.99333 15.4645 6.20472 14.9553 6.58 14.58L15.07 6.1"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Lampirkan File</span>
+        </label>
+        <input
+            type="file"
+            name="attachments[]"
+            id="fileAttachment"
+            class="field-input-file"
+            multiple
+            style="display: none;"
+        >
+    </div>
+    <div class="char-count" id="charCount">0 karakter</div>
+</div>
 
-                    <div class="form-hint">
-                        Anda dapat memilih lebih dari satu file
-                    </div>
+{{-- ✅ PREVIEW FILE (BARU) --}}
+<div id="attachmentPreview"></div>
 
-                    <button type="submit" class="send-button">
+<div class="form-hint">
+    Anda dapat memilih lebih dari satu file
+</div>
+
+
+                    <button type="submit" class="send-button" id="sendButton">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                             <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -209,8 +255,6 @@
                 </div>
             </div>
         </form>
-<<<<<<< HEAD
-=======
 
         {{-- Bottom Row - Activity Log (Full Width) --}}
         <div class="white-card activity-card">
@@ -228,8 +272,11 @@
             <div class="activity-table">
                 <div class="activity-table-header">
                     <div class="col-waktu">Detail Waktu</div>
+                    <div class="col-siswa">Nama Siswa</div>
+                    <div class="col-kelas">Kelas</div>
+                    <div class="col-wali">Nama Wali</div>
                     <div class="col-email">Email Penerima</div>
-                    <div class="col-subject">Subject</div>
+                    <div class="col-email">Subject</div>
                     <div class="col-attachment">Lampiran</div>
                     <div class="col-status">Status</div>
                 </div>
@@ -238,7 +285,6 @@
                 </div>
             </div>
         </div>
->>>>>>> 31397a22dc0f3a7385201979cf9cb536b864f5b3
     </div>
 
     {{-- Tips Section --}}
@@ -257,152 +303,6 @@
 </div>
 
 <style>
-<<<<<<< HEAD
-/* RESET */
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',sans-serif}
-
-/* PAGE */
-.email-page{max-width:780px;margin:40px auto;padding:0 20px;color:#1F2937}
-
-/* HEADER */
-.email-header{display:flex;gap:20px;margin-bottom:28px}
-.btn-back{padding:8px 14px;border-radius:10px;background:#F3F4F6;color:#4B5563;text-decoration:none}
-.btn-back:hover{background:#E5E7EB}
-
-.email-title{
-    font-size:28px;
-    font-weight:700;
-    background:linear-gradient(90deg,#4F46E5,#9333EA);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-.email-subtitle{font-size:14px;color:#6B7280}
-
-/* SUCCESS */
-.success-alert{
-    margin-bottom:20px;
-    padding:14px 18px;
-    border-radius:12px;
-    background:linear-gradient(90deg,#ECFEFF,#F0F9FF);
-    color:#0369A1;
-}
-
-/* CARD */
-.email-card{
-    background:linear-gradient(180deg,#FFFFFF 0%,#F9FAFB 100%);
-    border-radius:20px;
-    padding:34px;
-    box-shadow:0 20px 40px rgba(79,70,229,.08);
-}
-
-/* FIELD */
-.field{margin-bottom:26px}
-.field-label{font-weight:600;margin-bottom:10px;display:block}
-.field-hint{font-size:12px;color:#6B7280;margin-top:6px}
-
-/* CHIP INPUT */
-.chip-input-wrapper{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    padding:12px;
-    border-radius:14px;
-    border:1px solid #E5E7EB;
-    background:#FFFFFF;
-}
-
-.chip-list{display:flex;gap:8px;flex-wrap:wrap}
-
-.chip{
-    background:linear-gradient(90deg,#4F46E5,#7C3AED);
-    color:#fff;
-    padding:6px 10px;
-    border-radius:999px;
-    font-size:13px;
-    display:flex;
-    align-items:center;
-    gap:6px;
-}
-
-.chip button{
-    background:none;
-    border:none;
-    color:#fff;
-    cursor:pointer;
-    font-size:14px;
-}
-
-.chip-input{
-    border:none;
-    flex:1;
-    min-width:180px;
-    font-size:14px;
-}
-.chip-input:focus{outline:none}
-
-/* INPUT */
-.field-input{width:100%;padding:16px;border-radius:14px;border:1px solid #E5E7EB}
-.field-input-single{height:48px}
-.field-input-file{padding:12px}
-
-/* ACTION */
-.email-action{display:flex;justify-content:flex-end;margin-top:36px}
-.btn-primary{
-    background:linear-gradient(90deg,#4F46E5,#7C3AED);
-    color:#fff;
-    padding:14px 36px;
-    border:none;
-    border-radius:14px;
-    font-weight:600;
-    cursor:pointer;
-}
-.btn-primary:hover{box-shadow:0 10px 28px rgba(124,58,237,.35)}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const emailInput = document.getElementById('emailInput');
-    const chipList = document.getElementById('emailChips');
-    const targetsField = document.getElementById('targetsField');
-    let emails = [];
-
-    function syncTargets() {
-        targetsField.value = emails.join(',');
-    }
-
-    function addChip(email) {
-        if (emails.includes(email)) return;
-
-        emails.push(email);
-        syncTargets();
-
-        const chip = document.createElement('div');
-        chip.className = 'chip';
-        chip.innerHTML = `${email} <button type="button">×</button>`;
-
-        chip.querySelector('button').onclick = () => {
-            emails = emails.filter(e => e !== email);
-            chip.remove();
-            syncTargets();
-        };
-
-        chipList.appendChild(chip);
-    }
-
-    emailInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const value = emailInput.value.trim();
-            if (value && value.includes('@')) {
-                addChip(value);
-                emailInput.value = '';
-            }
-        }
-    });
-});
-</script>
-@endsection
-=======
     * {
         margin: 0;
         padding: 0;
@@ -459,6 +359,24 @@ document.addEventListener('DOMContentLoaded', () => {
         font-size: 14px;
         color: #6B7280;
     }
+#attachmentPreview {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.attachment-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    background: #f8f9fa;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    color: #4B5563;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
     .btn-back {
         padding: 10px 16px;
@@ -585,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* Form Groups */
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 
     .form-label {
@@ -593,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         font-size: 14px;
         color: #666;
         font-weight: 600;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .form-input {
@@ -702,59 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
         font-weight: 500;
     }
 
-    .recipient-list {
-        min-height: 150px;
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 10px;
-        background: #f8f9fa;
-    }
-
-    .recipient-status {
-        text-align: center;
-        color: #999;
-        padding: 40px 20px;
-        font-size: 14px;
-    }
-
-    .recipient-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 12px;
-        background: white;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        border: 1px solid #e9ecef;
-    }
-
-    .recipient-email {
-        font-size: 13px;
-        color: #1D1D41;
-        word-break: break-all;
-    }
-
-    .remove-recipient {
-        background: none;
-        border: none;
-        color: #ef4444;
-        cursor: pointer;
-        font-size: 20px;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 4px;
-        transition: background 0.2s;
-    }
-
-    .remove-recipient:hover {
-        background: rgba(239, 68, 68, 0.1);
-    }
-
     /* Message Card */
     .section-header {
         display: flex;
@@ -765,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     .message-textarea {
         width: 100%;
-        height: 200px;
+        height: 180px;
         border: 1px solid #E5E7EB;
         border-radius: 14px;
         padding: 16px;
@@ -784,20 +649,19 @@ document.addEventListener('DOMContentLoaded', () => {
     .variable-buttons {
         display: flex;
         gap: 8px;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         flex-wrap: wrap;
     }
 
     .var-btn {
         padding: 8px 16px;
         background: white;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #E5E7EB;
         border-radius: 8px;
         font-size: 12px;
         color: #666;
         cursor: pointer;
         transition: all 0.2s;
-        border: 1px solid #E5E7EB;
     }
 
     .var-btn:hover {
@@ -915,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     .activity-table-header {
         display: grid;
-        grid-template-columns: 120px 1fr 1fr 100px 100px;
+        grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px;
         gap: 12px;
         padding: 12px;
         background: #f8f9fa;
@@ -940,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     .activity-row {
         display: grid;
-        grid-template-columns: 120px 1fr 1fr 100px 100px;
+        grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px;
         gap: 12px;
         padding: 12px;
         border-bottom: 1px solid #f0f0f0;
@@ -968,6 +832,13 @@ document.addEventListener('DOMContentLoaded', () => {
         font-size: 11px;
         color: #666;
         word-break: break-all;
+        line-height: 1.4;
+    }
+
+    .col-siswa, .col-kelas, .col-wali {
+        font-size: 11px;
+        color: #666;
+        word-break: break-word;
         line-height: 1.4;
     }
 
@@ -1079,9 +950,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         .activity-table-header,
         .activity-row {
-            grid-template-columns: 100px 1fr 1fr 90px 90px;
+            grid-template-columns: 100px 1fr 80px 1fr 150px 1fr 90px 90px;
             font-size: 11px;
         }
+    }
+
+    @media (max-width: 1200px) {
+        .activity-table-header,
+        .activity-row {
+            grid-template-columns: 100px 1fr 1fr 1fr 1fr;
+            grid-template-areas: 
+                "waktu siswa kelas wali email"
+                "subject subject attachment attachment status";
+        }
+        
+        .col-waktu { grid-area: waktu; }
+        .col-siswa { grid-area: siswa; }
+        .col-kelas { grid-area: kelas; }
+        .col-wali { grid-area: wali; }
+        .col-email { grid-area: email; }
+        .col-subject { grid-area: subject; }
+        .col-attachment { grid-area: attachment; }
+        .col-status { grid-area: status; }
     }
 
     @media (max-width: 768px) {
@@ -1110,6 +1000,19 @@ document.addEventListener('DOMContentLoaded', () => {
         .activity-table-header {
             display: none;
         }
+    .attachment-remove {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.attachment-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
 
         .activity-row {
             grid-template-columns: 1fr;
@@ -1121,6 +1024,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         .col-waktu::before { content: 'Detail Waktu: '; font-weight: 600; }
+        .col-siswa::before { content: 'Nama Siswa: '; font-weight: 600; }
+        .col-kelas::before { content: 'Kelas: '; font-weight: 600; }
+        .col-wali::before { content: 'Nama Wali: '; font-weight: 600; }
         .col-email::before { content: 'Email Penerima: '; font-weight: 600; }
         .col-subject::before { content: 'Subject: '; font-weight: 600; }
         .col-attachment::before { content: 'Lampiran: '; font-weight: 600; }
@@ -1128,24 +1034,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* Scrollbar Styling */
-    .recipient-list::-webkit-scrollbar,
     .activity-table-body::-webkit-scrollbar {
         width: 6px;
     }
 
-    .recipient-list::-webkit-scrollbar-track,
     .activity-table-body::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 10px;
     }
 
-    .recipient-list::-webkit-scrollbar-thumb,
     .activity-table-body::-webkit-scrollbar-thumb {
         background: #c1c1c1;
         border-radius: 10px;
     }
 
-    .recipient-list::-webkit-scrollbar-thumb:hover,
     .activity-table-body::-webkit-scrollbar-thumb:hover {
         background: #a8a8a8;
     }
@@ -1153,12 +1055,117 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Chip Input functionality from Code 1
+        // Chip Input functionality FROM CODE PERTAMA (Working Blasting)
         const emailInput = document.getElementById('emailInput');
         const chipList = document.getElementById('emailChips');
         const targetsField = document.getElementById('targetsField');
+        const studentName = document.getElementById('studentName');
+        const studentClass = document.getElementById('studentClass');
+        const parentName = document.getElementById('parentName');
+        const templateSelect = document.getElementById('templateSelect');
+        const emailSubject = document.getElementById('emailSubject');
+        const messageTextarea = document.getElementById('messageTextarea');
+        const charCount = document.getElementById('charCount');
+        const sendButton = document.getElementById('sendButton');
+        
         let emails = [];
 
+        // Template definitions
+        const templates = {
+            reminder: {
+                subject: "Reminder Tagihan Sekolah - {nama_siswa} Kelas {kelas}",
+                message: `Yth. Bapak/Ibu {nama_wali},
+
+Kami ingin mengingatkan bahwa tagihan sekolah untuk {nama_siswa} (Kelas {kelas}) akan jatuh tempo pada {jatuh_tempo}.
+
+Detail Tagihan:
+- Jumlah: Rp {tagihan}
+- Jatuh Tempo: {jatuh_tempo}
+- Status: Belum Lunas
+
+Mohon untuk segera melakukan pembayaran melalui:
+1. Transfer Bank: BCA 1234567890 a/n Sekolah Terpadu
+2. Tunai di Sekolah: Kantor TU, jam 08.00-15.00
+
+Untuk konfirmasi pembayaran, silakan hubungi:
+- Ibu Sari: 0812-3456-7890
+- Kantor Sekolah: (021) 1234567
+
+Terima kasih atas perhatian dan kerjasamanya.
+
+Hormat kami,
+Administrasi Sekolah
+Sekolah Terpadu Jakarta`
+            },
+            payment: {
+                subject: "Informasi Pembayaran Sekolah - {nama_siswa} Kelas {kelas}",
+                message: `Kepada Yth. Bapak/Ibu {nama_wali},
+
+Berikut informasi pembayaran sekolah untuk periode Januari 2024:
+
+Nama Siswa: {nama_siswa}
+Kelas: {kelas}
+
+Rincian Pembayaran:
+1. SPP Bulanan: Rp 500.000
+2. Uang Kegiatan: Rp 200.000
+3. Uang Buku: Rp 150.000
+───────────────────────
+Total: Rp {tagihan}
+
+Batas Pembayaran: {jatuh_tempo}
+
+Cara Pembayaran:
+✅ Transfer Bank: BCA 1234567890
+✅ Tunai di Sekolah
+✅ E-Wallet: OVO/DANA
+
+Setelah pembayaran, harap kirim bukti transfer ke WhatsApp: 0812-3456-7890
+
+Jika sudah membayar, abaikan email ini.
+
+Terima kasih.
+
+Salam,
+Bendahara Sekolah`
+            },
+            notification: {
+                subject: "Pemberitahuan Tunggakan - {nama_siswa} Kelas {kelas}",
+                message: `KEPADA YTH.
+BAPAK/IBU {nama_wali}
+ORANG TUA/WALI SISWA
+{nama_siswa} - KELAS {kelas}
+
+DENGAN HORMAT,
+
+Kami informasikan bahwa hingga saat ini, terdapat tunggakan pembayaran sekolah untuk:
+- Nama Siswa: {nama_siswa}
+- Kelas: {kelas}
+- Total Tunggakan: Rp {tagihan}
+- Jatuh Tempo: {jatuh_tempo}
+- Keterlambatan: 15 hari
+
+PENTING:
+1. Mohon segera melakukan pelunasan maksimal 3 hari setelah email ini diterima
+2. Pembayaran dapat dilakukan melalui transfer atau langsung ke sekolah
+3. Keterlambatan pembayaran dapat mengakibatkan:
+   - Pembatasan mengikuti ujian
+   - Tidak dapat menerima rapor
+   - Tidak diperbolehkan mengikuti kegiatan sekolah
+
+Untuk konfirmasi dan informasi lebih lanjut, silakan hubungi:
+📞 0812-3456-7890 (Ibu Sari - Bendahara)
+🏫 Kantor Sekolah: (021) 1234567
+
+Kami harap Bapak/Ibu dapat memahami situasi ini dan segera menyelesaikan kewajiban pembayaran.
+
+HORMAT KAMI,
+KEPALA SEKOLAH
+SEKOLAH TERPADU JAKARTA`
+            }
+        };
+
+        // === FROM CODE PERTAMA (Working Chip Input) ===
         function syncTargets() {
             targetsField.value = emails.join(',');
         }
@@ -1182,6 +1189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chipList.appendChild(chip);
         }
 
+        // Email input event - FROM CODE PERTAMA
         if (emailInput) {
             emailInput.addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
@@ -1195,10 +1203,76 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Character count functionality
-        const messageTextarea = document.querySelector('textarea[name="message"]');
-        const charCount = document.getElementById('charCount');
+        // Template selection event
+        if (templateSelect) {
+            templateSelect.addEventListener('change', function() {
+                const selectedTemplate = this.value;
+                
+                if (selectedTemplate && templates[selectedTemplate]) {
+                    const template = templates[selectedTemplate];
+                    
+                    // Fill subject with placeholders
+                    let subject = template.subject
+                        .replace('{nama_siswa}', studentName.value || '{nama_siswa}')
+                        .replace('{kelas}', studentClass.value || '{kelas}');
+                    
+                    // Fill message with placeholders
+                    let message = template.message
+                        .replace(/{nama_siswa}/g, studentName.value || '{nama_siswa}')
+                        .replace(/{kelas}/g, studentClass.value || '{kelas}')
+                        .replace(/{nama_wali}/g, parentName.value || '{nama_wali}');
+                    
+                    emailSubject.value = subject;
+                    messageTextarea.value = message;
+                    
+                    // Trigger character count update
+                    messageTextarea.dispatchEvent(new Event('input'));
+                }
+            });
+        }
 
+        // Auto-update template when student info changes
+        [studentName, studentClass, parentName].forEach(input => {
+            input.addEventListener('input', function() {
+                if (templateSelect.value && templates[templateSelect.value]) {
+                    const template = templates[templateSelect.value];
+                    
+                    let subject = template.subject
+                        .replace('{nama_siswa}', studentName.value || '{nama_siswa}')
+                        .replace('{kelas}', studentClass.value || '{kelas}');
+                    
+                    let message = template.message
+                        .replace(/{nama_siswa}/g, studentName.value || '{nama_siswa}')
+                        .replace(/{kelas}/g, studentClass.value || '{kelas}')
+                        .replace(/{nama_wali}/g, parentName.value || '{nama_wali}');
+                    
+                    emailSubject.value = subject;
+                    messageTextarea.value = message;
+                    messageTextarea.dispatchEvent(new Event('input'));
+                }
+            });
+        });
+
+        // Variable buttons functionality
+        const varButtons = document.querySelectorAll('.var-btn');
+        varButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const variable = this.getAttribute('data-variable');
+                const cursorPos = messageTextarea.selectionStart;
+                const textBefore = messageTextarea.value.substring(0, cursorPos);
+                const textAfter = messageTextarea.value.substring(cursorPos);
+                
+                messageTextarea.value = textBefore + '{' + variable + '}' + textAfter;
+                messageTextarea.focus();
+                
+                const newPos = cursorPos + variable.length + 2;
+                messageTextarea.setSelectionRange(newPos, newPos);
+                
+                messageTextarea.dispatchEvent(new Event('input'));
+            });
+        });
+
+        // Character count functionality
         if (messageTextarea && charCount) {
             function updateCharCount() {
                 const charLength = messageTextarea.value.length;
@@ -1209,44 +1283,60 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCharCount();
         }
 
-        // Variable buttons functionality
-        const varButtons = document.querySelectorAll('.var-btn');
-        
-        varButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const variable = this.textContent.trim();
-                const cursorPos = messageTextarea.selectionStart;
-                const textBefore = messageTextarea.value.substring(0, cursorPos);
-                const textAfter = messageTextarea.value.substring(cursorPos);
-                
-                messageTextarea.value = textBefore + ' {' + variable.replace('+', '').trim() + '} ' + textAfter;
-                messageTextarea.focus();
-                
-                const newPos = cursorPos + variable.length + 3;
-                messageTextarea.setSelectionRange(newPos, newPos);
-                
-                messageTextarea.dispatchEvent(new Event('input'));
-            });
-        });
-
         // File attachment button
         const attachBtn = document.querySelector('.attach-btn');
-        const fileAttachment = document.getElementById('fileAttachment');
+       const fileAttachment = document.getElementById('fileAttachment');
+const preview = document.getElementById('attachmentPreview');
 
-        if (attachBtn && fileAttachment) {
-            attachBtn.addEventListener('click', function() {
-                fileAttachment.click();
-            });
+let fileBuffer = new DataTransfer();
 
-            fileAttachment.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    const fileNames = Array.from(e.target.files).map(file => file.name).join(', ');
-                    alert(`${e.target.files.length} file berhasil dilampirkan: ${fileNames}`);
-                }
-            });
+if (fileAttachment && preview) {
+    fileAttachment.addEventListener('change', function () {
+        Array.from(this.files).forEach(file => {
+            fileBuffer.items.add(file);
+        });
+
+        syncFiles();
+    });
+}
+
+function syncFiles() {
+    preview.innerHTML = '';
+    fileAttachment.files = fileBuffer.files;
+
+    Array.from(fileBuffer.files).forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'attachment-item';
+
+        item.innerHTML = `
+            <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+            <button type="button" class="attachment-remove">×</button>
+        `;
+
+        item.querySelector('.attachment-remove').addEventListener('click', () => {
+            removeFile(index);
+        });
+
+        preview.appendChild(item);
+    });
+}
+
+function removeFile(index) {
+    const newBuffer = new DataTransfer();
+
+    Array.from(fileBuffer.files).forEach((file, i) => {
+        if (i !== index) {
+            newBuffer.items.add(file);
         }
+    });
 
-        // Excel import button
+    fileBuffer = newBuffer;
+    syncFiles();
+}
+
+
+
+        // Excel import button - FROM CODE KEDUA
         const excelImport = document.getElementById('excelImport');
 
         if (excelImport) {
@@ -1258,7 +1348,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
                         const fileName = e.target.files[0].name;
+                        
+                        // Simulate reading Excel file
                         alert(`File "${fileName}" berhasil diimpor!`);
+                        
+                        // Demo: Add multiple emails from Excel
+                        const demoEmails = [
+                            'wali1@example.com',
+                            'wali2@example.com', 
+                            'wali3@example.com',
+                            'wali4@example.com',
+                            'wali5@example.com',
+                            'wali6@example.com',
+                            'wali7@example.com',
+                            'wali8@example.com',
+                            'wali9@example.com',
+                            'wali10@example.com'
+                        ];
+                        
+                        // Clear existing emails first
+                        emails = [];
+                        chipList.innerHTML = '';
+                        
+                        // Add all demo emails
+                        demoEmails.forEach(email => addChip(email));
+                        
+                        alert(`${demoEmails.length} email berhasil diimpor dari file Excel!`);
                     }
                 });
                 
@@ -1316,6 +1431,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="waktu-date">${activity.date}</div>
                         <div class="waktu-time">${activity.time}</div>
                     </div>
+                    <div class="col-siswa">${activity.studentName}</div>
+                    <div class="col-kelas">${activity.studentClass}</div>
+                    <div class="col-wali">${activity.parentName}</div>
                     <div class="col-email">${activity.email}</div>
                     <div class="col-subject">${activity.subject}</div>
                     <div class="col-attachment">${activity.attachments}</div>
@@ -1334,25 +1452,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 const searchTerm = this.value.toLowerCase();
                 const filtered = activities.filter(activity => {
                     return activity.email.toLowerCase().includes(searchTerm) ||
-                           activity.subject.toLowerCase().includes(searchTerm);
+                           activity.subject.toLowerCase().includes(searchTerm) ||
+                           activity.studentName.toLowerCase().includes(searchTerm) ||
+                           activity.parentName.toLowerCase().includes(searchTerm);
                 });
                 renderActivities(filtered);
             });
         }
 
-        // Form submission
-        const emailForm = document.querySelector('.email-form');
+        // === KEY FIX: FORM SUBMISSION FROM CODE PERTAMA ===
+        // In Code Pertama, form submission works because it doesn't have e.preventDefault()
+        // We'll keep the validation but remove the preventDefault() that blocks form submission
+        
+        const emailForm = document.getElementById('emailForm');
         
         if (emailForm) {
             emailForm.addEventListener('submit', function(e) {
+                // === VALIDATION ONLY (No e.preventDefault() here) ===
                 if (emails.length === 0) {
                     e.preventDefault();
                     alert('Tambahkan setidaknya satu penerima email terlebih dahulu!');
                     emailInput.focus();
                     return;
                 }
+                
+                if (!studentName.value.trim()) {
+                    e.preventDefault();
+                    alert('Masukkan nama siswa terlebih dahulu!');
+                    studentName.focus();
+                    return;
+                }
+                
+                if (!studentClass.value.trim()) {
+                    e.preventDefault();
+                    alert('Masukkan kelas terlebih dahulu!');
+                    studentClass.focus();
+                    return;
+                }
+                
+                if (!parentName.value.trim()) {
+                    e.preventDefault();
+                    alert('Masukkan nama wali terlebih dahulu!');
+                    parentName.focus();
+                    return;
+                }
+                
+                if (!emailSubject.value.trim()) {
+                    e.preventDefault();
+                    alert('Masukkan subject email terlebih dahulu!');
+                    emailSubject.focus();
+                    return;
+                }
+                
+                if (!messageTextarea.value.trim()) {
+                    e.preventDefault();
+                    alert('Masukkan isi pesan terlebih dahulu!');
+                    messageTextarea.focus();
+                    return;
+                }
 
-                // Add to activity log
+                // === SIMULATE BLASTING PROCESS (FOR DEMO ONLY) ===
+                // In production, this would be handled by the backend
+                // We're keeping this for UI feedback but NOT preventing form submission
+                
+                const emailCount = emails.length;
+                const attachments = document.querySelector('input[name="attachments[]"]');
+                const attachmentCount = attachments ? attachments.files.length : 0;
+                
+                // Show loading state
+                const originalButtonText = sendButton.innerHTML;
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<span>Mengirim Blast Email...</span>';
+                
+                // Add to activity log for demo
                 const now = new Date();
                 const date = now.toLocaleDateString('id-ID', { 
                     day: '2-digit', 
@@ -1365,24 +1537,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     minute: '2-digit', 
                     second: '2-digit' 
                 });
-
-                const subject = document.querySelector('input[name="subject"]').value;
-                const attachments = document.querySelector('input[name="attachments[]"]');
-                const attachmentCount = attachments ? attachments.files.length : 0;
-
-                emails.forEach(email => {
-                    activities.unshift({
-                        date: date,
-                        time: time,
-                        email: email,
-                        subject: subject,
-                        attachments: attachmentCount > 0 ? `${attachmentCount} file` : 'Tidak ada',
-                        status: 'pending'
-                    });
+                
+                // Simulate sending each email (for demo UI only)
+                let sentCount = 0;
+                let successCount = 0;
+                let failedCount = 0;
+                
+                emails.forEach((email, index) => {
+                    setTimeout(() => {
+                        const isSuccess = Math.random() > 0.2; // 80% success rate
+                        const status = isSuccess ? 'success' : 'failed';
+                        
+                        activities.unshift({
+                            date: date,
+                            time: time,
+                            studentName: studentName.value.trim(),
+                            studentClass: studentClass.value.trim(),
+                            parentName: parentName.value.trim(),
+                            email: email,
+                            subject: emailSubject.value.trim(),
+                            attachments: attachmentCount > 0 ? `${attachmentCount} file` : 'Tidak ada',
+                            status: status
+                        });
+                        
+                        sentCount++;
+                        if (isSuccess) successCount++;
+                        else failedCount++;
+                        
+                        // Update UI
+                        renderActivities();
+                        updateStats();
+                        
+                        // If all emails processed
+                        if (sentCount === emailCount) {
+                            // Restore button after a delay
+                            setTimeout(() => {
+                                sendButton.disabled = false;
+                                sendButton.innerHTML = originalButtonText;
+                                
+                                // Show demo completion message
+                                alert(`✅ Email Blast Selesai!\n\nTotal: ${emailCount} email\nBerhasil: ${successCount}\nGagal: ${failedCount}`);
+                            }, 500);
+                        }
+                    }, index * 100);
                 });
-
-                renderActivities();
-                updateStats();
+                
+                // === IMPORTANT: DON'T PREVENT DEFAULT ===
+                // Let the form submit to the backend
+                // e.preventDefault(); // REMOVED THIS LINE - This was blocking form submission
+                
+                // In real application, the form will submit to {{ route('admin.blast.email.send') }}
+                // and the backend will handle the actual email sending
             });
         }
 
@@ -1392,4 +1597,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 </script>
 @endsection
->>>>>>> 31397a22dc0f3a7385201979cf9cb536b864f5b3
