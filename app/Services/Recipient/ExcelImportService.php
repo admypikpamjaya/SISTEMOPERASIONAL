@@ -2,55 +2,49 @@
 
 namespace App\Services\Recipient;
 
-use App\DataTransferObjects\Recipient\RecipientRowDTO;
 use App\DataTransferObjects\Recipient\RecipientImportResultDTO;
+use App\DataTransferObjects\Recipient\RecipientRowDTO;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Collection;
 
 class ExcelImportService
 {
     public function __construct(
-        protected RecipientDetectionService $detector,
-        protected RecipientValidationService $validator,
-        protected RecipientDeduplicationService $deduper
+        protected RecipientNormalizer $normalizer
     ) {}
 
     public function import(string $path): RecipientImportResultDTO
     {
-        $sheet = IOFactory::load($path)->getActiveSheet()->toArray();
+        if (!file_exists($path)) {
+            throw new \Exception("File tidak ditemukan: {$path}");
+        }
 
-        $headers = array_shift($sheet);
-        $map = $this->detector->detect($headers);
+        $spreadsheet = IOFactory::load($path);
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray();
 
         $result = new RecipientImportResultDTO();
 
-        foreach ($sheet as $row) {
-            $dto = new RecipientRowDTO(
-                email: $map->emailCol !== null ? trim($row[$map->emailCol] ?? '') : null,
-                phone: $map->phoneCol !== null ? trim($row[$map->phoneCol] ?? '') : null,
-                namaWali: $map->namaWaliCol !== null ? trim($row[$map->namaWaliCol] ?? '') : null,
-                namaSiswa: $map->namaSiswaCol !== null ? trim($row[$map->namaSiswaCol] ?? '') : null,
-                kelas: $map->kelasCol !== null ? trim($row[$map->kelasCol] ?? '') : null,
-                isValid: false
-            );
+        foreach ($rows as $index => $row) {
+            // skip header
+            if ($index === 0) {
+                continue;
+            }
 
-            $dto = $this->validator->validate($dto);
+            // mapping fleksibel (phase 9.3)
+            $raw = [
+                'wa'    => $row[1] ?? null,
+                'email' => $row[2] ?? null,
+            ];
 
-            if (!$dto->isValid) {
+            // 🔥 NORMALIZE DI SINI (INI YANG HILANG)
+            $dto = $this->normalizer->normalize($raw);
+
+            if ($dto->isValid) {
+                $result->valid[] = $dto;
+            } else {
                 $result->invalid[] = $dto;
-                continue;
             }
-
-            if ($this->deduper->isDuplicate($dto)) {
-                $result->duplicate[] = $dto;
-                continue;
-            }
-
-            if (!$dto->email && !$dto->phone) {
-                $result->missing[] = $dto;
-                continue;
-            }
-
-            $result->valid[] = $dto;
         }
 
         return $result;

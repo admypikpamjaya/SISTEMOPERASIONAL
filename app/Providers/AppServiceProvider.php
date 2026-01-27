@@ -10,25 +10,37 @@ use App\Providers\Messaging\FonnteWhatsappProvider;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
+
 use App\Services\AccessControl\PermissionService;
 use App\Enums\Portal\PortalPermission;
+use App\Services\Recipient\RecipientNormalizer;
 
 class AppServiceProvider extends ServiceProvider
 {
-   public function register(): void
-{
-    // EMAIL
-    $this->app->bind(
-        EmailProviderInterface::class,
-        SmtpEmailProvider::class
-    );
+    public function register(): void
+    {
+        // ======================
+        // EMAIL PROVIDER
+        // ======================
+        $this->app->bind(
+            EmailProviderInterface::class,
+            SmtpEmailProvider::class
+        );
 
-    // WHATSAPP
-    $this->app->bind(
-        WhatsappProviderInterface::class,
-        FonnteWhatsappProvider::class
-    );
-}
+        // ======================
+        // WHATSAPP PROVIDER
+        // ======================
+        $this->app->bind(
+            WhatsappProviderInterface::class,
+            FonnteWhatsappProvider::class
+        );
+
+        // ======================
+        // RECIPIENT NORMALIZER
+        // (INI YANG HILANG KEMARIN)
+        // ======================
+        $this->app->singleton(RecipientNormalizer::class);
+    }
 
     public function boot(): void
     {
