@@ -51,13 +51,13 @@ return [
                 'route' => 'admin.blast.email',
             ],
             [
-                'label' => 'Penerima Blasting',
+                'label' => 'Student Data',
                 'icon'  => 'fas fa-users',
                 'route' => 'admin.blast.recipients.index',
                 'module_name' => 'admin_blast',
             ],
              [
-                'label' => 'Announcements',
+                'label' => 'Announcement',
                 'icon'  => 'fas fa-bullhorn',
                 'route' => 'admin.announcements.index',
     ],
