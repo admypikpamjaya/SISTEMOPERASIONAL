@@ -79,6 +79,7 @@ Route::prefix('asset-management')
         Route::post('/file', 'storeWithFile')->name('store-with-file');
 
         Route::put('/', 'update')->name('update');
+        Route::delete('/bulk', 'bulkDelete')->name('bulk-delete');
         Route::delete('/{id}', 'delete')->name('delete');
     });
 
@@ -242,6 +243,16 @@ Route::prefix('blast')
                     ->middleware('check_access:blast_recipient.create')
                     ->name('store');
 
+                // ✅ EDIT
+                Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])
+                    ->middleware('check_access:blast_recipient.update')
+                    ->name('edit');
+
+                // ✅ UPDATE
+                Route::put('/{id}', [BlastRecipientController::class, 'update'])
+                    ->middleware('check_access:blast_recipient.update')
+                    ->name('update');
+
                 Route::post('/import', [BlastRecipientController::class, 'import'])
                     ->middleware('check_access:blast_recipient.import')
                     ->name('import');
@@ -251,6 +262,7 @@ Route::prefix('blast')
                     ->name('destroy');
             });
     });
+
 
 
     });

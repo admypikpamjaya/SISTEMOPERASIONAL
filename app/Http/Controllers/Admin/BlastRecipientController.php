@@ -39,14 +39,12 @@ class BlastRecipientController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        // minimal salah satu
         if (empty($data['email_wali']) && empty($data['wa_wali'])) {
             return back()->withErrors([
                 'email_wali' => 'Email atau WhatsApp wajib diisi'
             ])->withInput();
         }
 
-        // 🔥 NORMALIZE
         $dto = $normalizer->normalize([
             'nama_siswa' => $data['nama_siswa'],
             'kelas' => $data['kelas'],
@@ -56,13 +54,12 @@ class BlastRecipientController extends Controller
             'catatan' => $data['catatan'] ?? null,
         ]);
 
-        // SIMPAN (VALID / INVALID)
         BlastRecipient::create([
             'nama_siswa' => $dto->namaSiswa,
             'kelas' => $dto->kelas,
             'nama_wali' => $dto->namaWali,
             'email_wali' => $dto->email,
-            'wa_wali' => $dto->phone, // ✅ SUDAH 62
+            'wa_wali' => $dto->phone,
             'catatan' => $dto->catatan,
             'is_valid' => empty($dto->errors),
             'validation_error' => empty($dto->errors)
@@ -73,6 +70,68 @@ class BlastRecipientController extends Controller
         return redirect()
             ->route('admin.blast.recipients.index')
             ->with('success', 'Penerima berhasil ditambahkan');
+    }
+
+    /**
+     * FORM EDIT
+     */
+    public function edit(string $id)
+    {
+        $recipient = BlastRecipient::findOrFail($id);
+
+        return view('admin.blast.recipients.edit', compact('recipient'));
+    }
+
+    /**
+     * UPDATE DATA (DENGAN NORMALIZATION)
+     */
+    public function update(
+        Request $request,
+        string $id,
+        RecipientNormalizer $normalizer
+    ) {
+        $recipient = BlastRecipient::findOrFail($id);
+
+        $data = $request->validate([
+            'nama_siswa' => 'required|string',
+            'kelas' => 'required|string',
+            'nama_wali' => 'required|string',
+            'email_wali' => 'nullable|email',
+            'wa_wali' => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if (empty($data['email_wali']) && empty($data['wa_wali'])) {
+            return back()->withErrors([
+                'email_wali' => 'Email atau WhatsApp wajib diisi'
+            ])->withInput();
+        }
+
+        $dto = $normalizer->normalize([
+            'nama_siswa' => $data['nama_siswa'],
+            'kelas' => $data['kelas'],
+            'nama_wali' => $data['nama_wali'],
+            'email' => $data['email_wali'],
+            'wa' => $data['wa_wali'],
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        $recipient->update([
+            'nama_siswa' => $dto->namaSiswa,
+            'kelas' => $dto->kelas,
+            'nama_wali' => $dto->namaWali,
+            'email_wali' => $dto->email,
+            'wa_wali' => $dto->phone,
+            'catatan' => $dto->catatan,
+            'is_valid' => empty($dto->errors),
+            'validation_error' => empty($dto->errors)
+                ? null
+                : implode(', ', $dto->errors),
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.index')
+            ->with('success', 'Data penerima berhasil diperbarui');
     }
 
     /**

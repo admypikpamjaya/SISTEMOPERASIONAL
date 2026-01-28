@@ -13,33 +13,46 @@ class RecipientNormalizer
         $namaSiswa = trim($row['nama_siswa'] ?? '');
         $kelas     = trim($row['kelas'] ?? '');
         $namaWali  = trim($row['nama_wali'] ?? '');
-        $email     = trim($row['email'] ?? '');
+        $emailRaw  = trim($row['email'] ?? '');
         $waRaw     = trim($row['wa'] ?? '');
+        $catatan   = trim($row['catatan'] ?? '');
 
         // ===== REQUIRED =====
         if ($namaSiswa === '') $errors[] = 'nama_siswa wajib diisi';
         if ($kelas === '')     $errors[] = 'kelas wajib diisi';
         if ($namaWali === '')  $errors[] = 'nama_wali wajib diisi';
-        if ($email === '')     $errors[] = 'email_wali wajib diisi';
-        if ($waRaw === '')     $errors[] = 'wa_wali wajib diisi';
+
+        // ===== MINIMAL CONTACT =====
+        if ($emailRaw === '' && $waRaw === '') {
+            $errors[] = 'email atau WhatsApp wajib diisi';
+        }
 
         // ===== EMAIL =====
-        if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'format email tidak valid';
+        $email = null;
+        if ($emailRaw !== '') {
+            if (!filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = 'format email tidak valid';
+            } else {
+                $email = $emailRaw;
+            }
         }
 
         // ===== WA NORMALIZATION =====
-        $wa = $this->normalizeWa($waRaw);
-        if (!$wa) {
-            $errors[] = 'format WhatsApp tidak valid';
+        $wa = null;
+        if ($waRaw !== '') {
+            $wa = $this->normalizeWa($waRaw);
+            if (!$wa) {
+                $errors[] = 'format WhatsApp tidak valid';
+            }
         }
 
         return new RecipientRowDTO(
-            email: $email ?: null,
+            email: $email,
             phone: $wa,
             namaWali: $namaWali ?: null,
             namaSiswa: $namaSiswa ?: null,
             kelas: $kelas ?: null,
+            catatan: $catatan ?: null,     // ✅ FIX UTAMA
             isValid: empty($errors),
             errors: $errors
         );

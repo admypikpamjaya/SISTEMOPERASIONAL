@@ -71,7 +71,7 @@ class AssetService
         return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
     }
 
-    public function getAssets(?string $keyword = null, ?AssetCategory $category = null, ?int $page = 1)
+    public function getAssets(?string $keyword = null, ?AssetCategory $category = null, ?int $page = 1, ?int $pageSize = 10)
     {
         $query = Asset::query();
         if($keyword)
@@ -89,7 +89,7 @@ class AssetService
 
         return $query
             ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'page', $page)
+            ->paginate($pageSize, ['*'], 'page', $page)
             ->appends(array_filter([
                 'keyword' => $keyword,
                 'category' => $category?->value,
@@ -202,6 +202,15 @@ class AssetService
                 $disk->delete($asset->qr_code_path);
 
             $asset->delete();
+        });
+    }
+
+    public function bulkDelete(array $ids)
+    {
+        DB::transaction(function () use ($ids) {
+            foreach ($ids as $id) {
+                $this->deleteAsset($id);
+            }
         });
     }
 

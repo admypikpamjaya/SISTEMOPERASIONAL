@@ -21,7 +21,10 @@ class AssetManagementController extends Controller
 
     public function index(Request $request)
     {
-        $assets = $this->service->getAssets($request->keyword, ($request->category) ? AssetCategory::from($request->category) : null, $request->page);
+        $page = $request->input('page', 1);
+        $pageSize = $request->input('page_size', 10);
+
+        $assets = $this->service->getAssets($request->keyword, ($request->category) ? AssetCategory::from($request->category) : null, $page, $pageSize);
         return view('asset-management.index', [
             'assets' => $assets
         ]);
@@ -86,6 +89,29 @@ class AssetManagementController extends Controller
         try 
         {
             $this->service->deleteAsset($id);
+
+            session()->flash('success', 'Aset berhasil dihapus');
+            return response()->json(['success' => true]);
+        }
+        catch(\Throwable $e)
+        {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], $e->getCode() ? $e->getCode() : 500);
+        }
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        try 
+        {
+            $ids = $request->input('ids', []);
+            if(count($ids) === 0)
+                return response()->json([
+                    'message' => 'Tidak ada data yang dipilih'
+                ], 400);
+
+            $this->service->bulkDelete($ids);
 
             session()->flash('success', 'Aset berhasil dihapus');
             return response()->json(['success' => true]);
