@@ -5,9 +5,9 @@ namespace App\Enums\Portal;
 enum PortalPermission: string
 {
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | ASSET MANAGEMENT
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
     case ASSET_MANAGEMENT_READ   = 'asset_management.read';
     case ASSET_MANAGEMENT_CREATE = 'asset_management.write';
@@ -15,9 +15,9 @@ enum PortalPermission: string
     case ASSET_MANAGEMENT_DELETE = 'asset_management.delete';
 
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | MAINTENANCE REPORT
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
     case MAINTENANCE_REPORT_READ          = 'maintenance_report.read';
     case MAINTENANCE_REPORT_CREATE        = 'maintenance_report.write';
@@ -26,9 +26,9 @@ enum PortalPermission: string
     case MAINTENANCE_REPORT_DELETE        = 'maintenance_report.delete';
 
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | USER MANAGEMENT
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
     case USER_MANAGEMENT_READ   = 'user_management.read';
     case USER_MANAGEMENT_CREATE = 'user_management.write';
@@ -36,9 +36,9 @@ enum PortalPermission: string
     case USER_MANAGEMENT_DELETE = 'user_management.delete';
 
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | ADMIN – COMMUNICATION & BILLING (PHASE 6)
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
 
     // Announcements
@@ -57,12 +57,14 @@ enum PortalPermission: string
     case ADMIN_BLAST_READ = 'admin_blast.read';
     case ADMIN_BLAST_SEND = 'admin_blast.send';
 
-     /* ===============================
-     | NEW – BLAST RECIPIENT MANAGEMENT (PHASE 9)
-     =============================== */
-
-    case BLAST_RECIPIENT_READ = 'blast_recipient.read';
+    /*
+    |----------------------------------------------------------------------
+    | BLAST RECIPIENT MANAGEMENT (PHASE 9)
+    |----------------------------------------------------------------------
+    */
+    case BLAST_RECIPIENT_READ   = 'blast_recipient.read';
     case BLAST_RECIPIENT_CREATE = 'blast_recipient.create';
+    case BLAST_RECIPIENT_UPDATE = 'blast_recipient.update';
     case BLAST_RECIPIENT_IMPORT = 'blast_recipient.import';
     case BLAST_RECIPIENT_DELETE = 'blast_recipient.delete';
 }

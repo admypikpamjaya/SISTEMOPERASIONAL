@@ -58,6 +58,20 @@
                             <button class="btn btn-sm btn-danger">✕</button>
                         </form>
                     </td>
+                    <td>
+    <a href="{{ route('admin.blast.recipients.edit', $r->id) }}"
+       class="btn btn-sm btn-warning">Edit</a>
+
+    <form method="POST"
+          action="{{ route('admin.blast.recipients.destroy', $r->id) }}"
+          class="d-inline"
+          onsubmit="return confirm('Hapus data ini?')">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-sm btn-danger">✕</button>
+    </form>
+</td>
+
                 </tr>
             @empty
                 <tr>
