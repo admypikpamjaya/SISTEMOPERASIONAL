@@ -56,4 +56,13 @@ enum PortalPermission: string
     // Blast
     case ADMIN_BLAST_READ = 'admin_blast.read';
     case ADMIN_BLAST_SEND = 'admin_blast.send';
+
+     /* ===============================
+     | NEW – BLAST RECIPIENT MANAGEMENT (PHASE 9)
+     =============================== */
+
+    case BLAST_RECIPIENT_READ = 'blast_recipient.read';
+    case BLAST_RECIPIENT_CREATE = 'blast_recipient.create';
+    case BLAST_RECIPIENT_IMPORT = 'blast_recipient.import';
+    case BLAST_RECIPIENT_DELETE = 'blast_recipient.delete';
 }

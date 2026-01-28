@@ -54,6 +54,13 @@ return [
                 'icon'  => 'fas fa-envelope',
                 'route' => 'admin.blast.email',
             ],
+            [
+                'label' => 'Penerima Blasting',
+                'icon'  => 'fas fa-users',
+                'route' => 'admin.blast.recipients.index',
+                'module_name' => 'admin_blast',
+            ],
+
         ],
     ],
 

@@ -80,22 +80,22 @@
 
     {{-- Main Content Grid --}}
     <div class="main-grid">
-        {{-- === FORM FROM CODE PERTAMA (Working Blasting) === --}}
-        <form method="POST" action="{{ route('admin.blast.whatsapp.send') }}" enctype="multipart/form-data">
+        {{-- FORM BLASTING DARI CODE PERTAMA --}}
+        <form method="POST" action="{{ route('admin.blast.whatsapp.send') }}" enctype="multipart/form-data" id="whatsappBlastForm">
             @csrf
+            {{-- Top Row - Penerima and Kotak Pesan --}}
             <div class="top-row">
                 {{-- Left Column - Penerima --}}
                 <div class="white-card recipient-card">
                     <div class="section-title">Penerima</div>
                     
                     <div class="phone-input-section">
-                        <input type="text" class="phone-input-main" placeholder="Masukkan nomor telepon (contoh: +628..)" id="phoneInput">
+                        <input type="text" class="phone-input-main" placeholder="Contoh: 6281234567890" id="phoneInput">
                         <button type="button" class="add-button" id="addPhoneBtn">
                             <span class="add-icon">+</span>
                         </button>
                     </div>
 
-                    {{-- Excel Import (from Code Kedua) --}}
                     <div class="excel-import" id="excelImport">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                             <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -108,8 +108,8 @@
                         <div class="recipient-status">Belum ada penerima</div>
                     </div>
 
-                    {{-- HIDDEN TARGETS (from Code Pertama, Backend Compatible) --}}
-                    <textarea name="targets" id="targetsField" hidden required></textarea>
+                    {{-- HIDDEN TARGETS FIELD DARI CODE PERTAMA --}}
+                    <textarea name="targets" id="targetsField" class="field-input" style="display: none;" rows="3" placeholder="6281234567890, 6289876543210" required></textarea>
                 </div>
 
                 {{-- Middle Column - Kotak Pesan --}}
@@ -118,23 +118,22 @@
                         <div class="section-title">Kotak Pesan</div>
                     </div>
 
-                    {{-- Student Information (from Code Kedua) --}}
+                    {{-- Input fields untuk personalisasi --}}
                     <div class="form-group">
                         <label class="form-label">Nama Siswa:</label>
-                        <input type="text" class="form-input" id="studentName" name="student_name" placeholder="Masukkan nama siswa" required>
+                        <input type="text" class="form-input" id="studentName" name="student_name" placeholder="Masukkan nama siswa">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Kelas:</label>
-                        <input type="text" class="form-input" id="studentClass" name="student_class" placeholder="Masukkan kelas (contoh: 5A)" required>
+                        <input type="text" class="form-input" id="studentClass" name="student_class" placeholder="Masukkan kelas (contoh: 5A)">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Nama Wali:</label>
-                        <input type="text" class="form-input" id="parentName" name="parent_name" placeholder="Masukkan nama wali" required>
+                        <input type="text" class="form-input" id="parentName" name="parent_name" placeholder="Masukkan nama wali">
                     </div>
 
-                    {{-- Template Section (from Code Kedua) --}}
                     <div class="template-section">
                         <label class="template-label">Template:</label>
                         <div class="template-selector">
@@ -147,17 +146,19 @@
                         </div>
                     </div>
 
-                    <div class="selected-templates" id="selectedTemplates" style="display: none;"></div>
+                    <div class="selected-templates" id="selectedTemplates" style="display: none;">
+                        <!-- Template tags will be added here dynamically -->
+                    </div>
 
-                    {{-- MESSAGE TEXTAREA (from Code Pertama - Backend Compatible) --}}
+                    {{-- MESSAGE FIELD DARI CODE PERTAMA --}}
                     <div class="message-editor">
                         <textarea 
                             name="message" 
                             class="message-textarea" 
                             placeholder="Ketik pesan Anda di sini..." 
                             id="messageTextarea" 
+                            rows="5" 
                             required
-                            rows="5"
                         ></textarea>
                     </div>
 
@@ -169,44 +170,31 @@
                                 </svg>
                                 <span>Lampirkan File</span>
                             </button>
-                            <button type="button" class="attach-btn" id="attachImage">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M21 15L16 10L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>Tambah Gambar</span>
-                            </button>
                         </div>
                         <div class="char-count" id="charCount">0 karakter</div>
                     </div>
 
-                    {{-- ATTACHMENT INPUT (from Code Pertama - Backend Compatible) --}}
-                    <div class="form-group" style="margin-bottom: 15px;">
+                    {{-- ATTACHMENT FIELD DARI CODE PERTAMA --}}
+                    <div class="form-group" style="margin-bottom: 15px; display: none;" id="attachmentContainer">
                         <label class="form-label">Lampiran (Opsional)</label>
                         <input 
                             type="file" 
                             name="attachments[]" 
-                            class="form-input" 
+                            class="form-input"
                             multiple 
                             accept=".pdf,.jpg,.jpeg,.png"
-                            style="padding: 10px;"
                         >
-                        <small style="font-size: 11px; color: #999; display: block; margin-top: 5px;">
-                            Maksimal 5MB per file. PDF / Image.
-                        </small>
+                        <small style="font-size: 11px; color: #999;">Maksimal 5MB per file. PDF / Image.</small>
                     </div>
 
-                    {{-- SUBMIT BUTTON (from Code Pertama) --}}
-                    <div style="margin-top: 36px;">
-                        <button type="submit" class="send-button">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <span>Kirim Pesan WhatsApp</span>
-                        </button>
-                    </div>
+                    {{-- SEND BUTTON DARI CODE PERTAMA --}}
+                    <button type="submit" class="send-button" id="sendButton">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Kirim Pesan</span>
+                    </button>
                 </div>
             </div>
         </form>
@@ -246,7 +234,7 @@
         <div class="tips-content-wrapper">
             <div class="tips-title">Tips</div>
             <div class="tips-list">
-                <div class="tip-item">Sertakan kode negara pada nomor telepon (contoh: +6281234567890).</div>
+                <div class="tip-item">Sertakan kode negara pada nomor telepon (contoh: 6281234567890).</div>
                 <div class="tip-item">Personalisasi pesan menggunakan variabel untuk engagement lebih baik.</div>
                 <div class="tip-item">Hindari mengirim terlalu banyak pesan sekaligus untuk mencegah pemblokiran.</div>
             </div>
@@ -255,7 +243,7 @@
 </div>
 
 <style>
-/* Semua CSS dari Code Kedua tetap di sini */
+/* Semua CSS yang sudah ada tetap di sini */
 * {
     margin: 0;
     padding: 0;
@@ -433,7 +421,7 @@
 }
 
 .form-input:focus {
-    border-color: #25D366;
+    border-color: #3b82f6;
 }
 
 /* Recipient Card */
@@ -455,13 +443,13 @@
 }
 
 .phone-input-main:focus {
-    border-color: #25D366;
+    border-color: #3b82f6;
 }
 
 .add-button {
     width: 45px;
     height: 45px;
-    background: #25D366;
+    background: #3b82f6;
     border: none;
     border-radius: 8px;
     color: white;
@@ -474,7 +462,7 @@
 }
 
 .add-button:hover {
-    background: #1DA851;
+    background: #2563eb;
 }
 
 .add-icon {
@@ -497,7 +485,7 @@
 
 .excel-import:hover {
     background: #e9ecef;
-    border-color: #25D366;
+    border-color: #3b82f6;
 }
 
 .excel-import span {
@@ -593,7 +581,7 @@
 }
 
 .template-select:focus {
-    border-color: #25D366;
+    border-color: #3b82f6;
 }
 
 .selected-templates {
@@ -645,30 +633,6 @@
     color: #ef4444;
 }
 
-.variable-buttons {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.var-btn {
-    padding: 6px 12px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.var-btn:hover {
-    background: #25D366;
-    color: white;
-    border-color: #25D366;
-}
-
 .message-editor {
     margin-bottom: 15px;
 }
@@ -687,7 +651,7 @@
 }
 
 .message-textarea:focus {
-    border-color: #25D366;
+    border-color: #3b82f6;
 }
 
 .message-footer {
@@ -718,8 +682,8 @@
 
 .attach-btn:hover {
     background: #e9ecef;
-    border-color: #25D366;
-    color: #25D366;
+    border-color: #3b82f6;
+    color: #3b82f6;
 }
 
 .attach-btn svg {
@@ -734,7 +698,7 @@
 .send-button {
     width: 100%;
     height: 45px;
-    background: #25D366;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -750,8 +714,7 @@
 
 .send-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
-    background: #1DA851;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .send-button:disabled {
@@ -1033,289 +996,206 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // === ELEMENTS ===
-    const phoneInput = document.getElementById('phoneInput');
-    const addPhoneBtn = document.getElementById('addPhoneBtn');
-    const recipientList = document.getElementById('recipientList');
-    const messageTextarea = document.getElementById('messageTextarea');
-    const charCount = document.getElementById('charCount');
-    const excelImport = document.getElementById('excelImport');
-    const templateSelect = document.getElementById('templateSelect');
-    const selectedTemplatesContainer = document.getElementById('selectedTemplates');
-    const varButtons = document.querySelectorAll('.var-btn');
-    const attachFile = document.getElementById('attachFile');
-    const attachImage = document.getElementById('attachImage');
-    const activityLog = document.getElementById('activityLog');
-    const searchInput = document.getElementById('searchInput');
-    const targetsField = document.getElementById('targetsField');
-    
-    // Form inputs
-    const studentName = document.getElementById('studentName');
-    const studentClass = document.getElementById('studentClass');
-    const parentName = document.getElementById('parentName');
-
-    // Stats
-    const statTotal = document.getElementById('statTotal');
-    const statSent = document.getElementById('statSent');
-    const statFailed = document.getElementById('statFailed');
-    const statPending = document.getElementById('statPending');
-
-    // === VARIABLES ===
-    let selectedTemplates = [];
-    let recipientNumbers = [];
-    let activities = JSON.parse(localStorage.getItem('whatsapp_activities') || '[]');
-
-    // === FUNCTIONS ===
-    
-    // Save activities to localStorage
-    function saveActivities() {
-        localStorage.setItem('whatsapp_activities', JSON.stringify(activities));
-    }
-
-    // Add recipient function
-    function addRecipient() {
-        let phoneNumber = phoneInput.value.trim();
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.getElementById('phoneInput');
+        const addPhoneBtn = document.getElementById('addPhoneBtn');
+        const recipientList = document.getElementById('recipientList');
+        const messageTextarea = document.getElementById('messageTextarea');
+        const charCount = document.getElementById('charCount');
+        const sendButton = document.getElementById('sendButton');
+        const targetsField = document.getElementById('targetsField');
+        const attachmentContainer = document.getElementById('attachmentContainer');
+        const attachFile = document.getElementById('attachFile');
+        const activityLog = document.getElementById('activityLog');
+        const searchInput = document.getElementById('searchInput');
         
-        if (!phoneNumber) {
-            alert('Masukkan nomor telepon terlebih dahulu!');
-            return;
-        }
+        // Form inputs
+        const studentName = document.getElementById('studentName');
+        const studentClass = document.getElementById('studentClass');
+        const parentName = document.getElementById('parentName');
+        const templateSelect = document.getElementById('templateSelect');
+        const selectedTemplatesContainer = document.getElementById('selectedTemplates');
 
-        // Format: Remove any spaces and ensure it starts with + or 62
-        phoneNumber = phoneNumber.replace(/\s+/g, '');
-        if (!phoneNumber.startsWith('+') && !phoneNumber.startsWith('62')) {
-            // Assume it's Indonesian number, add +62
+        // Stats
+        const statTotal = document.getElementById('statTotal');
+        const statSent = document.getElementById('statSent');
+        const statFailed = document.getElementById('statFailed');
+        const statPending = document.getElementById('statPending');
+
+        let selectedTemplates = [];
+        let activities = [];
+        let recipientNumbers = [];
+
+        // Add recipient function
+        function addRecipient() {
+            let phoneNumber = phoneInput.value.trim();
+            
+            if (!phoneNumber) {
+                alert('Masukkan nomor telepon terlebih dahulu!');
+                return;
+            }
+
+            // Clean the phone number (remove spaces, dashes, etc)
+            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, '');
+            
+            // Validate phone number format (Indonesian number)
+            if (!/^(\+?62|0)[0-9]{9,12}$/.test(phoneNumber)) {
+                alert('Format nomor telepon tidak valid! Gunakan format: 6281234567890');
+                return;
+            }
+
+            // Convert 0 to +62
             if (phoneNumber.startsWith('0')) {
-                phoneNumber = '+62' + phoneNumber.substring(1);
-            } else if (phoneNumber.startsWith('8')) {
-                phoneNumber = '+62' + phoneNumber;
+                phoneNumber = '62' + phoneNumber.substring(1);
+            } else if (phoneNumber.startsWith('+62')) {
+                phoneNumber = phoneNumber.substring(1);
+            } else if (phoneNumber.startsWith('62')) {
+                // Already correct format
+            } else {
+                alert('Gunakan format nomor Indonesia (contoh: 6281234567890)');
+                return;
             }
-        }
 
-        if (recipientNumbers.includes(phoneNumber)) {
-            alert('Nomor ini sudah ditambahkan!');
-            return;
-        }
-
-        // Remove status message if present
-        const statusElement = recipientList.querySelector('.recipient-status');
-        if (statusElement) {
-            statusElement.remove();
-        }
-
-        recipientNumbers.push(phoneNumber);
-
-        // Add to UI
-        const recipientItem = document.createElement('div');
-        recipientItem.className = 'recipient-item';
-        recipientItem.innerHTML = `
-            <span class="recipient-number">${phoneNumber}</span>
-            <button type="button" class="remove-recipient" title="Hapus">×</button>
-        `;
-
-        recipientList.appendChild(recipientItem);
-        phoneInput.value = '';
-
-        // Update hidden targets field (for form submission)
-        targetsField.value = recipientNumbers.join(',');
-
-        // Add remove functionality
-        const removeBtn = recipientItem.querySelector('.remove-recipient');
-        removeBtn.addEventListener('click', function() {
-            const index = recipientNumbers.indexOf(phoneNumber);
-            if (index > -1) {
-                recipientNumbers.splice(index, 1);
+            if (recipientNumbers.includes(phoneNumber)) {
+                alert('Nomor ini sudah ditambahkan!');
+                return;
             }
-            recipientItem.remove();
-            
-            // Update hidden targets field
-            targetsField.value = recipientNumbers.join(',');
-            
-            // If no recipients left, show status message
-            if (recipientList.children.length === 0) {
-                const newStatus = document.createElement('div');
-                newStatus.className = 'recipient-status';
-                newStatus.textContent = 'Belum ada penerima';
-                recipientList.appendChild(newStatus);
+
+            const statusElement = recipientList.querySelector('.recipient-status');
+            if (statusElement) {
+                statusElement.remove();
             }
-        });
-    }
 
-    // Template definitions
-    const templates = {
-        'reminder': {
-            name: 'Reminder Tagihan Sekolah',
-            content: 'Yth. Bapak/Ibu {nama wali},\n\nKami ingin mengingatkan bahwa tagihan sekolah untuk {nama siswa} kelas {kelas} sebesar {tagihan} akan jatuh tempo pada {jatuh tempo}.\n\nMohon segera melakukan pembayaran. Terima kasih.\n\nSalam,\nSOY YPIK PAM JAYA'
-        },
-        'payment': {
-            name: 'Informasi Pembayaran Sekolah',
-            content: 'Kepada Yth. Bapak/Ibu {nama wali},\n\nBerikut informasi pembayaran untuk {nama siswa} kelas {kelas}:\n- Tagihan: {tagihan}\n- Jatuh Tempo: {jatuh tempo}\n\nPembayaran dapat dilakukan melalui:\n- Transfer Bank\n- Pembayaran Langsung ke Sekolah\n\nTerima kasih.'
-        },
-        'notification': {
-            name: 'Pemberitahuan Tunggakan',
-            content: 'Kepada Yth. Bapak/Ibu {nama wali},\n\nDengan hormat, kami informasikan bahwa terdapat tunggakan pembayaran untuk {nama siswa} kelas {kelas} sebesar {tagihan}.\n\nBatas pembayaran telah melewati tanggal {jatuh tempo}. Mohon segera melakukan pembayaran.\n\nHubungi kami jika ada pertanyaan.\n\nHormat kami,\nSOY YPIK PAM JAYA'
-        }
-    };
+            recipientNumbers.push(phoneNumber);
 
-    // Render selected templates
-    function renderSelectedTemplates() {
-        selectedTemplatesContainer.innerHTML = '';
-        
-        if (selectedTemplates.length === 0) {
-            selectedTemplatesContainer.style.display = 'none';
-            return;
-        }
-
-        selectedTemplatesContainer.style.display = 'flex';
-        
-        selectedTemplates.forEach(templateKey => {
-            const template = templates[templateKey];
-            const tagElement = document.createElement('div');
-            tagElement.className = 'template-tag';
-            tagElement.innerHTML = `
-                <span>${template.name}</span>
-                <button type="button" class="remove-tag" data-template="${templateKey}">×</button>
+            const recipientItem = document.createElement('div');
+            recipientItem.className = 'recipient-item';
+            recipientItem.innerHTML = `
+                <span class="recipient-number">${phoneNumber}</span>
+                <button class="remove-recipient" title="Hapus">×</button>
             `;
-            selectedTemplatesContainer.appendChild(tagElement);
 
-            const removeBtn = tagElement.querySelector('.remove-tag');
+            recipientList.appendChild(recipientItem);
+            phoneInput.value = '';
+
+            // Update hidden targets field (sesuai dengan format code pertama)
+            targetsField.value = recipientNumbers.join(', ');
+
+            const removeBtn = recipientItem.querySelector('.remove-recipient');
             removeBtn.addEventListener('click', function() {
-                const templateToRemove = this.getAttribute('data-template');
-                selectedTemplates = selectedTemplates.filter(t => t !== templateToRemove);
-                renderSelectedTemplates();
+                const index = recipientNumbers.indexOf(phoneNumber);
+                if (index > -1) {
+                    recipientNumbers.splice(index, 1);
+                }
+                recipientItem.remove();
+                
+                // Update hidden targets field
+                targetsField.value = recipientNumbers.join(', ');
+                
+                if (recipientList.children.length === 0) {
+                    const newStatus = document.createElement('div');
+                    newStatus.className = 'recipient-status';
+                    newStatus.textContent = 'Belum ada penerima';
+                    recipientList.appendChild(newStatus);
+                }
             });
-        });
-    }
-
-    // Character count
-    function updateCharCount() {
-        const charLength = messageTextarea.value.length;
-        charCount.textContent = `${charLength} karakter`;
-    }
-
-    // Update stats from activities
-    function updateStats() {
-        const total = activities.length;
-        const sent = activities.filter(a => a.status === 'success').length;
-        const failed = activities.filter(a => a.status === 'failed').length;
-        const pending = activities.filter(a => a.status === 'pending').length;
-
-        if (statTotal) statTotal.textContent = total;
-        if (statSent) statSent.textContent = sent;
-        if (statFailed) statFailed.textContent = failed;
-        if (statPending) statPending.textContent = pending;
-    }
-
-    // Render activities
-    function renderActivities(filteredActivities = activities) {
-        activityLog.innerHTML = '';
-
-        if (filteredActivities.length === 0) {
-            const emptyElement = document.createElement('div');
-            emptyElement.className = 'activity-empty';
-            emptyElement.textContent = activities.length === 0 ? 'Belum ada aktivitas' : 'Tidak ada hasil pencarian';
-            activityLog.appendChild(emptyElement);
-            return;
         }
 
-        filteredActivities.forEach(activity => {
-            const row = document.createElement('div');
-            row.className = 'activity-row';
-            
-            const statusClass = activity.status === 'success' ? 'success' : 
-                              activity.status === 'failed' ? 'failed' : 'pending';
-            const statusText = activity.status === 'success' ? 'Terkirim' : 
-                             activity.status === 'failed' ? 'Gagal' : 'Pending';
-            
-            row.innerHTML = `
-                <div class="col-waktu">
-                    <div class="waktu-date">${activity.date}</div>
-                    <div class="waktu-time">${activity.time}</div>
-                </div>
-                <div class="col-siswa">
-                    <div class="siswa-name">${activity.studentName}</div>
-                </div>
-                <div class="col-kelas">${activity.studentClass}</div>
-                <div class="col-wali">
-                    <div class="wali-name">${activity.parentName}</div>
-                </div>
-                <div class="col-wa">${activity.phone}</div>
-                <div class="col-status">
-                    <span class="status-badge ${statusClass}">${statusText}</span>
-                </div>
-            `;
-            
-            activityLog.appendChild(row);
-        });
-    }
+        if (addPhoneBtn) {
+            addPhoneBtn.addEventListener('click', addRecipient);
+        }
 
-    // Toast notification
-    function showToast(message, isError = false) {
-        // Remove existing toast
-        const existingToast = document.querySelector('.toast');
-        if (existingToast) existingToast.remove();
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${isError ? 'error' : ''}`;
-        toast.innerHTML = `
-            ${isError ? '❌' : '✅'}
-            <span>${message}</span>
-        `;
-        
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: ${isError ? '#EF4444' : '#10B981'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 1001;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
+        if (phoneInput) {
+            phoneInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addRecipient();
+                }
+            });
+        }
 
-    // === EVENT LISTENERS ===
-    
-    // Add recipient
-    if (addPhoneBtn) {
-        addPhoneBtn.addEventListener('click', addRecipient);
-    }
-
-    if (phoneInput) {
-        phoneInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addRecipient();
+        // Template functionality
+        const templates = {
+            'reminder': {
+                name: 'Reminder Tagihan Sekolah',
+                content: 'Yth. Bapak/Ibu {nama wali},\n\nKami ingin mengingatkan bahwa tagihan sekolah untuk {nama siswa} kelas {kelas} sebesar {tagihan} akan jatuh tempo pada {jatuh tempo}.\n\nMohon segera melakukan pembayaran. Terima kasih.\n\nSalam,\nSOY YPIK PAM JAYA'
+            },
+            'payment': {
+                name: 'Informasi Pembayaran Sekolah',
+                content: 'Kepada Yth. Bapak/Ibu {nama wali},\n\nBerikut informasi pembayaran untuk {nama siswa} kelas {kelas}:\n- Tagihan: {tagihan}\n- Jatuh Tempo: {jatuh tempo}\n\nPembayaran dapat dilakukan melalui:\n- Transfer Bank\n- Pembayaran Langsung ke Sekolah\n\nTerima kasih.'
+            },
+            'notification': {
+                name: 'Pemberitahuan Tunggakan',
+                content: 'Kepada Yth. Bapak/Ibu {nama wali},\n\nDengan hormat, kami informasikan bahwa terdapat tunggakan pembayaran untuk {nama siswa} kelas {kelas} sebesar {tagihan}.\n\nBatas pembayaran telah melewati tanggal {jatuh tempo}. Mohon segera melakukan pembayaran.\n\nHubungi kami jika ada pertanyaan.\n\nHormat kami,\nSOY YPIK PAM JAYA'
             }
-        });
-    }
+        };
 
-    // Template selection
-    if (templateSelect) {
-        templateSelect.addEventListener('change', function() {
-            const selectedTemplate = this.value;
+        function renderSelectedTemplates() {
+            selectedTemplatesContainer.innerHTML = '';
             
-            if (selectedTemplate && templates[selectedTemplate]) {
-                if (!selectedTemplates.includes(selectedTemplate)) {
-                    selectedTemplates.push(selectedTemplate);
+            if (selectedTemplates.length === 0) {
+                selectedTemplatesContainer.style.display = 'none';
+                return;
+            }
+
+            selectedTemplatesContainer.style.display = 'flex';
+            
+            selectedTemplates.forEach(templateKey => {
+                const template = templates[templateKey];
+                const tagElement = document.createElement('div');
+                tagElement.className = 'template-tag';
+                tagElement.innerHTML = `
+                    <span>${template.name}</span>
+                    <button class="remove-tag" data-template="${templateKey}">×</button>
+                `;
+                selectedTemplatesContainer.appendChild(tagElement);
+
+                const removeBtn = tagElement.querySelector('.remove-tag');
+                removeBtn.addEventListener('click', function() {
+                    const templateToRemove = this.getAttribute('data-template');
+                    selectedTemplates = selectedTemplates.filter(t => t !== templateToRemove);
                     renderSelectedTemplates();
+                });
+            });
+        }
+
+        if (templateSelect) {
+            templateSelect.addEventListener('change', function() {
+                const selectedTemplate = this.value;
+                
+                if (selectedTemplate && templates[selectedTemplate]) {
+                    if (!selectedTemplates.includes(selectedTemplate)) {
+                        selectedTemplates.push(selectedTemplate);
+                        renderSelectedTemplates();
+                        
+                        let content = templates[selectedTemplate].content;
+                        
+                        // Replace placeholders with form values
+                        if (studentName.value) {
+                            content = content.replace(/{nama siswa}/g, studentName.value);
+                        }
+                        if (studentClass.value) {
+                            content = content.replace(/{kelas}/g, studentClass.value);
+                        }
+                        if (parentName.value) {
+                            content = content.replace(/{nama wali}/g, parentName.value);
+                        }
+                        
+                        messageTextarea.value = content;
+                        updateCharCount();
+                    }
                     
-                    let content = templates[selectedTemplate].content;
+                    this.value = '';
+                }
+            });
+        }
+
+        // Update message when form inputs change
+        [studentName, studentClass, parentName].forEach(input => {
+            input.addEventListener('input', function() {
+                if (messageTextarea.value) {
+                    let content = messageTextarea.value;
                     
-                    // Replace placeholders with form values
                     if (studentName.value) {
                         content = content.replace(/{nama siswa}/g, studentName.value);
                     }
@@ -1327,336 +1207,163 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     messageTextarea.value = content;
-                    messageTextarea.dispatchEvent(new Event('input'));
+                    updateCharCount();
                 }
-                
-                this.value = '';
-            }
-        });
-    }
-
-    // Update message when form inputs change
-    [studentName, studentClass, parentName].forEach(input => {
-        input.addEventListener('input', function() {
-            if (messageTextarea.value) {
-                let content = messageTextarea.value;
-                
-                if (studentName.value) {
-                    content = content.replace(/{nama siswa}/g, studentName.value);
-                }
-                if (studentClass.value) {
-                    content = content.replace(/{kelas}/g, studentClass.value);
-                }
-                if (parentName.value) {
-                    content = content.replace(/{nama wali}/g, parentName.value);
-                }
-                
-                messageTextarea.value = content;
-                messageTextarea.dispatchEvent(new Event('input'));
-            }
-        });
-    });
-
-    // Character count
-    if (messageTextarea) {
-        messageTextarea.addEventListener('input', updateCharCount);
-        updateCharCount();
-    }
-
-    // Variable buttons
-    varButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const variable = this.getAttribute('data-variable');
-            const cursorPos = messageTextarea.selectionStart;
-            const textBefore = messageTextarea.value.substring(0, cursorPos);
-            const textAfter = messageTextarea.value.substring(cursorPos);
-            
-            messageTextarea.value = textBefore + '{' + variable + '}' + textAfter;
-            messageTextarea.focus();
-            
-            const newPos = cursorPos + variable.length + 2;
-            messageTextarea.setSelectionRange(newPos, newPos);
-            
-            messageTextarea.dispatchEvent(new Event('input'));
-        });
-    });
-
-    // Search functionality
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const filtered = activities.filter(activity => {
-                return activity.studentName.toLowerCase().includes(searchTerm) ||
-                       activity.parentName.toLowerCase().includes(searchTerm) ||
-                       activity.phone.includes(searchTerm) ||
-                       activity.studentClass.toLowerCase().includes(searchTerm);
             });
-            renderActivities(filtered);
         });
-    }
 
-    // Excel import
-    if (excelImport) {
-        excelImport.addEventListener('click', function() {
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.xlsx,.xls,.csv';
-            
-            fileInput.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    const fileName = e.target.files[0].name;
+        // Character count
+        function updateCharCount() {
+            const charLength = messageTextarea.value.length;
+            charCount.textContent = `${charLength} karakter`;
+        }
+
+        if (messageTextarea) {
+            messageTextarea.addEventListener('input', updateCharCount);
+            updateCharCount();
+        }
+
+        // Update stats
+        function updateStats() {
+            const total = activities.length;
+            const sent = activities.filter(a => a.status === 'success').length;
+            const failed = activities.filter(a => a.status === 'failed').length;
+            const pending = activities.filter(a => a.status === 'pending').length;
+
+            statTotal.textContent = total;
+            statSent.textContent = sent;
+            statFailed.textContent = failed;
+            statPending.textContent = pending;
+        }
+
+        // Render activities
+        function renderActivities(filteredActivities = activities) {
+            activityLog.innerHTML = '';
+
+            if (filteredActivities.length === 0) {
+                const emptyElement = document.createElement('div');
+                emptyElement.className = 'activity-empty';
+                emptyElement.textContent = activities.length === 0 ? 'Belum ada aktivitas' : 'Tidak ada hasil pencarian';
+                activityLog.appendChild(emptyElement);
+                return;
+            }
+
+            filteredActivities.forEach(activity => {
+                const row = document.createElement('div');
+                row.className = 'activity-row';
+                
+                const statusClass = activity.status === 'success' ? 'success' : 
+                                  activity.status === 'failed' ? 'failed' : 'pending';
+                const statusText = activity.status === 'success' ? 'Terkirim' : 
+                                 activity.status === 'failed' ? 'Gagal' : 'Pending';
+                
+                row.innerHTML = `
+                    <div class="col-waktu">
+                        <div class="waktu-date">${activity.date}</div>
+                        <div class="waktu-time">${activity.time}</div>
+                    </div>
+                    <div class="col-siswa">
+                        <div class="siswa-name">${activity.studentName}</div>
+                    </div>
+                    <div class="col-kelas">${activity.studentClass}</div>
+                    <div class="col-wali">
+                        <div class="wali-name">${activity.parentName}</div>
+                    </div>
+                    <div class="col-wa">${activity.phone}</div>
+                    <div class="col-status">
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+                
+                activityLog.appendChild(row);
+            });
+        }
+
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const filtered = activities.filter(activity => {
+                    return activity.studentName.toLowerCase().includes(searchTerm) ||
+                           activity.parentName.toLowerCase().includes(searchTerm) ||
+                           activity.phone.includes(searchTerm) ||
+                           activity.studentClass.toLowerCase().includes(searchTerm);
+                });
+                renderActivities(filtered);
+            });
+        }
+
+        // Form submission - KEEP THE ORIGINAL FORM SUBMISSION FROM CODE 1
+        const whatsappBlastForm = document.getElementById('whatsappBlastForm');
+        if (whatsappBlastForm) {
+            whatsappBlastForm.addEventListener('submit', function(e) {
+                // Validation
+                if (recipientNumbers.length === 0) {
+                    alert('Tambahkan setidaknya satu penerima terlebih dahulu!');
+                    e.preventDefault();
+                    return;
+                }
+                
+                if (!messageTextarea.value.trim()) {
+                    alert('Masukkan pesan terlebih dahulu!');
+                    messageTextarea.focus();
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Show confirmation
+                const confirmation = confirm(
+                    `Pesan akan dikirim ke ${recipientNumbers.length} penerima. Lanjutkan?`
+                );
+                
+                if (confirmation) {
+                    // Add activities for UI (client-side only)
+                    const now = new Date();
+                    const date = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/');
+                    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     
-                    // Demo numbers (in real app, parse the Excel file)
-                    const demoNumbers = [
-                        '+6281234567890',
-                        '+6289876543210',
-                        '+6281122334455',
-                        '+6285566778899',
-                        '+6289900112233'
-                    ];
-                    
-                    // Clear existing recipients first
-                    recipientNumbers = [];
-                    recipientList.innerHTML = '';
-                    
-                    // Add all demo numbers
-                    demoNumbers.forEach(number => {
-                        recipientNumbers.push(number);
-                        
-                        const recipientItem = document.createElement('div');
-                        recipientItem.className = 'recipient-item';
-                        recipientItem.innerHTML = `
-                            <span class="recipient-number">${number}</span>
-                            <button type="button" class="remove-recipient" title="Hapus">×</button>
-                        `;
-                        
-                        recipientList.appendChild(recipientItem);
-                        
-                        const removeBtn = recipientItem.querySelector('.remove-recipient');
-                        removeBtn.addEventListener('click', function() {
-                            const index = recipientNumbers.indexOf(number);
-                            if (index > -1) {
-                                recipientNumbers.splice(index, 1);
-                            }
-                            recipientItem.remove();
-                            targetsField.value = recipientNumbers.join(',');
+                    recipientNumbers.forEach((phone, index) => {
+                        activities.unshift({
+                            date: date,
+                            time: time,
+                            studentName: studentName.value.trim() || '-',
+                            studentClass: studentClass.value.trim() || '-',
+                            parentName: parentName.value.trim() || '-',
+                            phone: phone,
+                            status: 'pending'
                         });
                     });
                     
-                    // Update hidden field
-                    targetsField.value = recipientNumbers.join(',');
-                    
-                    showToast(`✅ ${demoNumbers.length} nomor berhasil diimpor dari "${fileName}"`);
-                }
-            });
-            
-            fileInput.click();
-        });
-    }
-
-    // === FORM VALIDATION AND SUBMISSION ===
-    // This is where Code Pertama's working blasting is integrated
-    
-    // The form will submit normally to backend
-    // We'll add client-side validation and activity log tracking
-    
-    const form = document.querySelector('form');
-    
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // === CLIENT-SIDE VALIDATION ===
-            if (recipientNumbers.length === 0) {
-                e.preventDefault();
-                showToast('Tambahkan setidaknya satu penerima terlebih dahulu!', true);
-                phoneInput.focus();
-                return;
-            }
-            
-            if (!studentName.value.trim()) {
-                e.preventDefault();
-                showToast('Masukkan nama siswa terlebih dahulu!', true);
-                studentName.focus();
-                return;
-            }
-            
-            if (!studentClass.value.trim()) {
-                e.preventDefault();
-                showToast('Masukkan kelas terlebih dahulu!', true);
-                studentClass.focus();
-                return;
-            }
-            
-            if (!parentName.value.trim()) {
-                e.preventDefault();
-                showToast('Masukkan nama wali terlebih dahulu!', true);
-                parentName.focus();
-                return;
-            }
-            
-            if (!messageTextarea.value.trim()) {
-                e.preventDefault();
-                showToast('Masukkan pesan terlebih dahulu!', true);
-                messageTextarea.focus();
-                return;
-            }
-
-            // === SIMULATE ACTIVITY LOG FOR DEMO ===
-            // In production, this would be handled by backend response
-            
-            // Create progress overlay
-            const progressOverlay = document.createElement('div');
-            progressOverlay.className = 'progress-overlay';
-            progressOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255, 255, 255, 0.95);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-            `;
-            
-            progressOverlay.innerHTML = `
-                <div style="
-                    background: white;
-                    padding: 30px;
-                    border-radius: 16px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-                    text-align: center;
-                    min-width: 400px;
-                ">
-                    <div style="font-size: 18px; font-weight: 600; color: #1F2937; margin-bottom: 20px;">
-                        🚀 Mengirim WhatsApp Blast
-                    </div>
-                    <div style="width: 100%; height: 8px; background: #E5E7EB; border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
-                        <div id="progressFill" style="height: 100%; background: #25D366; border-radius: 4px; width: 0%; transition: width 0.3s ease;"></div>
-                    </div>
-                    <div id="progressText" style="font-size: 14px; color: #4B5563; margin-bottom: 15px;">
-                        Mengirim 0/${recipientNumbers.length} pesan
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6B7280; margin-top: 10px;">
-                        <div style="color: #10B981;">✓ Berhasil: <span id="successCount">0</span></div>
-                        <div style="color: #EF4444;">✗ Gagal: <span id="failedCount">0</span></div>
-                        <div style="color: #F59E0B;">⏳ Pending: <span id="pendingCount">${recipientNumbers.length}</span></div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(progressOverlay);
-            
-            // Disable submit button
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span>Mengirim...</span>';
-            
-            // Record timestamp
-            const now = new Date();
-            const date = now.toLocaleDateString('id-ID', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric' 
-            }).replace(/\//g, '/');
-            
-            const time = now.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
-            });
-            
-            // Simulate sending each message
-            let sentCount = 0;
-            let successCount = 0;
-            let failedCount = 0;
-            
-            recipientNumbers.forEach((phone, index) => {
-                setTimeout(() => {
-                    // Simulate random status (80% success rate)
-                    const isSuccess = Math.random() > 0.2;
-                    const status = isSuccess ? 'success' : 'failed';
-                    
-                    // Create activity object
-                    const activity = {
-                        id: Date.now() + index,
-                        date: date,
-                        time: time,
-                        studentName: studentName.value.trim(),
-                        studentClass: studentClass.value.trim(),
-                        parentName: parentName.value.trim(),
-                        phone: phone,
-                        status: status,
-                        timestamp: now.getTime()
-                    };
-                    
-                    // Add to activities array
-                    activities.unshift(activity);
-                    
-                    // Update progress
-                    sentCount++;
-                    const pendingCount = recipientNumbers.length - sentCount;
-                    
-                    const progressPercent = Math.round((sentCount / recipientNumbers.length) * 100);
-                    document.getElementById('progressFill').style.width = `${progressPercent}%`;
-                    document.getElementById('progressText').textContent = `Mengirim ${sentCount}/${recipientNumbers.length} pesan`;
-                    
-                    if (isSuccess) {
-                        successCount++;
-                    } else {
-                        failedCount++;
-                    }
-                    
-                    document.getElementById('successCount').textContent = successCount;
-                    document.getElementById('failedCount').textContent = failedCount;
-                    document.getElementById('pendingCount').textContent = pendingCount;
-                    
-                    // Save to localStorage and update UI
-                    saveActivities();
                     renderActivities();
                     updateStats();
                     
-                    // If all messages processed
-                    if (sentCount === recipientNumbers.length) {
-                        setTimeout(() => {
-                            // Remove progress overlay
-                            progressOverlay.remove();
-                            
-                            // Restore button
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = originalBtnText;
-                            
-                            // Show completion toast
-                            showToast(`✅ WhatsApp blast selesai! ${successCount} berhasil, ${failedCount} gagal dari total ${recipientNumbers.length} pesan.`);
-                            
-                            // Clear form for next use
-                            // recipientNumbers = [];
-                            // recipientList.innerHTML = '';
-                            // const statusElement = document.createElement('div');
-                            // statusElement.className = 'recipient-status';
-                            // statusElement.textContent = 'Belum ada penerima';
-                            // recipientList.appendChild(statusElement);
-                            // targetsField.value = '';
-                            // form.reset();
-                        }, 1000);
-                    }
-                }, index * 300); // Simulate 300ms delay per message
+                    // Reset form but keep recipients
+                    studentName.value = '';
+                    studentClass.value = '';
+                    parentName.value = '';
+                    selectedTemplates = [];
+                    renderSelectedTemplates();
+                    
+                    // Allow form to submit to server
+                    return true;
+                } else {
+                    e.preventDefault();
+                    return false;
+                }
             });
-            
-            // === IMPORTANT: In production, remove e.preventDefault() to let form submit to backend
-            // For demo purposes, we're preventing default to simulate the process
-            e.preventDefault();
-            
-            // For real backend submission, remove the above line and the simulation code
-            // The backend should handle the actual WhatsApp sending and return the results
-        });
-    }
+        }
 
-    // === INITIALIZATION ===
-    // Load and display existing activities
-    renderActivities();
-    updateStats();
-});
+        // Attachment button
+        if (attachFile) {
+            attachFile.addEventListener('click', function() {
+                attachmentContainer.style.display = 'block';
+            });
+        }
+
+        // Initialize
+        updateCharCount();
+        updateStats();
+        renderActivities();
+    });
 </script>
 @endsection

@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ReminderController;
 use App\Http\Controllers\Admin\BlastController;
+use App\Http\Controllers\Admin\BlastRecipientController;
+
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -218,4 +220,43 @@ Route::prefix('admin')
         Route::post('/blast/email/send', [BlastController::class, 'sendEmail'])
             ->name('blast.email.send');
             });
+         /*
+   /*
+|--------------------------------------------------------------------------
+| BLAST RECIPIENT MANAGEMENT (PHASE 9)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin/blast-recipients')
+    ->name('admin.blast.recipients.')
+    ->middleware(['auth', 'check_access:blast_recipient.read'])
+    ->group(function () {
+
+        Route::get('/', [BlastRecipientController::class, 'index'])
+            ->name('index');
+
+        Route::get('/create', [BlastRecipientController::class, 'create'])
+            ->middleware('check_access:blast_recipient.create')
+            ->name('create');
+
+        Route::post('/', [BlastRecipientController::class, 'store'])
+            ->middleware('check_access:blast_recipient.create')
+            ->name('store');
+
+        Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])
+            ->middleware('check_access:blast_recipient.update')
+            ->name('edit');
+
+        Route::put('/{id}', [BlastRecipientController::class, 'update'])
+            ->middleware('check_access:blast_recipient.update')
+            ->name('update');
+
+        Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
+            ->middleware('check_access:blast_recipient.delete')
+            ->name('destroy');
+
+        Route::post('/import', [BlastRecipientController::class, 'import'])
+            ->middleware('check_access:blast_recipient.import')
+            ->name('import');
+    });
+
     });

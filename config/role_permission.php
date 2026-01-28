@@ -5,12 +5,15 @@ use App\Enums\User\UserRole;
 
 return [
 
-    // SUPERADMIN / IT SUPPORT (FULL ACCESS)
+    /* ===============================
+     | IT SUPPORT (SUPERADMIN)
+     =============================== */
     UserRole::IT_SUPPORT->value => PortalPermission::cases(),
 
-    // ADMIN (boleh komunikasi & billing)
+    /* ===============================
+     | ADMIN
+     =============================== */
     UserRole::ADMIN->value => [
-
         // ANNOUNCEMENT
         PortalPermission::ADMIN_ANNOUNCEMENT_READ,
         PortalPermission::ADMIN_ANNOUNCEMENT_CREATE,
@@ -23,12 +26,19 @@ return [
         PortalPermission::ADMIN_REMINDER_READ,
         PortalPermission::ADMIN_REMINDER_SEND,
 
-        // BLAST  ✅ FIX UTAMA
+        // BLAST
         PortalPermission::ADMIN_BLAST_READ,
         PortalPermission::ADMIN_BLAST_SEND,
+
+        // BLAST RECIPIENT (NEW)
+        PortalPermission::BLAST_RECIPIENT_READ,
+        PortalPermission::BLAST_RECIPIENT_CREATE,
+        PortalPermission::BLAST_RECIPIENT_IMPORT,
     ],
 
-    // ASSET MANAGER
+    /* ===============================
+     | ASSET MANAGER
+     =============================== */
     UserRole::ASSET_MANAGER->value => [
         PortalPermission::ASSET_MANAGEMENT_READ,
         PortalPermission::ASSET_MANAGEMENT_CREATE,
@@ -36,7 +46,9 @@ return [
         PortalPermission::ASSET_MANAGEMENT_DELETE,
     ],
 
-    // FINANCE (TIDAK PUNYA ADMIN ACCESS)
+    /* ===============================
+     | FINANCE
+     =============================== */
     UserRole::FINANCE->value => [
         PortalPermission::MAINTENANCE_REPORT_READ,
         PortalPermission::MAINTENANCE_REPORT_UPDATE_STATUS,
