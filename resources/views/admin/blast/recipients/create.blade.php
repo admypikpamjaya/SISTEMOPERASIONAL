@@ -1,98 +1,70 @@
 @extends('layouts.app')
 
-@section('section_name',
-    isset($recipient)
-        ? 'Edit Penerima Blasting'
-        : 'Tambah Penerima Blasting'
-)
-
 @section('content')
+<div class="container-fluid">
 
-@if ($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+    <h4 class="mb-3">Data Penerima Blasting</h4>
 
-<div class="card">
-    <div class="card-body">
-        <form method="POST"
-              action="{{ isset($recipient)
-                    ? route('admin.blast.recipients.update', $recipient->id)
-                    : route('admin.blast.recipients.store') }}">
+    <div class="d-flex gap-2 mb-3">
+        <a href="{{ route('admin.blast_recipients.create') }}" class="btn btn-primary">
+            + Tambah Penerima
+        </a>
 
+        <form action="{{ route('admin.blast_recipients.import') }}"
+              method="POST"
+              enctype="multipart/form-data"
+              class="d-flex gap-2">
             @csrf
-            @if(isset($recipient))
-                @method('PUT')
-            @endif
-
-            <div class="mb-3">
-                <label class="form-label">Nama Siswa</label>
-                <input type="text"
-                       name="nama_siswa"
-                       class="form-control"
-                       value="{{ old('nama_siswa', $recipient->nama_siswa ?? '') }}"
-                       required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Kelas / Jenjang</label>
-                <input type="text"
-                       name="kelas"
-                       class="form-control"
-                       value="{{ old('kelas', $recipient->kelas ?? '') }}"
-                       required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Nama Wali</label>
-                <input type="text"
-                       name="nama_wali"
-                       class="form-control"
-                       value="{{ old('nama_wali', $recipient->nama_wali ?? '') }}"
-                       required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Email Wali</label>
-                <input type="email"
-                       name="email_wali"
-                       class="form-control"
-                       value="{{ old('email_wali', $recipient->email_wali ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">WhatsApp Wali</label>
-                <input type="text"
-                       name="wa_wali"
-                       class="form-control"
-                       value="{{ old('wa_wali', $recipient->wa_wali ?? '') }}">
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Catatan (Opsional)</label>
-                <textarea name="catatan"
-                          class="form-control"
-                          rows="3">{{ old('catatan', $recipient->catatan ?? '') }}</textarea>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary">
-                    {{ isset($recipient) ? 'Update' : 'Simpan' }}
-                </button>
-
-                <a href="{{ route('admin.blast.recipients.index') }}"
-                   class="btn btn-secondary">
-                    Kembali
-                </a>
-            </div>
-
+            <input type="file" name="file" required class="form-control">
+            <button class="btn btn-success">Import Excel</button>
         </form>
     </div>
-</div>
 
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>Nama Wali</th>
+                <th>Email</th>
+                <th>WhatsApp</th>
+                <th>Status</th>
+                <th width="80">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($recipients as $r)
+                <tr>
+                    <td>{{ $r->nama_siswa }}</td>
+                    <td>{{ $r->kelas }}</td>
+                    <td>{{ $r->nama_wali }}</td>
+                    <td>{{ $r->email_wali }}</td>
+                    <td>{{ $r->wa_wali }}</td>
+                    <td>
+                        @if($r->is_valid)
+                            <span class="badge bg-success">VALID</span>
+                        @else
+                            <span class="badge bg-danger">INVALID</span>
+                        @endif
+                    </td>
+                    <td>
+                        <form method="POST"
+                              action="{{ route('admin.blast_recipients.destroy', $r->id) }}"
+                              onsubmit="return confirm('Hapus data ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-sm btn-danger">✕</button>
+                        </form>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" class="text-center">Belum ada data</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    {{ $recipients->links() }}
+</div>
 @endsection

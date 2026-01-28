@@ -220,43 +220,37 @@ Route::prefix('admin')
         Route::post('/blast/email/send', [BlastController::class, 'sendEmail'])
             ->name('blast.email.send');
             });
-         /*
-   /*
-|--------------------------------------------------------------------------
-| BLAST RECIPIENT MANAGEMENT (PHASE 9)
-|--------------------------------------------------------------------------
-*/
-Route::prefix('admin/blast-recipients')
-    ->name('admin.blast.recipients.')
-    ->middleware(['auth', 'check_access:blast_recipient.read'])
+   
+// BLAST RECIPIENTS (PHASE 9)
+Route::prefix('blast')
+    ->name('blast.')
+    ->middleware('check_access:admin_blast.read')
     ->group(function () {
 
-        Route::get('/', [BlastRecipientController::class, 'index'])
-            ->name('index');
+        Route::prefix('recipients')
+            ->name('recipients.')
+            ->group(function () {
 
-        Route::get('/create', [BlastRecipientController::class, 'create'])
-            ->middleware('check_access:blast_recipient.create')
-            ->name('create');
+                Route::get('/', [BlastRecipientController::class, 'index'])
+                    ->name('index');
 
-        Route::post('/', [BlastRecipientController::class, 'store'])
-            ->middleware('check_access:blast_recipient.create')
-            ->name('store');
+                Route::get('/create', [BlastRecipientController::class, 'create'])
+                    ->middleware('check_access:blast_recipient.create')
+                    ->name('create');
 
-        Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])
-            ->middleware('check_access:blast_recipient.update')
-            ->name('edit');
+                Route::post('/', [BlastRecipientController::class, 'store'])
+                    ->middleware('check_access:blast_recipient.create')
+                    ->name('store');
 
-        Route::put('/{id}', [BlastRecipientController::class, 'update'])
-            ->middleware('check_access:blast_recipient.update')
-            ->name('update');
+                Route::post('/import', [BlastRecipientController::class, 'import'])
+                    ->middleware('check_access:blast_recipient.import')
+                    ->name('import');
 
-        Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
-            ->middleware('check_access:blast_recipient.delete')
-            ->name('destroy');
-
-        Route::post('/import', [BlastRecipientController::class, 'import'])
-            ->middleware('check_access:blast_recipient.import')
-            ->name('import');
+                Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
+                    ->middleware('check_access:blast_recipient.delete')
+                    ->name('destroy');
+            });
     });
+
 
     });

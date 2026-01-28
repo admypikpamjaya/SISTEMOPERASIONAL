@@ -28,11 +28,7 @@ return [
         'route'       => 'user-database.index',
     ],
 
-    [
-        'label' => 'Announcements',
-        'icon'  => 'fas fa-bullhorn',
-        'route' => 'admin.announcements.index',
-    ],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -60,6 +56,11 @@ return [
                 'route' => 'admin.blast.recipients.index',
                 'module_name' => 'admin_blast',
             ],
+             [
+                'label' => 'Announcements',
+                'icon'  => 'fas fa-bullhorn',
+                'route' => 'admin.announcements.index',
+    ],
 
         ],
     ],

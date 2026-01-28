@@ -1,89 +1,70 @@
 @extends('layouts.app')
 
-@section('section_name', 'Data Penerima Blasting')
-
 @section('content')
+<div class="container-fluid">
 
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
+    <h4 class="mb-3">Data Penerima Blasting</h4>
 
-<div class="mb-3 d-flex gap-2">
-    <a href="{{ route('admin.blast.recipients.create') }}" class="btn btn-primary">
-        + Tambah Penerima
-    </a>
+    <div class="d-flex gap-2 mb-3">
+        <a href="{{ route('admin.blast.recipients.create') }}" class="btn btn-primary">
+            + Tambah Penerima
+        </a>
 
-    <form action="{{ route('admin.blast.recipients.import') }}"
-          method="POST"
-          enctype="multipart/form-data"
-          class="d-flex gap-2">
-        @csrf
-        <input type="file" name="file" required class="form-control">
-        <button class="btn btn-success">Import Excel</button>
-    </form>
-</div>
-
-<div class="card">
-    <div class="card-body table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>Nama Siswa</th>
-                    <th>Kelas</th>
-                    <th>Nama Wali</th>
-                    <th>Email</th>
-                    <th>WhatsApp</th>
-                    <th>Status</th>
-                    <th width="150">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($recipients as $row)
-                    <tr>
-                        <td>{{ $row->nama_siswa }}</td>
-                        <td>{{ $row->kelas }}</td>
-                        <td>{{ $row->nama_wali }}</td>
-                        <td>{{ $row->email_wali ?? '-' }}</td>
-                        <td>{{ $row->wa_wali ?? '-' }}</td>
-                        <td>
-                            @if($row->is_valid)
-                                <span class="badge bg-success">VALID</span>
-                            @else
-                                <span class="badge bg-danger">INVALID</span>
-                                <div class="text-danger small">
-                                    {{ $row->validation_error }}
-                                </div>
-                            @endif
-                        </td>
-                        <td class="d-flex gap-1">
-                            <a href="{{ route('admin.blast.recipients.edit', $row->id) }}"
-                               class="btn btn-sm btn-warning">
-                                Edit
-                            </a>
-
-                            <form action="{{ route('admin.blast.recipients.destroy', $row->id) }}"
-                                  method="POST"
-                                  onsubmit="return confirm('Yakin hapus data ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-danger">
-                                    Hapus
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center">
-                            Belum ada data penerima
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        {{ $recipients->links() }}
+        <form action="{{ route('admin.blast.recipients.import') }}"
+              method="POST"
+              enctype="multipart/form-data"
+              class="d-flex gap-2">
+            @csrf
+            <input type="file" name="file" required class="form-control">
+            <button class="btn btn-success">Import Excel</button>
+        </form>
     </div>
-</div>
 
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>Nama Wali</th>
+                <th>Email</th>
+                <th>WhatsApp</th>
+                <th>Status</th>
+                <th width="80">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($recipients as $r)
+                <tr>
+                    <td>{{ $r->nama_siswa }}</td>
+                    <td>{{ $r->kelas }}</td>
+                    <td>{{ $r->nama_wali }}</td>
+                    <td>{{ $r->email_wali }}</td>
+                    <td>{{ $r->wa_wali }}</td>
+                    <td>
+                        @if($r->is_valid)
+                            <span class="badge bg-success">VALID</span>
+                        @else
+                            <span class="badge bg-danger">INVALID</span>
+                        @endif
+                    </td>
+                    <td>
+                        <form method="POST"
+                              action="{{ route('admin.blast.recipients.destroy', $r->id) }}"
+                              onsubmit="return confirm('Hapus data ini?')">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-sm btn-danger">✕</button>
+                        </form>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" class="text-center">Belum ada data</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    {{ $recipients->links() }}
+</div>
 @endsection
