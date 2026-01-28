@@ -32,6 +32,10 @@
             <label>WhatsApp Wali</label>
             <input type="text" name="wa_wali" class="form-control">
         </div>
+        <div class="mb-3">
+            <label>Catatan</label>
+            <textarea name="catatan" class="form-control" rows="3"></textarea>
+        </div>
 
         <button class="btn btn-primary">Simpan</button>
         <a href="{{ route('admin.blast.recipients.index') }}" class="btn btn-secondary">

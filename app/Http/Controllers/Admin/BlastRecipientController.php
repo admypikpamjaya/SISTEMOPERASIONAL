@@ -63,7 +63,7 @@ class BlastRecipientController extends Controller
             'nama_wali' => $dto->namaWali,
             'email_wali' => $dto->email,
             'wa_wali' => $dto->phone, // ✅ SUDAH 62
-            // 'catatan' => $dto->catatan,
+            'catatan' => $dto->catatan,
             'is_valid' => empty($dto->errors),
             'validation_error' => empty($dto->errors)
                 ? null

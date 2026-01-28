@@ -28,6 +28,7 @@
                 <th>Nama Wali</th>
                 <th>Email</th>
                 <th>WhatsApp</th>
+                <th>Catatan</th>
                 <th>Status</th>
                 <th width="80">Aksi</th>
             </tr>
@@ -40,6 +41,7 @@
                     <td>{{ $r->nama_wali }}</td>
                     <td>{{ $r->email_wali }}</td>
                     <td>{{ $r->wa_wali }}</td>
+                    <td>{{ $r->catatan }}</td>
                     <td>
                         @if($r->is_valid)
                             <span class="badge bg-success">VALID</span>
