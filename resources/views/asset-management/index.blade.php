@@ -29,6 +29,9 @@ use App\Enums\Asset\AssetCategory;
             <div class="col-md-6">
                 <div class="row align-items-center">
                     <div class="col">
+
+                    </div>
+                    <div class="col-3">
                         <div class="input-group input-group-sm">
                             <select name="category" id="filter-category-select" class="form-control">
                                 <option value="">Semua Kategori</option>
@@ -38,7 +41,7 @@ use App\Enums\Asset\AssetCategory;
                             </select>
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col-4">
                         <div class="input-group input-group-sm">
                             <input 
                                 type="text" 
@@ -122,6 +125,27 @@ use App\Enums\Asset\AssetCategory;
         </div>
     </div>
     <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <button type="button" id="delete-bulk-button" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+
+            <div class="input-group input-group-sm" style="width: 90px;">
+                <select name="page_size"
+                        id="page-size-select"
+                        class="form-control"
+                        onchange="this.form.submit()">
+
+                    @foreach ([10, 25, 50, 100, 250, 500, 1000] as $size)
+                        <option value="{{ $size }}"
+                            {{ request('page_size', 10) == $size ? 'selected' : '' }}>
+                            {{ $size }}
+                        </option>
+                    @endforeach
+
+                </select>
+            </div>
+        </div>
         {{ $assets->links() }}
     </div>
 </div>
@@ -251,6 +275,34 @@ use App\Enums\Asset\AssetCategory;
             $('#download-qr-anchor')
                 .attr('href', url)[0]
                 .click();
+        });
+
+        $(document).on('click', '#delete-bulk-button', async function() {
+            const ids = $('.child-checkbox:checked')
+                .map((_, el) => el.value)
+                .toArray();
+
+            if(ids.length === 0)
+                return Notification.error('Anda belum memilih aset');
+
+            const confirmation = await Notification.confirmation(`Anda yakin ingin menghapus total ${ids.length} aset ini?`);
+            if(!confirmation.isConfirmed)
+                return;
+
+            Loading.show();
+            try 
+            {
+                await Http.delete("{{ route('asset-management.bulk-delete') }}", { ids });
+                refreshUI();
+            }
+            catch(error)
+            {
+                Notification.error(error);
+            }
+            finally
+            {
+                Loading.hide();
+            }
         });
     });
 </script>
