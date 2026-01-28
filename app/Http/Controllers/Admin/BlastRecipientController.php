@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlastRecipient;
 use App\Services\Recipient\ExcelImportService;
 use App\Services\Recipient\RecipientBulkSaver;
+use App\Services\Recipient\RecipientNormalizer;
 use Illuminate\Http\Request;
 
 class BlastRecipientController extends Controller
@@ -14,7 +15,6 @@ class BlastRecipientController extends Controller
     {
         $recipients = BlastRecipient::latest()->paginate(20);
 
-        // FIX: view path sesuai folder
         return view('admin.blast.recipients.index', compact('recipients'));
     }
 
@@ -23,8 +23,13 @@ class BlastRecipientController extends Controller
         return view('admin.blast.recipients.create');
     }
 
-    public function store(Request $request)
-    {
+    /**
+     * INPUT MANUAL (DENGAN NORMALIZATION)
+     */
+    public function store(
+        Request $request,
+        RecipientNormalizer $normalizer
+    ) {
         $data = $request->validate([
             'nama_siswa' => 'required|string',
             'kelas' => 'required|string',
@@ -34,17 +39,35 @@ class BlastRecipientController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        // RULE FINAL: email / wa minimal salah satu
+        // minimal salah satu
         if (empty($data['email_wali']) && empty($data['wa_wali'])) {
             return back()->withErrors([
                 'email_wali' => 'Email atau WhatsApp wajib diisi'
             ])->withInput();
         }
 
+        // 🔥 NORMALIZE
+        $dto = $normalizer->normalize([
+            'nama_siswa' => $data['nama_siswa'],
+            'kelas' => $data['kelas'],
+            'nama_wali' => $data['nama_wali'],
+            'email' => $data['email_wali'],
+            'wa' => $data['wa_wali'],
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        // SIMPAN (VALID / INVALID)
         BlastRecipient::create([
-            ...$data,
-            'is_valid' => true,
-            'validation_error' => null,
+            'nama_siswa' => $dto->namaSiswa,
+            'kelas' => $dto->kelas,
+            'nama_wali' => $dto->namaWali,
+            'email_wali' => $dto->email,
+            'wa_wali' => $dto->phone, // ✅ SUDAH 62
+            // 'catatan' => $dto->catatan,
+            'is_valid' => empty($dto->errors),
+            'validation_error' => empty($dto->errors)
+                ? null
+                : implode(', ', $dto->errors),
         ]);
 
         return redirect()
@@ -68,12 +91,14 @@ class BlastRecipientController extends Controller
             $request->file('file')->getRealPath()
         );
 
-        // SIMPAN YANG VALID
         $summary = $bulkSaver->save(collect($result->valid));
 
         return redirect()
             ->route('admin.blast.recipients.index')
-            ->with('success', "Import selesai. Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$summary['invalid']}");
+            ->with(
+                'success',
+                "Import selesai. Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$summary['invalid']}"
+            );
     }
 
     public function destroy(string $id)
