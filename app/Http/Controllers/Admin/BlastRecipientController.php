@@ -48,7 +48,7 @@ class BlastRecipientController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.blast_recipients.index')
+            ->route('admin.blast.recipients.index')
             ->with('success', 'Penerima berhasil ditambahkan');
     }
 
@@ -72,7 +72,7 @@ class BlastRecipientController extends Controller
         $summary = $bulkSaver->save(collect($result->valid));
 
         return redirect()
-            ->route('admin.blast_recipients.index')
+            ->route('admin.blast.recipients.index')
             ->with('success', "Import selesai. Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$summary['invalid']}");
     }
 
