@@ -192,19 +192,19 @@
 
                     {{-- Subject --}}
                     <div class="form-group">
-                        <label class="form-label">Subject Email:</label>
+                        <label class="form-label">Subjek Email:</label>
                         <input
                             name="subject"
                             id="emailSubject"
                             class="form-input"
-                            placeholder="Masukkan subject email"
+                            placeholder="Masukkan subjek email"
                             required
                         >
                     </div>
 
                     {{-- Message --}}
                     <div class="form-group">
-                        <label class="form-label">Isi Pesan:</label>
+                        <label class="form-label">Isi Email:</label>
                         <textarea
                             name="message"
                             id="messageTextarea"
@@ -275,7 +275,7 @@
                     <div class="col-kelas">Kelas</div>
                     <div class="col-wali">Nama Wali</div>
                     <div class="col-email">Email Penerima</div>
-                    <div class="col-email">Subject</div>
+                    <div class="col-email">Subjek</div>
                     <div class="col-attachment">Lampiran</div>
                     <div class="col-status">Status</div>
                 </div>
@@ -293,7 +293,7 @@
             <div class="tips-title">Tips</div>
             <div class="tips-list">
                 <div class="tip-item">Pastikan email yang dimasukkan valid dan aktif.</div>
-                <div class="tip-item">Gunakan subject yang jelas dan menarik untuk meningkatkan open rate.</div>
+                <div class="tip-item">Gunakan subjek yang jelas dan menarik untuk meningkatkan tingkat buka.</div>
                 <div class="tip-item">Personalisasi pesan menggunakan variabel untuk engagement lebih baik.</div>
                 <div class="tip-item">Hindari penggunaan kata-kata yang masuk spam filter.</div>
             </div>

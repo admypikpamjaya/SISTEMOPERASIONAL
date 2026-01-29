@@ -79,6 +79,7 @@ Route::prefix('asset-management')
         Route::post('/file', 'storeWithFile')->name('store-with-file');
 
         Route::put('/', 'update')->name('update');
+        Route::delete('/bulk', 'bulkDelete')->name('bulk-delete');
         Route::delete('/{id}', 'delete')->name('delete');
     });
 
