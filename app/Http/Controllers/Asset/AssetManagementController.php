@@ -6,6 +6,7 @@ use App\DTOs\Asset\AssetDataDTO;
 use App\DTOs\Asset\RegisterAssetDTO;
 use App\DTOs\Asset\RegisterAssetViaFileDTO;
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Asset\EditAssetRequest;
 use App\Http\Requests\Asset\RegisterAssetRequest;
@@ -24,7 +25,13 @@ class AssetManagementController extends Controller
         $page = $request->input('page', 1);
         $pageSize = $request->input('page_size', 10);
 
-        $assets = $this->service->getAssets($request->keyword, ($request->category) ? AssetCategory::from($request->category) : null, $page, $pageSize);
+        $assets = $this->service->getAssets(
+            $request->keyword, 
+            ($request->category) ? AssetCategory::from($request->category) : null, 
+            ($request->unit) ? AssetUnit::from($request->unit) : null,
+            $page, 
+            $pageSize
+        );
         return view('asset-management.index', [
             'assets' => $assets
         ]);

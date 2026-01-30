@@ -2,6 +2,7 @@
 
 @php 
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 @endphp 
 
 @section('content')
@@ -47,10 +48,24 @@ use App\Enums\Asset\AssetCategory;
                         <div class="row">
                             <div class="col">
                                 <div class="form-group">
+                                    <label for="unit">Unit  <span class="text-red">*</span></label>
+                                    <select name="unit" id="unit" class="form-control">
+                                        <option value="" disabled selected>-- Pilih Unit --</option>
+                                        @foreach(AssetUnit::cases() as $unit)
+                                            <option value="{{ $unit->value }}">{{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
                                     <label for="location">Lokasi <span class="text-red">*</span></label>
                                     <input type="text" name="location" class="form-control" id="location" placeholder="Masukkan lokasi">
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col">
                                 <div class="form-group">
                                     <label for="location">Tahun Pembelian</label>
@@ -99,6 +114,7 @@ use App\Enums\Asset\AssetCategory;
         $('#asset-detail-form .card-body').html('');
 
         $('#category').prop('selectedIndex', 0);
+        $('#unit').prop('selectedIndex', 0);
         $('#asset-detail-form-container').addClass('d-none');
     }
 

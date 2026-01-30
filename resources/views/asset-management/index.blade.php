@@ -2,6 +2,7 @@
 
 @php 
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 @endphp
 
 @section('content')
@@ -29,7 +30,14 @@ use App\Enums\Asset\AssetCategory;
             <div class="col-md-6">
                 <div class="row align-items-center">
                     <div class="col">
-
+                        <div class="input-group input-group-sm">
+                            <select name="unit" id="filter-unit-select" class="form-control">
+                                <option value="">Semua Unit</option>
+                                @foreach (AssetUnit::cases() as $unit)
+                                    <option value="{{ $unit->value }}" {{ request('unit') == $unit->value ? 'selected' : '' }}>{{ $unit->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="col-3">
                         <div class="input-group input-group-sm">
@@ -130,20 +138,23 @@ use App\Enums\Asset\AssetCategory;
                 <i class="fas fa-trash-alt"></i>
             </button>
 
-            <div class="input-group input-group-sm" style="width: 90px;">
-                <select name="page_size"
-                        id="page-size-select"
-                        class="form-control"
-                        onchange="this.form.submit()">
+            <div class="form-group">
+                <label for="">Row Limit</label>
+                <div class="input-group input-group-sm" style="width: 90px;">
+                    <select name="page_size"
+                            id="page-size-select"
+                            class="form-control"
+                            onchange="this.form.submit()">
 
-                    @foreach ([10, 25, 50, 100, 250, 500, 1000] as $size)
-                        <option value="{{ $size }}"
-                            {{ request('page_size', 10) == $size ? 'selected' : '' }}>
-                            {{ $size }}
-                        </option>
-                    @endforeach
+                        @foreach ([10, 25, 50, 100, 250, 500, 1000] as $size)
+                            <option value="{{ $size }}"
+                                {{ request('page_size', 10) == $size ? 'selected' : '' }}>
+                                {{ $size }}
+                            </option>
+                        @endforeach
 
-                </select>
+                    </select>
+                </div>
             </div>
         </div>
         {{ $assets->links() }}
@@ -192,6 +203,10 @@ use App\Enums\Asset\AssetCategory;
 
     $(function() {
         resetState();
+
+        $('#filter-unit-select').on('change', function() {
+            $(this).closest('form').submit();
+        })
 
         $('#filter-category-select').on('change', function() {
             $(this).closest('form').submit();

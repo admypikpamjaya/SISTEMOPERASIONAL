@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Asset;
 
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +29,7 @@ class EditAssetRequest extends FormRequest
             'category' => ['required', Rule::enum(AssetCategory::class)],
             'account_code' => ['required', 'unique:assets,account_code,' . $this->id],
             'asset_serial_number' => ['nullable', 'unique:assets,serial_number,' . $this->id],
+            'unit' => ['required', Rule::enum(AssetUnit::class)],
             'location' => 'required|string',
             'purchase_year'=> ['nullable', 'string'],
             'detail' => 'required|array'
@@ -46,6 +48,9 @@ class EditAssetRequest extends FormRequest
             'account_code.unique' => 'Kode akun sudah digunakan',
 
             'asset_serial_number.unique' => 'Nomor serial sudah digunakan',
+
+            'unit.required' => 'Field unit wajib diisi',
+            'unit.*' => 'Unit tidak valid',
 
             'location.required' => 'Field lokasi wajib diisi',
 
