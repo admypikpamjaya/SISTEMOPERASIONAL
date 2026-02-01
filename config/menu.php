@@ -51,7 +51,7 @@ return [
                 'route' => 'admin.blast.email',
             ],
             [
-                'label' => 'Student Data',
+                'label' => 'Recipient Data',
                 'icon'  => 'fas fa-users',
                 'route' => 'admin.blast.recipients.index',
                 'module_name' => 'admin_blast',
