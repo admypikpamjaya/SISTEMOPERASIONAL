@@ -647,7 +647,7 @@
                                 </div>
                             @endif
                             <div class="form-hint">
-                                Gunakan format: +62 812 3456 789
+                                Gunakan format: +62 812 3456 789 (maksimal 13 digit setelah +62)
                             </div>
                         </div>
 
@@ -956,7 +956,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 4000);
     }
 
-    // Format phone number input dengan +62
+    // Format phone number input dengan +62 (maksimal 13 digit setelah kode negara)
     const phoneInput = document.getElementById('wa_wali');
     if (phoneInput) {
         phoneInput.addEventListener('input', function(e) {
@@ -973,19 +973,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 value = '62' + value;
             }
             
+            // Batasi panjang maksimal: 2 (kode negara) + 13 = 15 digit total
+            const maxLength = 15; // 62 + 13 digit
+            if (value.length > maxLength) {
+                value = value.substring(0, maxLength);
+            }
+            
             // Format: +62 xxx xxx xxxx
             let formattedValue = '';
             if (value.length > 0) {
                 formattedValue = '+' + value.substring(0, 2); // +62
                 
                 if (value.length > 2) {
-                    formattedValue += ' ' + value.substring(2, 5); // spasi + 3 digit pertama
-                }
-                if (value.length > 5) {
-                    formattedValue += ' ' + value.substring(5, 8); // spasi + 3 digit berikutnya
-                }
-                if (value.length > 8) {
-                    formattedValue += ' ' + value.substring(8, 12); // spasi + 4 digit terakhir
+                    // Ambil maksimal 13 digit setelah +62
+                    const digits = value.substring(2, Math.min(value.length, 15));
+                    
+                    // Format dengan spasi setiap 3-4 digit
+                    if (digits.length <= 3) {
+                        formattedValue += ' ' + digits;
+                    } else if (digits.length <= 6) {
+                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3);
+                    } else if (digits.length <= 9) {
+                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6);
+                    } else if (digits.length <= 13) {
+                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6, 9) + ' ' + digits.substring(9, 13);
+                    }
                 }
             }
             
@@ -1004,18 +1016,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 value = '62' + value;
             }
             
+            // Batasi panjang maksimal: 2 (kode negara) + 13 = 15 digit total
+            const maxLength = 15;
+            if (value.length > maxLength) {
+                value = value.substring(0, maxLength);
+            }
+            
             let formattedValue = '';
             if (value.length > 0) {
                 formattedValue = '+' + value.substring(0, 2);
                 
                 if (value.length > 2) {
-                    formattedValue += ' ' + value.substring(2, 5);
-                }
-                if (value.length > 5) {
-                    formattedValue += ' ' + value.substring(5, 8);
-                }
-                if (value.length > 8) {
-                    formattedValue += ' ' + value.substring(8, 12);
+                    // Ambil maksimal 13 digit setelah +62
+                    const digits = value.substring(2, Math.min(value.length, 15));
+                    
+                    // Format dengan spasi setiap 3-4 digit
+                    if (digits.length <= 3) {
+                        formattedValue += ' ' + digits;
+                    } else if (digits.length <= 6) {
+                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3);
+                    } else if (digits.length <= 9) {
+                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6);
+                    } else if (digits.length <= 13) {
+                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6, 9) + ' ' + digits.substring(9, 13);
+                    }
                 }
             }
             

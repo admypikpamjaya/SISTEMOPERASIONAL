@@ -257,7 +257,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Data Lengkap</div>
-                    <div class="stat-number">{{ $completeCount ?? 0 }}</div>
+                    <div class="stat-number">{{ $recipients->total() }}</div>
                 </div>
             </div>
             <div class="stat-card">
@@ -279,7 +279,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Data Tervalidasi</div>
-                    <div class="stat-number">{{ $validatedCount ?? 0 }}</div>
+                    <div class="stat-number">{{ $recipients->total() }}</div>
                 </div>
             </div>
         </div>
