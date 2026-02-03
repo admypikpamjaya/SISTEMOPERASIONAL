@@ -1,213 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Student Data')
 @section('content')
-<<<<<<< HEAD
-<div class="container-fluid recipient-wrapper">
-
-    {{-- Page Title --}}
-    <div class="page-title">
-        <h3>Kelola Data Penerima WhatsApp & Email</h3>
-        <p>Manajemen data penerima untuk kebutuhan blasting</p>
-    </div>
-
-    {{-- Action Bar --}}
-    <div class="action-bar">
-        <a href="{{ route('admin.blast.recipients.create') }}" class="btn btn-primary">
-            + Tambah Penerima
-        </a>
-
-        <form action="{{ route('admin.blast.recipients.import') }}"
-              method="POST"
-              enctype="multipart/form-data"
-              class="import-form">
-            @csrf
-            <input type="file" name="file" required>
-            <button class="btn btn-success">Import Excel</button>
-        </form>
-    </div>
-
-    {{-- Data Table --}}
-    <div class="card data-card">
-        <div class="table-responsive">
-            <table class="table recipient-table">
-                <thead>
-                <tr>
-                    <th>Nama Siswa</th>
-                    <th>Kelas</th>
-                    <th>Nama Wali</th>
-                    <th>Email</th>
-                    <th>WhatsApp</th>
-                    <th>Catatan</th>
-                    <th>Status</th>
-                    <th width="120">Aksi</th>
-                </tr>
-                </thead>
-                <tbody>
-                @forelse($recipients as $r)
-                    <tr>
-                        <td class="fw-semibold">{{ $r->nama_siswa }}</td>
-                        <td>{{ $r->kelas }}</td>
-                        <td>{{ $r->nama_wali }}</td>
-                        <td>{{ $r->email_wali }}</td>
-                        <td>{{ $r->wa_wali }}</td>
-                        <td>{{ $r->catatan ?? '-' }}</td>
-                        <td>
-                            @if($r->is_valid)
-                                <span class="badge badge-valid">VALID</span>
-                            @else
-                                <span class="badge badge-invalid">INVALID</span>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="aksi">
-                                <a href="{{ route('admin.blast.recipients.edit', $r->id) }}"
-                                   class="btn btn-sm btn-warning">
-                                    Edit
-                                </a>
-
-                                <form method="POST"
-                                      action="{{ route('admin.blast.recipients.destroy', $r->id) }}"
-                                      onsubmit="return confirm('Hapus data ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-danger">✕</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            Belum ada data penerima
-                        </td>
-                    </tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- Pagination --}}
-    <div class="mt-3">
-        {{ $recipients->links() }}
-    </div>
-
-    {{-- Activity Log --}}
-    <div class="card activity-card">
-        <div class="card-header">
-            <strong>Activity Log</strong>
-            <small class="text-muted d-block">
-                Riwayat aktivitas pengelolaan data penerima
-            </small>
-        </div>
-        <div class="card-body">
-            <ul class="activity-list">
-                <li>Import data penerima via Excel</li>
-                <li>Tambah penerima baru</li>
-                <li class="text-muted fst-italic">
-                    Log akan tampil otomatis setelah audit trail aktif
-                </li>
-            </ul>
-        </div>
-    </div>
-
-</div>
-
-<style>
-/* ===== LAYOUT ===== */
-.recipient-wrapper {
-    padding: 20px;
-}
-
-/* ===== TITLE ===== */
-.page-title h3 {
-    margin-bottom: 4px;
-    font-weight: 600;
-}
-.page-title p {
-    color: #6c757d;
-    font-size: 14px;
-}
-
-/* ===== ACTION BAR ===== */
-.action-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 15px 0 20px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.import-form {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-/* ===== TABLE ===== */
-.data-card {
-    border-radius: 6px;
-}
-
-.recipient-table thead th {
-    background: #f8f9fa;
-    font-size: 13px;
-    font-weight: 600;
-    color: #495057;
-}
-
-.recipient-table td {
-    font-size: 14px;
-    vertical-align: middle;
-}
-
-/* ===== BADGE ===== */
-.badge-valid {
-    background: #d1e7dd;
-    color: #0f5132;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.badge-invalid {
-    background: #f8d7da;
-    color: #842029;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* ===== AKSI ===== */
-.aksi {
-    display: flex;
-    gap: 6px;
-}
-
-/* ===== ACTIVITY ===== */
-.activity-card {
-    margin-top: 25px;
-}
-
-.activity-list {
-    padding-left: 18px;
-    margin: 0;
-}
-
-.activity-list li {
-    font-size: 14px;
-    margin-bottom: 6px;
-}
-</style>
-@endsection
-=======
 
 <style>
     body {background: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; color: #334155; margin: 0; padding: 0;}
-    .container-fluid {padding: 24px; max-width: 1400px; margin: 0 auto;}
+    .container-fluid {padding: 10px; max-width: 1400px; margin: 0 auto;}
     
     .header {
         display: flex;
@@ -309,6 +106,7 @@
     .badge-lengkap {background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;}
     .badge-kurang {background: #fefce8; color: #ca8a04; border-color: #fde047;}
     .badge-valid {background: #ecfdf5; color: #10b981; border-color: #a7f3d0;}
+    .badge-invalid {background: #f8d7da; color: #842029; border-color: #f5c2c7;}
     .badge-perlu-verifikasi {background: #fef3c7; color: #d97706; border-color: #fde68a;}
     .badge-status svg {width: 10px; height: 10px;}
     .action-buttons {display: flex; gap: 6px; flex-wrap: wrap;}
@@ -432,9 +230,9 @@
         
         <div class="header-content">
             <h1 class="header-title">
-                Student Data
+                Recipient Data
             </h1>
-            <p class="header-subtitle">Kelola data siswa dan wali murid</p>
+            <p class="header-subtitle">Manajemen data penerima untuk kebutuhan blasting</p>
         </div>
     </div>
 
@@ -448,7 +246,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Total Siswa</div>
-                    <div class="stat-number" id="totalSiswa">0</div>
+                    <div class="stat-number">{{ $recipients->total() }}</div>
                 </div>
             </div>
             <div class="stat-card">
@@ -459,7 +257,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Data Lengkap</div>
-                    <div class="stat-number" id="dataLengkap">0</div>
+                    <div class="stat-number">{{ $recipients->total() }}</div>
                 </div>
             </div>
             <div class="stat-card">
@@ -470,7 +268,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Data Kurang</div>
-                    <div class="stat-number" id="dataKurang">0</div>
+                    <div class="stat-number">{{ $incompleteCount ?? 0 }}</div>
                 </div>
             </div>
             <div class="stat-card">
@@ -481,7 +279,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Data Tervalidasi</div>
-                    <div class="stat-number" id="dataValid">0</div>
+                    <div class="stat-number">{{ $recipients->total() }}</div>
                 </div>
             </div>
         </div>
@@ -490,20 +288,25 @@
             <div class="table-header">
                 <div class="search-container">
                     <input type="text" class="search-box" placeholder="Cari nama siswa, kelas, atau wali..." id="searchInput">
-                    <button class="btn-import" id="importExcelBtn">
-                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                        </svg>
-                        Impor Excel
-                        <input type="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv">
-                    </button>
-                    <button class="btn-add" id="addStudentBtn">
+                    
+                    <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
+                        @csrf
+                        <button type="button" class="btn-import" id="importExcelBtn">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+                                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                            </svg>
+                            Impor Excel
+                            <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
+                        </button>
+                    </form>
+                    
+                    <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">
                         <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                         </svg>
                         Tambah Data
-                    </button>
+                    </a>
                 </div>
             </div>
             
@@ -521,119 +324,119 @@
                             <th style="width: 130px;">AKSI</th>
                         </tr>
                     </thead>
-                    <tbody id="studentTableBody">
-                        <!-- Data akan ditampilkan di sini -->
+                    <tbody>
+                        @forelse($recipients as $r)
+                            <tr>
+                                <td>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        @php
+                                            $isComplete = $r->nama_siswa && $r->nama_wali && $r->wa_wali && $r->email_wali;
+                                        @endphp
+                                        <span class="badge-status {{ $isComplete ? 'badge-lengkap' : 'badge-kurang' }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $isComplete ? 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z' }}" />
+                                            </svg>
+                                            {{ $isComplete ? 'LENGKAP' : 'KURANG' }}
+                                        </span>
+                                        
+                                        @if($r->is_valid)
+                                            <span class="badge-status badge-valid">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                VALID
+                                            </span>
+                                        @else
+                                            <span class="badge-status badge-invalid">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                                </svg>
+                                                INVALID
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="student-name" title="{{ $r->nama_siswa }}">
+                                        {{ $r->nama_siswa }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="student-class">{{ $r->kelas }}</span>
+                                </td>
+                                <td>
+                                    <div class="student-info" title="{{ $r->nama_wali }}">
+                                        {{ $r->nama_wali }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="student-phone" title="{{ $r->wa_wali }}">
+                                        {{ $r->wa_wali }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="student-email" title="{{ $r->email_wali }}">
+                                        {{ $r->email_wali }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="student-catatan" title="{{ $r->catatan ?? '-' }}">
+                                        {{ $r->catatan ?? '-' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ route('admin.blast.recipients.edit', $r->id) }}" class="btn-action btn-edit">
+                                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                            </svg>
+                                            Edit
+                                        </a>
+                                        
+                                        <form method="POST" action="{{ route('admin.blast.recipients.destroy', $r->id) }}" class="d-inline" onsubmit="return confirm('Hapus data ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-action btn-delete">
+                                                <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                                </svg>
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8">
+                                    <div class="empty-state table-empty-state">
+                                        <div class="empty-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                            </svg>
+                                        </div>
+                                        <div class="empty-title">Belum Ada Data Siswa</div>
+                                        <div class="empty-subtitle">Tambahkan data siswa baru dengan menekan tombol "Tambah Data" di atas atau impor dari file Excel</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
-        </div>
-        
-        <div class="activity-section">
-            <div class="activity-card">
-                <div class="activity-header">
-                    <div class="activity-title">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 012.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                        </svg>
-                        Activity Log
-                        <span class="activity-count" id="activityCount">0</span>
-                    </div>
-                    <button class="btn-delete-all" id="deleteAllActivitiesBtn">
-                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
-                        </svg>
-                        Hapus Semua
-                    </button>
+            
+            {{-- Pagination --}}
+            @if($recipients->hasPages())
+                <div class="table-header" style="border-top: 1px solid #e2e8f0; padding: 15px 20px;">
+                    {{ $recipients->links() }}
                 </div>
-                
-                <div class="activity-content" id="activityLog">
-                    <!-- Activity log akan ditampilkan di sini -->
-                </div>
-            </div>
+            @endif
         </div>
     </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="studentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Tambah Data Siswa
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="studentForm">
-                    <div class="form-group">
-                        <label class="form-label">Nama Siswa</label>
-                        <input type="text" class="form-control" id="nama" placeholder="Masukkan nama lengkap siswa" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Kelas</label>
-                        <div class="form-row">
-                            <div>
-                                <select class="form-control" id="tingkat" required>
-                                    <option value="">Pilih Tingkat</option>
-                                    <option value="1">Kelas 1</option>
-                                    <option value="2">Kelas 2</option>
-                                    <option value="3">Kelas 3</option>
-                                    <option value="4">Kelas 4</option>
-                                    <option value="5">Kelas 5</option>
-                                    <option value="6">Kelas 6</option>
-                                </select>
-                            </div>
-                            <div>
-                                <select class="form-control" id="kelas" required>
-                                    <option value="">Pilih Kelas</option>
-                                    <option value="A">Kelas A</option>
-                                    <option value="B">Kelas B</option>
-                                    <option value="C">Kelas C</option>
-                                    <option value="D">Kelas D</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-hint">Contoh: 4 A (Kelas 4-A)</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Nama Wali Murid</label>
-                        <input type="text" class="form-control" id="wali" placeholder="Masukkan nama wali murid" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Nomor WhatsApp</label>
-                        <div class="phone-input">
-                            <span class="phone-prefix">+62</span>
-                            <input type="tel" class="form-control" id="wa" placeholder="81234567890" required>
-                        </div>
-                        <div class="form-hint">Format: +62 8xxxxxxxxxx (tanpa spasi, dimulai dengan 8)</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Email Wali Murid</label>
-                        <input type="email" class="form-control" id="email" placeholder="contoh@email.com" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Catatan <span style="color: #94a3b8; font-weight: normal;">(Opsional)</span></label>
-                        <textarea class="form-control" id="catatan" rows="3" placeholder="Tambahkan catatan jika diperlukan..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal" id="cancelStudentBtn">Batal</button>
-                <button type="button" class="btn-submit" id="saveStudentBtn">Tambah Data</button>
-            </div>
-        </div>
-    </div>
-</div>
-
+<!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -659,646 +462,64 @@
     </div>
 </div>
 
-<div class="modal fade" id="deleteAllActivitiesModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal">×</button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="mb-4">
-                    <div style="width: 64px; height: 64px; margin: 0 auto 20px; color: #f59e0b;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                        </svg>
-                    </div>
-                    <h5 class="fw-bold mb-2">Hapus Semua Aktivitas?</h5>
-                    <p class="text-muted">Semua riwayat aktivitas akan dihapus secara permanen</p>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" id="confirmDeleteAllActivitiesBtn">Hapus Semua</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-    let students = [], activities = [], currentStudentId = null, isEditing = false;
-    const studentTableBody = document.getElementById('studentTableBody'),
-          activityLog = document.getElementById('activityLog'),
-          totalSiswa = document.getElementById('totalSiswa'),
-          dataLengkap = document.getElementById('dataLengkap'),
-          dataKurang = document.getElementById('dataKurang'),
-          dataValid = document.getElementById('dataValid'),
-          activityCount = document.getElementById('activityCount'),
-          searchInput = document.getElementById('searchInput'),
-          addStudentBtn = document.getElementById('addStudentBtn'),
-          saveStudentBtn = document.getElementById('saveStudentBtn'),
-          cancelStudentBtn = document.getElementById('cancelStudentBtn'),
-          deleteAllActivitiesBtn = document.getElementById('deleteAllActivitiesBtn'),
-          excelFileInput = document.getElementById('excelFileInput'),
-          confirmDeleteBtn = document.getElementById('confirmDeleteBtn'),
-          confirmDeleteAllActivitiesBtn = document.getElementById('confirmDeleteAllActivitiesBtn');
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // Data kosong secara default
-        students = [];
-        activities = [];
-        
-        // Render tampilan kosong
-        renderEmptyState();
-        renderEmptyActivityLog();
-        updateStats();
-        setupEventListeners();
-    });
-
-    function renderEmptyState() {
-        studentTableBody.innerHTML = `<tr><td colspan="8"><div class="empty-state table-empty-state">
-            <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                </svg>
-            </div>
-            <div class="empty-title">Belum Ada Data Siswa</div>
-            <div class="empty-subtitle">Tambahkan data siswa baru dengan menekan tombol "Tambah Data" di atas atau impor dari file Excel</div>
-        </div></td></tr>`;
-    }
-
-    function renderEmptyActivityLog() {
-        activityLog.innerHTML = `<div class="empty-state">
-            <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <div class="empty-title">Belum Ada Aktivitas</div>
-            <div class="empty-subtitle">Aktivitas akan muncul di sini saat Anda menambahkan atau mengubah data siswa</div>
-        </div>`;
-        activityCount.textContent = '0';
-    }
-
-    function openAddModal() {
-        isEditing = false;
-        currentStudentId = null;
-        document.getElementById('studentForm').reset();
-        document.getElementById('modalTitle').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Tambah Data Siswa`;
-        document.getElementById('saveStudentBtn').textContent = 'Tambah Data';
-        const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
-        studentModal.show();
-    }
-
-    function openEditModal(studentId) {
-        const student = students.find(s => s.id === studentId);
-        if (!student) return;
-        isEditing = true;
-        currentStudentId = studentId;
-        const [tingkat, kelas] = student.kelas.split(' ');
-        document.getElementById('nama').value = student.nama;
-        document.getElementById('tingkat').value = tingkat || '';
-        document.getElementById('kelas').value = kelas || '';
-        document.getElementById('wali').value = student.wali;
-        document.getElementById('wa').value = student.wa.replace('+62', '');
-        document.getElementById('email').value = student.email;
-        document.getElementById('catatan').value = student.catatan || '';
-        document.getElementById('modalTitle').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 011.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>Edit Data Siswa`;
-        document.getElementById('saveStudentBtn').textContent = 'Update Siswa';
-        const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
-        studentModal.show();
-    }
-
-    function saveStudent() {
-        const form = document.getElementById('studentForm');
-        if (!form.checkValidity()) return form.reportValidity();
-        const tingkat = document.getElementById('tingkat').value,
-              kelas = document.getElementById('kelas').value,
-              phoneInput = document.getElementById('wa').value.trim();
-        if (!tingkat || !kelas) return showToast('Harap pilih tingkat dan kelas', 'error');
-        if (!phoneInput) return showToast('Harap isi nomor WhatsApp', 'error');
-        
-        const studentData = {
-            nama: document.getElementById('nama').value.trim(),
-            kelas: `${tingkat} ${kelas}`,
-            wali: document.getElementById('wali').value.trim(),
-            wa: `+62${phoneInput}`,
-            email: document.getElementById('email').value.trim(),
-            catatan: document.getElementById('catatan').value.trim(),
-            status: 'LENGKAP',
-            createdAt: new Date(),
-            isValidated: false,
-            validatedBy: null,
-            validatedAt: null
-        };
-        
-        // Validasi
-        if (!studentData.nama || !studentData.wali || !phoneInput || !studentData.email) 
-            return showToast('Harap isi semua field yang wajib diisi', 'error');
-        if (!/^8[0-9]{9,11}$/.test(phoneInput)) 
-            return showToast('Nomor WA harus dimulai dengan 8 dan terdiri dari 10-12 digit', 'error');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentData.email)) 
-            return showToast('Format email tidak valid', 'error');
-        
-        if (isEditing) {
-            // Edit data siswa yang sudah ada
-            const index = students.findIndex(s => s.id === currentStudentId);
-            if (index !== -1) {
-                students[index] = {...students[index], ...studentData};
-                addActivity('Data Diperbarui', `${studentData.nama} (${studentData.kelas})`, 'Admin', 'update');
-                showToast('Data siswa berhasil diperbarui', 'success');
-            }
-        } else {
-            // Tambah data siswa baru
-            const newStudent = {
-                id: students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1,
-                ...studentData
-            };
-            students.unshift(newStudent);
-            addActivity('Ditambahkan', `Siswa ${studentData.nama} (${studentData.kelas})`, 'Admin', 'add');
-            showToast('Data siswa berhasil ditambahkan', 'success');
-        }
-        
-        renderStudents();
-        updateStats();
-        bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
-    }
-
-    function toggleValidation(studentId) {
-        const student = students.find(s => s.id === studentId);
-        if (!student) return;
-        
-        const currentUser = "Admin"; // Ini bisa diganti dengan user yang sedang login
-        const now = new Date();
-        
-        if (student.isValidated) {
-            // Jika sudah tervalidasi, batalkan validasi
-            student.isValidated = false;
-            student.validatedBy = null;
-            student.validatedAt = null;
-            addActivity('Validasi Dibatalkan', `${student.nama} (${student.kelas})`, currentUser, 'validation', 'invalid');
-            showToast('Validasi data siswa dibatalkan', 'info');
-        } else {
-            // Jika belum tervalidasi, validasi data
-            student.isValidated = true;
-            student.validatedBy = currentUser;
-            student.validatedAt = now;
-            addActivity('Data Tervalidasi', `${student.nama} (${student.kelas}) - Data sudah diverifikasi`, currentUser, 'validation', 'valid');
-            showToast('Data siswa berhasil divalidasi', 'success');
-        }
-        
-        renderStudents();
-        updateStats();
-    }
-
-    function renderStudents() {
-        if (students.length === 0) {
-            renderEmptyState();
-            return;
-        }
-        
-        let tableHTML = '';
-        students.forEach(student => {
-            const isComplete = student.nama && student.wali && student.wa && student.email;
-            const status = isComplete ? 'LENGKAP' : 'KURANG';
-            
-            tableHTML += `<tr>
-                <td>
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span class="badge-status ${isComplete?'badge-lengkap':'badge-kurang'}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="${isComplete?'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z':'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'}" />
-                            </svg>${status}
-                        </span>
-                        ${student.isValidated ? 
-                            `<span class="badge-status badge-valid">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>TERVALIDASI
-                            </span>` : 
-                            `<span class="badge-status badge-perlu-verifikasi">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                                </svg>PERLU VERIFIKASI
-                            </span>`
-                        }
-                    </div>
-                </td>
-                <td><div class="student-name" title="${student.nama}">${student.nama}</div></td>
-                <td><span class="student-class">${student.kelas}</span></td>
-                <td><div class="student-info" title="${student.wali}">${student.wali}</div></td>
-                <td><div class="student-phone" title="${student.wa}">${student.wa}</div></td>
-                <td><div class="student-email" title="${student.email}">${student.email}</div></td>
-                <td><div class="student-catatan" title="${student.catatan || '-'}">${student.catatan ? student.catatan : '-'}</div></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-edit" onclick="openEditModal(${student.id})">
-                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
-                            </svg>Edit
-                        </button>
-                        <button class="btn-action btn-validate" onclick="toggleValidation(${student.id})">
-                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                            </svg>${student.isValidated ? 'Batal Validasi' : 'Validasi'}
-                        </button>
-                        <button class="btn-action btn-delete" onclick="deleteStudent(${student.id})">
-                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                            </svg>Hapus
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
-        });
-        studentTableBody.innerHTML = tableHTML;
-    }
-
-    function deleteStudent(studentId) {
-        currentStudentId = studentId;
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    }
-
-    function confirmDelete() {
-        const student = students.find(s => s.id === currentStudentId);
-        const index = students.findIndex(s => s.id === currentStudentId);
-        if (index !== -1) {
-            students.splice(index, 1);
-            addActivity('Dihapus', `Siswa ${student.nama} (${student.kelas})`, 'Admin', 'delete');
-            renderStudents();
-            updateStats();
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-            showToast('Data siswa berhasil dihapus', 'success');
-        }
-    }
-
-    function deleteAllActivities() {
-        if (activities.length === 0) return showToast('Tidak ada aktivitas untuk dihapus', 'info');
-        new bootstrap.Modal(document.getElementById('deleteAllActivitiesModal')).show();
-    }
-
-    function confirmDeleteAllActivities() {
-        const count = activities.length;
-        activities = [];
-        renderActivities();
-        activityCount.textContent = '0';
-        bootstrap.Modal.getInstance(document.getElementById('deleteAllActivitiesModal')).hide();
-        showToast(`Semua aktivitas (${count}) berhasil dihapus`, 'success');
-    }
-
-    function addActivity(action, detail, user = 'Admin', type = 'general', status = null) {
-        const now = new Date(),
-              time = getRelativeTime(now),
-              timestamp = formatTime(now),
-              initials = user.charAt(0).toUpperCase(),
-              newActivity = {
-                id: activities.length + 1, 
-                user, 
-                initials, 
-                action, 
-                detail, 
-                time, 
-                timestamp, 
-                type,
-                status,
-                createdAt: now
-            };
-        activities.unshift(newActivity);
-        renderActivities();
-    }
-
-    function renderActivities() {
-        if (activities.length === 0) {
-            renderEmptyActivityLog();
-            return;
-        }
-        
-        let activityHTML = '';
-        activities.forEach(activity => {
-            let actionIcon = '', statusBadge = '';
-            
-            // Tentukan ikon berdasarkan aksi
-            if (activity.action.includes('Validasi') || activity.action.includes('Tervalidasi')) {
-                actionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="10" height="10">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>`;
-                
-                if (activity.status === 'valid') {
-                    statusBadge = `<span class="activity-status-badge activity-status-valid">✓ VALID</span>`;
-                } else if (activity.status === 'invalid') {
-                    statusBadge = `<span class="activity-status-badge activity-status-invalid">✗ PERLU VERIFIKASI</span>`;
-                }
-            } else if (activity.action === 'Ditambahkan') {
-                actionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="10" height="10">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>`;
-            } else if (activity.action === 'Dihapus') {
-                actionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="10" height="10">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>`;
-            } else if (activity.action === 'Data Diperbarui') {
-                actionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="10" height="10">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                </svg>`;
-            } else if (activity.action === 'Import Excel') {
-                actionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="10" height="10">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                </svg>`;
-            } else if (activity.action === 'Validasi Dibatalkan') {
-                actionIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="10" height="10">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>`;
-            }
-            
-            activityHTML += `<div class="activity-item">
-                <div class="activity-header-main">
-                    <div class="activity-avatar">${activity.initials}</div>
-                    <div class="activity-user">${activity.user}</div>
-                    <div class="activity-time">${activity.time}</div>
-                </div>
-                <div class="activity-detail">
-                    ${activity.detail}
-                    ${statusBadge}
-                </div>
-                <div class="activity-action">
-                    ${actionIcon} ${activity.action}
-                </div>
-                <div class="activity-time">
-                    <span class="timestamp">${activity.timestamp}</span>
-                </div>
-            </div>`;
-        });
-        
-        activityLog.innerHTML = activityHTML;
-        activityCount.textContent = activities.length;
-    }
-
-    function updateStats() {
-        totalSiswa.textContent = students.length;
-        const complete = students.filter(s => s.nama && s.wali && s.wa && s.email).length,
-              incomplete = students.length - complete,
-              validated = students.filter(s => s.isValidated).length;
-        
-        dataLengkap.textContent = complete;
-        dataKurang.textContent = incomplete;
-        dataValid.textContent = validated;
-    }
-
-    function importExcelFile(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result),
-                      workbook = XLSX.read(data, { type: 'array' }),
-                      firstSheet = workbook.Sheets[workbook.SheetNames[0]],
-                      jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                if (jsonData.length === 0) return showToast('File Excel kosong atau format tidak sesuai', 'error');
-                
-                showImportProgress(0, jsonData.length);
-                let importedCount = 0, validCount = 0;
-                
-                jsonData.forEach((row, index) => {
-                    setTimeout(() => {
-                        const studentData = {
-                            nama: row['Nama Siswa'] || row['Nama'] || row['nama'] || '',
-                            kelas: (row['Kelas'] || row['kelas'] || '').toString(),
-                            wali: row['Nama Wali'] || row['Wali'] || row['wali'] || '',
-                            wa: row['Nomor WA'] || row['WhatsApp'] || row['wa'] || '',
-                            email: row['Email'] || row['Email Wali'] || row['email'] || '',
-                            catatan: row['Catatan'] || row['catatan'] || '',
-                            createdAt: new Date(),
-                            isValidated: false,
-                            validatedBy: null,
-                            validatedAt: null
-                        };
-                        
-                        if (studentData.kelas) {
-                            const kelasMatch = studentData.kelas.match(/(\d+)\s*([A-D])/i);
-                            if (kelasMatch) studentData.kelas = `${kelasMatch[1]} ${kelasMatch[2].toUpperCase()}`;
-                        }
-                        
-                        if (studentData.wa) {
-                            let phone = studentData.wa.toString().replace(/\s/g, '');
-                            if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-                            else if (!phone.startsWith('62') && !phone.startsWith('+62')) phone = '62' + phone;
-                            if (!phone.startsWith('+')) phone = '+' + phone;
-                            studentData.wa = phone;
-                        }
-                        
-                        if (studentData.nama && studentData.wali && studentData.wa && studentData.email) {
-                            students.unshift({
-                                id: students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1,
-                                ...studentData,
-                                status: 'LENGKAP'
-                            });
-                            validCount++;
-                        }
-                        
-                        importedCount++;
-                        const progress = Math.round((importedCount / jsonData.length) * 100);
-                        showImportProgress(importedCount, jsonData.length, progress);
-                        
-                        if (importedCount === jsonData.length) {
-                            setTimeout(() => {
-                                hideImportProgress();
-                                if (validCount > 0) {
-                                    addActivity('Import Excel', `${validCount} data siswa diimpor`, 'Admin', 'import');
-                                    renderStudents();
-                                    updateStats();
-                                    showToast(`Berhasil mengimpor ${validCount} data siswa dari file Excel`, 'success');
-                                } else {
-                                    showToast('Tidak ada data valid yang dapat diimpor. Periksa format file Excel', 'error');
-                                }
-                            }, 500);
-                        }
-                    }, index * 50);
-                });
-            } catch (error) {
-                hideImportProgress();
-                showToast('Error membaca file Excel: ' + error.message, 'error');
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function showImportProgress(current, total, percent = 0) {
-        let progressModal = document.getElementById('importProgressModal');
-        if (!progressModal) {
-            progressModal = document.createElement('div');
-            progressModal.id = 'importProgressModal';
-            progressModal.className = 'import-progress';
-            progressModal.innerHTML = `<div style="margin-bottom:16px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="32" height="32" style="color:#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg></div>
-            <h5 style="margin-bottom:8px;color:#1e293b;font-weight:600">Mengimpor Data</h5>
-            <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
-            <div class="progress-text">${current} dari ${total} data diproses (${percent}%)</div>`;
-            document.body.appendChild(progressModal);
-        } else {
-            const progressFill = progressModal.querySelector('.progress-fill'),
-                  progressText = progressModal.querySelector('.progress-text');
-            if (progressFill) progressFill.style.width = percent + '%';
-            if (progressText) progressText.textContent = `${current} dari ${total} data diproses (${percent}%)`;
-        }
-    }
-
-    function hideImportProgress() {
-        const progressModal = document.getElementById('importProgressModal');
-        if (progressModal) progressModal.remove();
-    }
-
-    function setupEventListeners() {
-        addStudentBtn.addEventListener('click', openAddModal);
-        saveStudentBtn.addEventListener('click', saveStudent);
-        cancelStudentBtn.addEventListener('click', function() {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('studentModal'));
-            if (modal) modal.hide();
-        });
-        
-        deleteAllActivitiesBtn.addEventListener('click', deleteAllActivities);
-        excelFileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const validExtensions = ['.xlsx', '.xls', '.csv'],
-                  fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            if (!validExtensions.includes(fileExtension)) {
-                showToast('Format file tidak didukung. Harap upload file Excel (.xlsx, .xls, .csv)', 'error');
-                this.value = '';
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('File terlalu besar. Maksimal 5MB', 'error');
-                this.value = '';
-                return;
-            }
-            showToast('Memproses file Excel...', 'info');
-            importExcelFile(file);
-            this.value = '';
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase().trim();
-            if (!searchTerm) return renderStudents();
-            const filtered = students.filter(student => 
-                student.nama.toLowerCase().includes(searchTerm) ||
-                student.kelas.toLowerCase().includes(searchTerm) ||
-                student.wali.toLowerCase().includes(searchTerm) ||
-                student.email.toLowerCase().includes(searchTerm) ||
-                student.wa.includes(searchTerm) ||
-                (student.catatan && student.catatan.toLowerCase().includes(searchTerm))
-            );
-            renderFilteredStudents(filtered);
-        });
-        confirmDeleteBtn.addEventListener('click', confirmDelete);
-        confirmDeleteAllActivitiesBtn.addEventListener('click', confirmDeleteAllActivities);
-    }
-
-    function renderFilteredStudents(filteredStudents) {
-        if (filteredStudents.length === 0) {
-            studentTableBody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
-                <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg></div>
-                <div class="empty-title">Tidak ditemukan data siswa</div><div class="empty-subtitle">Coba dengan kata kunci yang berbeda</div></div></td></tr>`;
-            return;
-        }
-        
-        let tableHTML = '';
-        filteredStudents.forEach(student => {
-            const isComplete = student.nama && student.wali && student.wa && student.email;
-            const status = isComplete ? 'LENGKAP' : 'KURANG';
+            const rows = document.querySelectorAll('.table tbody tr');
             
-            tableHTML += `<tr>
-                <td>
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span class="badge-status ${isComplete?'badge-lengkap':'badge-kurang'}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="${isComplete?'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z':'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'}" />
-                            </svg>${status}
-                        </span>
-                        ${student.isValidated ? 
-                            `<span class="badge-status badge-valid">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>TERVALIDASI
-                            </span>` : 
-                            `<span class="badge-status badge-perlu-verifikasi">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                                </svg>PERLU VERIFIKASI
-                            </span>`
-                        }
-                    </div>
-                </td>
-                <td><div class="student-name" title="${student.nama}">${student.nama}</div></td>
-                <td><span class="student-class">${student.kelas}</span></td>
-                <td><div class="student-info" title="${student.wali}">${student.wali}</div></td>
-                <td><div class="student-phone" title="${student.wa}">${student.wa}</div></td>
-                <td><div class="student-email" title="${student.email}">${student.email}</div></td>
-                <td><div class="student-catatan" title="${student.catatan || '-'}">${student.catatan ? student.catatan : '-'}</div></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-edit" onclick="openEditModal(${student.id})">
-                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
-                            </svg>Edit
-                        </button>
-                        <button class="btn-action btn-validate" onclick="toggleValidation(${student.id})">
-                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                            </svg>${student.isValidated ? 'Batal Validasi' : 'Validasi'}
-                        </button>
-                        <button class="btn-action btn-delete" onclick="deleteStudent(${student.id})">
-                            <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                            </svg>Hapus
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
         });
-        studentTableBody.innerHTML = tableHTML;
     }
-
-    function formatTime(date) {
-        return date.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false});
-    }
-
-    function getRelativeTime(date) {
-        const now = new Date(),
-              diffMs = now - date,
-              diffMins = Math.floor(diffMs / (1000 * 60));
-        if (diffMins < 1) return 'Baru saja';
-        if (diffMins === 1) return '1 menit yang lalu';
-        if (diffMins < 60) return `${diffMins} menit yang lalu`;
-        const diffHours = Math.floor(diffMins / 60);
-        if (diffHours === 1) return '1 jam yang lalu';
-        if (diffHours < 24) return `${diffHours} jam yang lalu`;
-        const diffDays = Math.floor(diffHours / 24);
-        if (diffDays === 1) return '1 hari yang lalu';
-        return `${diffDays} hari yang lalu`;
-    }
-
-    function showToast(message, type = 'success') {
-        document.querySelectorAll('.toast').forEach(toast => toast.remove());
-        
-        let icon = '';
-        if (type === 'success') {
-            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-        } else if (type === 'error') {
-            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`;
-        } else {
-            icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>`;
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type === 'error' ? 'toast-error' : type === 'info' ? 'toast-info' : ''}`;
-        toast.innerHTML = `${icon}<div style="flex:1">${message}</div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;cursor:pointer;font-size:18px;opacity:0.7">×</button>`;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
+    
+    // Import form submission
+    const excelFileInput = document.getElementById('excelFileInput');
+    if (excelFileInput) {
+        excelFileInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                this.closest('form').submit();
             }
-        }, 4000);
+        });
     }
+    
+    // Toast notification
+    @if(session('success'))
+        showToast('{{ session('success') }}', 'success');
+    @endif
+    
+    @if(session('error'))
+        showToast('{{ session('error') }}', 'error');
+    @endif
+});
+
+function showToast(message, type = 'success') {
+    document.querySelectorAll('.toast').forEach(toast => toast.remove());
+    
+    let icon = '';
+    if (type === 'success') {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+    } else if (type === 'error') {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`;
+    } else {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>`;
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type === 'error' ? 'toast-error' : type === 'info' ? 'toast-info' : ''}`;
+    toast.innerHTML = `${icon}<div style="flex:1">${message}</div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;cursor:pointer;font-size:18px;opacity:0.7">×</button>`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 4000);
+}
 </script>
 @endsection
->>>>>>> c5b32f4283ad352a9cccba955fcb76187646d59b

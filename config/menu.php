@@ -60,7 +60,7 @@ return [
                 'label' => 'Announcement',
                 'icon'  => 'fas fa-bullhorn',
                 'route' => 'admin.announcements.index',
-    ],
+       ],
 
         ],
     ],

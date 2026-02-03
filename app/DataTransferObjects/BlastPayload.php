@@ -53,4 +53,11 @@ class BlastPayload
             'meta'        => $this->meta,
         ];
     }
+    /**
+     * 🔥 BARU – inject hasil render template
+     */
+    public function applyRenderedMessage(string $message): void
+    {
+        $this->message = $message;
+    }
 }

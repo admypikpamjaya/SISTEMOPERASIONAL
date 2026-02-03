@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Services\Blast;
+
+use App\DataTransferObjects\BlastPayload;
+use App\Models\BlastTemplate;
+use App\Models\BlastRecipient;
+
+class BlastTemplateInjector
+{
+    public function __construct(
+        protected TemplateRenderer $renderer
+    ) {}
+
+    public function inject(
+        BlastPayload $payload,
+        BlastTemplate $template,
+        BlastRecipient $recipient
+    ): BlastPayload {
+        $variables = [
+            'nama_wali'   => $recipient->nama_wali,
+            'nama_siswa' => $recipient->nama_siswa,
+            'kelas'      => $recipient->kelas,
+            'email'      => $recipient->email_wali,
+            'wa'         => $recipient->wa_wali,
+        ];
+
+        $rendered = $this->renderer->render(
+            $template->body,
+            $variables
+        );
+
+        $payload->applyRenderedMessage($rendered);
+
+        if ($template->channel === 'EMAIL' && $template->subject) {
+            $payload->setMeta('subject', $template->subject);
+        }
+
+        return $payload;
+    }
+}

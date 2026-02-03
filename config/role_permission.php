@@ -30,10 +30,15 @@ return [
         PortalPermission::ADMIN_BLAST_READ,
         PortalPermission::ADMIN_BLAST_SEND,
 
-        // BLAST RECIPIENT (NEW)
+        // BLAST RECIPIENT
         PortalPermission::BLAST_RECIPIENT_READ,
         PortalPermission::BLAST_RECIPIENT_CREATE,
         PortalPermission::BLAST_RECIPIENT_IMPORT,
+
+        // 🚀 BLAST TEMPLATE (PHASE 10.2)
+        PortalPermission::BLAST_TEMPLATE_READ,
+        PortalPermission::BLAST_TEMPLATE_CREATE,
+        PortalPermission::BLAST_TEMPLATE_DELETE,
     ],
 
     /* ===============================

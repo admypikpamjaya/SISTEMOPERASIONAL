@@ -1,29 +1,30 @@
 <?php
 
-use App\Http\Controllers\Asset\AssetManagementController;
-use App\Http\Controllers\Asset\PublicAssetController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+
+use App\Http\Controllers\Asset\AssetManagementController;
+use App\Http\Controllers\Asset\PublicAssetController;
+
 use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
 
-// ADMIN COMMUNICATION & BILLING
+// ADMIN
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ReminderController;
 use App\Http\Controllers\Admin\BlastController;
 use App\Http\Controllers\Admin\BlastRecipientController;
-
-
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\BlastTemplateController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Root
 |--------------------------------------------------------------------------
 */
-
 Route::get('/', function () {
     return Auth::check()
         ? redirect()->route('dashboard.index')
@@ -70,6 +71,7 @@ Route::prefix('asset-management')
     ->middleware(['auth', 'check_access:asset_management.read'])
     ->controller(AssetManagementController::class)
     ->group(function () {
+
         Route::get('/', 'index')->name('index');
         Route::get('/register', 'showRegisterForm')->name('register-form');
         Route::get('/edit/{id}', 'showEditForm')->name('edit-form');
@@ -94,6 +96,7 @@ Route::prefix('maintenance-report')
     ->group(function () {
 
         Route::middleware(['auth', 'check_access:maintenance_report.read'])->group(function () {
+
             Route::get('/', 'index')->name('index');
             Route::get('/{id}', 'show')->name('detail');
 
@@ -115,7 +118,7 @@ Route::prefix('maintenance-report')
 
 /*
 |--------------------------------------------------------------------------
-| User Management (IT SUPPORT ONLY)
+| User Management
 |--------------------------------------------------------------------------
 */
 Route::prefix('user-database')
@@ -123,6 +126,7 @@ Route::prefix('user-database')
     ->middleware(['auth', 'check_access:user_management.read'])
     ->controller(UserManagementController::class)
     ->group(function () {
+
         Route::get('/', 'index')->name('index');
         Route::get('/{id}', 'show')->name('show');
 
@@ -136,7 +140,7 @@ Route::prefix('user-database')
 
 /*
 |--------------------------------------------------------------------------
-| Public View
+| Public
 |--------------------------------------------------------------------------
 */
 Route::get('assets/{id}', [PublicAssetController::class, 'show'])
@@ -150,18 +154,19 @@ Route::post('reset-password', [ResetPasswordController::class, 'reset'])
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN – COMMUNICATION & BILLING (PHASE 6 – LOCKED)
+| ADMIN AREA
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth'])
+    ->middleware('auth')
     ->group(function () {
 
-        // ANNOUNCEMENTS
+        /* ================= ANNOUNCEMENTS ================= */
         Route::prefix('announcements')
             ->middleware('check_access:admin_announcement.read')
             ->group(function () {
+
                 Route::get('/', [AnnouncementController::class, 'index'])
                     ->name('announcements.index');
 
@@ -174,10 +179,11 @@ Route::prefix('admin')
                     ->name('announcements.store');
             });
 
-        // BILLINGS
+        /* ================= BILLINGS ================= */
         Route::prefix('billings')
             ->middleware('check_access:admin_billing.read')
             ->group(function () {
+
                 Route::get('/', [BillingController::class, 'index'])
                     ->name('billings.index');
 
@@ -186,10 +192,11 @@ Route::prefix('admin')
                     ->name('billings.confirm');
             });
 
-        // REMINDERS
+        /* ================= REMINDERS ================= */
         Route::prefix('reminders')
             ->middleware('check_access:admin_reminder.read')
             ->group(function () {
+
                 Route::get('/', [ReminderController::class, 'index'])
                     ->name('reminders.index');
 
@@ -198,71 +205,41 @@ Route::prefix('admin')
                     ->name('reminders.send');
             });
 
-        // BLAST
+        /* ================= BLAST ================= */
         Route::prefix('blast')
-        
+            ->name('blast.')
             ->middleware('check_access:admin_blast.read')
             ->group(function () {
-                Route::get('/', [BlastController::class, 'index'])
-                    ->name('blast.index');
 
-                Route::post('/send', [BlastController::class, 'send'])
-                    ->middleware('check_access:admin_blast.send')
-                    ->name('blast.send');
-                     Route::get('/blast/whatsapp', [BlastController::class, 'whatsapp'])
-            ->name('blast.whatsapp');
+                Route::get('/', [BlastController::class, 'index'])->name('index');
 
-        Route::post('/blast/whatsapp/send', [BlastController::class, 'sendWhatsapp'])
-            ->name('blast.whatsapp.send');
+                Route::get('/whatsapp', [BlastController::class, 'whatsapp'])->name('whatsapp');
+                Route::post('/whatsapp/send', [BlastController::class, 'sendWhatsapp'])->name('whatsapp.send');
 
-        Route::get('/blast/email', [BlastController::class, 'email'])
-            ->name('blast.email');
+                Route::get('/email', [BlastController::class, 'email'])->name('email');
+                Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
 
-        Route::post('/blast/email/send', [BlastController::class, 'sendEmail'])
-            ->name('blast.email.send');
+                /* ===== RECIPIENTS (PHASE 9) ===== */
+                Route::prefix('recipients')->name('recipients.')->group(function () {
+
+                    Route::get('/', [BlastRecipientController::class, 'index'])->name('index');
+                    Route::get('/create', [BlastRecipientController::class, 'create'])->name('create');
+                    Route::post('/', [BlastRecipientController::class, 'store'])->name('store');
+
+                    Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])->name('edit');
+                    Route::put('/{id}', [BlastRecipientController::class, 'update'])->name('update');
+
+                    Route::post('/import', [BlastRecipientController::class, 'import'])->name('import');
+                    Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])->name('destroy');
+                });
+
+                /* ===== TEMPLATES (PHASE 10) ===== */
+                Route::prefix('templates')->name('templates.')->group(function () {
+
+                    Route::get('/', [BlastTemplateController::class, 'index'])->name('index');
+                    Route::get('/create', [BlastTemplateController::class, 'create'])->name('create');
+                    Route::post('/', [BlastTemplateController::class, 'store'])->name('store');
+                    Route::delete('/{id}', [BlastTemplateController::class, 'destroy'])->name('destroy');
+                });
             });
-   
-// BLAST RECIPIENTS (PHASE 9)
-Route::prefix('blast')
-    ->name('blast.')
-    ->middleware('check_access:admin_blast.read')
-    ->group(function () {
-
-        Route::prefix('recipients')
-            ->name('recipients.')
-            ->group(function () {
-
-                Route::get('/', [BlastRecipientController::class, 'index'])
-                    ->name('index');
-
-                Route::get('/create', [BlastRecipientController::class, 'create'])
-                    ->middleware('check_access:blast_recipient.create')
-                    ->name('create');
-
-                Route::post('/', [BlastRecipientController::class, 'store'])
-                    ->middleware('check_access:blast_recipient.create')
-                    ->name('store');
-
-                // ✅ EDIT
-                Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])
-                    ->middleware('check_access:blast_recipient.update')
-                    ->name('edit');
-
-                // ✅ UPDATE
-                Route::put('/{id}', [BlastRecipientController::class, 'update'])
-                    ->middleware('check_access:blast_recipient.update')
-                    ->name('update');
-
-                Route::post('/import', [BlastRecipientController::class, 'import'])
-                    ->middleware('check_access:blast_recipient.import')
-                    ->name('import');
-
-                Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
-                    ->middleware('check_access:blast_recipient.delete')
-                    ->name('destroy');
-            });
-    });
-
-
-
     });
