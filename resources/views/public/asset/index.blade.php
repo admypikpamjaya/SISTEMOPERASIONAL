@@ -1,6 +1,7 @@
 @php 
     use Carbon\Carbon;
     use App\Enums\Asset\AssetCategory;
+    use App\Enums\Asset\AssetUnit;
     use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 
     $basicAssetInfoFields = [
@@ -11,6 +12,10 @@
         [
             'label' => 'Nomor Serial',
             'key' => 'serialNumber'
+        ],
+        [
+            'label' => 'Unit',
+            'key' => 'unit'
         ],
         [
             'label' => 'Lokasi',

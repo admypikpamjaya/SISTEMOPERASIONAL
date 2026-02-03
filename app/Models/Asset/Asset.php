@@ -3,6 +3,7 @@
 namespace App\Models\Asset;
 
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 use App\Models\Log\MaintenanceLog;
 use App\Services\Asset\AssetFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -27,7 +28,8 @@ class Asset extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
-        'category' => AssetCategory::class
+        'category' => AssetCategory::class,
+        'unit' => AssetUnit::class
     ];
 
     protected function serialNumber(): Attribute
@@ -49,6 +51,7 @@ class Asset extends Model
         $validator = Validator::make($data, 
             [
                 'category' => ['required', Rule::enum(AssetCategory::class)], 
+                'unit' => ['required', Rule::enum(AssetUnit::class)],
                 'account_code' => ['required', 'string', 'unique:assets,account_code'],
                 'location' => ['required', 'string'],
                 'serial_number' => ['nullable', 'string', 'unique:assets,serial_number'],
@@ -61,6 +64,9 @@ class Asset extends Model
                 'account_code.required' => 'Kode akun wajib diisi.',
                 'account_code.string' => 'Kode akun tidak valid.',
                 'account_code.unique' => 'Kode akun sudah terdaftar.',
+
+                'unit.required' => 'Unit wajib diisi.',
+                'unit.*' => 'Unit tidak valid.',
 
                 'location.required' => 'Lokasi wajib diisi.',
                 'location.string' => 'Lokasi tidak valid.',

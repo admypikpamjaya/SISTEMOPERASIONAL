@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php 
+use App\Enums\Asset\AssetUnit;
+@endphp 
+
 @section('content')
 <div class="card">
     <div class="card-header">
@@ -37,6 +41,26 @@
                                 <div class="form-group">
                                     <label for="location">Tahun Pembelian</label>
                                     <input type="text" name="purchase_year" class="form-control" id="purchase_year" value="{{ $asset->purchaseYear }}" placeholder="Masukkan tahun pembelian">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="unit">Unit  <span class="text-red">*</span></label>
+                                    <select name="unit" id="unit" class="form-control">
+                                        <option value="" disabled {{ empty($asset->unit) ? 'selected' : '' }}>
+                                            -- Pilih Unit --
+                                        </option>
+
+                                        @foreach(AssetUnit::cases() as $unit)
+                                            <option value="{{ $unit->value }}"
+                                                {{ $asset->unit === $unit ? 'selected' : '' }}>
+                                                {{ $unit->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                         </div>

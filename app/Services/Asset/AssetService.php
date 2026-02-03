@@ -7,6 +7,7 @@ use App\DTOs\Asset\RegisterAssetDTO;
 use App\DTOs\Asset\RegisterAssetViaFileDTO;
 use App\DTOs\File\DownloadFileDTO;
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 use App\Models\Asset\Asset;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ class AssetService
 
         $requiredHeaders = [
             'account_code',
+            'unit',
             'location',
         ];
         foreach ($requiredHeaders as $required) 
@@ -55,6 +57,7 @@ class AssetService
                 category: $category,
                 accountCode: $row['account_code'],
                 serialNumber: $row['serial_number'] ?? null,
+                unit: $row['unit'],
                 location: $row['location'],
                 purchaseYear: $row['purchase_year'] ?? null,
                 detail: $detail
@@ -71,7 +74,7 @@ class AssetService
         return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
     }
 
-    public function getAssets(?string $keyword = null, ?AssetCategory $category = null, ?int $page = 1, ?int $pageSize = 10)
+    public function getAssets(?string $keyword = null, ?AssetCategory $category = null, ?AssetUnit $unit = null, ?int $page = 1, ?int $pageSize = 10)
     {
         $query = Asset::query();
         if($keyword)
@@ -85,6 +88,11 @@ class AssetService
         if($category)
         {
             $query->where('category', $category);
+        }
+
+        if($unit)
+        {
+            $query->where('unit', $unit);
         }
 
         return $query
@@ -178,6 +186,7 @@ class AssetService
         $asset->update([
             'account_code' => $dto->accountCode,
             'serial_number' => $dto->serialNumber,
+            'unit' => $dto->unit,
             'location' => $dto->location,
             'purchase_year' => $dto->purchaseYear
         ]);

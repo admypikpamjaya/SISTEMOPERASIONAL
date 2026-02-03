@@ -4,6 +4,7 @@ namespace App\DTOs\Asset;
 
 use App\DTOs\Report\MaintenanceReportDataDTO;
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\AssetUnit;
 use App\Models\Asset\Asset;
 use App\Services\Asset\AssetFactory;
 
@@ -14,6 +15,7 @@ class AssetDataDTO
         public AssetCategory $category,
         public string $accountCode,
         public ?string $serialNumber,
+        public ?AssetUnit $unit,
         public string $location,
         public ?string $purchaseYear,
         public array $detail,
@@ -27,6 +29,7 @@ class AssetDataDTO
             AssetCategory::from($data['category']),
             $data['account_code'],
             $data['asset_serial_number'] ?? null,
+            (AssetUnit::from($data['unit']) ?? null),
             $data['location'],
             $data['purchase_year'] ?? null,
             $data['detail'],
@@ -48,6 +51,7 @@ class AssetDataDTO
             $asset->category,
             $asset->account_code,
             $asset->serial_number,
+            $asset->unit,
             $asset->location,
             $asset->purchase_year,
             $asset->{$relationName}?->toArray(),
