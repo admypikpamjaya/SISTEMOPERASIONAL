@@ -96,12 +96,19 @@
                         </button>
                     </div>
 
+                    {{-- Excel Import Section dengan File Input Tersembunyi --}}
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display: none;">
                     <div class="excel-import" id="excelImport">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                             <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M14 2V8H20" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <span>Impor Excel</span>
+                    </div>
+
+                    {{-- Info Excel Import --}}
+                    <div class="excel-import-info" id="excelImportInfo" style="display: none; font-size: 12px; color: #666; margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+                        <div>Format Excel harus memiliki kolom: <strong>Nomor WhatsApp</strong> (opsional: Nama, Kelas)</div>
                     </div>
 
                     <div class="recipient-list" id="recipientList">
@@ -995,6 +1002,7 @@
 }
 </style>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const phoneInput = document.getElementById('phoneInput');
@@ -1008,6 +1016,9 @@
         const attachFile = document.getElementById('attachFile');
         const activityLog = document.getElementById('activityLog');
         const searchInput = document.getElementById('searchInput');
+        const excelImport = document.getElementById('excelImport');
+        const excelFileInput = document.getElementById('excelFileInput');
+        const excelImportInfo = document.getElementById('excelImportInfo');
         
         // Form inputs
         const studentName = document.getElementById('studentName');
@@ -1027,37 +1038,37 @@
         let recipientNumbers = [];
 
         // Add recipient function
-        function addRecipient() {
-            let phoneNumber = phoneInput.value.trim();
+        function addRecipient(phoneNumber = null, showAlert = true) {
+            let phone = phoneNumber || phoneInput.value.trim();
             
-            if (!phoneNumber) {
-                alert('Masukkan nomor telepon terlebih dahulu!');
+            if (!phone) {
+                if (showAlert) alert('Masukkan nomor telepon terlebih dahulu!');
                 return;
             }
 
             // Clean the phone number (remove spaces, dashes, etc)
-            phoneNumber = phoneNumber.replace(/\s+/g, '').replace(/-/g, '');
+            phone = phone.replace(/\s+/g, '').replace(/-/g, '');
             
             // Validate phone number format (Indonesian number)
-            if (!/^(\+?62|0)[0-9]{9,12}$/.test(phoneNumber)) {
-                alert('Format nomor telepon tidak valid! Gunakan format: 6281234567890');
+            if (!/^(\+?62|0)[0-9]{9,12}$/.test(phone)) {
+                if (showAlert) alert('Format nomor telepon tidak valid! Gunakan format: 6281234567890');
                 return;
             }
 
             // Convert 0 to +62
-            if (phoneNumber.startsWith('0')) {
-                phoneNumber = '62' + phoneNumber.substring(1);
-            } else if (phoneNumber.startsWith('+62')) {
-                phoneNumber = phoneNumber.substring(1);
-            } else if (phoneNumber.startsWith('62')) {
+            if (phone.startsWith('0')) {
+                phone = '62' + phone.substring(1);
+            } else if (phone.startsWith('+62')) {
+                phone = phone.substring(1);
+            } else if (phone.startsWith('62')) {
                 // Already correct format
             } else {
-                alert('Gunakan format nomor Indonesia (contoh: 6281234567890)');
+                if (showAlert) alert('Gunakan format nomor Indonesia (contoh: 6281234567890)');
                 return;
             }
 
-            if (recipientNumbers.includes(phoneNumber)) {
-                alert('Nomor ini sudah ditambahkan!');
+            if (recipientNumbers.includes(phone)) {
+                if (showAlert) alert('Nomor ini sudah ditambahkan!');
                 return;
             }
 
@@ -1066,12 +1077,12 @@
                 statusElement.remove();
             }
 
-            recipientNumbers.push(phoneNumber);
+            recipientNumbers.push(phone);
 
             const recipientItem = document.createElement('div');
             recipientItem.className = 'recipient-item';
             recipientItem.innerHTML = `
-                <span class="recipient-number">${phoneNumber}</span>
+                <span class="recipient-number">${phone}</span>
                 <button class="remove-recipient" title="Hapus">×</button>
             `;
 
@@ -1083,7 +1094,7 @@
 
             const removeBtn = recipientItem.querySelector('.remove-recipient');
             removeBtn.addEventListener('click', function() {
-                const index = recipientNumbers.indexOf(phoneNumber);
+                const index = recipientNumbers.indexOf(phone);
                 if (index > -1) {
                     recipientNumbers.splice(index, 1);
                 }
@@ -1102,16 +1113,220 @@
         }
 
         if (addPhoneBtn) {
-            addPhoneBtn.addEventListener('click', addRecipient);
+            addPhoneBtn.addEventListener('click', function() {
+                addRecipient(null, true);
+            });
         }
 
         if (phoneInput) {
             phoneInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    addRecipient();
+                    addRecipient(null, true);
                 }
             });
+        }
+
+        // Excel Import Functionality
+        if (excelImport) {
+            excelImport.addEventListener('click', function() {
+                excelFileInput.click();
+            });
+        }
+
+        if (excelFileInput) {
+            excelFileInput.addEventListener('change', handleExcelImport);
+        }
+
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validasi file
+            const validExtensions = ['.xlsx', '.xls', '.csv'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!validExtensions.includes(fileExtension)) {
+                alert('Format file tidak didukung! Silakan upload file Excel (.xlsx, .xls) atau CSV.');
+                excelFileInput.value = '';
+                return;
+            }
+
+            // Show loading indicator
+            excelImport.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="#1D1D41" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 9.27455 20.9097 6.80375 19.1414 5" stroke="#1D1D41" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Memproses...</span>
+            `;
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Ambil sheet pertama
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Konversi ke JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    // Validasi header
+                    if (jsonData.length === 0) {
+                        alert('File Excel kosong!');
+                        resetExcelImport();
+                        return;
+                    }
+
+                    // Cari kolom nomor WhatsApp
+                    const headers = jsonData[0].map(h => h ? h.toString().toLowerCase() : '');
+                    const whatsappIndex = headers.findIndex(h => 
+                        h.includes('whatsapp') || h.includes('wa') || h.includes('nomor') || h.includes('no') || h.includes('phone') || h.includes('telepon')
+                    );
+
+                    if (whatsappIndex === -1) {
+                        alert('Tidak ditemukan kolom "Nomor WhatsApp" dalam file Excel! Pastikan file memiliki kolom dengan nama: WhatsApp, WA, Nomor, No, Phone, atau Telepon.');
+                        resetExcelImport();
+                        return;
+                    }
+
+                    // Cari kolom lain (opsional)
+                    const nameIndex = headers.findIndex(h => 
+                        h.includes('nama') || h.includes('name')
+                    );
+                    
+                    const classIndex = headers.findIndex(h => 
+                        h.includes('kelas') || h.includes('class')
+                    );
+
+                    // Proses data mulai dari baris kedua (indeks 1)
+                    let importedCount = 0;
+                    let duplicateCount = 0;
+                    let invalidCount = 0;
+
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row[whatsappIndex]) continue;
+
+                        let phone = row[whatsappIndex].toString().trim();
+                        
+                        // Coba format nomor
+                        phone = phone.replace(/\s+/g, '').replace(/-/g, '').replace(/\+/g, '');
+                        
+                        // Skip jika sudah ada
+                        if (recipientNumbers.includes(phone)) {
+                            duplicateCount++;
+                            continue;
+                        }
+
+                        // Validasi format nomor
+                        if (/^(\+?62|0)[0-9]{9,12}$/.test(phone)) {
+                            // Convert to 62 format
+                            if (phone.startsWith('0')) {
+                                phone = '62' + phone.substring(1);
+                            } else if (phone.startsWith('+62')) {
+                                phone = phone.substring(1);
+                            }
+                            
+                            // Jika berhasil, tambahkan
+                            recipientNumbers.push(phone);
+                            importedCount++;
+                            
+                            // Buat item recipient
+                            const statusElement = recipientList.querySelector('.recipient-status');
+                            if (statusElement) {
+                                statusElement.remove();
+                            }
+
+                            const recipientItem = document.createElement('div');
+                            recipientItem.className = 'recipient-item';
+                            recipientItem.innerHTML = `
+                                <span class="recipient-number">${phone}</span>
+                                <button class="remove-recipient" title="Hapus">×</button>
+                            `;
+
+                            recipientList.appendChild(recipientItem);
+
+                            const removeBtn = recipientItem.querySelector('.remove-recipient');
+                            removeBtn.addEventListener('click', function() {
+                                const index = recipientNumbers.indexOf(phone);
+                                if (index > -1) {
+                                    recipientNumbers.splice(index, 1);
+                                }
+                                recipientItem.remove();
+                                
+                                if (recipientList.children.length === 0) {
+                                    const newStatus = document.createElement('div');
+                                    newStatus.className = 'recipient-status';
+                                    newStatus.textContent = 'Belum ada penerima';
+                                    recipientList.appendChild(newStatus);
+                                }
+                                
+                                updateTargetsField();
+                            });
+                        } else {
+                            invalidCount++;
+                        }
+                    }
+
+                    // Update hidden field
+                    updateTargetsField();
+
+                    // Reset file input
+                    excelFileInput.value = '';
+
+                    // Tampilkan hasil import
+                    let resultMessage = `Berhasil mengimpor ${importedCount} nomor WhatsApp.`;
+                    
+                    if (duplicateCount > 0) {
+                        resultMessage += `\n${duplicateCount} nomor duplikat dilewati.`;
+                    }
+                    
+                    if (invalidCount > 0) {
+                        resultMessage += `\n${invalidCount} nomor tidak valid dilewati.`;
+                    }
+                    
+                    alert(resultMessage);
+
+                    // Show import info
+                    excelImportInfo.innerHTML = `
+                        <div><strong>Format Excel:</strong> Harus memiliki kolom: <strong>Nomor WhatsApp</strong></div>
+                        <div><strong>Hasil Import:</strong> ${importedCount} nomor berhasil ditambahkan</div>
+                    `;
+                    excelImportInfo.style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error reading Excel file:', error);
+                    alert('Terjadi kesalahan saat membaca file Excel. Pastikan format file benar.');
+                } finally {
+                    resetExcelImport();
+                }
+            };
+
+            reader.onerror = function() {
+                alert('Gagal membaca file!');
+                resetExcelImport();
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function updateTargetsField() {
+            targetsField.value = recipientNumbers.join(', ');
+        }
+
+        function resetExcelImport() {
+            excelImport.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2V8H20" stroke="#1D1D41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Impor Excel</span>
+            `;
         }
 
         // Template functionality
