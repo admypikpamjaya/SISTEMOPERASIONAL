@@ -18,7 +18,8 @@ use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ReminderController;
 use App\Http\Controllers\Admin\BlastController;
 use App\Http\Controllers\Admin\BlastRecipientController;
-use App\Http\Controllers\Admin\BlastTemplateController;
+use App\Http\Controllers\Admin\BlastMessageTemplateController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -234,12 +235,32 @@ Route::prefix('admin')
                 });
 
                 /* ===== TEMPLATES (PHASE 10) ===== */
-                Route::prefix('templates')->name('templates.')->group(function () {
+               Route::prefix('blast/templates')
+    ->middleware('check_access:blast_template.read')
+    ->group(function () {
 
-                    Route::get('/', [BlastTemplateController::class, 'index'])->name('index');
-                    Route::get('/create', [BlastTemplateController::class, 'create'])->name('create');
-                    Route::post('/', [BlastTemplateController::class, 'store'])->name('store');
-                    Route::delete('/{id}', [BlastTemplateController::class, 'destroy'])->name('destroy');
+        Route::get('/', [BlastMessageTemplateController::class, 'index'])
+            ->name('blast.templates.index');
+
+        Route::get('/create', [BlastMessageTemplateController::class, 'create'])
+            ->middleware('check_access:blast_template.create')
+            ->name('blast.templates.create');
+
+        Route::post('/', [BlastMessageTemplateController::class, 'store'])
+            ->middleware('check_access:blast_template.create')
+            ->name('blast.templates.store');
+
+        Route::get('/{id}/edit', [BlastMessageTemplateController::class, 'edit'])
+            ->middleware('check_access:blast_template.update')
+            ->name('blast.templates.edit');
+
+        Route::put('/{id}', [BlastMessageTemplateController::class, 'update'])
+            ->middleware('check_access:blast_template.update')
+            ->name('blast.templates.update');
+
+        Route::delete('/{id}', [BlastMessageTemplateController::class, 'destroy'])
+            ->middleware('check_access:blast_template.delete')
+            ->name('blast.templates.destroy');
                 });
             });
     });

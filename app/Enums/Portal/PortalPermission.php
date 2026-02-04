@@ -69,8 +69,9 @@ enum PortalPermission: string
     case BLAST_RECIPIENT_DELETE = 'blast_recipient.delete';
 
 // Template blasting massage
-    case BLAST_TEMPLATE_READ   = 'blast_template.read';
-    case BLAST_TEMPLATE_CREATE = 'blast_template.create';
-    case BLAST_TEMPLATE_UPDATE = 'blast_template.update';
-    case BLAST_TEMPLATE_DELETE = 'blast_template.delete';
+case BLAST_TEMPLATE_READ   = 'blast_template.read';
+case BLAST_TEMPLATE_CREATE = 'blast_template.create';
+case BLAST_TEMPLATE_UPDATE = 'blast_template.update';
+case BLAST_TEMPLATE_DELETE = 'blast_template.delete';
+
 }

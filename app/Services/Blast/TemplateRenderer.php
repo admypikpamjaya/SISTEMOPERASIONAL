@@ -2,19 +2,27 @@
 
 namespace App\Services\Blast;
 
+use App\Models\BlastRecipient;
+
 class TemplateRenderer
 {
-    
-    public function render(string $body, array $variables): string
+    /**
+     * Render template content dengan data recipient
+     */
+    public function render(string $template, BlastRecipient $recipient): string
     {
-        foreach ($variables as $key => $value) {
-            $body = str_replace(
-                '{' . $key . '}',
-                (string) ($value ?? ''),
-                $body
-            );
-        }
+        $replacements = [
+            '{nama_siswa}' => $recipient->nama_siswa,
+            '{kelas}'      => $recipient->kelas,
+            '{nama_wali}'  => $recipient->nama_wali,
+            '{email}'      => $recipient->email_wali,
+            '{wa}'         => $recipient->wa_wali,
+        ];
 
-        return $body;
+        return str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $template
+        );
     }
 }

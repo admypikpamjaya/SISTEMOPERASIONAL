@@ -725,6 +725,25 @@
                 </strong>
                 <div class="subtitle">Unggah file Excel untuk impor data secara massal</div>
             </div>
+            <div style="margin-bottom: 14px; font-size: 14px;">
+    <a href="https://drive.google.com/drive/u/3/folders/1_dySG9XdJB3GPiVATUzAvzjSvoDNvIBC"
+       target="_blank"
+       style="
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+       ">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+             stroke-width="1.5" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M13.5 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5h10.5A2.25 2.25 0 0019.5 17.25V10.5m-6-6l6 6m-6-6v6h6" />
+        </svg>
+        Klik di sini untuk melihat template Excel
+    </a>
+</div>
 
             <div class="card-body">
                 <form action="{{ route('admin.blast.recipients.import') }}"

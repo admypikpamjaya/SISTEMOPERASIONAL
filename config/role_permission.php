@@ -35,9 +35,10 @@ return [
         PortalPermission::BLAST_RECIPIENT_CREATE,
         PortalPermission::BLAST_RECIPIENT_IMPORT,
 
-        // 🚀 BLAST TEMPLATE (PHASE 10.2)
+        // BLAST TEMPLATE
         PortalPermission::BLAST_TEMPLATE_READ,
         PortalPermission::BLAST_TEMPLATE_CREATE,
+        PortalPermission::BLAST_TEMPLATE_UPDATE,
         PortalPermission::BLAST_TEMPLATE_DELETE,
     ],
 
