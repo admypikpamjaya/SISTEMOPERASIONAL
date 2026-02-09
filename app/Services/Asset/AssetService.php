@@ -96,7 +96,7 @@ class AssetService
         }
 
         return $query
-            ->orderBy('created_at', 'desc')
+            ->orderBy('account_code', 'asc')
             ->paginate($pageSize, ['*'], 'page', $page)
             ->appends(array_filter([
                 'keyword' => $keyword,
