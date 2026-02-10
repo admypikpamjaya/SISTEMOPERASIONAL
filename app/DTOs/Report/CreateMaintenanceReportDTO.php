@@ -14,6 +14,7 @@ class CreateMaintenanceReportDTO
         public string $issueDescription,
         public string $workingDescription,
         public string $pic,
+        public float $cost,
         public UploadedFile $evidencePhoto
     ) {}
 
@@ -26,6 +27,7 @@ class CreateMaintenanceReportDTO
             $data['issue_description'],
             $data['working_description'],
             $data['pic'],
+            $data['cost'],
             $data['evidence_photo']
         );
     }

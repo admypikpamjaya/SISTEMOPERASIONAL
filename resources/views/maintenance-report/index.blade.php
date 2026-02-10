@@ -146,6 +146,31 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                     <input type="text" name="pic" class="form-control" placeholder="Masukkan nama PIC / pemanggil pekerja" value="${data.pic}" ${!isUserCanUpdate ? 'readonly' : ''} required>
                 </div>
                 <div class="form-group">
+                    <label for="cost">Biaya</label>
+                    ${!isUserCanUpdate 
+                        ? `
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="${data.costFormatted}"
+                                readonly
+                            >
+                        `
+                        : `
+                            <input
+                                type="number"
+                                name="cost"
+                                min="0"
+                                step="0.01"
+                                class="form-control"
+                                placeholder="Masukkan biaya"
+                                value="${data.cost}"
+                                required
+                            >
+                        `
+                    }
+                </div>
+                <div class="form-group">
                     <details>
                         <summary class="font-weight-bold">Gambar Dokumentasi Pengerjaan</summary>
                         ${constructEvidencePhoto()}

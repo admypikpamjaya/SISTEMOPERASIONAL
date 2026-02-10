@@ -22,7 +22,8 @@ class MaintenanceReportService
             $query->where(function($q) use ($keyword) {
                 $q->where('worker_name', 'like', "%{$keyword}%")
                 ->orWhere('issue_description', 'like', "%{$keyword}%")
-                ->orWhere('working_description', 'like', "%{$keyword}%");
+                ->orWhere('working_description', 'like', "%{$keyword}%")
+                ->orWhere('pic', 'like', "%{$keyword}%");
             });
         }
 
@@ -61,7 +62,8 @@ class MaintenanceReportService
                 'date' => $dto->workingDate,
                 'issue_description' => $dto->issueDescription,
                 'working_description' => $dto->workingDescription,
-                'pic' => $dto->pic
+                'pic' => $dto->pic,
+                'cost' => $dto->cost
             ]);
 
             $log->maintenanceDocumentations()->create([
@@ -84,7 +86,9 @@ class MaintenanceReportService
             'worker_name' => $dto->workerName,
             'date' => $dto->workingDate,
             'issue_description' => $dto->issueDescription,
-            'working_description' => $dto->workingDescription
+            'working_description' => $dto->workingDescription,
+            'pic' => $dto->pic,
+            'cost' => $dto->cost
         ]);
 
         return MaintenanceReportDataDTO::fromModel($log);
