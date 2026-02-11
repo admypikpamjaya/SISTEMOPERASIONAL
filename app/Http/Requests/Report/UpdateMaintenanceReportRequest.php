@@ -26,7 +26,9 @@ class UpdateMaintenanceReportRequest extends FormRequest
             'worker_name' => 'required|string',
             'working_date' => 'required|date',
             'issue_description' => 'required|string',
-            'working_description' => 'required|string'
+            'working_description' => 'required|string',
+            'pic' => 'required|string',
+            'cost' => 'required|numeric',
         ];
     }
 
@@ -43,7 +45,12 @@ class UpdateMaintenanceReportRequest extends FormRequest
             'working_date.date' => 'Tanggal Pengerjaan tidak valid',
 
             'issue_description.required' => 'Masalah Aset tidak boleh kosong',
-            'working_description.required' => 'Deskripsi Pengerjaan tidak boleh kosong'
+            'working_description.required' => 'Deskripsi Pengerjaan tidak boleh kosong',
+
+            'pic.required' => 'PIC tidak boleh kosong',
+            
+            'cost.required' => 'Biaya tidak boleh kosong',
+            'cost.numeric' => 'Biaya tidak valid',
         ];
     }
 }

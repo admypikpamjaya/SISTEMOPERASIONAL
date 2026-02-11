@@ -11,7 +11,9 @@ class UpdateMaintenanceReportDTO
         public string $workerName,
         public Carbon $workingDate,
         public string $issueDescription,
-        public string $workingDescription
+        public string $workingDescription,
+        public string $pic,
+        public float $cost,
     ) {}
 
     public static function fromArray(array $data): self 
@@ -21,7 +23,9 @@ class UpdateMaintenanceReportDTO
             $data['worker_name'],
             Carbon::parse($data['working_date']),
             $data['issue_description'],
-            $data['working_description']
+            $data['working_description'],
+            $data['pic'],
+            $data['cost']
         );
     }
 }

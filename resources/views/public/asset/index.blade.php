@@ -184,7 +184,13 @@
                                         <p class="mb-2">{{ $maintenance->issueDescription }}</p>
 
                                         <strong>Deskripsi Pekerjaan:</strong>
-                                        <p class="mb-0">{{ $maintenance->workingDescription }}</p>
+                                        <p class="mb-2">{{ $maintenance->workingDescription }}</p>
+
+                                        <strong>PIC:</strong>
+                                        <p class="mb-2">{{ $maintenance->pic }}</p>
+
+                                        <strong>Biaya:</strong>
+                                        <p class="mb-2">{{ $maintenance->costFormatted }}</p>
 
                                         <details>
                                             <summary class="font-weight-bold">Gambar Dokumentasi Pengerjaan</summary>
@@ -255,6 +261,10 @@
                 <div class="form-group">
                     <label for="pic">Nama PIC (Pemanggil Pekerja)</label>
                     <input type="text" name="pic" class="form-control" placeholder="Masukkan nama PIC / pemanggil pekerja" required>
+                </div>
+                <div class="form-group">
+                    <label for="cost">Biaya</label>
+                    <input type="number" name="cost" min="0" step="0.01" class="form-control" placeholder="Masukkan biaya (cth: 50 ribu ditulis 50000)" required>
                 </div>
                 <div class="form-group">
                     <label for="evidence-photo-input" class="font-weight-bold">

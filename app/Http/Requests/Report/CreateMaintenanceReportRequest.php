@@ -28,6 +28,7 @@ class CreateMaintenanceReportRequest extends FormRequest
             'issue_description' => 'required|string',
             'working_description' => 'required|string',
             'pic' => 'required|string',
+            'cost' => 'required|numeric',
             'evidence_photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120'
         ];
     }
@@ -47,6 +48,9 @@ class CreateMaintenanceReportRequest extends FormRequest
             'working_description.required' => 'Deskripsi Pengerjaan tidak boleh kosong',
 
             'pic.required' => 'PIC tidak boleh kosong',
+
+            'cost.required' => 'Biaya tidak boleh kosong',
+            'cost.numeric' => 'Biaya harus berupa angka',
 
             'evidence_photo.required' => 'Foto bukti pengerjaan tidak boleh kosong',
             'evidence_photo.image' => 'Foto bukti pengerjaan harus berupa gambar yang valid',

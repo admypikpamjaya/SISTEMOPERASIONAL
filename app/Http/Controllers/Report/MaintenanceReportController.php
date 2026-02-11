@@ -12,6 +12,7 @@ use App\Http\Requests\Report\UpdateMaintenanceReportRequest;
 use App\Http\Requests\Report\UpdateMaintenanceReportStatusRequest;
 use App\Services\Report\MaintenanceReportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MaintenanceReportController extends Controller
 {

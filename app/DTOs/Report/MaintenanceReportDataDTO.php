@@ -6,6 +6,7 @@ use App\DTOs\Asset\MinimalAssetDataDTO;
 use App\Models\Log\MaintenanceLog;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class MaintenanceReportDataDTO
 {
@@ -17,6 +18,8 @@ class MaintenanceReportDataDTO
         public string $issueDescription,
         public string $workingDescription,
         public string $pic,
+        public float $cost,
+        public string $costFormatted,
         public AssetMaintenanceReportStatus $status,
         public array $evidencePhotos
     ) {}
@@ -31,6 +34,8 @@ class MaintenanceReportDataDTO
             $data->issue_description,
             $data->working_description,
             $data->pic,
+            $data->cost,
+            $data->cost_formatted,
             $data->status,
             $data->maintenanceDocumentations
                 ->map(fn ($doc) => $doc->url)

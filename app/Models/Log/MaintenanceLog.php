@@ -24,6 +24,15 @@ class MaintenanceLog extends Model
         'status' => AssetMaintenanceReportStatus::class
     ];
 
+    protected $appends = [
+        'cost_formatted',
+    ];
+
+    public function getCostFormattedAttribute()
+    {
+        return 'Rp ' . number_format($this->cost, 0, ',', '.');
+    }
+
     public function asset()
     {
         return $this->belongsTo(Asset::class);
