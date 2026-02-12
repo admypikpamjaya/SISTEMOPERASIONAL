@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 class BlastController extends Controller
 {
     /* =======================
-     |  VIEW (JANGAN DIUBAH)
+     |  VIEW
      ======================= */
 
     public function index()
@@ -28,7 +28,20 @@ class BlastController extends Controller
 
     public function whatsapp()
     {
-        return view('admin.blast.whatsapp');
+        $recipients = BlastRecipient::whereNotNull('wa_wali')
+            ->where('is_valid', true)
+            ->orderBy('nama_siswa')
+            ->get();
+
+        $templates = BlastMessageTemplate::where('channel', 'whatsapp')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.blast.whatsapp', compact(
+            'recipients',
+            'templates'
+        ));
     }
 
     public function email()
@@ -37,36 +50,32 @@ class BlastController extends Controller
     }
 
     /* =======================
-     |  ACTION
+     |  WHATSAPP BLAST
      ======================= */
 
-    /**
-     * =======================
-     * WHATSAPP BLAST
-     * =======================
-     */
     public function sendWhatsapp(
         Request $request,
         TemplateRenderer $renderer
     ) {
         $validated = $request->validate([
-            // MODE DB
             'recipient_ids' => 'nullable|array',
             'recipient_ids.*' => 'string',
             'template_id' => 'nullable|string',
 
-            // MODE MANUAL (fallback)
             'targets' => 'nullable|string',
             'message' => 'nullable|string',
+
+            'messages' => 'nullable|array',
+            'messages.*' => 'nullable|string',
 
             'attachments.*' => 'nullable|file|max:5120',
         ]);
 
-        /**
-         * =======================
-         * MODE 1: DATABASE RECIPIENT
-         * =======================
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | MODE 1 - DATABASE RECIPIENT
+        |--------------------------------------------------------------------------
+        */
         if (!empty($validated['recipient_ids'])) {
 
             $recipients = BlastRecipient::whereIn(
@@ -83,21 +92,35 @@ class BlastController extends Controller
 
             foreach ($recipients as $recipient) {
 
-                // Render message
-                $message = $template
-                    ? $renderer->render($template->content, $recipient)
-                    : ($validated['message'] ?? '');
+                // PRIORITY:
+                // 1. Per-recipient message
+                // 2. Template
+                // 3. Global message
+
+                $customMessage = $validated['messages'][$recipient->id] ?? null;
+
+                if (!empty($customMessage)) {
+                    $message = $customMessage;
+                } elseif ($template) {
+                    $message = $renderer->render(
+                        $template->content,
+                        $recipient
+                    );
+                } else {
+                    $message = $validated['message'] ?? '';
+                }
 
                 $payload = new BlastPayload($message);
                 $payload->setMeta('channel', 'WHATSAPP');
                 $payload->setMeta('sent_by', Auth::id());
                 $payload->setMeta('recipient_id', $recipient->id);
 
-                // Attachment (optional)
+                // Attachment (same file for all recipients)
                 if ($request->hasFile('attachments')) {
                     $folder = 'blasts/' . Str::uuid();
                     foreach ($request->file('attachments') as $file) {
                         $path = $file->store($folder, 'public');
+
                         $payload->addAttachment(
                             new BlastAttachment(
                                 public_path('storage/' . $path),
@@ -118,20 +141,21 @@ class BlastController extends Controller
 
             return back()->with(
                 'success',
-                'WhatsApp blast (DB recipients) queued.'
+                'WhatsApp blast berhasil diproses.'
             );
         }
 
-        /**
-         * =======================
-         * MODE 2: MANUAL (LEGACY)
-         * =======================
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | MODE 2 - MANUAL TARGET (LEGACY)
+        |--------------------------------------------------------------------------
+        */
         $targets = array_filter(
             array_map('trim', explode(',', $validated['targets'] ?? ''))
         );
 
         foreach ($targets as $target) {
+
             $payload = new BlastPayload($validated['message'] ?? '');
             $payload->setMeta('channel', 'WHATSAPP');
             $payload->setMeta('sent_by', Auth::id());
@@ -144,22 +168,19 @@ class BlastController extends Controller
         return back()->with('success', 'WhatsApp blast queued.');
     }
 
-    /**
-     * =======================
-     * EMAIL BLAST
-     * =======================
-     */
+    /* =======================
+     |  EMAIL (TIDAK DIUBAH)
+     ======================= */
+
     public function sendEmail(
         Request $request,
         TemplateRenderer $renderer
     ) {
         $validated = $request->validate([
-            // MODE DB
             'recipient_ids' => 'nullable|array',
             'recipient_ids.*' => 'string',
             'template_id' => 'nullable|string',
 
-            // MODE MANUAL
             'targets' => 'nullable|string',
             'subject' => 'required|string',
             'message' => 'nullable|string',
@@ -167,9 +188,6 @@ class BlastController extends Controller
             'attachments.*' => 'nullable|file|max:5120',
         ]);
 
-        /**
-         * MODE DB
-         */
         if (!empty($validated['recipient_ids'])) {
 
             $recipients = BlastRecipient::whereIn(
@@ -195,11 +213,11 @@ class BlastController extends Controller
                 $payload->setMeta('sent_by', Auth::id());
                 $payload->setMeta('recipient_id', $recipient->id);
 
-                // Attachment
                 if ($request->hasFile('attachments')) {
                     $folder = 'blasts/' . Str::uuid();
                     foreach ($request->file('attachments') as $file) {
                         $path = $file->store($folder, 'public');
+
                         $payload->addAttachment(
                             new BlastAttachment(
                                 public_path('storage/' . $path),
@@ -219,15 +237,9 @@ class BlastController extends Controller
                 );
             }
 
-            return back()->with(
-                'success',
-                'Email blast (DB recipients) queued.'
-            );
+            return back()->with('success', 'Email blast queued.');
         }
 
-        /**
-         * MODE MANUAL
-         */
         $targets = array_filter(
             array_map('trim', explode(',', $validated['targets'] ?? ''))
         );
@@ -249,11 +261,10 @@ class BlastController extends Controller
         return back()->with('success', 'Email blast queued.');
     }
 
-    /**
-     * =======================
-     * RECIPIENT SELECTOR API
-     * =======================
-     */
+    /* =======================
+     |  RECIPIENT SELECTOR API
+     ======================= */
+
     public function recipients(
         Request $request,
         RecipientSelectorService $service
