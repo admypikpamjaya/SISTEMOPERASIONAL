@@ -185,8 +185,11 @@ class BlastController extends Controller
             'subject' => 'required|string',
             'message' => 'nullable|string',
 
+            'attachments' => 'nullable|array',
             'attachments.*' => 'nullable|file|max:5120',
         ]);
+
+        $attachments = $this->storeEmailAttachments($request);
 
         if (!empty($validated['recipient_ids'])) {
 
@@ -212,21 +215,7 @@ class BlastController extends Controller
                 $payload->setMeta('channel', 'EMAIL');
                 $payload->setMeta('sent_by', Auth::id());
                 $payload->setMeta('recipient_id', $recipient->id);
-
-                if ($request->hasFile('attachments')) {
-                    $folder = 'blasts/' . Str::uuid();
-                    foreach ($request->file('attachments') as $file) {
-                        $path = $file->store($folder, 'public');
-
-                        $payload->addAttachment(
-                            new BlastAttachment(
-                                public_path('storage/' . $path),
-                                $file->getClientOriginalName(),
-                                $file->getMimeType()
-                            )
-                        );
-                    }
-                }
+                $this->attachFilesToPayload($payload, $attachments);
 
                 dispatch(
                     new SendEmailBlastJob(
@@ -248,6 +237,7 @@ class BlastController extends Controller
             $payload = new BlastPayload($validated['message'] ?? '');
             $payload->setMeta('channel', 'EMAIL');
             $payload->setMeta('sent_by', Auth::id());
+            $this->attachFilesToPayload($payload, $attachments);
 
             dispatch(
                 new SendEmailBlastJob(
@@ -284,5 +274,42 @@ class BlastController extends Controller
         return response()->json(
             $service->getSelectable($validated['channel'])
         );
+    }
+
+    /**
+     * @return BlastAttachment[]
+     */
+    private function storeEmailAttachments(Request $request): array
+    {
+        if (!$request->hasFile('attachments')) {
+            return [];
+        }
+
+        $attachments = [];
+        $folder = 'blasts/' . Str::uuid();
+
+        foreach ($request->file('attachments') as $file) {
+            $path = $file->store($folder, 'public');
+
+            $attachments[] = new BlastAttachment(
+                storage_path('app/public/' . $path),
+                $file->getClientOriginalName(),
+                $file->getMimeType() ?: 'application/octet-stream'
+            );
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * @param BlastAttachment[] $attachments
+     */
+    private function attachFilesToPayload(
+        BlastPayload $payload,
+        array $attachments
+    ): void {
+        foreach ($attachments as $attachment) {
+            $payload->addAttachment($attachment);
+        }
     }
 }
