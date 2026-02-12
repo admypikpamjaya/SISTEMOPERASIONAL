@@ -12,33 +12,26 @@ return [
         'label'       => 'Asset Management',
         'icon'        => 'fas fa-boxes',
         'route'       => 'asset-management.index',
+        'children'    => [
+            [
+                'module_name' => 'maintenance_report',
+                'label'       => 'Maintenance Report',
+                'icon'        => 'fas fa-tools',
+                'route'       => 'maintenance-report.index',
+            ],
+            [
+                'module_name' => 'user_management',
+                'label'       => 'User Database',
+                'icon'        => 'fas fa-users',
+                'route'       => 'user-database.index',
+            ],
+        ],
     ],
 
-    [
-        'module_name' => 'maintenance_report',
-        'label'       => 'Maintenance Report',
-        'icon'        => 'fas fa-tools',
-        'route'       => 'maintenance-report.index',
-    ],
-
-    [
-        'module_name' => 'user_management',
-        'label'       => 'User Database',
-        'icon'        => 'fas fa-users',
-        'route'       => 'user-database.index',
-    ],
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | BLAST MESSAGE (PARENT + DROPDOWN) — FIXED
-    |--------------------------------------------------------------------------
-    */
     [
         'label' => 'Blast Message',
         'icon'  => 'fas fa-paper-plane',
-        'route' => 'admin.blast.index', // ✅ ROUTE VALID
+        'route' => 'admin.blast.index',
         'children' => [
             [
                 'label' => 'WhatsApp Blast',
@@ -56,12 +49,11 @@ return [
                 'route' => 'admin.blast.recipients.index',
                 'module_name' => 'admin_blast',
             ],
-             [
+            [
                 'label' => 'Announcement',
                 'icon'  => 'fas fa-bullhorn',
                 'route' => 'admin.announcements.index',
-       ],
-
+            ],
         ],
     ],
 

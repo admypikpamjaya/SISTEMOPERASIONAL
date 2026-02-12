@@ -113,12 +113,47 @@
                         Tekan Enter untuk menambahkan email
                     </small>
 
+                    <div class="recipient-db-section">
+                        <div class="recipient-db-header">
+                            <span class="recipient-db-title">Recipient List DB</span>
+                            <button type="button" class="btn-select-db" id="selectAllRecipientsBtn">
+                                Select All
+                            </button>
+                        </div>
+                        <div class="recipient-db-count">
+                            Total valid recipient: {{ $recipients->count() }}
+                        </div>
+                        <div class="recipient-db-list">
+                            @forelse($recipients as $recipient)
+                                <label class="recipient-db-item" for="recipient_{{ $recipient->id }}">
+                                    <input
+                                        type="checkbox"
+                                        class="recipient-db-checkbox"
+                                        id="recipient_{{ $recipient->id }}"
+                                        name="recipient_ids[]"
+                                        value="{{ $recipient->id }}"
+                                        data-email="{{ $recipient->email_wali }}"
+                                    >
+                                    <div class="recipient-db-info">
+                                        <div class="recipient-db-name">
+                                            {{ $recipient->nama_siswa }} ({{ $recipient->kelas }})
+                                        </div>
+                                        <div class="recipient-db-email">
+                                            {{ $recipient->nama_wali }} - {{ $recipient->email_wali }}
+                                        </div>
+                                    </div>
+                                </label>
+                            @empty
+                                <div class="recipient-db-empty">Tidak ada recipient email valid.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
                     {{-- HIDDEN TEXTAREA (BACKEND COMPATIBLE) --}}
                     <textarea
                         name="targets"
                         id="targetsField"
                         hidden
-                        required
                     ></textarea>
 
                     <div class="excel-import" id="excelImport">
@@ -146,7 +181,6 @@
                             id="studentName"
                             class="form-input"
                             placeholder="Masukkan nama siswa"
-                            required
                         >
                     </div>
 
@@ -158,7 +192,6 @@
                             id="studentClass"
                             class="form-input"
                             placeholder="Masukkan kelas (contoh: 5A)"
-                            required
                         >
                     </div>
 
@@ -170,7 +203,6 @@
                             id="parentName"
                             class="form-input"
                             placeholder="Masukkan nama wali"
-                            required
                         >
                     </div>
 
@@ -188,6 +220,33 @@
                             <option value="payment">Informasi Pembayaran Sekolah</option>
                             <option value="notification">Pemberitahuan Tunggakan</option>
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Template Blast DB:</label>
+                        <select
+                            name="template_id"
+                            id="dbTemplateSelect"
+                            class="form-input"
+                            style="height: auto; padding: 12px 16px;"
+                        >
+                            <option value="">Tanpa template</option>
+                            @foreach($templates as $template)
+                                <option
+                                    value="{{ $template->id }}"
+                                    data-content="{{ e($template->content) }}"
+                                >
+                                    {{ $template->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Template Preview:</label>
+                        <div id="dbTemplatePreview" class="template-preview-box">
+                            Pilih template untuk melihat preview.
+                        </div>
                     </div>
 
                     {{-- Subject --}}
@@ -211,7 +270,6 @@
                             class="message-textarea"
                             placeholder="Tulis isi email di sini..."
                             rows="8"
-                            required
                         ></textarea>
                     </div>
 
@@ -375,6 +433,99 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.recipient-db-section {
+    margin-top: 14px;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 12px;
+    background: #FAFBFF;
+}
+
+.recipient-db-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.recipient-db-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.recipient-db-count {
+    font-size: 12px;
+    color: #6B7280;
+    margin-bottom: 8px;
+}
+
+.btn-select-db {
+    border: 1px solid #4F46E5;
+    color: #4F46E5;
+    background: #EEF2FF;
+    border-radius: 8px;
+    font-size: 12px;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+.recipient-db-list {
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recipient-db-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    background: #FFFFFF;
+    cursor: pointer;
+}
+
+.recipient-db-item:hover {
+    border-color: #C7D2FE;
+}
+
+.recipient-db-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recipient-db-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.recipient-db-email {
+    font-size: 11px;
+    color: #6B7280;
+}
+
+.recipient-db-empty {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+.template-preview-box {
+    min-height: 110px;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    background: #F9FAFB;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #374151;
+    white-space: pre-wrap;
 }
 
     .btn-back {
@@ -1062,10 +1213,14 @@
         const studentClass = document.getElementById('studentClass');
         const parentName = document.getElementById('parentName');
         const templateSelect = document.getElementById('templateSelect');
+        const dbTemplateSelect = document.getElementById('dbTemplateSelect');
+        const dbTemplatePreview = document.getElementById('dbTemplatePreview');
         const emailSubject = document.getElementById('emailSubject');
         const messageTextarea = document.getElementById('messageTextarea');
         const charCount = document.getElementById('charCount');
         const sendButton = document.getElementById('sendButton');
+        const selectAllRecipientsBtn = document.getElementById('selectAllRecipientsBtn');
+        const recipientDbCheckboxes = document.querySelectorAll('.recipient-db-checkbox');
         
         let emails = [];
 
@@ -1200,6 +1355,39 @@ SEKOLAH TERPADU JAKARTA`
                     }
                 }
             });
+        }
+
+        if (selectAllRecipientsBtn && recipientDbCheckboxes.length > 0) {
+            let allRecipientSelected = false;
+
+            selectAllRecipientsBtn.addEventListener('click', function () {
+                allRecipientSelected = !allRecipientSelected;
+                recipientDbCheckboxes.forEach(cb => {
+                    cb.checked = allRecipientSelected;
+                });
+
+                selectAllRecipientsBtn.textContent = allRecipientSelected
+                    ? 'Unselect All'
+                    : 'Select All';
+            });
+        }
+
+        function updateDbTemplatePreview() {
+            if (!dbTemplateSelect || !dbTemplatePreview) {
+                return;
+            }
+
+            const selectedOption = dbTemplateSelect.options[dbTemplateSelect.selectedIndex];
+            const content = selectedOption ? selectedOption.getAttribute('data-content') : '';
+
+            dbTemplatePreview.textContent = content && content.trim().length > 0
+                ? content
+                : 'Pilih template untuk melihat preview.';
+        }
+
+        if (dbTemplateSelect) {
+            dbTemplateSelect.addEventListener('change', updateDbTemplatePreview);
+            updateDbTemplatePreview();
         }
 
         // Template selection event
@@ -1467,45 +1655,30 @@ function removeFile(index) {
         
         if (emailForm) {
             emailForm.addEventListener('submit', function(e) {
-                // === VALIDATION ONLY (No e.preventDefault() here) ===
-                if (emails.length === 0) {
+                const selectedDbRecipients = Array.from(
+                    document.querySelectorAll('.recipient-db-checkbox:checked')
+                );
+                const hasDbRecipients = selectedDbRecipients.length > 0;
+                const hasManualTargets = emails.length > 0;
+                const hasDbTemplate = dbTemplateSelect && dbTemplateSelect.value.trim() !== '';
+
+                if (!hasDbRecipients && !hasManualTargets) {
                     e.preventDefault();
-                    alert('Tambahkan setidaknya satu penerima email terlebih dahulu!');
+                    alert('Pilih recipient dari DB atau tambahkan email manual terlebih dahulu!');
                     emailInput.focus();
                     return;
                 }
-                
-                if (!studentName.value.trim()) {
-                    e.preventDefault();
-                    alert('Masukkan nama siswa terlebih dahulu!');
-                    studentName.focus();
-                    return;
-                }
-                
-                if (!studentClass.value.trim()) {
-                    e.preventDefault();
-                    alert('Masukkan kelas terlebih dahulu!');
-                    studentClass.focus();
-                    return;
-                }
-                
-                if (!parentName.value.trim()) {
-                    e.preventDefault();
-                    alert('Masukkan nama wali terlebih dahulu!');
-                    parentName.focus();
-                    return;
-                }
-                
+
                 if (!emailSubject.value.trim()) {
                     e.preventDefault();
                     alert('Masukkan subject email terlebih dahulu!');
                     emailSubject.focus();
                     return;
                 }
-                
-                if (!messageTextarea.value.trim()) {
+
+                if (!hasDbTemplate && !messageTextarea.value.trim()) {
                     e.preventDefault();
-                    alert('Masukkan isi pesan terlebih dahulu!');
+                    alert('Masukkan isi pesan atau pilih template blast DB!');
                     messageTextarea.focus();
                     return;
                 }
@@ -1514,7 +1687,11 @@ function removeFile(index) {
                 // In production, this would be handled by the backend
                 // We're keeping this for UI feedback but NOT preventing form submission
                 
-                const emailCount = emails.length;
+                const simulatedTargets = hasManualTargets
+                    ? [...emails]
+                    : selectedDbRecipients.map(cb => cb.getAttribute('data-email') || cb.value);
+
+                const emailCount = simulatedTargets.length;
                 const attachments = document.querySelector('input[name="attachments[]"]');
                 const attachmentCount = attachments ? attachments.files.length : 0;
                 
@@ -1542,7 +1719,7 @@ function removeFile(index) {
                 let successCount = 0;
                 let failedCount = 0;
                 
-                emails.forEach((email, index) => {
+                simulatedTargets.forEach((email, index) => {
                     setTimeout(() => {
                         const isSuccess = Math.random() > 0.2; // 80% success rate
                         const status = isSuccess ? 'success' : 'failed';

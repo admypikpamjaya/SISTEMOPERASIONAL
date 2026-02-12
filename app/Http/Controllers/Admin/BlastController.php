@@ -46,7 +46,24 @@ class BlastController extends Controller
 
     public function email()
     {
-        return view('admin.blast.email');
+        $recipients = BlastRecipient::query()
+            ->whereNotNull('email_wali')
+            ->where('is_valid', true)
+            ->orderBy('nama_siswa')
+            ->get()
+            ->filter(
+                fn (BlastRecipient $recipient) =>
+                    filter_var($recipient->email_wali, FILTER_VALIDATE_EMAIL)
+            )
+            ->values();
+
+        $templates = BlastMessageTemplate::query()
+            ->whereIn('channel', ['EMAIL', 'email'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.blast.email', compact('recipients', 'templates'));
     }
 
     /* =======================
@@ -196,13 +213,23 @@ class BlastController extends Controller
             $recipients = BlastRecipient::whereIn(
                 'id',
                 $validated['recipient_ids']
-            )->whereNotNull('email_wali')->get();
+            )
+                ->whereNotNull('email_wali')
+                ->where('is_valid', true)
+                ->get()
+                ->filter(
+                    fn (BlastRecipient $recipient) =>
+                        filter_var($recipient->email_wali, FILTER_VALIDATE_EMAIL)
+                )
+                ->values();
 
             $template = null;
             if (!empty($validated['template_id'])) {
-                $template = BlastMessageTemplate::find(
-                    $validated['template_id']
-                );
+                $template = BlastMessageTemplate::query()
+                    ->where('id', $validated['template_id'])
+                    ->whereIn('channel', ['EMAIL', 'email'])
+                    ->where('is_active', true)
+                    ->first();
             }
 
             foreach ($recipients as $recipient) {
