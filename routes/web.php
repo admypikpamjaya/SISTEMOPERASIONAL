@@ -212,6 +212,7 @@ Route::prefix('admin')
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
                 Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
                 Route::get('/activity-api', [BlastController::class, 'activity'])->name('activity');
+                Route::get('/campaign-api', [BlastController::class, 'campaigns'])->name('campaigns');
                 Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])->name('campaign.pause');
                 Route::post('/campaign/resume', [BlastController::class, 'resumeCampaign'])->name('campaign.resume');
                 Route::post('/campaign/stop', [BlastController::class, 'stopCampaign'])->name('campaign.stop');

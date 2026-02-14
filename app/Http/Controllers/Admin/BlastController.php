@@ -531,6 +531,62 @@ class BlastController extends Controller
         );
     }
 
+    public function campaigns(Request $request)
+    {
+        $validated = $request->validate([
+            'channel' => 'required|in:email,whatsapp',
+            'q' => 'nullable|string|max:100',
+        ]);
+
+        $channel = strtoupper((string) $validated['channel']);
+        $search = trim((string) ($validated['q'] ?? ''));
+
+        $query = BlastMessage::query()
+            ->where('channel', $channel)
+            ->withCount([
+                'logs as logs_total_count',
+                'logs as logs_sent_count' => function ($query) {
+                    $query->where('status', 'SENT');
+                },
+                'logs as logs_failed_count' => function ($query) {
+                    $query->where('status', 'FAILED');
+                },
+                'logs as logs_pending_count' => function ($query) {
+                    $query->where('status', 'PENDING');
+                },
+            ]);
+
+        if ($search !== '') {
+            $query->where('id', 'like', '%' . $search . '%');
+        }
+
+        $campaigns = $query
+            ->latest('created_at')
+            ->limit(25)
+            ->get(['id', 'channel', 'campaign_status', 'priority', 'scheduled_at', 'created_at'])
+            ->map(function (BlastMessage $campaign) {
+                return [
+                    'id' => $campaign->id,
+                    'channel' => strtoupper((string) $campaign->channel),
+                    'status' => strtoupper((string) $campaign->campaign_status),
+                    'priority' => strtolower((string) $campaign->priority),
+                    'scheduledAt' => $campaign->scheduled_at?->format('Y-m-d H:i:s'),
+                    'createdAt' => $campaign->created_at?->format('Y-m-d H:i:s'),
+                    'stats' => [
+                        'total' => (int) ($campaign->logs_total_count ?? 0),
+                        'sent' => (int) ($campaign->logs_sent_count ?? 0),
+                        'failed' => (int) ($campaign->logs_failed_count ?? 0),
+                        'pending' => (int) ($campaign->logs_pending_count ?? 0),
+                    ],
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'campaigns' => $campaigns,
+        ]);
+    }
+
     public function pauseCampaign(Request $request)
     {
         $validated = $request->validate([
@@ -680,6 +736,7 @@ class BlastController extends Controller
                 'studentClass' => $recipient?->kelas ?: '-',
                 'parentName' => $recipient?->nama_wali ?: '-',
                 'status' => $statusKey,
+                'campaignId' => (string) $log->blast_message_id,
             ];
 
             if ($normalizedChannel === 'EMAIL') {

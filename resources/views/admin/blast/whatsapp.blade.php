@@ -41,20 +41,67 @@
                 Masukkan Campaign ID untuk pause, resume, atau stop.
             @endif
         </div>
+        <div class="campaign-control-note">
+            UUID untuk Pause, Resume, dan Soft Stop bisa berbeda.
+        </div>
+        <div class="campaign-search-row">
+            <input
+                type="text"
+                id="campaignSearchInput"
+                class="campaign-control-input"
+                placeholder="Cari Campaign UUID..."
+                value="{{ session('campaign_id') }}"
+            >
+            <button type="button" id="campaignSearchBtn" class="campaign-btn info">Search UUID</button>
+        </div>
+        <div id="campaignSearchResults" class="campaign-search-results"></div>
         <div class="campaign-control-actions">
-            <form method="POST" action="{{ route('admin.blast.campaign.pause') }}" class="campaign-control-form">
+            <form method="POST" action="{{ route('admin.blast.campaign.pause') }}" class="campaign-control-form" data-action-type="pause">
                 @csrf
-                <input type="text" name="campaign_id" class="campaign-control-input" placeholder="Campaign ID (UUID)" required>
+                <div class="campaign-input-wrap">
+                    <input
+                        type="text"
+                        id="pauseCampaignInput"
+                        name="campaign_id"
+                        class="campaign-control-input campaign-target-input"
+                        data-target-action="pause"
+                        placeholder="Campaign UUID untuk Pause"
+                        required
+                    >
+                    <button type="button" class="campaign-clear-btn" data-clear-target="pause" aria-label="Clear Pause UUID">&times;</button>
+                </div>
                 <button type="submit" class="campaign-btn warning">Pause</button>
             </form>
-            <form method="POST" action="{{ route('admin.blast.campaign.resume') }}" class="campaign-control-form">
+            <form method="POST" action="{{ route('admin.blast.campaign.resume') }}" class="campaign-control-form" data-action-type="resume">
                 @csrf
-                <input type="text" name="campaign_id" class="campaign-control-input" placeholder="Campaign ID (UUID)" required>
+                <div class="campaign-input-wrap">
+                    <input
+                        type="text"
+                        id="resumeCampaignInput"
+                        name="campaign_id"
+                        class="campaign-control-input campaign-target-input"
+                        data-target-action="resume"
+                        placeholder="Campaign UUID untuk Resume"
+                        required
+                    >
+                    <button type="button" class="campaign-clear-btn" data-clear-target="resume" aria-label="Clear Resume UUID">&times;</button>
+                </div>
                 <button type="submit" class="campaign-btn success">Resume</button>
             </form>
-            <form method="POST" action="{{ route('admin.blast.campaign.stop') }}" class="campaign-control-form">
+            <form method="POST" action="{{ route('admin.blast.campaign.stop') }}" class="campaign-control-form" data-action-type="stop">
                 @csrf
-                <input type="text" name="campaign_id" class="campaign-control-input" placeholder="Campaign ID (UUID)" required>
+                <div class="campaign-input-wrap">
+                    <input
+                        type="text"
+                        id="stopCampaignInput"
+                        name="campaign_id"
+                        class="campaign-control-input campaign-target-input"
+                        data-target-action="stop"
+                        placeholder="Campaign UUID untuk Soft Stop"
+                        required
+                    >
+                    <button type="button" class="campaign-clear-btn" data-clear-target="stop" aria-label="Clear Stop UUID">&times;</button>
+                </div>
                 <button type="submit" class="campaign-btn danger">Soft Stop</button>
             </form>
         </div>
@@ -583,9 +630,58 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.campaign-search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.campaign-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    max-height: 180px;
+    overflow: auto;
+}
+
+.campaign-search-empty {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+.campaign-search-item {
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+}
+
+.campaign-search-meta {
+    font-size: 11px;
+    color: #4B5563;
+    line-height: 1.4;
+}
+
+.campaign-result-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .campaign-control-form {
     display: flex;
     gap: 8px;
+}
+
+.campaign-input-wrap {
+    position: relative;
+    flex: 1;
 }
 
 .campaign-control-input {
@@ -594,6 +690,34 @@
     border-radius: 8px;
     padding: 8px 10px;
     font-size: 12px;
+}
+
+.campaign-target-input {
+    padding-right: 28px;
+}
+
+.campaign-clear-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 999px;
+    background: #E5E7EB;
+    color: #1F2937;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.campaign-clear-btn.visible {
+    display: inline-flex;
 }
 
 .campaign-btn {
@@ -616,6 +740,15 @@
 
 .campaign-btn.danger {
     background: #DC2626;
+}
+
+.campaign-btn.info {
+    background: #2563EB;
+}
+
+.campaign-btn.tiny {
+    padding: 6px 8px;
+    font-size: 11px;
 }
 
 /* Stats Container */
@@ -1612,6 +1745,11 @@
         flex-direction: column;
     }
 
+    .campaign-search-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .delivery-settings-grid {
         grid-template-columns: 1fr;
     }
@@ -1689,7 +1827,13 @@
         const attachFile = document.getElementById('attachFile');
         const activityLog = document.getElementById('activityLog');
         const searchInput = document.getElementById('searchInput');
+        const campaignSearchInput = document.getElementById('campaignSearchInput');
+        const campaignSearchBtn = document.getElementById('campaignSearchBtn');
+        const campaignSearchResults = document.getElementById('campaignSearchResults');
+        const campaignTargetInputs = Array.from(document.querySelectorAll('.campaign-target-input'));
+        const campaignClearButtons = Array.from(document.querySelectorAll('.campaign-clear-btn'));
         const activityApiUrl = @json(route('admin.blast.activity'));
+        const campaignApiUrl = @json(route('admin.blast.campaigns'));
         const activityChannel = 'whatsapp';
         const excelImport = document.getElementById('excelImport');
         const excelFileInput = document.getElementById('excelFileInput');
@@ -2626,6 +2770,7 @@
             filteredActivities.forEach(activity => {
                 const row = document.createElement('div');
                 row.className = 'activity-row';
+                row.setAttribute('data-campaign-id', String(activity.campaignId || ''));
                 
                 const statusClass = activity.status === 'success' ? 'success' : 
                                   activity.status === 'failed' ? 'failed' : 'pending';
@@ -2666,10 +2811,123 @@
                 return String(activity.studentName || '').toLowerCase().includes(searchTerm) ||
                     String(activity.parentName || '').toLowerCase().includes(searchTerm) ||
                     String(activity.phone || '').toLowerCase().includes(searchTerm) ||
-                    String(activity.studentClass || '').toLowerCase().includes(searchTerm);
+                    String(activity.studentClass || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.campaignId || '').toLowerCase().includes(searchTerm);
             });
 
             renderActivities(filtered);
+        }
+
+        function syncCampaignClearButtons() {
+            campaignClearButtons.forEach((button) => {
+                const target = button.getAttribute('data-clear-target');
+                const input = campaignTargetInputs.find((item) => item.getAttribute('data-target-action') === target);
+                const hasValue = input ? input.value.trim() !== '' : false;
+                button.classList.toggle('visible', hasValue);
+            });
+        }
+
+        function applyCampaignIdToTarget(campaignId, targetAction) {
+            const input = campaignTargetInputs.find((item) => item.getAttribute('data-target-action') === targetAction);
+            if (!input) {
+                return;
+            }
+
+            input.value = campaignId;
+            syncCampaignClearButtons();
+            input.focus();
+        }
+
+        function renderCampaignResults(campaigns) {
+            if (!campaignSearchResults) {
+                return;
+            }
+
+            campaignSearchResults.innerHTML = '';
+            if (!Array.isArray(campaigns) || campaigns.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'campaign-search-empty';
+                empty.textContent = 'Campaign tidak ditemukan.';
+                campaignSearchResults.appendChild(empty);
+                return;
+            }
+
+            campaigns.forEach((campaign) => {
+                const item = document.createElement('div');
+                item.className = 'campaign-search-item';
+
+                const meta = document.createElement('div');
+                meta.className = 'campaign-search-meta';
+                meta.innerHTML = `
+                    <div><strong>${campaign.id}</strong></div>
+                    <div>Status: ${campaign.status} | Priority: ${campaign.priority}</div>
+                    <div>Total: ${campaign.stats?.total ?? 0} | Sent: ${campaign.stats?.sent ?? 0} | Failed: ${campaign.stats?.failed ?? 0} | Pending: ${campaign.stats?.pending ?? 0}</div>
+                `;
+
+                const actions = document.createElement('div');
+                actions.className = 'campaign-result-actions';
+
+                const actionButtons = [
+                    { target: 'pause', label: 'Ke Pause', className: 'warning' },
+                    { target: 'resume', label: 'Ke Resume', className: 'success' },
+                    { target: 'stop', label: 'Ke Soft', className: 'danger' },
+                ];
+
+                actionButtons.forEach((action) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `campaign-btn ${action.className} tiny`;
+                    button.textContent = action.label;
+                    button.addEventListener('click', () => {
+                        const campaignId = String(campaign.id || '');
+                        if (campaignSearchInput) {
+                            campaignSearchInput.value = campaignId;
+                        }
+
+                        applyCampaignIdToTarget(campaignId, action.target);
+                        if (searchInput) {
+                            searchInput.value = campaignId;
+                        }
+                        renderActivitiesWithCurrentFilter();
+                    });
+                    actions.appendChild(button);
+                });
+
+                item.appendChild(meta);
+                item.appendChild(actions);
+                campaignSearchResults.appendChild(item);
+            });
+        }
+
+        async function searchCampaignsByUuid() {
+            if (!campaignApiUrl || !campaignSearchResults) {
+                return;
+            }
+
+            const keyword = (campaignSearchInput?.value || '').trim();
+            campaignSearchResults.innerHTML = '<div class="campaign-search-empty">Mencari campaign...</div>';
+
+            try {
+                const response = await fetch(
+                    `${campaignApiUrl}?channel=${encodeURIComponent(activityChannel)}&q=${encodeURIComponent(keyword)}`,
+                    {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const payload = await response.json();
+                renderCampaignResults(payload.campaigns || []);
+                syncCampaignClearButtons();
+            } catch (error) {
+                campaignSearchResults.innerHTML = '<div class="campaign-search-empty">Gagal mencari campaign.</div>';
+            }
         }
 
         async function refreshActivityLogs() {
@@ -2722,6 +2980,41 @@
                 renderActivitiesWithCurrentFilter();
             });
         }
+
+        if (campaignSearchBtn) {
+            campaignSearchBtn.addEventListener('click', function () {
+                searchCampaignsByUuid();
+            });
+        }
+
+        if (campaignSearchInput) {
+            campaignSearchInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    searchCampaignsByUuid();
+                }
+            });
+        }
+
+        campaignTargetInputs.forEach((input) => {
+            input.addEventListener('input', function () {
+                syncCampaignClearButtons();
+            });
+        });
+
+        campaignClearButtons.forEach((button) => {
+            button.addEventListener('click', function () {
+                const target = button.getAttribute('data-clear-target');
+                const input = campaignTargetInputs.find((item) => item.getAttribute('data-target-action') === target);
+                if (!input) {
+                    return;
+                }
+
+                input.value = '';
+                syncCampaignClearButtons();
+                input.focus();
+            });
+        });
 
         // Form submission - KEEP THE ORIGINAL FORM SUBMISSION FROM CODE 1
         const whatsappBlastForm = document.getElementById('whatsappBlastForm');
@@ -2873,6 +3166,8 @@
         updateDbTemplatePreview();
         renderRecipientMessageMatrix();
         syncMessageOverridesField();
+        searchCampaignsByUuid();
+        syncCampaignClearButtons();
         refreshActivityLogs();
 
         const activityPollIntervalMs = 5000;
