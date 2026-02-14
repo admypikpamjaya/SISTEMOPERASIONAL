@@ -202,6 +202,7 @@ Route::prefix('admin')
                 // Email
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
                 Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
+                Route::get('/activity-api', [BlastController::class, 'activity'])->name('activity');
 
                 /* ===== RECIPIENT CRUD ===== */
                 Route::prefix('recipients')->name('recipients.')->group(function () {

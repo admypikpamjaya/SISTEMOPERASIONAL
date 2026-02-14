@@ -32,7 +32,7 @@
         <div class="stat-card">
             <div class="stat-content">
                 <div class="stat-label">Total</div>
-                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-value" id="statTotal">{{ $activityStats['total'] ?? 0 }}</div>
             </div>
             <div class="stat-icon blue">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -45,7 +45,7 @@
         <div class="stat-card">
             <div class="stat-content">
                 <div class="stat-label">Terkirim</div>
-                <div class="stat-value" id="statSent">0</div>
+                <div class="stat-value" id="statSent">{{ $activityStats['sent'] ?? 0 }}</div>
             </div>
             <div class="stat-icon green">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -58,7 +58,7 @@
         <div class="stat-card">
             <div class="stat-content">
                 <div class="stat-label">Gagal</div>
-                <div class="stat-value" id="statFailed">0</div>
+                <div class="stat-value" id="statFailed">{{ $activityStats['failed'] ?? 0 }}</div>
             </div>
             <div class="stat-icon red">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -72,7 +72,7 @@
         <div class="stat-card">
             <div class="stat-content">
                 <div class="stat-label">Pending</div>
-                <div class="stat-value" id="statPending">0</div>
+                <div class="stat-value" id="statPending">{{ $activityStats['pending'] ?? 0 }}</div>
             </div>
             <div class="stat-icon yellow">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -122,6 +122,14 @@
                         </div>
                         <div class="recipient-db-count">
                             Total valid recipient: {{ $recipients->count() }}
+                        </div>
+                        <div class="recipient-db-search">
+                            <input
+                                type="text"
+                                id="recipientDbSearchInput"
+                                class="recipient-db-search-input"
+                                placeholder="Cari recipient DB..."
+                            >
                         </div>
                         <div class="recipient-db-list">
                             @forelse($recipients as $recipient)
@@ -249,6 +257,19 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label">Pesan Khusus Per Penerima:</label>
+                        <div class="recipient-message-note">
+                            Atur per penerima: pilih mode <b>manual</b>, <b>template</b>, atau <b>global</b>.
+                        </div>
+                        <div id="recipientMessageMatrix" class="recipient-message-matrix">
+                            <div class="recipient-db-empty">
+                                Pilih recipient DB atau tambah email manual untuk mengatur pesan khusus.
+                            </div>
+                        </div>
+                        <input type="hidden" name="message_overrides" id="messageOverridesField">
+                    </div>
+
                     {{-- Subject --}}
                     <div class="form-group">
                         <label class="form-label">Subjek Email:</label>
@@ -271,6 +292,10 @@
                             placeholder="Tulis isi email di sini..."
                             rows="8"
                         ></textarea>
+                        <label class="global-default-toggle">
+                            <input type="checkbox" name="use_global_default" id="useGlobalDefaultToggle" value="1" checked>
+                            Gunakan isi email global sebagai default penerima (override template jika tidak dipilih khusus).
+                        </label>
                     </div>
 
                    <div class="message-footer">
@@ -462,6 +487,26 @@
     margin-bottom: 8px;
 }
 
+.recipient-db-search {
+    margin-bottom: 10px;
+}
+
+.recipient-db-search-input {
+    width: 100%;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #111827;
+    background: #FFFFFF;
+}
+
+.recipient-db-search-input:focus {
+    outline: none;
+    border-color: #A5B4FC;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
 .btn-select-db {
     border: 1px solid #4F46E5;
     color: #4F46E5;
@@ -526,6 +571,209 @@
     font-size: 12px;
     color: #374151;
     white-space: pre-wrap;
+}
+
+.recipient-message-note {
+    font-size: 12px;
+    color: #6B7280;
+    margin-bottom: 8px;
+}
+
+.recipient-message-matrix {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    background: #FFFFFF;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message-override-item {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    background: #FAFAFA;
+    padding: 10px;
+}
+
+.message-override-item.mode-template {
+    border-color: #A7F3D0;
+    background: #F0FDF4;
+}
+
+.message-override-item.mode-manual {
+    border-color: #C7D2FE;
+    background: #EEF2FF;
+}
+
+.message-override-item.mode-global {
+    border-color: #FDE68A;
+    background: #FFFBEB;
+}
+
+.message-override-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.message-override-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.message-override-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1F2937;
+}
+
+.message-override-badge {
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 3px 8px;
+    letter-spacing: .2px;
+}
+
+.message-override-badge.mode-template {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.message-override-badge.mode-manual {
+    background: #E0E7FF;
+    color: #3730A3;
+}
+
+.message-override-badge.mode-global {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.message-override-remove {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #FCA5A5;
+    border-radius: 999px;
+    background: #FEF2F2;
+    color: #B91C1C;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: .2s;
+}
+
+.message-override-remove:hover {
+    background: #FEE2E2;
+    border-color: #F87171;
+}
+
+.message-override-file-wrap {
+    margin-top: 8px;
+}
+
+.message-override-file-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.message-override-file-input {
+    font-size: 11px;
+    width: 100%;
+}
+
+.message-override-file-list {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.message-override-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    background: #FFFFFF;
+    font-size: 11px;
+    color: #374151;
+}
+
+.message-override-file-remove {
+    border: 1px solid #FCA5A5;
+    background: #FEF2F2;
+    color: #B91C1C;
+    border-radius: 999px;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.message-override-file-empty {
+    font-size: 11px;
+    color: #9CA3AF;
+}
+
+.message-override-mode {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.message-override-mode label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+
+.message-override-text {
+    width: 100%;
+    min-height: 72px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    outline: none;
+    resize: vertical;
+}
+
+.message-override-text:disabled {
+    background: #F3F4F6;
+    color: #9CA3AF;
+}
+
+.message-override-hint {
+    font-size: 11px;
+    color: #6B7280;
+    margin-top: 6px;
+}
+
+.global-default-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #4B5563;
 }
 
     .btn-back {
@@ -1220,9 +1468,16 @@
         const charCount = document.getElementById('charCount');
         const sendButton = document.getElementById('sendButton');
         const selectAllRecipientsBtn = document.getElementById('selectAllRecipientsBtn');
+        const recipientDbSearchInput = document.getElementById('recipientDbSearchInput');
+        const recipientDbList = document.querySelector('.recipient-db-list');
+        const recipientDbItems = Array.from(document.querySelectorAll('.recipient-db-item'));
         const recipientDbCheckboxes = document.querySelectorAll('.recipient-db-checkbox');
+        const recipientMessageMatrix = document.getElementById('recipientMessageMatrix');
+        const messageOverridesField = document.getElementById('messageOverridesField');
         
         let emails = [];
+        const overrideState = {};
+        const attachmentBufferByKey = {};
 
         // Template definitions
         const templates = {
@@ -1332,15 +1587,291 @@ SEKOLAH TERPADU JAKARTA`
 
             const chip = document.createElement('div');
             chip.className = 'chip';
+            chip.setAttribute('data-email', email);
             chip.innerHTML = `${email} <button type="button">×</button>`;
 
             chip.querySelector('button').onclick = () => {
                 emails = emails.filter(e => e !== email);
+                delete overrideState[`manual:${email.trim().toLowerCase()}`];
+                delete attachmentBufferByKey[`manual:${email.trim().toLowerCase()}`];
                 chip.remove();
                 syncTargets();
+                renderRecipientMessageMatrix();
             };
 
             chipList.appendChild(chip);
+            renderRecipientMessageMatrix();
+        }
+
+        function removeManualEmailByAddress(email) {
+            const normalized = email.trim().toLowerCase();
+
+            emails = emails.filter(
+                e => e.trim().toLowerCase() !== normalized
+            );
+
+            delete overrideState[`manual:${normalized}`];
+            delete attachmentBufferByKey[`manual:${normalized}`];
+            syncTargets();
+
+            chipList.querySelectorAll('.chip').forEach((chip) => {
+                const chipEmail = (chip.getAttribute('data-email') || '').trim().toLowerCase();
+                if (chipEmail === normalized) {
+                    chip.remove();
+                }
+            });
+        }
+
+        function removeDbRecipientById(recipientId) {
+            recipientDbCheckboxes.forEach((cb) => {
+                if (cb.value === recipientId) {
+                    cb.checked = false;
+                }
+            });
+
+            delete overrideState[`db:${recipientId}`];
+            delete attachmentBufferByKey[`db:${recipientId}`];
+        }
+
+        function keyToToken(key) {
+            const base64 = btoa(unescape(encodeURIComponent(key)));
+            return base64
+                .replace(/=+$/g, '')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_');
+        }
+
+        function ensureAttachmentBuffer(key) {
+            if (!attachmentBufferByKey[key]) {
+                attachmentBufferByKey[key] = new DataTransfer();
+            }
+
+            return attachmentBufferByKey[key];
+        }
+
+        function removeAttachmentFileByIndex(key, index) {
+            const currentBuffer = ensureAttachmentBuffer(key);
+            const nextBuffer = new DataTransfer();
+
+            Array.from(currentBuffer.files).forEach((file, i) => {
+                if (i !== index) {
+                    nextBuffer.items.add(file);
+                }
+            });
+
+            attachmentBufferByKey[key] = nextBuffer;
+        }
+
+        function renderAttachmentPreview(item, key) {
+            const input = item.querySelector('.message-override-file-input');
+            const list = item.querySelector('.message-override-file-list');
+            const buffer = ensureAttachmentBuffer(key);
+
+            if (!input || !list) {
+                return;
+            }
+
+            input.files = buffer.files;
+
+            if (buffer.files.length === 0) {
+                list.innerHTML = '<div class="message-override-file-empty">Tidak ada file khusus</div>';
+                return;
+            }
+
+            list.innerHTML = Array.from(buffer.files).map((file, index) => `
+                <div class="message-override-file-item">
+                    <span>${escapeHtml(file.name)}</span>
+                    <button
+                        type="button"
+                        class="message-override-file-remove"
+                        data-index="${index}"
+                        title="Hapus file"
+                    >&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getSelectedRecipients() {
+            const recipients = [];
+
+            recipientDbCheckboxes.forEach((cb) => {
+                if (!cb.checked) {
+                    return;
+                }
+
+                const key = `db:${cb.value}`;
+                const label = cb.closest('.recipient-db-item')
+                    ?.querySelector('.recipient-db-name')
+                    ?.textContent?.trim() || cb.value;
+
+                recipients.push({
+                    key,
+                    label: `DB - ${label}`,
+                    kind: 'db',
+                    ref: cb.value,
+                });
+            });
+
+            emails.forEach((email) => {
+                recipients.push({
+                    key: `manual:${email.trim().toLowerCase()}`,
+                    label: `Manual - ${email}`,
+                    kind: 'manual',
+                    ref: email,
+                });
+            });
+
+            return recipients;
+        }
+
+        function getActiveMessageOverrides() {
+            const overrides = {};
+
+            getSelectedRecipients().forEach(({ key }) => {
+                const state = overrideState[key] || {};
+                const mode = (state.mode || 'manual').toLowerCase();
+                const message = (state.message || '').trim();
+
+                if (mode === 'template') {
+                    overrides[key] = { mode: 'template', message: '' };
+                    return;
+                }
+
+                if (mode === 'global') {
+                    overrides[key] = { mode: 'global', message: '' };
+                    return;
+                }
+
+                if (message !== '') {
+                    overrides[key] = { mode: 'manual', message };
+                }
+            });
+
+            return overrides;
+        }
+
+        function syncMessageOverridesField() {
+            if (!messageOverridesField) {
+                return {};
+            }
+
+            const overrides = getActiveMessageOverrides();
+            messageOverridesField.value = JSON.stringify(overrides);
+
+            return overrides;
+        }
+
+        function renderRecipientMessageMatrix() {
+            if (!recipientMessageMatrix) {
+                return;
+            }
+
+            const recipients = getSelectedRecipients();
+
+            if (recipients.length === 0) {
+                recipientMessageMatrix.innerHTML = `
+                    <div class="recipient-db-empty">
+                        Pilih recipient DB atau tambah email manual untuk mengatur pesan khusus.
+                    </div>
+                `;
+                syncMessageOverridesField();
+                return;
+            }
+
+            recipientMessageMatrix.innerHTML = recipients.map(({ key, label, kind, ref }) => {
+                const state = overrideState[key] || {};
+                const mode = (state.mode || 'manual').toLowerCase();
+                const manualChecked = mode === 'manual';
+                const templateChecked = mode === 'template';
+                const globalChecked = mode === 'global';
+                const effectiveMode = templateChecked
+                    ? 'template'
+                    : (globalChecked ? 'global' : 'manual');
+                const message = escapeHtml(state.message || '');
+                const keyToken = keyToToken(key);
+                const radioGroup = `override_mode_${key.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+                const modeClass = `mode-${effectiveMode}`;
+                const badgeText = effectiveMode === 'template'
+                    ? 'Template'
+                    : (effectiveMode === 'global' ? 'Global' : 'Manual');
+                const hintText = effectiveMode === 'template'
+                    ? 'Menggunakan template blast DB untuk penerima ini.'
+                    : (effectiveMode === 'global'
+                        ? 'Menggunakan isi email global untuk penerima ini.'
+                        : 'Gunakan isi manual khusus untuk penerima ini.');
+                const textPlaceholder = effectiveMode === 'template'
+                    ? 'Mode template aktif untuk penerima ini.'
+                    : (effectiveMode === 'global'
+                        ? 'Mode global aktif untuk penerima ini.'
+                        : 'Isi pesan khusus untuk penerima ini...');
+
+                return `
+                    <div class="message-override-item ${modeClass}" data-key="${escapeHtml(key)}" data-kind="${escapeHtml(kind)}" data-ref="${escapeHtml(ref)}">
+                        <div class="message-override-head">
+                            <div class="message-override-title">${escapeHtml(label)}</div>
+                            <div class="message-override-actions">
+                                <span class="message-override-badge ${modeClass}">${badgeText}</span>
+                                <button type="button" class="message-override-remove" title="Hapus penerima ini">&times;</button>
+                            </div>
+                        </div>
+                        <div class="message-override-mode">
+                            <label>
+                                <input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="manual" ${manualChecked ? 'checked' : ''}>
+                                Manual
+                            </label>
+                            <label>
+                                <input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="template" ${templateChecked ? 'checked' : ''}>
+                                Template
+                            </label>
+                            <label>
+                                <input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="global" ${globalChecked ? 'checked' : ''}>
+                                Global
+                            </label>
+                        </div>
+                        <textarea
+                            class="message-override-text"
+                            placeholder="${textPlaceholder}"
+                            ${(templateChecked || globalChecked) ? 'disabled' : ''}
+                        >${message}</textarea>
+                        <div class="message-override-file-wrap">
+                            <div class="message-override-file-label">File Khusus Penerima (opsional)</div>
+                            <input
+                                type="hidden"
+                                name="attachment_override_keys[${keyToken}]"
+                                value="${escapeHtml(key)}"
+                            >
+                            <input
+                                type="file"
+                                class="message-override-file-input"
+                                name="attachment_overrides[${keyToken}][]"
+                                multiple
+                            >
+                            <div class="message-override-file-list"></div>
+                        </div>
+                        <div class="message-override-hint">${hintText}</div>
+                    </div>
+                `;
+            }).join('');
+
+            recipientMessageMatrix.querySelectorAll('.message-override-item').forEach((item) => {
+                const key = item.getAttribute('data-key');
+                if (!key) {
+                    return;
+                }
+
+                renderAttachmentPreview(item, key);
+            });
+
+            syncMessageOverridesField();
         }
 
         // Email input event - FROM CODE PERTAMA
@@ -1369,8 +1900,16 @@ SEKOLAH TERPADU JAKARTA`
                 selectAllRecipientsBtn.textContent = allRecipientSelected
                     ? 'Unselect All'
                     : 'Select All';
+
+                renderRecipientMessageMatrix();
             });
         }
+
+        recipientDbCheckboxes.forEach((cb) => {
+            cb.addEventListener('change', () => {
+                renderRecipientMessageMatrix();
+            });
+        });
 
         function updateDbTemplatePreview() {
             if (!dbTemplateSelect || !dbTemplatePreview) {
@@ -1379,15 +1918,157 @@ SEKOLAH TERPADU JAKARTA`
 
             const selectedOption = dbTemplateSelect.options[dbTemplateSelect.selectedIndex];
             const content = selectedOption ? selectedOption.getAttribute('data-content') : '';
+            const templateName = selectedOption && selectedOption.value
+                ? selectedOption.textContent.trim()
+                : '';
 
             dbTemplatePreview.textContent = content && content.trim().length > 0
-                ? content
+                ? `Template: ${templateName}\n\n${content}`
                 : 'Pilih template untuk melihat preview.';
         }
 
         if (dbTemplateSelect) {
             dbTemplateSelect.addEventListener('change', updateDbTemplatePreview);
             updateDbTemplatePreview();
+        }
+
+        if (recipientMessageMatrix) {
+            recipientMessageMatrix.addEventListener('click', function (event) {
+                const fileRemoveBtn = event.target.closest('.message-override-file-remove');
+                if (fileRemoveBtn) {
+                    const item = fileRemoveBtn.closest('.message-override-item');
+                    const key = item ? item.getAttribute('data-key') : null;
+                    const index = Number(fileRemoveBtn.getAttribute('data-index'));
+
+                    if (item && key && Number.isInteger(index)) {
+                        removeAttachmentFileByIndex(key, index);
+                        renderAttachmentPreview(item, key);
+                    }
+
+                    return;
+                }
+
+                const removeBtn = event.target.closest('.message-override-remove');
+                if (!removeBtn) {
+                    return;
+                }
+
+                const item = removeBtn.closest('.message-override-item');
+                if (!item) {
+                    return;
+                }
+
+                const key = item.getAttribute('data-key');
+                const kind = item.getAttribute('data-kind');
+                const ref = item.getAttribute('data-ref');
+
+                if (kind === 'db' && ref) {
+                    removeDbRecipientById(ref);
+                }
+
+                if (kind === 'manual' && ref) {
+                    removeManualEmailByAddress(ref);
+                }
+
+                if (key) {
+                    delete overrideState[key];
+                    delete attachmentBufferByKey[key];
+                }
+
+                renderRecipientMessageMatrix();
+            });
+
+            recipientMessageMatrix.addEventListener('change', function (event) {
+                const item = event.target.closest('.message-override-item');
+                if (!item) {
+                    return;
+                }
+
+                const key = item.getAttribute('data-key');
+                if (!key) {
+                    return;
+                }
+
+                if (!overrideState[key]) {
+                    overrideState[key] = { mode: 'manual', message: '' };
+                }
+
+                const fileInput = event.target.closest('.message-override-file-input');
+                if (fileInput) {
+                    const buffer = ensureAttachmentBuffer(key);
+
+                    Array.from(fileInput.files || []).forEach((file) => {
+                        buffer.items.add(file);
+                    });
+
+                    renderAttachmentPreview(item, key);
+                    return;
+                }
+
+                const modeInput = event.target.closest('.message-override-mode-input');
+                if (modeInput) {
+                    overrideState[key].mode = modeInput.getAttribute('data-mode') || 'manual';
+
+                    const textarea = item.querySelector('.message-override-text');
+                    const mode = overrideState[key].mode;
+                    const isTemplate = mode === 'template';
+                    const isGlobal = mode === 'global';
+
+                    item.classList.toggle('mode-template', isTemplate);
+                    item.classList.toggle('mode-manual', mode === 'manual');
+                    item.classList.toggle('mode-global', isGlobal);
+
+                    const badge = item.querySelector('.message-override-badge');
+                    if (badge) {
+                        badge.classList.toggle('mode-template', isTemplate);
+                        badge.classList.toggle('mode-manual', mode === 'manual');
+                        badge.classList.toggle('mode-global', isGlobal);
+                        badge.textContent = isTemplate
+                            ? 'Template'
+                            : (isGlobal ? 'Global' : 'Manual');
+                    }
+
+                    const hint = item.querySelector('.message-override-hint');
+                    if (hint) {
+                        hint.textContent = isTemplate
+                            ? 'Menggunakan template blast DB untuk penerima ini.'
+                            : (isGlobal
+                                ? 'Menggunakan isi email global untuk penerima ini.'
+                                : 'Gunakan isi manual khusus untuk penerima ini.');
+                    }
+
+                    if (textarea) {
+                        textarea.disabled = isTemplate || isGlobal;
+                        textarea.placeholder = isTemplate
+                            ? 'Mode template aktif untuk penerima ini.'
+                            : (isGlobal
+                                ? 'Mode global aktif untuk penerima ini.'
+                                : 'Isi pesan khusus untuk penerima ini...');
+                    }
+                }
+
+                syncMessageOverridesField();
+            });
+
+            recipientMessageMatrix.addEventListener('input', function (event) {
+                const textarea = event.target.closest('.message-override-text');
+                if (!textarea) {
+                    return;
+                }
+
+                const item = textarea.closest('.message-override-item');
+                const key = item ? item.getAttribute('data-key') : null;
+                if (!key) {
+                    return;
+                }
+
+                if (!overrideState[key]) {
+                    overrideState[key] = { mode: 'manual', message: '' };
+                }
+
+                overrideState[key].message = textarea.value || '';
+                syncMessageOverridesField();
+            });
         }
 
         // Template selection event
@@ -1577,7 +2258,45 @@ function removeFile(index) {
         // Activity log functionality
         const activityLog = document.getElementById('activityLog');
         const searchInput = document.getElementById('searchInput');
-        let activities = [];
+        const activityApiUrl = @json(route('admin.blast.activity'));
+        const activityChannel = 'email';
+        let activities = @json($activityLogs ?? []);
+        let isRefreshingActivities = false;
+
+        function filterRecipientDbList() {
+            if (!recipientDbList || recipientDbItems.length === 0) {
+                return;
+            }
+
+            const searchTerm = (recipientDbSearchInput?.value || '').trim().toLowerCase();
+            let visibleCount = 0;
+
+            recipientDbItems.forEach((item) => {
+                const candidate = (item.textContent || '').toLowerCase();
+                const isMatch = searchTerm === '' || candidate.includes(searchTerm);
+
+                item.style.display = isMatch ? '' : 'none';
+                if (isMatch) {
+                    visibleCount += 1;
+                }
+            });
+
+            let emptySearch = recipientDbList.querySelector('.recipient-db-empty-search');
+            if (visibleCount === 0) {
+                if (!emptySearch) {
+                    emptySearch = document.createElement('div');
+                    emptySearch.className = 'recipient-db-empty recipient-db-empty-search';
+                    emptySearch.textContent = 'Tidak ada recipient sesuai pencarian.';
+                    recipientDbList.appendChild(emptySearch);
+                }
+            } else if (emptySearch) {
+                emptySearch.remove();
+            }
+        }
+
+        if (recipientDbSearchInput) {
+            recipientDbSearchInput.addEventListener('input', filterRecipientDbList);
+        }
 
         // Update stats
         function updateStats() {
@@ -1633,17 +2352,72 @@ function removeFile(index) {
             });
         }
 
+        function renderActivitiesWithCurrentFilter() {
+            const searchTerm = (searchInput?.value || '').trim().toLowerCase();
+
+            if (searchTerm === '') {
+                renderActivities();
+                return;
+            }
+
+            const filtered = activities.filter((activity) => {
+                return String(activity.email || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.subject || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.studentName || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.parentName || '').toLowerCase().includes(searchTerm);
+            });
+
+            renderActivities(filtered);
+        }
+
+        async function refreshActivityLogs() {
+            if (isRefreshingActivities) {
+                return;
+            }
+
+            isRefreshingActivities = true;
+
+            try {
+                const response = await fetch(
+                    `${activityApiUrl}?channel=${encodeURIComponent(activityChannel)}`,
+                    {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const payload = await response.json();
+                if (Array.isArray(payload.logs)) {
+                    activities = payload.logs;
+                }
+
+                if (payload && typeof payload === 'object' && payload.stats) {
+                    if (statTotal) statTotal.textContent = Number(payload.stats.total ?? 0);
+                    if (statSent) statSent.textContent = Number(payload.stats.sent ?? 0);
+                    if (statFailed) statFailed.textContent = Number(payload.stats.failed ?? 0);
+                    if (statPending) statPending.textContent = Number(payload.stats.pending ?? 0);
+                } else {
+                    updateStats();
+                }
+
+                renderActivitiesWithCurrentFilter();
+            } catch (error) {
+                // Keep UI stable when polling fails.
+            } finally {
+                isRefreshingActivities = false;
+            }
+        }
+
         // Search functionality
         if (searchInput) {
             searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const filtered = activities.filter(activity => {
-                    return activity.email.toLowerCase().includes(searchTerm) ||
-                           activity.subject.toLowerCase().includes(searchTerm) ||
-                           activity.studentName.toLowerCase().includes(searchTerm) ||
-                           activity.parentName.toLowerCase().includes(searchTerm);
-                });
-                renderActivities(filtered);
+                renderActivitiesWithCurrentFilter();
             });
         }
 
@@ -1652,15 +2426,47 @@ function removeFile(index) {
         // We'll keep the validation but remove the preventDefault() that blocks form submission
         
         const emailForm = document.getElementById('emailForm');
+        renderRecipientMessageMatrix();
         
         if (emailForm) {
             emailForm.addEventListener('submit', function(e) {
+                const activeOverrides = syncMessageOverridesField();
                 const selectedDbRecipients = Array.from(
                     document.querySelectorAll('.recipient-db-checkbox:checked')
                 );
                 const hasDbRecipients = selectedDbRecipients.length > 0;
                 const hasManualTargets = emails.length > 0;
                 const hasDbTemplate = dbTemplateSelect && dbTemplateSelect.value.trim() !== '';
+                const hasGlobalMessage = messageTextarea.value.trim() !== '';
+                const overrideValues = Object.values(activeOverrides);
+                const hasPerRecipientManual = overrideValues.some(
+                    (override) => override.mode === 'manual' && (override.message || '').trim() !== ''
+                );
+                const hasPerRecipientTemplate = overrideValues.some(
+                    (override) => override.mode === 'template'
+                );
+                const hasPerRecipientGlobal = overrideValues.some(
+                    (override) => override.mode === 'global'
+                );
+                const hasPerRecipientContent = hasPerRecipientManual
+                    || (hasPerRecipientTemplate && hasDbTemplate)
+                    || (hasPerRecipientGlobal && hasGlobalMessage);
+
+                if (hasPerRecipientTemplate && !hasDbTemplate) {
+                    e.preventDefault();
+                    alert('Pilih "Template Blast DB" jika ada penerima yang menggunakan mode template.');
+                    if (dbTemplateSelect) {
+                        dbTemplateSelect.focus();
+                    }
+                    return;
+                }
+
+                if (hasPerRecipientGlobal && !hasGlobalMessage) {
+                    e.preventDefault();
+                    alert('Isi Email global wajib diisi jika ada penerima dengan mode Global.');
+                    messageTextarea.focus();
+                    return;
+                }
 
                 if (!hasDbRecipients && !hasManualTargets) {
                     e.preventDefault();
@@ -1676,100 +2482,46 @@ function removeFile(index) {
                     return;
                 }
 
-                if (!hasDbTemplate && !messageTextarea.value.trim()) {
+                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent) {
                     e.preventDefault();
-                    alert('Masukkan isi pesan atau pilih template blast DB!');
+                    alert('Masukkan isi pesan, pilih template, atau atur pesan khusus per penerima!');
                     messageTextarea.focus();
                     return;
                 }
 
-                // === SIMULATE BLASTING PROCESS (FOR DEMO ONLY) ===
-                // In production, this would be handled by the backend
-                // We're keeping this for UI feedback but NOT preventing form submission
-                
-                const simulatedTargets = hasManualTargets
+                const selectedTargets = hasManualTargets
                     ? [...emails]
-                    : selectedDbRecipients.map(cb => cb.getAttribute('data-email') || cb.value);
+                    : selectedDbRecipients.map((cb) => cb.getAttribute('data-email') || cb.value);
 
-                const emailCount = simulatedTargets.length;
-                const attachments = document.querySelector('input[name="attachments[]"]');
-                const attachmentCount = attachments ? attachments.files.length : 0;
-                
-                // Show loading state
-                const originalButtonText = sendButton.innerHTML;
+                const confirmation = confirm(
+                    `Email akan dikirim ke ${selectedTargets.length} penerima. Lanjutkan?`
+                );
+
+                if (!confirmation) {
+                    e.preventDefault();
+                    return false;
+                }
+
                 sendButton.disabled = true;
                 sendButton.innerHTML = '<span>Mengirim Blast Email...</span>';
-                
-                // Add to activity log for demo
-                const now = new Date();
-                const date = now.toLocaleDateString('id-ID', { 
-                    day: '2-digit', 
-                    month: '2-digit', 
-                    year: 'numeric' 
-                }).replace(/\//g, '/');
-                
-                const time = now.toLocaleTimeString('id-ID', { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit' 
-                });
-                
-                // Simulate sending each email (for demo UI only)
-                let sentCount = 0;
-                let successCount = 0;
-                let failedCount = 0;
-                
-                simulatedTargets.forEach((email, index) => {
-                    setTimeout(() => {
-                        const isSuccess = Math.random() > 0.2; // 80% success rate
-                        const status = isSuccess ? 'success' : 'failed';
-                        
-                        activities.unshift({
-                            date: date,
-                            time: time,
-                            studentName: studentName.value.trim(),
-                            studentClass: studentClass.value.trim(),
-                            parentName: parentName.value.trim(),
-                            email: email,
-                            subject: emailSubject.value.trim(),
-                            attachments: attachmentCount > 0 ? `${attachmentCount} file` : 'Tidak ada',
-                            status: status
-                        });
-                        
-                        sentCount++;
-                        if (isSuccess) successCount++;
-                        else failedCount++;
-                        
-                        // Update UI
-                        renderActivities();
-                        updateStats();
-                        
-                        // If all emails processed
-                        if (sentCount === emailCount) {
-                            // Restore button after a delay
-                            setTimeout(() => {
-                                sendButton.disabled = false;
-                                sendButton.innerHTML = originalButtonText;
-                                
-                                // Show demo completion message
-                                alert(`✅ Email Blast Selesai!\n\nTotal: ${emailCount} email\nBerhasil: ${successCount}\nGagal: ${failedCount}`);
-                            }, 500);
-                        }
-                    }, index * 100);
-                });
-                
-                // === IMPORTANT: DON'T PREVENT DEFAULT ===
-                // Let the form submit to the backend
-                // e.preventDefault(); // REMOVED THIS LINE - This was blocking form submission
-                
-                // In real application, the form will submit to {{ route('admin.blast.email.send') }}
-                // and the backend will handle the actual email sending
             });
         }
 
         // Initial render
-        renderActivities();
+        renderActivitiesWithCurrentFilter();
         updateStats();
+        filterRecipientDbList();
+        refreshActivityLogs();
+
+        const activityPollIntervalMs = 5000;
+        setInterval(() => {
+            if (document.visibilityState === 'hidden') {
+                return;
+            }
+
+            refreshActivityLogs();
+        }, activityPollIntervalMs);
     });
 </script>
 @endsection
+

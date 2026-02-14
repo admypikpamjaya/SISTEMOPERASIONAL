@@ -10,18 +10,27 @@ class BlastLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'channel',
-        'target',
+        'blast_message_id',
+        'blast_target_id',
         'status',
-        'reference_type',
-        'reference_id',
+        'message_snapshot',
         'response',
+        'error_message',
+        'attempt',
+        'sent_at',
     ];
 
-    /* ================= RELATION ================= */
+    protected $casts = [
+        'sent_at' => 'datetime',
+    ];
 
-    public function reference()
+    public function message()
     {
-        return $this->morphTo();
+        return $this->belongsTo(BlastMessage::class, 'blast_message_id');
+    }
+
+    public function target()
+    {
+        return $this->belongsTo(BlastTarget::class, 'blast_target_id');
     }
 }
