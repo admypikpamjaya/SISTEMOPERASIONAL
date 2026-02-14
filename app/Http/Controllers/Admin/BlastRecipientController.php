@@ -150,14 +150,25 @@ class BlastRecipientController extends Controller
             $request->file('file')->getRealPath()
         );
 
+        if (empty($result->valid) && empty($result->invalid)) {
+            return redirect()
+                ->route('admin.blast.recipients.index')
+                ->with('error', 'Import gagal: file tidak berisi data yang dapat diproses.');
+        }
+
         $summary = $bulkSaver->save(collect($result->valid));
+        $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
+        $message = "Import selesai. Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
+
+        if ((int) $summary['inserted'] === 0) {
+            return redirect()
+                ->route('admin.blast.recipients.index')
+                ->with('error', $message . ' Tidak ada data baru yang disimpan.');
+        }
 
         return redirect()
             ->route('admin.blast.recipients.index')
-            ->with(
-                'success',
-                "Import selesai. Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$summary['invalid']}"
-            );
+            ->with('success', $message);
     }
 
     public function destroy(string $id)
