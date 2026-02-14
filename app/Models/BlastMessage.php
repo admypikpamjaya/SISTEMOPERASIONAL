@@ -21,6 +21,12 @@ class BlastMessage extends Model
         'subject',
         'message',
         'meta',
+        'campaign_status',
+        'priority',
+        'scheduled_at',
+        'started_at',
+        'paused_at',
+        'completed_at',
         'attachment_path',
         'created_by',
     ];
@@ -36,5 +42,14 @@ class BlastMessage extends Model
 
     protected $casts = [
         'meta' => 'array',
+        'scheduled_at' => 'datetime',
+        'started_at' => 'datetime',
+        'paused_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
+
+    public function logs()
+    {
+        return $this->hasMany(BlastLog::class, 'blast_message_id');
+    }
 }

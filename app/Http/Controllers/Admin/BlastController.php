@@ -5,17 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\DataTransferObjects\BlastPayload;
 use App\DataTransferObjects\BlastAttachment;
-use App\Jobs\Blast\SendWhatsappBlastJob;
-use App\Jobs\Blast\SendEmailBlastJob;
+use App\Jobs\Blast\QueueBlastDeliveryJob;
 use App\Models\BlastRecipient;
 use App\Models\BlastMessageTemplate;
 use App\Models\BlastMessage;
 use App\Models\BlastTarget;
 use App\Models\BlastLog;
+use App\Models\Announcement;
 use App\Services\Blast\TemplateRenderer;
 use App\Services\Blast\RecipientSelectorService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -39,6 +41,11 @@ class BlastController extends Controller
             ->orderBy('name')
             ->get();
 
+        $announcementOptions = Announcement::query()
+            ->latest('id')
+            ->limit(100)
+            ->get(['id', 'title', 'message']);
+
         $activityData = $this->buildChannelActivityData('WHATSAPP', $recipients);
         $activityLogs = $activityData['logs'];
         $activityStats = $activityData['stats'];
@@ -46,6 +53,7 @@ class BlastController extends Controller
         return view('admin.blast.whatsapp', compact(
             'recipients',
             'templates',
+            'announcementOptions',
             'activityLogs',
             'activityStats'
         ));
@@ -61,13 +69,18 @@ class BlastController extends Controller
             ->orderBy('name')
             ->get();
 
+        $announcementOptions = Announcement::query()
+            ->latest('id')
+            ->limit(100)
+            ->get(['id', 'title', 'message']);
+
         $activityData = $this->buildChannelActivityData('EMAIL', $recipients);
         $activityLogs = $activityData['logs'];
         $activityStats = $activityData['stats'];
 
         return view(
             'admin.blast.email',
-            compact('recipients', 'templates', 'activityLogs', 'activityStats')
+            compact('recipients', 'templates', 'announcementOptions', 'activityLogs', 'activityStats')
         );
     }
 
@@ -102,6 +115,13 @@ class BlastController extends Controller
 
             'targets' => 'nullable|string',
             'message' => 'nullable|string',
+            'scheduled_at' => 'nullable|date',
+            'rate_limit_per_minute' => 'nullable|integer|min:1|max:5000',
+            'batch_size' => 'nullable|integer|min:1|max:2000',
+            'batch_delay_seconds' => 'nullable|integer|min:0|max:3600',
+            'retry_attempts' => 'nullable|integer|min:1|max:10',
+            'retry_backoff_seconds' => 'nullable|string|max:255',
+            'priority' => 'nullable|in:high,normal,low',
             'use_global_default' => 'nullable|boolean',
             'message_overrides' => 'nullable|string',
             'attachment_override_keys' => 'nullable|array',
@@ -126,6 +146,11 @@ class BlastController extends Controller
         $messageOverrides = $this->parseMessageOverrides(
             $validated['message_overrides'] ?? null
         );
+        $campaignOptions = $this->resolveCampaignOptions(
+            validatedData: $validated,
+            channel: 'WHATSAPP'
+        );
+        $dispatchIndex = 0;
 
         // Backward compatibility: old UI used messages[recipient_id].
         if (empty($messageOverrides) && !empty($validated['messages'])) {
@@ -181,7 +206,8 @@ class BlastController extends Controller
                         channel: 'WHATSAPP',
                         subject: null,
                         fallbackMessage: $validated['message'] ?? '',
-                        template: $template
+                        template: $template,
+                        campaignOptions: $campaignOptions
                     );
                 }
 
@@ -196,13 +222,24 @@ class BlastController extends Controller
                 $payload->setMeta('sent_by', Auth::id());
                 $payload->setMeta('recipient_id', $recipient->id);
                 $payload->setMeta('blast_log_id', $blastLog->id);
+                $payload->setMeta('blast_message_id', $blastMessage->id);
+                $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
                 $this->attachFilesToPayload($payload, $attachments);
                 $this->attachFilesToPayload(
                     $payload,
                     $recipientAttachmentOverrides['db:' . $recipient->id] ?? []
                 );
 
-                dispatch(new SendWhatsappBlastJob($target, $payload));
+                $this->dispatchQueuedBlastDelivery(
+                    channel: 'WHATSAPP',
+                    target: $target,
+                    subject: null,
+                    payload: $payload,
+                    campaignOptions: $campaignOptions,
+                    dispatchIndex: $dispatchIndex
+                );
             }
         }
 
@@ -231,7 +268,8 @@ class BlastController extends Controller
                     channel: 'WHATSAPP',
                     subject: null,
                     fallbackMessage: $validated['message'] ?? '',
-                    template: $template
+                    template: $template,
+                    campaignOptions: $campaignOptions
                 );
             }
 
@@ -245,16 +283,35 @@ class BlastController extends Controller
             $payload->setMeta('channel', 'WHATSAPP');
             $payload->setMeta('sent_by', Auth::id());
             $payload->setMeta('blast_log_id', $blastLog->id);
+            $payload->setMeta('blast_message_id', $blastMessage->id);
+            $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+            $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+            $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
             $this->attachFilesToPayload($payload, $attachments);
             $this->attachFilesToPayload(
                 $payload,
                 $recipientAttachmentOverrides['manual:' . $target] ?? []
             );
 
-            dispatch(new SendWhatsappBlastJob($target, $payload));
+            $this->dispatchQueuedBlastDelivery(
+                channel: 'WHATSAPP',
+                target: $target,
+                subject: null,
+                payload: $payload,
+                campaignOptions: $campaignOptions,
+                dispatchIndex: $dispatchIndex
+            );
         }
 
-        return back()->with('success', 'WhatsApp blast queued.');
+        $campaignId = $blastMessage?->id;
+        $statusMessage = 'WhatsApp blast queued.';
+        if ($campaignId !== null) {
+            $statusMessage .= ' Campaign ID: ' . $campaignId;
+        }
+
+        return back()
+            ->with('success', $statusMessage)
+            ->with('campaign_id', $campaignId);
     }
 
     /* =======================
@@ -273,6 +330,13 @@ class BlastController extends Controller
             'targets' => 'nullable|string',
             'subject' => 'required|string',
             'message' => 'nullable|string',
+            'scheduled_at' => 'nullable|date',
+            'rate_limit_per_minute' => 'nullable|integer|min:1|max:5000',
+            'batch_size' => 'nullable|integer|min:1|max:2000',
+            'batch_delay_seconds' => 'nullable|integer|min:0|max:3600',
+            'retry_attempts' => 'nullable|integer|min:1|max:10',
+            'retry_backoff_seconds' => 'nullable|string|max:255',
+            'priority' => 'nullable|in:high,normal,low',
             'use_global_default' => 'nullable|boolean',
             'message_overrides' => 'nullable|string',
             'attachment_override_keys' => 'nullable|array',
@@ -294,6 +358,11 @@ class BlastController extends Controller
         $messageOverrides = $this->parseMessageOverrides(
             $validated['message_overrides'] ?? null
         );
+        $campaignOptions = $this->resolveCampaignOptions(
+            validatedData: $validated,
+            channel: 'EMAIL'
+        );
+        $dispatchIndex = 0;
 
         $template = null;
         if (!empty($validated['template_id'])) {
@@ -335,7 +404,8 @@ class BlastController extends Controller
                         channel: 'EMAIL',
                         subject: $validated['subject'],
                         fallbackMessage: $validated['message'] ?? '',
-                        template: $template
+                        template: $template,
+                        campaignOptions: $campaignOptions
                     );
                 }
 
@@ -350,18 +420,23 @@ class BlastController extends Controller
                 $payload->setMeta('sent_by', Auth::id());
                 $payload->setMeta('recipient_id', $recipient->id);
                 $payload->setMeta('blast_log_id', $blastLog->id);
+                $payload->setMeta('blast_message_id', $blastMessage->id);
+                $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
                 $this->attachFilesToPayload($payload, $attachments);
                 $this->attachFilesToPayload(
                     $payload,
                     $recipientAttachmentOverrides['db:' . $recipient->id] ?? []
                 );
 
-                dispatch(
-                    new SendEmailBlastJob(
-                        $recipient->email_wali,
-                        $validated['subject'],
-                        $payload
-                    )
+                $this->dispatchQueuedBlastDelivery(
+                    channel: 'EMAIL',
+                    target: $recipient->email_wali,
+                    subject: $validated['subject'],
+                    payload: $payload,
+                    campaignOptions: $campaignOptions,
+                    dispatchIndex: $dispatchIndex
                 );
             }
 
@@ -385,7 +460,8 @@ class BlastController extends Controller
                     channel: 'EMAIL',
                     subject: $validated['subject'],
                     fallbackMessage: $validated['message'] ?? '',
-                    template: $template
+                    template: $template,
+                    campaignOptions: $campaignOptions
                 );
             }
 
@@ -399,22 +475,35 @@ class BlastController extends Controller
             $payload->setMeta('channel', 'EMAIL');
             $payload->setMeta('sent_by', Auth::id());
             $payload->setMeta('blast_log_id', $blastLog->id);
+            $payload->setMeta('blast_message_id', $blastMessage->id);
+            $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+            $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+            $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
             $this->attachFilesToPayload($payload, $attachments);
             $this->attachFilesToPayload(
                 $payload,
                 $recipientAttachmentOverrides['manual:' . strtolower(trim($email))] ?? []
             );
 
-            dispatch(
-                new SendEmailBlastJob(
-                    $email,
-                    $validated['subject'],
-                    $payload
-                )
+            $this->dispatchQueuedBlastDelivery(
+                channel: 'EMAIL',
+                target: $email,
+                subject: $validated['subject'],
+                payload: $payload,
+                campaignOptions: $campaignOptions,
+                dispatchIndex: $dispatchIndex
             );
         }
 
-        return back()->with('success', 'Email blast queued.');
+        $campaignId = $blastMessage?->id;
+        $statusMessage = 'Email blast queued.';
+        if ($campaignId !== null) {
+            $statusMessage .= ' Campaign ID: ' . $campaignId;
+        }
+
+        return back()
+            ->with('success', $statusMessage)
+            ->with('campaign_id', $campaignId);
     }
 
     /* =======================
@@ -440,6 +529,75 @@ class BlastController extends Controller
         return response()->json(
             $service->getSelectable($validated['channel'])
         );
+    }
+
+    public function pauseCampaign(Request $request)
+    {
+        $validated = $request->validate([
+            'campaign_id' => 'required|string|exists:blast_messages,id',
+        ]);
+
+        $campaign = BlastMessage::query()->findOrFail($validated['campaign_id']);
+        $campaign->update([
+            'campaign_status' => 'PAUSED',
+            'paused_at' => now(),
+            'completed_at' => null,
+        ]);
+
+        return back()
+            ->with('success', 'Campaign paused. ID: ' . $campaign->id)
+            ->with('campaign_id', $campaign->id);
+    }
+
+    public function resumeCampaign(Request $request)
+    {
+        $validated = $request->validate([
+            'campaign_id' => 'required|string|exists:blast_messages,id',
+        ]);
+
+        $campaign = BlastMessage::query()->findOrFail($validated['campaign_id']);
+
+        $nextStatus = $campaign->scheduled_at instanceof CarbonInterface
+            && $campaign->scheduled_at->isFuture()
+            ? 'SCHEDULED'
+            : 'RUNNING';
+
+        $campaign->update([
+            'campaign_status' => $nextStatus,
+            'paused_at' => null,
+            'started_at' => $campaign->started_at ?? now(),
+        ]);
+
+        return back()
+            ->with('success', 'Campaign resumed. ID: ' . $campaign->id)
+            ->with('campaign_id', $campaign->id);
+    }
+
+    public function stopCampaign(Request $request)
+    {
+        $validated = $request->validate([
+            'campaign_id' => 'required|string|exists:blast_messages,id',
+        ]);
+
+        $campaign = BlastMessage::query()->findOrFail($validated['campaign_id']);
+        $campaign->update([
+            'campaign_status' => 'STOPPED',
+            'completed_at' => now(),
+            'paused_at' => null,
+        ]);
+
+        BlastLog::query()
+            ->where('blast_message_id', $campaign->id)
+            ->where('status', 'PENDING')
+            ->update([
+                'status' => 'FAILED',
+                'error_message' => 'Campaign stopped by operator.',
+                'sent_at' => now(),
+            ]);
+
+        return back()
+            ->with('success', 'Campaign stopped. ID: ' . $campaign->id)
+            ->with('campaign_id', $campaign->id);
     }
 
     /**
@@ -570,7 +728,8 @@ class BlastController extends Controller
         string $channel,
         ?string $subject,
         string $fallbackMessage,
-        ?BlastMessageTemplate $template
+        ?BlastMessageTemplate $template,
+        array $campaignOptions
     ): BlastMessage {
         $message = trim($fallbackMessage) !== ''
             ? $fallbackMessage
@@ -582,7 +741,25 @@ class BlastController extends Controller
             'message' => $message,
             'meta' => [
                 'template_id' => $template?->id,
+                'campaign' => [
+                    'scheduled_at' => $campaignOptions['scheduled_at'] instanceof CarbonInterface
+                        ? $campaignOptions['scheduled_at']->toIso8601String()
+                        : null,
+                    'rate_limit_per_minute' => $campaignOptions['rate_limit_per_minute'],
+                    'batch_size' => $campaignOptions['batch_size'],
+                    'batch_delay_seconds' => $campaignOptions['batch_delay_seconds'],
+                    'retry_attempts' => $campaignOptions['retry_attempts'],
+                    'retry_backoff_seconds' => $campaignOptions['retry_backoff_seconds'],
+                    'priority' => $campaignOptions['priority'],
+                    'queue_name' => $campaignOptions['queue_name'],
+                ],
             ],
+            'campaign_status' => $campaignOptions['initial_status'],
+            'priority' => $campaignOptions['priority'],
+            'scheduled_at' => $campaignOptions['scheduled_at'],
+            'started_at' => null,
+            'paused_at' => null,
+            'completed_at' => null,
             'created_by' => Auth::id(),
         ]);
     }
@@ -606,6 +783,176 @@ class BlastController extends Controller
             'sent_at' => null,
             'attempt' => 0,
         ]);
+    }
+
+    private function resolveCampaignOptions(array $validatedData, string $channel): array
+    {
+        $normalizedChannel = strtolower(trim($channel));
+        $normalizedPriority = strtolower((string) ($validatedData['priority'] ?? 'normal'));
+        if (!in_array($normalizedPriority, ['high', 'normal', 'low'], true)) {
+            $normalizedPriority = 'normal';
+        }
+
+        $scheduledAt = null;
+        if (!empty($validatedData['scheduled_at'])) {
+            $scheduledAt = Carbon::parse((string) $validatedData['scheduled_at'], config('app.timezone'));
+        }
+
+        $queueName = $this->resolveQueueName($normalizedChannel, $normalizedPriority);
+
+        $rateLimitKey = $normalizedChannel === 'email'
+            ? 'blast.rate_limits.email_per_minute'
+            : 'blast.rate_limits.whatsapp_per_minute';
+
+        $rateLimitPerMinute = max(
+            1,
+            (int) ($validatedData['rate_limit_per_minute'] ?? config($rateLimitKey, 60))
+        );
+
+        $batchSize = max(
+            1,
+            (int) ($validatedData['batch_size'] ?? config('blast.batch.size', 50))
+        );
+
+        $batchDelaySeconds = max(
+            0,
+            (int) ($validatedData['batch_delay_seconds'] ?? config('blast.batch.delay_seconds', 10))
+        );
+
+        $retryAttempts = max(
+            1,
+            (int) ($validatedData['retry_attempts'] ?? config('blast.retry.max_attempts', 3))
+        );
+
+        $retryBackoffSeconds = $this->parseRetryBackoffSeconds(
+            $validatedData['retry_backoff_seconds'] ?? null
+        );
+
+        $scheduledDelaySeconds = 0;
+        if ($scheduledAt instanceof CarbonInterface) {
+            $scheduledDelaySeconds = max(
+                0,
+                now()->diffInSeconds($scheduledAt, false)
+            );
+        }
+
+        return [
+            'priority' => $normalizedPriority,
+            'queue_name' => $queueName,
+            'scheduled_at' => $scheduledAt,
+            'scheduled_delay_seconds' => $scheduledDelaySeconds,
+            'rate_limit_per_minute' => $rateLimitPerMinute,
+            'batch_size' => $batchSize,
+            'batch_delay_seconds' => $batchDelaySeconds,
+            'retry_attempts' => $retryAttempts,
+            'retry_backoff_seconds' => $retryBackoffSeconds,
+            'initial_status' => $scheduledDelaySeconds > 0 ? 'SCHEDULED' : 'QUEUED',
+        ];
+    }
+
+    private function resolveQueueName(string $channel, string $priority): string
+    {
+        $configured = config("blast.queues.{$channel}.{$priority}");
+        if (is_string($configured) && trim($configured) !== '') {
+            return trim($configured);
+        }
+
+        return 'blast-' . $channel . '-' . $priority;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function parseRetryBackoffSeconds(?string $rawValue): array
+    {
+        if ($rawValue === null || trim($rawValue) === '') {
+            $default = config('blast.retry.backoff_seconds', [30, 120, 300]);
+            return is_array($default) ? $default : [30, 120, 300];
+        }
+
+        $parts = preg_split('/\s*,\s*/', trim($rawValue)) ?: [];
+        $seconds = [];
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            $value = (int) $part;
+            if ($value < 0) {
+                continue;
+            }
+
+            $seconds[] = $value;
+        }
+
+        if ($seconds === []) {
+            $default = config('blast.retry.backoff_seconds', [30, 120, 300]);
+            return is_array($default) ? $default : [30, 120, 300];
+        }
+
+        return array_values(array_unique($seconds));
+    }
+
+    private function dispatchQueuedBlastDelivery(
+        string $channel,
+        string $target,
+        ?string $subject,
+        BlastPayload $payload,
+        array $campaignOptions,
+        int &$dispatchIndex
+    ): void {
+        $job = new QueueBlastDeliveryJob(
+            $channel,
+            $target,
+            $subject,
+            $payload
+        );
+
+        if (!empty($campaignOptions['queue_name'])) {
+            $job->onQueue((string) $campaignOptions['queue_name']);
+        }
+
+        $delaySeconds = $this->calculateDispatchDelaySeconds(
+            $campaignOptions,
+            $dispatchIndex
+        );
+        if ($delaySeconds > 0) {
+            $job->delay(now()->addSeconds($delaySeconds));
+        }
+
+        dispatch($job);
+        $dispatchIndex++;
+    }
+
+    private function calculateDispatchDelaySeconds(
+        array $campaignOptions,
+        int $dispatchIndex
+    ): int {
+        $scheduledDelaySeconds = max(
+            0,
+            (int) ($campaignOptions['scheduled_delay_seconds'] ?? 0)
+        );
+
+        $rateLimit = max(
+            1,
+            (int) ($campaignOptions['rate_limit_per_minute'] ?? 1)
+        );
+
+        $batchSize = max(
+            1,
+            (int) ($campaignOptions['batch_size'] ?? 1)
+        );
+
+        $batchDelaySeconds = max(
+            0,
+            (int) ($campaignOptions['batch_delay_seconds'] ?? 0)
+        );
+
+        $rateDelaySeconds = (int) floor(($dispatchIndex * 60) / $rateLimit);
+        $batchIndex = intdiv($dispatchIndex, $batchSize);
+        $batchDelay = $batchIndex * $batchDelaySeconds;
+
+        return $scheduledDelaySeconds + $rateDelaySeconds + $batchDelay;
     }
 
     /**

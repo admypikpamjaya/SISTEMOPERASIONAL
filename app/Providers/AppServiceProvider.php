@@ -10,6 +10,8 @@ use App\Providers\Messaging\FonnteWhatsappProvider;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 
 use App\Services\AccessControl\PermissionService;
 use App\Enums\Portal\PortalPermission;
@@ -45,6 +47,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        RateLimiter::for('blast-email', function () {
+            $perMinute = max(
+                1,
+                (int) config('blast.rate_limits.email_per_minute', 90)
+            );
+
+            return Limit::perMinute($perMinute)->by('blast-channel-email');
+        });
+
+        RateLimiter::for('blast-whatsapp', function () {
+            $perMinute = max(
+                1,
+                (int) config('blast.rate_limits.whatsapp_per_minute', 45)
+            );
+
+            return Limit::perMinute($perMinute)->by('blast-channel-whatsapp');
+        });
 
         Blade::if('permission', function (string $permission) {
             return auth()->check()

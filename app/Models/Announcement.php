@@ -23,9 +23,8 @@ class Announcement extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function blastLogs()
+    public function logs()
     {
-        return $this->morphMany(BlastLog::class, 'reference');
+        return $this->hasMany(AnnouncementLog::class);
     }
-    
 }

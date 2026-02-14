@@ -17,6 +17,8 @@ class AnnouncementRequest extends FormRequest
             'title'       => ['required', 'string', 'max:255'],
             'message'     => ['required', 'string'],
             'attachment'  => ['nullable', 'file', 'max:2048'],
+            'channels'    => ['nullable', 'array'],
+            'channels.*'  => ['in:email,whatsapp'],
         ];
     }
 }

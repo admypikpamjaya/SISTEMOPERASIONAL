@@ -163,6 +163,15 @@ Route::prefix('admin')
                 Route::post('/', [AnnouncementController::class, 'store'])
                     ->middleware('check_access:admin_announcement.create')
                     ->name('announcements.store');
+                Route::get('/{id}/edit', [AnnouncementController::class, 'edit'])
+                    ->middleware('check_access:admin_announcement.create')
+                    ->name('announcements.edit');
+                Route::put('/{id}', [AnnouncementController::class, 'update'])
+                    ->middleware('check_access:admin_announcement.create')
+                    ->name('announcements.update');
+                Route::delete('/{id}', [AnnouncementController::class, 'destroy'])
+                    ->middleware('check_access:admin_announcement.create')
+                    ->name('announcements.destroy');
             });
 
         /* ================= BILLINGS ================= */
@@ -203,6 +212,9 @@ Route::prefix('admin')
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
                 Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
                 Route::get('/activity-api', [BlastController::class, 'activity'])->name('activity');
+                Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])->name('campaign.pause');
+                Route::post('/campaign/resume', [BlastController::class, 'resumeCampaign'])->name('campaign.resume');
+                Route::post('/campaign/stop', [BlastController::class, 'stopCampaign'])->name('campaign.stop');
 
                 /* ===== RECIPIENT CRUD ===== */
                 Route::prefix('recipients')->name('recipients.')->group(function () {
