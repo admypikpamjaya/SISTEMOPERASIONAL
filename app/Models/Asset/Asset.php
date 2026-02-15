@@ -4,6 +4,7 @@ namespace App\Models\Asset;
 
 use App\Enums\Asset\AssetCategory;
 use App\Enums\Asset\AssetUnit;
+use App\Models\AssetDepreciation;
 use App\Models\Log\MaintenanceLog;
 use App\Services\Asset\AssetFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -112,5 +113,10 @@ class Asset extends Model
     public function maintenanceLogs(): HasMany
     {
         return $this->hasMany(MaintenanceLog::class, 'asset_id');
+    }
+
+    public function assetDepreciations(): HasMany
+    {
+        return $this->hasMany(AssetDepreciation::class, 'asset_id');
     }
 }
