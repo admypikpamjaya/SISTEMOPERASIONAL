@@ -129,6 +129,31 @@ Route::prefix('user-database')
 
 /*
 |--------------------------------------------------------------------------
+| Finance
+|--------------------------------------------------------------------------
+*/
+Route::prefix('finance')
+    ->name('finance.')
+    ->middleware(['auth', 'ensure_finance_access'])
+    ->group(function () {
+        Route::post('/depreciation/calculate', function () {
+            abort(501, 'Finance depreciation endpoint is not implemented yet.');
+        })->middleware('check_access:finance_depreciation.calculate')
+            ->name('depreciation.calculate');
+
+        Route::get('/reports', function () {
+            abort(501, 'Finance report endpoint is not implemented yet.');
+        })->middleware('check_access:finance_report.read')
+            ->name('reports.index');
+
+        Route::post('/reports/generate', function () {
+            abort(501, 'Finance report generation endpoint is not implemented yet.');
+        })->middleware('check_access:finance_report.generate')
+            ->name('reports.generate');
+    });
+
+/*
+|--------------------------------------------------------------------------
 | Public
 |--------------------------------------------------------------------------
 */

@@ -56,7 +56,8 @@ return [
      | FINANCE
      =============================== */
     UserRole::FINANCE->value => [
-        PortalPermission::MAINTENANCE_REPORT_READ,
-        PortalPermission::MAINTENANCE_REPORT_UPDATE_STATUS,
+        PortalPermission::FINANCE_DEPRECIATION_CALCULATE,
+        PortalPermission::FINANCE_REPORT_READ,
+        PortalPermission::FINANCE_REPORT_GENERATE,
     ],
 ];

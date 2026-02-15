@@ -36,6 +36,15 @@ enum PortalPermission: string
     case USER_MANAGEMENT_DELETE = 'user_management.delete';
 
     /*
+    |--------------------------------------------------------------------------
+    | FINANCE
+    |--------------------------------------------------------------------------
+    */
+    case FINANCE_DEPRECIATION_CALCULATE = 'finance_depreciation.calculate';
+    case FINANCE_REPORT_READ            = 'finance_report.read';
+    case FINANCE_REPORT_GENERATE        = 'finance_report.generate';
+
+    /*
     |----------------------------------------------------------------------
     | ADMIN – COMMUNICATION & BILLING (PHASE 6)
     |----------------------------------------------------------------------
