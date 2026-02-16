@@ -70,21 +70,34 @@
                         @php
                             $hasChildren = isset($menu['children']);
                             $isActiveParent = false;
+                            $isHiddenOnCurrentRoute = false;
 
                             if ($hasChildren) {
                                 $isActiveParent = collect($menu['children'])
                                     ->pluck('route')
                                     ->contains(fn($r) => request()->routeIs($r));
                             }
+
+                            if (!empty($menu['hide_on_routes'])) {
+                                $hidePatterns = is_array($menu['hide_on_routes'])
+                                    ? $menu['hide_on_routes']
+                                    : [$menu['hide_on_routes']];
+
+                                $isHiddenOnCurrentRoute = collect($hidePatterns)
+                                    ->contains(fn($pattern) => request()->routeIs($pattern));
+                            }
                         @endphp
 
                         @if(
-                            empty($menu['module_name']) ||
-                            app(\App\Services\AccessControl\PermissionService::class)
-                                ->checkAccess(
-                                    auth()->user(),
-                                    \App\Enums\Portal\PortalPermission::from($menu['module_name'] . '.read')->value
-                                )
+                            !$isHiddenOnCurrentRoute &&
+                            (
+                                empty($menu['module_name']) ||
+                                app(\App\Services\AccessControl\PermissionService::class)
+                                    ->checkAccess(
+                                        auth()->user(),
+                                        \App\Enums\Portal\PortalPermission::from($menu['module_name'] . '.read')->value
+                                    )
+                            )
                         )
 
                             <li class="nav-item {{ $hasChildren ? 'has-treeview' : '' }} {{ $isActiveParent ? 'menu-open' : '' }}">

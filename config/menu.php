@@ -14,6 +14,18 @@ return [
         'route'       => 'asset-management.index',
         'children'    => [
             [
+                'module_name' => 'asset_management',
+                'label'       => 'Kelola Aset',
+                'icon'        => 'fas fa-list',
+                'route'       => 'asset-management.index',
+            ],
+            [
+                'module_name' => 'asset_management',
+                'label'       => 'Register Asset',
+                'icon'        => 'fas fa-file-signature',
+                'route'       => 'asset-management.register-form',
+            ],
+            [
                 'module_name' => 'maintenance_report',
                 'label'       => 'Maintenance Report',
                 'icon'        => 'fas fa-tools',
@@ -29,9 +41,11 @@ return [
     ],
 
     [
+        'module_name' => 'admin_blast',
         'label' => 'Blast Message',
         'icon'  => 'fas fa-paper-plane',
         'route' => 'admin.blast.index',
+        'hide_on_routes' => ['finance.*'],
         'children' => [
             [
                 'label' => 'WhatsApp Blast',
@@ -67,6 +81,30 @@ return [
         'label' => 'Billing',
         'icon'  => 'fas fa-file-invoice-dollar',
         'route' => 'admin.billings.index',
+    ],
+
+    [
+        'module_name' => 'finance_report',
+        'label'       => 'Finance',
+        'icon'        => 'fas fa-chart-line',
+        'route'       => 'finance.dashboard',
+        'children'    => [
+            [
+                'label' => 'Finance Dashboard',
+                'icon'  => 'fas fa-chart-pie',
+                'route' => 'finance.dashboard',
+            ],
+            [
+                'label' => 'Depreciation',
+                'icon'  => 'fas fa-calculator',
+                'route' => 'finance.depreciation.index',
+            ],
+            [
+                'label' => 'Finance Report',
+                'icon'  => 'fas fa-file-invoice',
+                'route' => 'finance.report.index',
+            ],
+        ],
     ],
 
     [

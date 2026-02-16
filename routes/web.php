@@ -11,6 +11,9 @@ use App\Http\Controllers\Asset\PublicAssetController;
 
 use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
+use App\Http\Controllers\Finance\AssetDepreciationController;
+use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Finance\FinanceReportController;
 
 // ADMIN
 use App\Http\Controllers\Admin\AnnouncementController;
@@ -136,20 +139,33 @@ Route::prefix('finance')
     ->name('finance.')
     ->middleware(['auth', 'ensure_finance_access'])
     ->group(function () {
-        Route::post('/depreciation/calculate', function () {
-            abort(501, 'Finance depreciation endpoint is not implemented yet.');
-        })->middleware('check_access:finance_depreciation.calculate')
-            ->name('depreciation.calculate');
+        Route::get('/dashboard', [FinanceDashboardController::class, 'index'])
+            ->middleware('check_access:finance_report.read')
+            ->name('dashboard');
 
-        Route::get('/reports', function () {
-            abort(501, 'Finance report endpoint is not implemented yet.');
-        })->middleware('check_access:finance_report.read')
-            ->name('reports.index');
+        Route::get('/depreciation', [AssetDepreciationController::class, 'index'])
+            ->middleware('check_access:finance_depreciation.calculate')
+            ->name('depreciation.index');
 
-        Route::post('/reports/generate', function () {
-            abort(501, 'Finance report generation endpoint is not implemented yet.');
-        })->middleware('check_access:finance_report.generate')
-            ->name('reports.generate');
+        Route::post('/depreciation/calc', [AssetDepreciationController::class, 'calculate'])
+            ->middleware('check_access:finance_depreciation.calculate')
+            ->name('depreciation.calc');
+
+        Route::get('/report', [FinanceReportController::class, 'index'])
+            ->middleware('check_access:finance_report.read')
+            ->name('report.index');
+
+        Route::post('/report', [FinanceReportController::class, 'store'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.store');
+
+        Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
+            ->middleware('check_access:finance_report.read')
+            ->name('report.download');
+
+        Route::get('/report/{id}', [FinanceReportController::class, 'show'])
+            ->middleware('check_access:finance_report.read')
+            ->name('report.show');
     });
 
 /*

@@ -10,7 +10,9 @@ class ReportSummaryDTO
         public float $totalIncome,
         public float $totalExpense,
         public float $totalDepreciation,
-        public float $netResult
+        public float $netResult,
+        public float $openingBalance = 0.0,
+        public float $endingBalance = 0.0
     ) {}
 
     public static function fromArray(array $data): self
@@ -21,7 +23,9 @@ class ReportSummaryDTO
             (float) $data['total_income'],
             (float) $data['total_expense'],
             (float) $data['total_depreciation'],
-            (float) $data['net_result']
+            (float) $data['net_result'],
+            (float) ($data['opening_balance'] ?? 0),
+            (float) ($data['ending_balance'] ?? 0)
         );
     }
 
@@ -34,6 +38,8 @@ class ReportSummaryDTO
             'total_expense' => $this->totalExpense,
             'total_depreciation' => $this->totalDepreciation,
             'net_result' => $this->netResult,
+            'opening_balance' => $this->openingBalance,
+            'ending_balance' => $this->endingBalance,
         ];
     }
 }

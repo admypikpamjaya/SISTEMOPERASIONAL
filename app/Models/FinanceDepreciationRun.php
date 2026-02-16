@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class FinanceReport extends Model
+class FinanceDepreciationRun extends Model
 {
     use HasFactory, HasUuids;
 
@@ -16,42 +16,33 @@ class FinanceReport extends Model
 
     protected $keyType = 'string';
 
-    protected $table = 'finance_report_snapshots';
+    protected $table = 'finance_depreciation_runs';
 
     protected $fillable = [
         'period_id',
-        'report_type',
-        'version_no',
-        'reconciliation_snapshot_id',
-        'summary',
+        'run_no',
+        'status',
+        'assets_count',
+        'total_depreciation',
         'generated_by',
         'generated_at',
-        'is_read_only',
+        'notes',
     ];
 
     protected $casts = [
-        'summary' => 'array',
+        'run_no' => 'integer',
+        'assets_count' => 'integer',
+        'total_depreciation' => 'decimal:2',
         'generated_at' => 'datetime',
-        'is_read_only' => 'boolean',
     ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'generated_by');
-    }
 
     public function period(): BelongsTo
     {
         return $this->belongsTo(FinancePeriod::class, 'period_id');
     }
 
-    public function reconciliationSnapshot(): BelongsTo
+    public function reconciliationSnapshots(): HasMany
     {
-        return $this->belongsTo(FinanceReconciliationSnapshot::class, 'reconciliation_snapshot_id');
-    }
-
-    public function items(): HasMany
-    {
-        return $this->hasMany(FinanceReportItem::class, 'report_snapshot_id');
+        return $this->hasMany(FinanceReconciliationSnapshot::class, 'depreciation_run_id');
     }
 }
