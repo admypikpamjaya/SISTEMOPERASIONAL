@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\DashboardController;
 
 use App\Http\Controllers\Asset\AssetManagementController;
 use App\Http\Controllers\Asset\PublicAssetController;
@@ -61,7 +62,8 @@ Route::prefix('dashboard')
     ->name('dashboard.')
     ->middleware('auth')
     ->group(function () {
-        Route::get('/', fn () => view('dashboard.index'))->name('index');
+        Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('/chart-data', [DashboardController::class, 'chartData'])->name('chart-data');
     });
 
 /*

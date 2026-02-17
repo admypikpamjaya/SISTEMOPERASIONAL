@@ -59,15 +59,15 @@ class ReportService
     }
 
     public function getReports(
-        int $year,
+        ?int $year = null,
         ?int $month = null,
-        ?string $reportType = null,
+        ?string $periodType = null,
         ?string $reportDate = null,
         int $page = 1,
         int $perPage = 20
     ) {
         return $this->financeReportRepository->paginateByFilters(
-            periodType: $reportType ? strtoupper($reportType) : null,
+            periodType: $periodType ? strtoupper($periodType) : null,
             reportDate: $reportDate,
             year: $year,
             month: $month,

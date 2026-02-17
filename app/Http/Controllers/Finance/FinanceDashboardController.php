@@ -17,41 +17,64 @@ class FinanceDashboardController extends Controller
     {
         try {
             $validated = $request->validated();
-            $filterType = $validated['filter_type'] ?? 'monthly';
-            $date = $validated['date'] ?? null;
-            $year = (int) ($validated['year'] ?? now()->year);
+            $filterType = strtolower((string) ($validated['filter_type'] ?? 'monthly'));
+            $date = !empty($validated['date'])
+                ? \Carbon\Carbon::parse((string) $validated['date'])->toDateString()
+                : null;
+            $year = isset($validated['year']) ? (int) $validated['year'] : null;
             $month = isset($validated['month']) ? (int) $validated['month'] : null;
             $page = (int) ($validated['page'] ?? 1);
             $perPage = (int) ($validated['per_page'] ?? 5);
+            $currentYear = (int) now()->year;
+            $currentMonth = (int) now()->month;
+            $hasMonthQuery = $request->query->has('month');
 
-            if ($filterType === 'daily' && $date) {
-                $parsedDate = \Carbon\Carbon::parse($date);
-                $reports = $this->reportService->getReports(
-                    year: $parsedDate->year,
-                    month: $parsedDate->month,
-                    reportType: 'DAILY',
-                    reportDate: $parsedDate->toDateString(),
-                    page: $page,
-                    perPage: $perPage
-                );
+            $periodType = null;
+            $reportDate = null;
+
+            if ($filterType === 'monthly') {
+                $periodType = 'MONTHLY';
+                $year = $year ?? $currentYear;
+                if ($month === null && !$hasMonthQuery) {
+                    $month = $currentMonth;
+                }
+            } elseif ($filterType === 'yearly') {
+                $periodType = 'YEARLY';
+                $year = $year ?? $currentYear;
+                $month = null;
             } else {
-                $reports = $this->reportService->getReports(
-                    year: $year,
-                    month: $month,
-                    reportType: null,
-                    page: $page,
-                    perPage: $perPage
-                );
+                if ($date !== null) {
+                    $periodType = 'DAILY';
+                    $reportDate = $date;
+                    $parsedDate = \Carbon\Carbon::parse($date);
+                    $year = (int) $parsedDate->year;
+                    $month = (int) $parsedDate->month;
+                } elseif ($month !== null && $year === null) {
+                    $year = $currentYear;
+                }
             }
+
+            $reports = $this->reportService->getReports(
+                year: $year,
+                month: $month,
+                periodType: $periodType,
+                reportDate: $reportDate,
+                page: $page,
+                perPage: $perPage
+            );
 
             return view('finance.dashboard', [
                 'reports' => $reports,
                 'totalReports' => $reports->total(),
                 'filters' => [
                     'filter_type' => $filterType,
-                    'date' => $date,
+                    'date' => $reportDate ?? $date,
                     'month' => $month,
-                    'year' => $year,
+                    'year' => $year ?? (
+                        in_array($filterType, ['monthly', 'yearly'], true)
+                            ? $currentYear
+                            : null
+                    ),
                 ],
             ]);
         } catch (Throwable $exception) {
