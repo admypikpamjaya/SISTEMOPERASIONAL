@@ -165,6 +165,135 @@
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 <script src="{{ asset('js/helper.js') }}"></script>
 
+@php
+    $canReadReminder = Auth::check()
+        && app(\App\Services\AccessControl\PermissionService::class)->checkAccess(
+            auth()->user(),
+            \App\Enums\Portal\PortalPermission::ADMIN_REMINDER_READ->value
+        );
+@endphp
+
+@if($canReadReminder)
+<script>
+    (function () {
+        const alertEndpoint = @json(route('admin.reminders.alerts'));
+        const reminderPageUrl = @json(route('admin.reminders.index'));
+        const announcementPageUrl = @json(route('admin.announcements.index'));
+
+        const pollIntervalMs = 60000;
+        const cooldownMs = {
+            upcoming: 10 * 60 * 1000,
+            due: 2 * 60 * 1000
+        };
+        const lastShownAt = {};
+        let isPolling = false;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function canShowAlert(primaryAlert) {
+            if (!primaryAlert) {
+                return false;
+            }
+
+            const signature = `${primaryAlert.id}:${primaryAlert.state}`;
+            const now = Date.now();
+            const requiredCooldown = primaryAlert.state === 'due'
+                ? cooldownMs.due
+                : cooldownMs.upcoming;
+
+            if ((lastShownAt[signature] ?? 0) + requiredCooldown > now) {
+                return false;
+            }
+
+            lastShownAt[signature] = now;
+            return true;
+        }
+
+        function buildAlertHtml(alerts) {
+            const listItems = alerts.slice(0, 5).map((alert) => {
+                const title = escapeHtml(alert.title);
+                const hint = escapeHtml(alert.hint);
+                const schedule = escapeHtml(alert.remind_at_label);
+                return `<li><strong>${title}</strong><br><small>${hint} (Jadwal: ${schedule})</small></li>`;
+            });
+
+            const hiddenCount = Math.max(0, alerts.length - 5);
+            const hiddenSummary = hiddenCount > 0
+                ? `<p class="mt-2 mb-0 text-muted">+${hiddenCount} reminder lain juga aktif.</p>`
+                : '';
+
+            return `<ul class="text-left pl-3 mb-0">${listItems.join('')}</ul>${hiddenSummary}`;
+        }
+
+        function showReminderPopup(alerts) {
+            const dueAlert = alerts.find((alert) => alert.state === 'due');
+            const primaryAlert = dueAlert ?? alerts[0];
+
+            if (!canShowAlert(primaryAlert) || Swal.isVisible()) {
+                return;
+            }
+
+            const hasAnnouncementReminder = alerts.some(
+                (alert) => alert.type === 'ANNOUNCEMENT'
+            );
+
+            Swal.fire({
+                title: dueAlert ? 'Reminder Hari-H Aktif' : 'Reminder Mendekati Waktu',
+                html: buildAlertHtml(alerts),
+                icon: 'warning',
+                width: '32em',
+                confirmButtonText: 'Kelola Reminder',
+                showCancelButton: true,
+                cancelButtonText: 'Tutup',
+                showDenyButton: hasAnnouncementReminder,
+                denyButtonText: 'Buka Announcement'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = reminderPageUrl;
+                    return;
+                }
+
+                if (result.isDenied) {
+                    window.location.href = announcementPageUrl;
+                }
+            });
+        }
+
+        function pollReminderAlerts() {
+            if (isPolling) {
+                return;
+            }
+
+            isPolling = true;
+
+            Http.get(alertEndpoint)
+                .done((response) => {
+                    const alerts = response && Array.isArray(response.alerts)
+                        ? response.alerts
+                        : [];
+
+                    if (alerts.length > 0) {
+                        showReminderPopup(alerts);
+                    }
+                })
+                .always(() => {
+                    isPolling = false;
+                });
+        }
+
+        pollReminderAlerts();
+        setInterval(pollReminderAlerts, pollIntervalMs);
+    })();
+</script>
+@endif
+
 @stack('component_js')
 @yield('js')
 

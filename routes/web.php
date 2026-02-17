@@ -159,6 +159,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.generate')
             ->name('report.store');
 
+        Route::get('/report/snapshots', [FinanceReportController::class, 'snapshots'])
+            ->middleware('check_access:finance_report.read')
+            ->name('report.snapshots');
+
         Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
             ->middleware('check_access:finance_report.read')
             ->name('report.download');
@@ -228,13 +232,22 @@ Route::prefix('admin')
 
         /* ================= REMINDERS ================= */
         Route::prefix('reminders')
+            ->name('reminders.')
             ->middleware('check_access:admin_reminder.read')
             ->group(function () {
                 Route::get('/', [ReminderController::class, 'index'])
-                    ->name('reminders.index');
-                Route::post('/send', [ReminderController::class, 'send'])
+                    ->name('index');
+                Route::get('/alerts', [ReminderController::class, 'alerts'])
+                    ->name('alerts');
+                Route::post('/', [ReminderController::class, 'store'])
                     ->middleware('check_access:admin_reminder.send')
-                    ->name('reminders.send');
+                    ->name('store');
+                Route::post('/send', [ReminderController::class, 'store'])
+                    ->middleware('check_access:admin_reminder.send')
+                    ->name('send');
+                Route::post('/{reminder}/toggle', [ReminderController::class, 'toggle'])
+                    ->middleware('check_access:admin_reminder.send')
+                    ->name('toggle');
             });
 
         /* ================= BLAST ================= */
@@ -253,6 +266,7 @@ Route::prefix('admin')
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
                 Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
                 Route::get('/activity-api', [BlastController::class, 'activity'])->name('activity');
+                Route::post('/activity/clear', [BlastController::class, 'clearActivityLogs'])->name('activity.clear');
                 Route::get('/campaign-api', [BlastController::class, 'campaigns'])->name('campaigns');
                 Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])->name('campaign.pause');
                 Route::post('/campaign/resume', [BlastController::class, 'resumeCampaign'])->name('campaign.resume');
