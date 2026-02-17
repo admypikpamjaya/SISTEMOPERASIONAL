@@ -97,7 +97,7 @@ return [
                 'route' => 'finance.dashboard',
             ],
             [
-                'label' => 'Depreciation',
+                'label' => 'Asset Depreciation',
                 'icon'  => 'fas fa-calculator',
                 'route' => 'finance.depreciation.index',
             ],
