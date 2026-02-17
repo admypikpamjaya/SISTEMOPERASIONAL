@@ -72,12 +72,14 @@ return [
     ],
 
     [
+        'module_name' => 'admin_reminder',
         'label' => 'Reminders',
         'icon'  => 'fas fa-bell',
         'route' => 'admin.reminders.index',
     ],
 
     [
+        'module_name' => 'admin_billing',
         'label' => 'Billing',
         'icon'  => 'fas fa-file-invoice-dollar',
         'route' => 'admin.billings.index',
@@ -100,9 +102,14 @@ return [
                 'route' => 'finance.depreciation.index',
             ],
             [
-                'label' => 'Finance Report',
+                'label' => 'Input Finance Report',
                 'icon'  => 'fas fa-file-invoice',
                 'route' => 'finance.report.index',
+            ],
+            [
+                'label' => 'Snapshot Laporan',
+                'icon'  => 'fas fa-book',
+                'route' => 'finance.report.snapshots',
             ],
         ],
     ],

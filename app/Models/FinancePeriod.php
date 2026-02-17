@@ -23,6 +23,8 @@ class FinancePeriod extends Model
         'month',
         'start_date',
         'end_date',
+        'opening_balance',
+        'closing_balance',
         'status',
         'locked_by',
         'locked_at',
@@ -33,6 +35,8 @@ class FinancePeriod extends Model
         'month' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
+        'opening_balance' => 'decimal:2',
+        'closing_balance' => 'decimal:2',
         'locked_at' => 'datetime',
     ];
 

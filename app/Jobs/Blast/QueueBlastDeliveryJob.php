@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class QueueBlastDeliveryJob implements ShouldQueue
 {
@@ -72,6 +73,18 @@ class QueueBlastDeliveryJob implements ShouldQueue
 
         if ($queueName !== '') {
             $job->onQueue($queueName);
+        }
+
+        if ($normalizedChannel === 'WHATSAPP') {
+            try {
+                app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
+            } catch (\Throwable $exception) {
+                Log::error('[WHATSAPP SYNC DISPATCH FAILED]', [
+                    'target' => $this->target,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+            return;
         }
 
         dispatch($job);

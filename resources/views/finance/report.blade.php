@@ -6,8 +6,11 @@
 <div class="row">
     <div class="col-12">
         <div class="card card-outline card-success">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">Input Laporan Laba Rugi</h3>
+                <a href="{{ route('finance.report.snapshots', ['year' => now()->year]) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-list mr-1"></i> Buka Snapshot Laporan
+                </a>
             </div>
             <form method="POST" action="{{ route('finance.report.store') }}" id="profit-loss-form">
                 @csrf
@@ -58,16 +61,27 @@
                         </div>
                         <div class="form-group col-md-3">
                             <label for="opening_balance_create">Saldo Awal</label>
-                            <input
-                                type="number"
-                                name="opening_balance"
-                                id="opening_balance_create"
-                                class="form-control"
-                                step="0.01"
-                                value="{{ old('opening_balance', 0) }}"
-                                required
-                            >
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Rp</span>
+                                </div>
+                                <input
+                                    type="number"
+                                    name="opening_balance"
+                                    id="opening_balance_create"
+                                    class="form-control"
+                                    step="0.01"
+                                    min="0"
+                                    value="{{ old('opening_balance', $suggestedOpeningBalance ?? 0) }}"
+                                    required
+                                >
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="alert alert-light border mb-3">
+                        <strong>Estimasi Saldo Akhir:</strong>
+                        <span id="estimated-ending-balance">Rp 0,00</span>
                     </div>
 
                     <div class="table-responsive">
@@ -165,119 +179,6 @@
         </div>
     </div>
 </div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card card-outline card-primary">
-            <div class="card-header">
-                <h3 class="card-title mb-0">Filter Laporan Finance</h3>
-            </div>
-            <div class="card-body">
-                <form method="GET" action="{{ route('finance.report.index') }}" class="form-row">
-                    <div class="form-group col-md-2">
-                        <label for="month">Bulan</label>
-                        <select name="month" id="month" class="form-control">
-                            <option value="">Semua</option>
-                            @for($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}" {{ (int) ($filters['month'] ?? 0) === $m ? 'selected' : '' }}>
-                                    {{ $m }}
-                                </option>
-                            @endfor
-                        </select>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="year">Tahun</label>
-                        <input
-                            type="number"
-                            name="year"
-                            id="year"
-                            class="form-control"
-                            min="1900"
-                            max="2100"
-                            value="{{ $filters['year'] }}"
-                            required
-                        >
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label for="report_type">Tipe</label>
-                        <select name="report_type" id="report_type" class="form-control">
-                            <option value="">Semua</option>
-                            <option value="MONTHLY" {{ ($filters['report_type'] ?? null) === 'MONTHLY' ? 'selected' : '' }}>MONTHLY</option>
-                            <option value="YEARLY" {{ ($filters['report_type'] ?? null) === 'YEARLY' ? 'selected' : '' }}>YEARLY</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label for="per_page">Per Page</label>
-                        <select name="per_page" id="per_page" class="form-control">
-                            @foreach([10, 20, 50, 100] as $size)
-                                <option value="{{ $size }}" {{ (int) request('per_page', 20) === $size ? 'selected' : '' }}>
-                                    {{ $size }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary mr-2">
-                            <i class="fas fa-search mr-1"></i> Cari
-                        </button>
-                        <a href="{{ route('finance.report.index', ['year' => now()->year]) }}" class="btn btn-default">Reset</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title mb-0">Daftar Snapshot Laporan</h3>
-            </div>
-            <div class="card-body table-responsive p-0">
-                <table class="table table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>Aksi</th>
-                            <th>Tipe</th>
-                            <th>Versi</th>
-                            <th>Saldo Akhir</th>
-                            <th>Generated At</th>
-                            <th>Generated By</th>
-                            <th>Read Only</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($reports as $report)
-                            <tr>
-                                <td>
-                                    <a href="{{ route('finance.report.show', $report->id) }}" class="btn btn-sm btn-outline-primary">
-                                        Preview
-                                    </a>
-                                </td>
-                                <td>{{ $report->report_type }}</td>
-                                <td>{{ $report->version_no }}</td>
-                                <td>
-                                    {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}
-                                </td>
-                                <td>{{ optional($report->generated_at)->format('Y-m-d H:i:s') ?? '-' }}</td>
-                                <td>{{ $report->user?->name ?? '-' }}</td>
-                                <td>{{ $report->is_read_only ? 'Yes' : 'No' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">Tidak ada snapshot laporan untuk filter ini.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="card-footer clearfix">
-                {{ $reports->appends(request()->query())->links() }}
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @section('js')
@@ -287,6 +188,47 @@
         const addButton = document.getElementById('add-profit-loss-line');
         const reportTypeSelect = document.getElementById('report_type_create');
         const monthSelect = document.getElementById('month_create');
+        const openingBalanceInput = document.getElementById('opening_balance_create');
+        const estimatedEndingBalance = document.getElementById('estimated-ending-balance');
+
+        function parseAmount(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function formatRupiah(value) {
+            return 'Rp ' + Number(value).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function updateEstimatedBalance() {
+            let balance = parseAmount(openingBalanceInput.value);
+
+            Array.from(tableBody.querySelectorAll('tr')).forEach(function (row) {
+                const typeSelect = row.querySelector('select[name*="[type]"]');
+                const amountInput = row.querySelector('input[name*="[amount]"]');
+                const depreciationInput = row.querySelector('input[name*="[is_depreciation]"]');
+
+                if (!typeSelect || !amountInput) {
+                    return;
+                }
+
+                const amount = parseAmount(amountInput.value);
+                if (typeSelect.value === 'INCOME') {
+                    balance += amount;
+                    return;
+                }
+
+                const isDepreciation = depreciationInput ? depreciationInput.checked : false;
+                if (!isDepreciation) {
+                    balance -= amount;
+                }
+            });
+
+            estimatedEndingBalance.textContent = formatRupiah(balance);
+        }
 
         function syncDepreciationCheckbox(row) {
             const typeSelect = row.querySelector('select[name*="[type]"]');
@@ -356,6 +298,7 @@
 
             tableBody.appendChild(row);
             renumberRows();
+            updateEstimatedBalance();
         }
 
         function syncMonthField() {
@@ -389,6 +332,7 @@
 
             row.remove();
             renumberRows();
+            updateEstimatedBalance();
         });
 
         tableBody.addEventListener('change', function (event) {
@@ -398,12 +342,24 @@
                     syncDepreciationCheckbox(row);
                 }
             }
+
+            if (event.target.matches('select[name*="[type]"], input[name*="[amount]"], input[name*="[is_depreciation]"]')) {
+                updateEstimatedBalance();
+            }
+        });
+
+        tableBody.addEventListener('input', function (event) {
+            if (event.target.matches('input[name*="[amount]"]')) {
+                updateEstimatedBalance();
+            }
         });
 
         reportTypeSelect.addEventListener('change', syncMonthField);
+        openingBalanceInput.addEventListener('input', updateEstimatedBalance);
 
         renumberRows();
         syncMonthField();
+        updateEstimatedBalance();
     })();
 </script>
 @endsection

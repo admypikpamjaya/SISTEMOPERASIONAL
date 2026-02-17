@@ -9,7 +9,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">Preview Dokumen LABA DAN RUGI</h3>
                 <div class="btn-group">
-                    <a href="{{ route('finance.report.index', ['year' => $report->year]) }}" class="btn btn-sm btn-default">
+                    <a href="{{ route('finance.report.snapshots', ['year' => $report->year]) }}" class="btn btn-sm btn-default">
                         <i class="fas fa-arrow-left mr-1"></i> Kembali
                     </a>
                     <a href="{{ route('finance.report.download', $report->reportId) }}" class="btn btn-sm btn-success">
@@ -25,8 +25,8 @@
                 <div class="mb-3">
                     <div><strong>Periode:</strong> {{ $report->month ? sprintf('%02d', $report->month) . '/' . $report->year : $report->year }}</div>
                     <div><strong>Jenis:</strong> {{ $report->reportType }}</div>
-                    <div><strong>Saldo Awal:</strong> {{ number_format($report->openingBalance, 2, ',', '.') }}</div>
-                    <div><strong>Saldo Akhir:</strong> {{ number_format($report->endingBalance, 2, ',', '.') }}</div>
+                    <div><strong>Saldo Awal:</strong> Rp {{ number_format($report->openingBalance, 2, ',', '.') }}</div>
+                    <div><strong>Saldo Akhir:</strong> Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</div>
                     <div><strong>Disusun Oleh:</strong> {{ $report->generatedByName ?? '-' }}</div>
                     <div><strong>Generated At:</strong> {{ $report->generatedAt->format('Y-m-d H:i:s') }}</div>
                 </div>
@@ -50,7 +50,7 @@
                                     <td>{{ $line->lineCode }}</td>
                                     <td>{{ $line->lineLabel }}</td>
                                     <td>{{ $line->description ?: '-' }}</td>
-                                    <td class="text-right">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                                    <td class="text-right">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -59,7 +59,7 @@
                             @endforelse
                             <tr class="bg-light">
                                 <td colspan="3"><strong>Total Penghasilan</strong></td>
-                                <td class="text-right"><strong>{{ number_format($report->totalIncome, 2, ',', '.') }}</strong></td>
+                                <td class="text-right"><strong>Rp {{ number_format($report->totalIncome, 2, ',', '.') }}</strong></td>
                             </tr>
 
                             <tr class="bg-light">
@@ -70,7 +70,7 @@
                                     <td>{{ $line->lineCode }}</td>
                                     <td>{{ $line->lineLabel }}</td>
                                     <td>{{ $line->description ?: '-' }}</td>
-                                    <td class="text-right">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                                    <td class="text-right">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -79,7 +79,7 @@
                             @endforelse
                             <tr class="bg-light">
                                 <td colspan="3"><strong>Total Pengeluaran (non-penyusutan)</strong></td>
-                                <td class="text-right"><strong>{{ number_format($report->totalExpense, 2, ',', '.') }}</strong></td>
+                                <td class="text-right"><strong>Rp {{ number_format($report->totalExpense, 2, ',', '.') }}</strong></td>
                             </tr>
 
                             <tr class="bg-light">
@@ -90,7 +90,7 @@
                                     <td>{{ $line->lineCode }}</td>
                                     <td>{{ $line->lineLabel }}</td>
                                     <td>{{ $line->description ?: '-' }}</td>
-                                    <td class="text-right">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                                    <td class="text-right">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -99,15 +99,15 @@
                             @endforelse
                             <tr class="bg-light">
                                 <td colspan="3"><strong>Penyusutan</strong></td>
-                                <td class="text-right"><strong>{{ number_format($report->totalDepreciation, 2, ',', '.') }}</strong></td>
+                                <td class="text-right"><strong>Rp {{ number_format($report->totalDepreciation, 2, ',', '.') }}</strong></td>
                             </tr>
                             <tr class="bg-success">
                                 <td colspan="3"><strong>Surplus (Defisit)</strong></td>
-                                <td class="text-right"><strong>{{ number_format($report->surplusDeficit, 2, ',', '.') }}</strong></td>
+                                <td class="text-right"><strong>Rp {{ number_format($report->surplusDeficit, 2, ',', '.') }}</strong></td>
                             </tr>
                             <tr class="bg-info">
                                 <td colspan="3"><strong>Saldo Akhir</strong></td>
-                                <td class="text-right"><strong>{{ number_format($report->endingBalance, 2, ',', '.') }}</strong></td>
+                                <td class="text-right"><strong>Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</strong></td>
                             </tr>
                         </tbody>
                     </table>

@@ -74,12 +74,38 @@ class ReportService
         );
     }
 
+    public function getSuggestedOpeningBalance(string $reportType, int $year, ?int $month): float
+    {
+        $normalizedType = strtoupper($reportType);
+        $periodMonth = $normalizedType === 'YEARLY' ? 0 : (int) $month;
+
+        $latestClosingBalance = $this->financePeriodRepository->getLatestClosingBalanceBefore(
+            $normalizedType,
+            $year,
+            $periodMonth
+        );
+
+        return $latestClosingBalance ?? 0.0;
+    }
+
     public function createProfitLossReport(GenerateProfitLossReportDTO $dto): FinanceReportSnapshotDTO
     {
+        $period = $this->resolveOrCreatePeriod(
+            $dto->reportType,
+            $dto->year,
+            $dto->month,
+            $dto->openingBalance
+        );
+
+        $periodOpeningBalance = (float) ($period->opening_balance ?? 0);
+        $openingBalance = round($dto->openingBalance, 2);
+        if ($openingBalance == 0.0 && $periodOpeningBalance > 0) {
+            $openingBalance = $periodOpeningBalance;
+        }
+
         $totalIncome = 0.0;
         $totalExpense = 0.0;
         $totalDepreciation = 0.0;
-        $openingBalance = $dto->openingBalance;
 
         foreach ($dto->entries as $entry) {
             if ($entry->type === 'INCOME') {
@@ -100,13 +126,13 @@ class ReportService
             $totalExpense,
             $totalDepreciation
         );
-        $endingBalance = round($openingBalance + $reconciliation->netResult, 2);
+        $endingBalance = round($openingBalance + $totalIncome - $totalExpense, 2);
 
-        return DB::transaction(function () use ($dto, $reconciliation, $openingBalance, $endingBalance) {
-            $period = $this->resolveOrCreatePeriod(
-                $dto->reportType,
-                $dto->year,
-                $dto->month
+        return DB::transaction(function () use ($dto, $period, $reconciliation, $openingBalance, $endingBalance) {
+            $this->financePeriodRepository->updateBalances(
+                $period->id,
+                $openingBalance,
+                $endingBalance
             );
 
             $runNo = $this->financeDepreciationRunRepository->getNextRunNumber($period->id);
@@ -155,7 +181,15 @@ class ReportService
 
             $now = now();
             $rows = [];
+            $runningBalance = $openingBalance;
             foreach ($dto->entries as $index => $entry) {
+                $balanceBefore = $runningBalance;
+                if ($entry->type === 'INCOME') {
+                    $runningBalance += $entry->amount;
+                } elseif (!$entry->isDepreciation) {
+                    $runningBalance -= $entry->amount;
+                }
+
                 $rows[] = [
                     'report_snapshot_id' => $reportSnapshot->id,
                     'line_code' => $entry->lineCode,
@@ -166,6 +200,8 @@ class ReportService
                         'type' => $entry->type,
                         'is_depreciation' => $entry->isDepreciation,
                         'description' => $entry->description,
+                        'balance_before' => round($balanceBefore, 2),
+                        'balance_after' => round($runningBalance, 2),
                     ], JSON_THROW_ON_ERROR),
                     'created_at' => $now,
                     'updated_at' => $now,
@@ -212,9 +248,17 @@ class ReportService
         }
 
         $month = (int) data_get($report->summary, 'month', (int) ($report->period?->month ?? 0));
-        $openingBalance = (float) data_get($report->summary, 'opening_balance', 0);
+        $openingBalance = (float) data_get(
+            $report->summary,
+            'opening_balance',
+            (float) ($report->period?->opening_balance ?? 0)
+        );
         $surplusDeficit = (float) data_get($report->summary, 'net_result', 0);
-        $endingBalance = (float) data_get($report->summary, 'ending_balance', $openingBalance + $surplusDeficit);
+        $endingBalance = (float) data_get(
+            $report->summary,
+            'ending_balance',
+            (float) ($report->period?->closing_balance ?? ($openingBalance + $surplusDeficit))
+        );
 
         return new ProfitLossReportDetailDTO(
             reportId: $report->id,
@@ -235,7 +279,12 @@ class ReportService
         );
     }
 
-    private function resolveOrCreatePeriod(string $reportType, int $year, ?int $month): FinancePeriod
+    private function resolveOrCreatePeriod(
+        string $reportType,
+        int $year,
+        ?int $month,
+        float $openingBalance = 0.0
+    ): FinancePeriod
     {
         $normalizedType = strtoupper($reportType);
 
@@ -268,7 +317,9 @@ class ReportService
             $year,
             $periodMonth,
             $startDate,
-            $endDate
+            $endDate,
+            $openingBalance,
+            $openingBalance
         );
     }
 }

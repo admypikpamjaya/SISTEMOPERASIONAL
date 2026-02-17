@@ -115,9 +115,9 @@
         </tr>
         <tr>
             <td class="label">Saldo Awal</td>
-            <td>: {{ number_format($report->openingBalance, 2, ',', '.') }}</td>
+            <td>: Rp {{ number_format($report->openingBalance, 2, ',', '.') }}</td>
             <td class="label">Saldo Akhir</td>
-            <td>: {{ number_format($report->endingBalance, 2, ',', '.') }}</td>
+            <td>: Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</td>
         </tr>
         <tr>
             <td class="label">Disusun Oleh</td>
@@ -145,7 +145,7 @@
                     <td>{{ $line->lineCode }}</td>
                     <td>{{ $line->lineLabel }}</td>
                     <td>{{ $line->description ?: '-' }}</td>
-                    <td class="amount">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                    <td class="amount">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
@@ -154,7 +154,7 @@
             @endforelse
             <tr class="total-row">
                 <td colspan="3">Total Penghasilan</td>
-                <td class="amount">{{ number_format($report->totalIncome, 2, ',', '.') }}</td>
+                <td class="amount">Rp {{ number_format($report->totalIncome, 2, ',', '.') }}</td>
             </tr>
 
             <tr class="section-row">
@@ -165,7 +165,7 @@
                     <td>{{ $line->lineCode }}</td>
                     <td>{{ $line->lineLabel }}</td>
                     <td>{{ $line->description ?: '-' }}</td>
-                    <td class="amount">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                    <td class="amount">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
@@ -174,7 +174,7 @@
             @endforelse
             <tr class="total-row">
                 <td colspan="3">Total Pengeluaran (non-penyusutan)</td>
-                <td class="amount">{{ number_format($report->totalExpense, 2, ',', '.') }}</td>
+                <td class="amount">Rp {{ number_format($report->totalExpense, 2, ',', '.') }}</td>
             </tr>
 
             <tr class="section-row">
@@ -185,7 +185,7 @@
                     <td>{{ $line->lineCode }}</td>
                     <td>{{ $line->lineLabel }}</td>
                     <td>{{ $line->description ?: '-' }}</td>
-                    <td class="amount">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                    <td class="amount">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
@@ -194,16 +194,16 @@
             @endforelse
             <tr class="total-row">
                 <td colspan="3">Total Penyusutan</td>
-                <td class="amount">{{ number_format($report->totalDepreciation, 2, ',', '.') }}</td>
+                <td class="amount">Rp {{ number_format($report->totalDepreciation, 2, ',', '.') }}</td>
             </tr>
 
             <tr class="surplus-row">
                 <td colspan="3">Surplus (Defisit)</td>
-                <td class="amount">{{ number_format($report->surplusDeficit, 2, ',', '.') }}</td>
+                <td class="amount">Rp {{ number_format($report->surplusDeficit, 2, ',', '.') }}</td>
             </tr>
             <tr class="total-row">
                 <td colspan="3">Saldo Akhir</td>
-                <td class="amount">{{ number_format($report->endingBalance, 2, ',', '.') }}</td>
+                <td class="amount">Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

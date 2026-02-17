@@ -1,17 +1,20 @@
 @extends('layouts.app')
 
-@section('section_name', 'Finance Dashboard')
+@section('section_name', 'Snapshot Laporan Finance')
 
 @section('content')
 <div class="row">
-    <div class="col-lg-8 col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title mb-0">Filter Snapshot Finance</h3>
+    <div class="col-12">
+        <div class="card card-outline card-primary">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">Filter Snapshot Laporan</h3>
+                <a href="{{ route('finance.report.index') }}" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-plus mr-1"></i> Input Finance Report
+                </a>
             </div>
             <div class="card-body">
-                <form method="GET" action="{{ route('finance.dashboard') }}" class="form-row">
-                    <div class="form-group col-md-3">
+                <form method="GET" action="{{ route('finance.report.snapshots') }}" class="form-row">
+                    <div class="form-group col-md-2">
                         <label for="month">Bulan</label>
                         <select name="month" id="month" class="form-control">
                             <option value="">Semua</option>
@@ -32,42 +35,35 @@
                             min="1900"
                             max="2100"
                             value="{{ $filters['year'] }}"
+                            required
                         >
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="report_type">Tipe</label>
+                        <select name="report_type" id="report_type" class="form-control">
+                            <option value="">Semua</option>
+                            <option value="MONTHLY" {{ ($filters['report_type'] ?? null) === 'MONTHLY' ? 'selected' : '' }}>MONTHLY</option>
+                            <option value="YEARLY" {{ ($filters['report_type'] ?? null) === 'YEARLY' ? 'selected' : '' }}>YEARLY</option>
+                        </select>
                     </div>
                     <div class="form-group col-md-2">
                         <label for="per_page">Per Page</label>
                         <select name="per_page" id="per_page" class="form-control">
-                            @foreach([5, 10, 20, 50] as $size)
-                                <option value="{{ $size }}" {{ (int) request('per_page', 5) === $size ? 'selected' : '' }}>
+                            @foreach([10, 20, 50, 100] as $size)
+                                <option value="{{ $size }}" {{ (int) request('per_page', 20) === $size ? 'selected' : '' }}>
                                     {{ $size }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="form-group col-md-4 d-flex align-items-end">
+                    <div class="form-group col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary mr-2">
-                            <i class="fas fa-filter mr-1"></i> Filter
+                            <i class="fas fa-search mr-1"></i> Cari
                         </button>
-                        <a href="{{ route('finance.dashboard') }}" class="btn btn-default">
-                            Reset
-                        </a>
+                        <a href="{{ route('finance.report.snapshots', ['year' => now()->year]) }}" class="btn btn-default">Reset</a>
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-12">
-        <div class="small-box bg-info">
-            <div class="inner">
-                <h3>{{ $totalReports }}</h3>
-                <p>Total Snapshot</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-file-invoice"></i>
-            </div>
-            <a href="{{ route('finance.report.snapshots', ['year' => $filters['year']]) }}" class="small-box-footer">
-                Buka Snapshot Laporan <i class="fas fa-arrow-circle-right"></i>
-            </a>
         </div>
     </div>
 </div>
@@ -75,16 +71,14 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title mb-0">Snapshot Terbaru</h3>
-                <a href="{{ route('finance.depreciation.index') }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-calculator mr-1"></i> Hitung Penyusutan
-                </a>
+            <div class="card-header">
+                <h3 class="card-title mb-0">Daftar Snapshot Laporan</h3>
             </div>
-            <div class="card-body p-0 table-responsive">
-                <table class="table table-hover mb-0">
+            <div class="card-body table-responsive p-0">
+                <table class="table table-striped mb-0">
                     <thead>
                         <tr>
+                            <th>Aksi</th>
                             <th>Tipe</th>
                             <th>Versi</th>
                             <th>Saldo Awal</th>
@@ -97,17 +91,26 @@
                     <tbody>
                         @forelse($reports as $report)
                             <tr>
+                                <td>
+                                    <a href="{{ route('finance.report.show', $report->id) }}" class="btn btn-sm btn-outline-primary">
+                                        Preview
+                                    </a>
+                                </td>
                                 <td>{{ $report->report_type }}</td>
                                 <td>{{ $report->version_no }}</td>
-                                <td>Rp {{ number_format((float) data_get($report->summary, 'opening_balance', 0), 2, ',', '.') }}</td>
-                                <td>Rp {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}</td>
+                                <td>
+                                    Rp {{ number_format((float) data_get($report->summary, 'opening_balance', 0), 2, ',', '.') }}
+                                </td>
+                                <td>
+                                    Rp {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}
+                                </td>
                                 <td>{{ optional($report->generated_at)->format('Y-m-d H:i:s') ?? '-' }}</td>
                                 <td>{{ $report->user?->name ?? '-' }}</td>
                                 <td>{{ $report->is_read_only ? 'Yes' : 'No' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4">Belum ada snapshot laporan finance.</td>
+                                <td colspan="8" class="text-center py-4">Tidak ada snapshot laporan untuk filter ini.</td>
                             </tr>
                         @endforelse
                     </tbody>

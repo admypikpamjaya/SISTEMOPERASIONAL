@@ -34,6 +34,8 @@ class BlastController extends Controller
 
     public function whatsapp()
     {
+        session()->forget('campaign_id');
+
         $recipients = $this->getRecipientsByChannel('whatsapp');
 
         $templates = BlastMessageTemplate::where('channel', 'whatsapp')
@@ -98,6 +100,28 @@ class BlastController extends Controller
         );
 
         return response()->json($activityData);
+    }
+
+    public function clearActivityLogs(Request $request)
+    {
+        $validated = $request->validate([
+            'channel' => 'required|in:email,whatsapp',
+        ]);
+
+        $channel = strtoupper((string) $validated['channel']);
+        $deletedLogCount = BlastLog::query()
+            ->whereHas('message', function ($query) use ($channel) {
+                $query->where('channel', $channel);
+            })
+            ->delete();
+
+        $channelLabel = $channel === 'WHATSAPP' ? 'WhatsApp' : 'Email';
+
+        return back()->with(
+            'success',
+            'Activity log ' . $channelLabel . ' berhasil dibersihkan. '
+            . 'Data terhapus: ' . $deletedLogCount . '.'
+        );
     }
 
     /* =======================
@@ -304,14 +328,12 @@ class BlastController extends Controller
         }
 
         $campaignId = $blastMessage?->id;
-        $statusMessage = 'WhatsApp blast queued.';
-        if ($campaignId !== null) {
-            $statusMessage .= ' Campaign ID: ' . $campaignId;
+        $statusMessage = 'WhatsApp blast diproses.';
+        if ($campaignId === null) {
+            $statusMessage = 'Tidak ada target WhatsApp valid untuk diproses.';
         }
 
-        return back()
-            ->with('success', $statusMessage)
-            ->with('campaign_id', $campaignId);
+        return back()->with('success', $statusMessage);
     }
 
     /* =======================
@@ -495,15 +517,12 @@ class BlastController extends Controller
             );
         }
 
-        $campaignId = $blastMessage?->id;
         $statusMessage = 'Email blast queued.';
-        if ($campaignId !== null) {
-            $statusMessage .= ' Campaign ID: ' . $campaignId;
+        if ($blastMessage === null) {
+            $statusMessage = 'Tidak ada target email valid untuk diproses.';
         }
 
-        return back()
-            ->with('success', $statusMessage)
-            ->with('campaign_id', $campaignId);
+        return back()->with('success', $statusMessage);
     }
 
     /* =======================
@@ -601,8 +620,7 @@ class BlastController extends Controller
         ]);
 
         return back()
-            ->with('success', 'Campaign paused. ID: ' . $campaign->id)
-            ->with('campaign_id', $campaign->id);
+            ->with('success', 'Campaign paused.');
     }
 
     public function resumeCampaign(Request $request)
@@ -625,8 +643,7 @@ class BlastController extends Controller
         ]);
 
         return back()
-            ->with('success', 'Campaign resumed. ID: ' . $campaign->id)
-            ->with('campaign_id', $campaign->id);
+            ->with('success', 'Campaign resumed.');
     }
 
     public function stopCampaign(Request $request)
@@ -652,8 +669,7 @@ class BlastController extends Controller
             ]);
 
         return back()
-            ->with('success', 'Campaign stopped. ID: ' . $campaign->id)
-            ->with('campaign_id', $campaign->id);
+            ->with('success', 'Campaign stopped.');
     }
 
     /**
@@ -854,6 +870,10 @@ class BlastController extends Controller
         if (!empty($validatedData['scheduled_at'])) {
             $scheduledAt = Carbon::parse((string) $validatedData['scheduled_at'], config('app.timezone'));
         }
+        if ($normalizedChannel === 'whatsapp') {
+            // Temporarily force WhatsApp blasting to send immediately.
+            $scheduledAt = null;
+        }
 
         $queueName = $this->resolveQueueName($normalizedChannel, $normalizedPriority);
 
@@ -875,6 +895,13 @@ class BlastController extends Controller
             0,
             (int) ($validatedData['batch_delay_seconds'] ?? config('blast.batch.delay_seconds', 10))
         );
+
+        if ($normalizedChannel === 'whatsapp') {
+            // Disable delay behavior for WhatsApp until campaign flow is stabilized.
+            $rateLimitPerMinute = 5000;
+            $batchSize = 2000;
+            $batchDelaySeconds = 0;
+        }
 
         $retryAttempts = max(
             1,
@@ -965,8 +992,15 @@ class BlastController extends Controller
             $payload
         );
 
-        if (!empty($campaignOptions['queue_name'])) {
+        $normalizedChannel = strtoupper($channel);
+        if ($normalizedChannel !== 'WHATSAPP' && !empty($campaignOptions['queue_name'])) {
             $job->onQueue((string) $campaignOptions['queue_name']);
+        }
+
+        if ($normalizedChannel === 'WHATSAPP') {
+            app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
+            $dispatchIndex++;
+            return;
         }
 
         $delaySeconds = $this->calculateDispatchDelaySeconds(

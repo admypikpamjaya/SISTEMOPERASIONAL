@@ -22,6 +22,26 @@ class FinanceReportController extends Controller
     {
         $validated = $request->validated();
         $year = (int) ($validated['year'] ?? now()->year);
+        $reportTypeForCreate = strtoupper((string) ($validated['report_type'] ?? 'MONTHLY'));
+        $monthForCreate = $reportTypeForCreate === 'YEARLY'
+            ? null
+            : (isset($validated['month']) ? (int) $validated['month'] : (int) now()->month);
+
+        $suggestedOpeningBalance = $this->reportService->getSuggestedOpeningBalance(
+            $reportTypeForCreate,
+            $year,
+            $monthForCreate
+        );
+
+        return view('finance.report', [
+            'suggestedOpeningBalance' => $suggestedOpeningBalance,
+        ]);
+    }
+
+    public function snapshots(FinanceReportIndexRequest $request)
+    {
+        $validated = $request->validated();
+        $year = (int) ($validated['year'] ?? now()->year);
 
         $reports = $this->reportService->getReports(
             year: $year,
@@ -31,7 +51,7 @@ class FinanceReportController extends Controller
             perPage: (int) ($validated['per_page'] ?? 20)
         );
 
-        return view('finance.report', [
+        return view('finance.snapshots', [
             'reports' => $reports,
             'filters' => [
                 'month' => $validated['month'] ?? null,

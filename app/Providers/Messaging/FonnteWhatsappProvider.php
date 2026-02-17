@@ -26,7 +26,7 @@ class FonnteWhatsappProvider implements WhatsappProviderInterface
                 );
             }
 
-            $response = Http::withHeaders([
+            $response = Http::timeout(20)->withHeaders([
                 'Authorization' => config('services.fonnte.token'),
             ])->post(
                 rtrim(config('services.fonnte.base_url'), '/') . '/send',
@@ -37,6 +37,15 @@ class FonnteWhatsappProvider implements WhatsappProviderInterface
                 Log::error('[FONNTE FAILED]', [
                     'to' => $to,
                     'response' => $response->body(),
+                ]);
+                return false;
+            }
+
+            $decoded = $response->json();
+            if (is_array($decoded) && array_key_exists('status', $decoded) && $decoded['status'] !== true) {
+                Log::error('[FONNTE REJECTED]', [
+                    'to' => $to,
+                    'response' => $decoded,
                 ]);
                 return false;
             }

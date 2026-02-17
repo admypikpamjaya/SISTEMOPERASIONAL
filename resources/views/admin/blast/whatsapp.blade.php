@@ -22,24 +22,20 @@
 
     @if(session('success'))
         <div class="success-alert">
-            âœ… {{ session('success') }}
+            Berhasil: {{ session('success') }}
         </div>
     @endif
 
     @if($errors->any())
         <div class="error-alert">
-            âš ï¸ {{ $errors->first() }}
+            Error: {{ $errors->first() }}
         </div>
     @endif
 
     <div class="campaign-control-panel">
         <div class="campaign-control-title">Campaign Control</div>
         <div class="campaign-control-note">
-            @if(session('campaign_id'))
-                Campaign terakhir: <code>{{ session('campaign_id') }}</code>
-            @else
-                Masukkan Campaign ID untuk pause, resume, atau stop.
-            @endif
+            Masukkan Campaign ID untuk pause, resume, atau stop.
         </div>
         <div class="campaign-control-note">
             UUID untuk Pause, Resume, dan Soft Stop bisa berbeda.
@@ -50,7 +46,7 @@
                 id="campaignSearchInput"
                 class="campaign-control-input"
                 placeholder="Cari Campaign UUID..."
-                value="{{ session('campaign_id') }}"
+                value=""
             >
             <button type="button" id="campaignSearchBtn" class="campaign-btn info">Search UUID</button>
         </div>
@@ -368,85 +364,16 @@
 
                     <div class="form-group">
                         <label class="form-label">Pengaturan Pengiriman Lanjutan:</label>
-                        <div class="delivery-settings-grid">
-                            <div class="delivery-setting-item">
-                                <label class="form-label" for="scheduledAtInput">Jadwal Kirim</label>
-                                <input
-                                    type="datetime-local"
-                                    name="scheduled_at"
-                                    id="scheduledAtInput"
-                                    class="form-input"
-                                    value="{{ old('scheduled_at') }}"
-                                >
-                            </div>
-                            <div class="delivery-setting-item">
-                                <label class="form-label" for="priorityInput">Queue Priority</label>
-                                <select name="priority" id="priorityInput" class="form-input">
-                                    <option value="high" @selected(old('priority') === 'high')>High</option>
-                                    <option value="normal" @selected(old('priority', 'normal') === 'normal')>Normal</option>
-                                    <option value="low" @selected(old('priority') === 'low')>Low</option>
-                                </select>
-                            </div>
-                            <div class="delivery-setting-item">
-                                <label class="form-label" for="rateLimitInput">Rate / menit</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    name="rate_limit_per_minute"
-                                    id="rateLimitInput"
-                                    class="form-input"
-                                    value="{{ old('rate_limit_per_minute', config('blast.rate_limits.whatsapp_per_minute', 45)) }}"
-                                >
-                            </div>
-                            <div class="delivery-setting-item">
-                                <label class="form-label" for="batchSizeInput">Batch Size</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    name="batch_size"
-                                    id="batchSizeInput"
-                                    class="form-input"
-                                    value="{{ old('batch_size', config('blast.batch.size', 50)) }}"
-                                >
-                            </div>
-                            <div class="delivery-setting-item">
-                                <label class="form-label" for="batchDelayInput">Delay Antar Batch (detik)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    name="batch_delay_seconds"
-                                    id="batchDelayInput"
-                                    class="form-input"
-                                    value="{{ old('batch_delay_seconds', config('blast.batch.delay_seconds', 10)) }}"
-                                >
-                            </div>
-                            <div class="delivery-setting-item">
-                                <label class="form-label" for="retryAttemptsInput">Max Retry</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    name="retry_attempts"
-                                    id="retryAttemptsInput"
-                                    class="form-input"
-                                    value="{{ old('retry_attempts', config('blast.retry.max_attempts', 3)) }}"
-                                >
-                            </div>
-                            <div class="delivery-setting-item delivery-wide">
-                                <label class="form-label" for="retryBackoffInput">Backoff Retry (detik, pisahkan koma)</label>
-                                <input
-                                    type="text"
-                                    name="retry_backoff_seconds"
-                                    id="retryBackoffInput"
-                                    class="form-input"
-                                    value="{{ old('retry_backoff_seconds', implode(',', config('blast.retry.backoff_seconds', [30, 120, 300]))) }}"
-                                    placeholder="30,120,300"
-                                >
-                            </div>
+                        <div class="recipient-message-note" style="margin-bottom: 0;">
+                            Fitur jadwal, delay, dan rate limit dinonaktifkan sementara. Pengiriman WhatsApp diproses langsung.
                         </div>
-                        <small style="font-size: 12px; color: #8b96a8; margin-top: 6px; display: block;">
-                            Kosongkan jadwal kirim untuk mengirim segera.
-                        </small>
+                        <input type="hidden" name="scheduled_at" id="scheduledAtInput" value="">
+                        <input type="hidden" name="priority" id="priorityInput" value="normal">
+                        <input type="hidden" name="rate_limit_per_minute" id="rateLimitInput" value="5000">
+                        <input type="hidden" name="batch_size" id="batchSizeInput" value="2000">
+                        <input type="hidden" name="batch_delay_seconds" id="batchDelayInput" value="0">
+                        <input type="hidden" name="retry_attempts" id="retryAttemptsInput" value="1">
+                        <input type="hidden" name="retry_backoff_seconds" id="retryBackoffInput" value="0">
                     </div>
 
                     <div class="message-footer">
@@ -490,12 +417,24 @@
         <div class="white-card activity-card">
             <div class="activity-header">
                 <div class="section-title">Activity Log</div>
-                <div class="search-small">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <circle cx="11" cy="11" r="8" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M21 21L16.65 16.65" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <input type="text" placeholder="Cari..." class="search-input-small" id="searchInput">
+                <div class="activity-header-actions">
+                    <form
+                        method="POST"
+                        action="{{ route('admin.blast.activity.clear') }}"
+                        class="activity-clear-form"
+                        onsubmit="return confirm('Yakin ingin menghapus semua activity log WhatsApp?')"
+                    >
+                        @csrf
+                        <input type="hidden" name="channel" value="whatsapp">
+                        <button type="submit" class="campaign-btn danger tiny">Clear Activity Log</button>
+                    </form>
+                    <div class="search-small">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <circle cx="11" cy="11" r="8" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 21L16.65 16.65" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <input type="text" placeholder="Cari..." class="search-input-small" id="searchInput">
+                    </div>
                 </div>
             </div>
 
@@ -1532,6 +1471,12 @@
     margin-bottom: 20px;
 }
 
+.activity-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .search-small {
     display: flex;
     align-items: center;
@@ -1748,6 +1693,17 @@
     .campaign-search-row {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .activity-header-actions {
+        width: 100%;
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .activity-clear-form {
+        display: flex;
     }
 
     .delivery-settings-grid {
@@ -3072,67 +3028,15 @@
                     return;
                 }
 
-                const rateLimitValue = Number(rateLimitInput?.value || 0);
-                const batchSizeValue = Number(batchSizeInput?.value || 0);
-                const batchDelayValue = Number(batchDelayInput?.value || 0);
-                const retryAttemptsValue = Number(retryAttemptsInput?.value || 0);
+                if (scheduledAtInput) scheduledAtInput.value = '';
+                if (priorityInput) priorityInput.value = 'normal';
+                if (rateLimitInput) rateLimitInput.value = '5000';
+                if (batchSizeInput) batchSizeInput.value = '2000';
+                if (batchDelayInput) batchDelayInput.value = '0';
+                if (retryAttemptsInput) retryAttemptsInput.value = '1';
+                if (retryBackoffInput) retryBackoffInput.value = '0';
 
-                if (!Number.isFinite(rateLimitValue) || rateLimitValue < 1) {
-                    e.preventDefault();
-                    alert('Rate per menit minimal 1.');
-                    rateLimitInput?.focus();
-                    return;
-                }
-
-                if (!Number.isFinite(batchSizeValue) || batchSizeValue < 1) {
-                    e.preventDefault();
-                    alert('Batch size minimal 1.');
-                    batchSizeInput?.focus();
-                    return;
-                }
-
-                if (!Number.isFinite(batchDelayValue) || batchDelayValue < 0) {
-                    e.preventDefault();
-                    alert('Delay antar batch tidak boleh negatif.');
-                    batchDelayInput?.focus();
-                    return;
-                }
-
-                if (!Number.isFinite(retryAttemptsValue) || retryAttemptsValue < 1) {
-                    e.preventDefault();
-                    alert('Max retry minimal 1.');
-                    retryAttemptsInput?.focus();
-                    return;
-                }
-
-                const retryBackoffRaw = String(retryBackoffInput?.value || '').trim();
-                if (retryBackoffRaw !== '') {
-                    const allValid = retryBackoffRaw
-                        .split(',')
-                        .map((item) => item.trim())
-                        .filter((item) => item !== '')
-                        .every((item) => /^\d+$/.test(item));
-
-                    if (!allValid) {
-                        e.preventDefault();
-                        alert('Format backoff retry harus angka yang dipisahkan koma, contoh: 30,120,300');
-                        retryBackoffInput?.focus();
-                        return;
-                    }
-                }
-
-                let scheduleInfo = 'Campaign akan dikirim segera.';
-                if (scheduledAtInput && scheduledAtInput.value) {
-                    const scheduleDate = new Date(scheduledAtInput.value);
-                    if (Number.isNaN(scheduleDate.getTime())) {
-                        e.preventDefault();
-                        alert('Format jadwal kirim tidak valid.');
-                        scheduledAtInput.focus();
-                        return;
-                    }
-
-                    scheduleInfo = `Campaign dijadwalkan pada ${scheduledAtInput.value}.`;
-                }
+                const scheduleInfo = 'Campaign dikirim sekarang.';
 
                 const dbPhones = selectedDbRecipients
                     .map((cb) => normalizePhone(cb.getAttribute('data-phone') || ''))
@@ -3140,7 +3044,7 @@
                 const allTargetPhones = Array.from(new Set(recipientNumbers.concat(dbPhones)));
 
                 const confirmation = confirm(
-                    `${scheduleInfo}\nPriority: ${priorityInput?.value || 'normal'}\nPesan akan diproses ke ${allTargetPhones.length} penerima. Lanjutkan?`
+                    `${scheduleInfo}\nPriority: normal\nPesan akan diproses ke ${allTargetPhones.length} penerima. Lanjutkan?`
                 );
 
                 if (!confirmation) {
