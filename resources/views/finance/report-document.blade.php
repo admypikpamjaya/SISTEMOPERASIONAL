@@ -101,6 +101,17 @@
     </style>
 </head>
 <body>
+    @php
+        $periodLabel = $report->year;
+        if ($report->reportType === 'DAILY') {
+            $periodLabel = $report->periodDate
+                ? \Carbon\Carbon::parse($report->periodDate)->format('d/m/Y')
+                : sprintf('%02d/%02d/%04d', (int) ($report->day ?? 1), (int) ($report->month ?? 1), $report->year);
+        } elseif ($report->reportType === 'MONTHLY') {
+            $periodLabel = sprintf('%02d/%04d', (int) ($report->month ?? 1), $report->year);
+        }
+    @endphp
+
     <div class="header">
         <h1>LABA DAN RUGI</h1>
         <p>YPIK PAM JAYA</p>
@@ -109,7 +120,7 @@
     <table class="meta">
         <tr>
             <td class="label">Periode</td>
-            <td>: {{ $report->month ? sprintf('%02d', $report->month) . '/' . $report->year : $report->year }}</td>
+            <td>: {{ $periodLabel }}</td>
             <td class="label">Jenis</td>
             <td>: {{ $report->reportType }}</td>
         </tr>

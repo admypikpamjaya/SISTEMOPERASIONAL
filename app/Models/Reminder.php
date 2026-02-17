@@ -57,13 +57,17 @@ class Reminder extends Model
             return null;
         }
 
-        $now ??= now();
+        $now ??= now(config('app.timezone'));
+        $remindAt = $this->remind_at?->copy()->timezone(config('app.timezone'));
+        if ($remindAt === null) {
+            return null;
+        }
 
-        if ($now->greaterThanOrEqualTo($this->remind_at)) {
+        if ($now->greaterThanOrEqualTo($remindAt)) {
             return 'due';
         }
 
-        $alertStart = $this->remind_at->copy()->subMinutes(max(1, (int) $this->alert_before_minutes));
+        $alertStart = $remindAt->copy()->subMinutes(max(1, (int) $this->alert_before_minutes));
 
         if ($now->greaterThanOrEqualTo($alertStart)) {
             return 'upcoming';

@@ -7,6 +7,7 @@ class ReportSummaryDTO
     public function __construct(
         public int $month,
         public int $year,
+        public int $day,
         public float $totalIncome,
         public float $totalExpense,
         public float $totalDepreciation,
@@ -20,6 +21,7 @@ class ReportSummaryDTO
         return new self(
             (int) $data['month'],
             (int) $data['year'],
+            (int) ($data['day'] ?? 0),
             (float) $data['total_income'],
             (float) $data['total_expense'],
             (float) $data['total_depreciation'],
@@ -34,6 +36,7 @@ class ReportSummaryDTO
         return [
             'month' => $this->month,
             'year' => $this->year,
+            'day' => $this->day,
             'total_income' => $this->totalIncome,
             'total_expense' => $this->totalExpense,
             'total_depreciation' => $this->totalDepreciation,

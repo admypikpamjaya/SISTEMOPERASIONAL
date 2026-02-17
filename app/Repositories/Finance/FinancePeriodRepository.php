@@ -8,19 +8,25 @@ use Illuminate\Support\Facades\Schema;
 
 class FinancePeriodRepository
 {
-    public function findByTypeYearMonth(string $periodType, int $year, int $month): ?FinancePeriod
+    public function findByTypeYearMonthDay(string $periodType, int $year, int $month, int $day = 0): ?FinancePeriod
     {
-        return FinancePeriod::query()
+        $query = FinancePeriod::query()
             ->where('period_type', strtoupper($periodType))
             ->where('year', $year)
-            ->where('month', $month)
-            ->first();
+            ->where('month', $month);
+
+        if ($this->hasDayColumn()) {
+            $query->where('day', $day);
+        }
+
+        return $query->first();
     }
 
     public function create(
         string $periodType,
         int $year,
         int $month,
+        int $day,
         Carbon $startDate,
         Carbon $endDate,
         float $openingBalance = 0.0,
@@ -34,6 +40,10 @@ class FinancePeriodRepository
             'end_date' => $endDate->toDateString(),
             'status' => 'OPEN',
         ];
+
+        if ($this->hasDayColumn()) {
+            $data['day'] = $day;
+        }
 
         if ($this->hasBalanceColumns()) {
             $data['opening_balance'] = round($openingBalance, 2);
@@ -57,24 +67,43 @@ class FinancePeriodRepository
             ]);
     }
 
-    public function getLatestClosingBalanceBefore(string $periodType, int $year, int $month): ?float
+    public function getLatestClosingBalanceBefore(
+        string $periodType,
+        int $year,
+        int $month,
+        int $day = 0
+    ): ?float
     {
         if (!$this->hasBalanceColumns()) {
             return null;
         }
 
-        $value = FinancePeriod::query()
+        $periodType = strtoupper($periodType);
+        $query = FinancePeriod::query()
             ->where('period_type', strtoupper($periodType))
-            ->where(function ($query) use ($year, $month) {
+            ->where(function ($query) use ($year, $month, $day, $periodType) {
                 $query->where('year', '<', $year)
                     ->orWhere(function ($subQuery) use ($year, $month) {
                         $subQuery->where('year', $year)
                             ->where('month', '<', $month);
                     });
+
+                if ($periodType === 'DAILY' && $this->hasDayColumn()) {
+                    $query->orWhere(function ($subQuery) use ($year, $month, $day) {
+                        $subQuery->where('year', $year)
+                            ->where('month', $month)
+                            ->where('day', '<', $day);
+                    });
+                }
             })
             ->orderByDesc('year')
-            ->orderByDesc('month')
-            ->value('closing_balance');
+            ->orderByDesc('month');
+
+        if ($this->hasDayColumn()) {
+            $query->orderByDesc('day');
+        }
+
+        $value = $query->value('closing_balance');
 
         return $value !== null ? (float) $value : null;
     }
@@ -83,5 +112,10 @@ class FinancePeriodRepository
     {
         return Schema::hasColumn('finance_periods', 'opening_balance')
             && Schema::hasColumn('finance_periods', 'closing_balance');
+    }
+
+    private function hasDayColumn(): bool
+    {
+        return Schema::hasColumn('finance_periods', 'day');
     }
 }

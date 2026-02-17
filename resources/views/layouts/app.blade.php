@@ -243,6 +243,9 @@
             const hasAnnouncementReminder = alerts.some(
                 (alert) => alert.type === 'ANNOUNCEMENT'
             );
+            const announcementRedirectUrl = (dueAlert && dueAlert.announcement_url)
+                ? dueAlert.announcement_url
+                : ((alerts.find((alert) => alert.announcement_url) || {}).announcement_url || announcementPageUrl);
 
             Swal.fire({
                 title: dueAlert ? 'Reminder Hari-H Aktif' : 'Reminder Mendekati Waktu',
@@ -261,7 +264,7 @@
                 }
 
                 if (result.isDenied) {
-                    window.location.href = announcementPageUrl;
+                    window.location.href = announcementRedirectUrl;
                 }
             });
         }
@@ -300,6 +303,12 @@
 @if(session()->has('success'))
 <script>
     Notification.success("{{ session('success') }}");
+</script>
+@endif
+
+@if(session()->has('error'))
+<script>
+    Notification.error(@json(session('error')), 15000);
 </script>
 @endif
 

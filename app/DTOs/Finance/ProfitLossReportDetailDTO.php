@@ -16,6 +16,8 @@ class ProfitLossReportDetailDTO
         public string $reportType,
         public int $year,
         public ?int $month,
+        public ?int $day,
+        public ?string $periodDate,
         public float $openingBalance,
         public float $endingBalance,
         public Carbon $generatedAt,

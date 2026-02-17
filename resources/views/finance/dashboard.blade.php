@@ -12,26 +12,49 @@
             <div class="card-body">
                 <form method="GET" action="{{ route('finance.dashboard') }}" class="form-row">
                     <div class="form-group col-md-3">
-                        <label for="month">Bulan</label>
-                        <select name="month" id="month" class="form-control">
-                            <option value="">Semua</option>
-                            @for($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}" {{ (int) ($filters['month'] ?? 0) === $m ? 'selected' : '' }}>
-                                    {{ $m }}
-                                </option>
-                            @endfor
+                        <label for="filter_type">Tipe Filter</label>
+                        <select name="filter_type" id="filter_type" class="form-control">
+                            <option value="monthly" {{ ($filters['filter_type'] ?? 'monthly') === 'monthly' ? 'selected' : '' }}>Bulanan</option>
+                            <option value="daily" {{ ($filters['filter_type'] ?? '') === 'daily' ? 'selected' : '' }}>Harian</option>
                         </select>
                     </div>
-                    <div class="form-group col-md-3">
-                        <label for="year">Tahun</label>
+
+                    {{-- FILTER BULANAN --}}
+                    <div class="contents" id="filter-monthly" style="display: contents;">
+                        <div class="form-group col-md-3">
+                            <label for="month">Bulan</label>
+                            <select name="month" id="month" class="form-control">
+                                <option value="">Semua</option>
+                                @for($m = 1; $m <= 12; $m++)
+                                    <option value="{{ $m }}" {{ (int) ($filters['month'] ?? 0) === $m ? 'selected' : '' }}>
+                                        {{ $m }}
+                                    </option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="year">Tahun</label>
+                            <input
+                                type="number"
+                                name="year"
+                                id="year"
+                                class="form-control"
+                                min="1900"
+                                max="2100"
+                                value="{{ $filters['year'] }}"
+                            >
+                        </div>
+                    </div>
+
+                    {{-- FILTER HARIAN --}}
+                    <div class="form-group col-md-6" id="filter-daily" style="display: none;">
+                        <label for="date">Tanggal</label>
                         <input
-                            type="number"
-                            name="year"
-                            id="year"
+                            type="date"
+                            name="date"
+                            id="date"
                             class="form-control"
-                            min="1900"
-                            max="2100"
-                            value="{{ $filters['year'] }}"
+                            value="{{ $filters['date'] ?? '' }}"
                         >
                     </div>
                     <div class="form-group col-md-2">
@@ -120,3 +143,35 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterTypeSelect = document.getElementById('filter_type');
+        const filterMonthly = document.getElementById('filter-monthly');
+        const filterDaily = document.getElementById('filter-daily');
+        const dateInput = document.getElementById('date');
+
+        function toggleFilters() {
+            if (filterTypeSelect.value === 'daily') {
+                filterMonthly.style.display = 'none';
+                filterMonthly.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                
+                filterDaily.style.display = 'block';
+                dateInput.disabled = false;
+                dateInput.required = true;
+            } else {
+                filterMonthly.style.display = 'contents';
+                filterMonthly.querySelectorAll('input, select').forEach(el => el.disabled = false);
+
+                filterDaily.style.display = 'none';
+                dateInput.disabled = true;
+                dateInput.required = false;
+            }
+        }
+
+        filterTypeSelect.addEventListener('change', toggleFilters);
+        toggleFilters(); // Initialize on load
+    });
+</script>
+@endpush

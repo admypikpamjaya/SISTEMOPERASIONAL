@@ -3,31 +3,40 @@
 @section('section_name', 'Finance Report')
 
 @section('content')
+@php
+    $defaultPeriodType = old('report_type', $defaults['period_type'] ?? 'MONTHLY');
+    $defaultReportDate = old('report_date', $defaults['report_date'] ?? now()->toDateString());
+    $defaultMonth = (int) old('month', $defaults['month'] ?? now()->month);
+    $defaultYear = (int) old('year', $defaults['year'] ?? now()->year);
+    $defaultOpeningBalance = old('opening_balance', $suggestedOpeningBalance ?? 0);
+
+    $entryRows = old('entries', [
+        [
+            'type' => 'INCOME',
+            'line_code' => '',
+            'line_label' => '',
+            'description' => '',
+            'amount' => '',
+            'is_depreciation' => false,
+        ],
+    ]);
+@endphp
+
 <div class="row">
     <div class="col-12">
         <div class="card card-outline card-success">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">Input Laporan Laba Rugi</h3>
-                <a href="{{ route('finance.report.snapshots', ['year' => now()->year]) }}" class="btn btn-sm btn-outline-primary">
+                <a
+                    href="{{ route('finance.report.snapshots', ['period_type' => 'MONTHLY', 'month' => now()->month, 'year' => now()->year]) }}"
+                    class="btn btn-sm btn-outline-primary"
+                >
                     <i class="fas fa-list mr-1"></i> Buka Snapshot Laporan
                 </a>
             </div>
             <form method="POST" action="{{ route('finance.report.store') }}" id="profit-loss-form">
                 @csrf
                 <div class="card-body">
-                    @php
-                        $entryRows = old('entries', [
-                            [
-                                'type' => 'INCOME',
-                                'line_code' => '',
-                                'line_label' => '',
-                                'description' => '',
-                                'amount' => '',
-                                'is_depreciation' => false,
-                            ],
-                        ]);
-                    @endphp
-
                     @if($errors->any())
                         <div class="alert alert-danger">
                             <strong>Validasi gagal:</strong>
@@ -41,25 +50,48 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-2">
-                            <label for="report_type_create">Tipe</label>
+                            <label for="report_type_create">Periode</label>
                             <select name="report_type" id="report_type_create" class="form-control" required>
-                                <option value="MONTHLY" {{ old('report_type', 'MONTHLY') === 'MONTHLY' ? 'selected' : '' }}>MONTHLY</option>
-                                <option value="YEARLY" {{ old('report_type') === 'YEARLY' ? 'selected' : '' }}>YEARLY</option>
+                                <option value="DAILY" {{ $defaultPeriodType === 'DAILY' ? 'selected' : '' }}>Harian</option>
+                                <option value="MONTHLY" {{ $defaultPeriodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
+                                <option value="YEARLY" {{ $defaultPeriodType === 'YEARLY' ? 'selected' : '' }}>Tahunan</option>
                             </select>
                         </div>
-                        <div class="form-group col-md-2">
+
+                        <div class="form-group col-md-2" id="report_date_group">
+                            <label for="report_date_create">Tanggal</label>
+                            <input
+                                type="date"
+                                name="report_date"
+                                id="report_date_create"
+                                class="form-control"
+                                value="{{ $defaultReportDate }}"
+                            >
+                        </div>
+
+                        <div class="form-group col-md-2" id="month_group">
                             <label for="month_create">Bulan</label>
                             <select name="month" id="month_create" class="form-control">
                                 @for($m = 1; $m <= 12; $m++)
-                                    <option value="{{ $m }}" {{ (int) old('month', now()->month) === $m ? 'selected' : '' }}>{{ $m }}</option>
+                                    <option value="{{ $m }}" {{ $defaultMonth === $m ? 'selected' : '' }}>{{ $m }}</option>
                                 @endfor
                             </select>
                         </div>
-                        <div class="form-group col-md-2">
+
+                        <div class="form-group col-md-2" id="year_group">
                             <label for="year_create">Tahun</label>
-                            <input type="number" name="year" id="year_create" class="form-control" min="1900" max="2100" value="{{ old('year', now()->year) }}" required>
+                            <input
+                                type="number"
+                                name="year"
+                                id="year_create"
+                                class="form-control"
+                                min="1900"
+                                max="2100"
+                                value="{{ $defaultYear }}"
+                            >
                         </div>
-                        <div class="form-group col-md-3">
+
+                        <div class="form-group col-md-4">
                             <label for="opening_balance_create">Saldo Awal</label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
@@ -72,7 +104,7 @@
                                     class="form-control"
                                     step="0.01"
                                     min="0"
-                                    value="{{ old('opening_balance', $suggestedOpeningBalance ?? 0) }}"
+                                    value="{{ $defaultOpeningBalance }}"
                                     required
                                 >
                             </div>
@@ -187,7 +219,12 @@
         const tableBody = document.getElementById('profit-loss-lines-body');
         const addButton = document.getElementById('add-profit-loss-line');
         const reportTypeSelect = document.getElementById('report_type_create');
+        const reportDateGroup = document.getElementById('report_date_group');
+        const reportDateInput = document.getElementById('report_date_create');
+        const monthGroup = document.getElementById('month_group');
         const monthSelect = document.getElementById('month_create');
+        const yearGroup = document.getElementById('year_group');
+        const yearInput = document.getElementById('year_create');
         const openingBalanceInput = document.getElementById('opening_balance_create');
         const estimatedEndingBalance = document.getElementById('estimated-ending-balance');
 
@@ -301,16 +338,25 @@
             updateEstimatedBalance();
         }
 
-        function syncMonthField() {
-            if (reportTypeSelect.value === 'YEARLY') {
-                monthSelect.value = '';
-                monthSelect.setAttribute('disabled', 'disabled');
-            } else {
-                monthSelect.removeAttribute('disabled');
-                if (!monthSelect.value) {
-                    monthSelect.value = '{{ now()->month }}';
-                }
-            }
+        function syncPeriodFields() {
+            const reportType = reportTypeSelect.value;
+
+            const isDaily = reportType === 'DAILY';
+            const isMonthly = reportType === 'MONTHLY';
+            const isYearly = reportType === 'YEARLY';
+
+            reportDateGroup.style.display = isDaily ? '' : 'none';
+            monthGroup.style.display = isMonthly ? '' : 'none';
+            yearGroup.style.display = (isMonthly || isYearly) ? '' : 'none';
+
+            reportDateInput.disabled = !isDaily;
+            reportDateInput.required = isDaily;
+
+            monthSelect.disabled = !isMonthly;
+            monthSelect.required = isMonthly;
+
+            yearInput.disabled = !(isMonthly || isYearly);
+            yearInput.required = (isMonthly || isYearly);
         }
 
         addButton.addEventListener('click', createRow);
@@ -354,11 +400,11 @@
             }
         });
 
-        reportTypeSelect.addEventListener('change', syncMonthField);
+        reportTypeSelect.addEventListener('change', syncPeriodFields);
         openingBalanceInput.addEventListener('input', updateEstimatedBalance);
 
         renumberRows();
-        syncMonthField();
+        syncPeriodFields();
         updateEstimatedBalance();
     })();
 </script>

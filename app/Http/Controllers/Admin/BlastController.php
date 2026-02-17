@@ -23,6 +23,8 @@ use Illuminate\Support\Str;
 
 class BlastController extends Controller
 {
+    private const WIB_TIMEZONE = 'Asia/Jakarta';
+
     /* =======================
      |  VIEW
      ======================= */
@@ -63,6 +65,8 @@ class BlastController extends Controller
 
     public function email()
     {
+        session()->forget('campaign_id');
+
         $recipients = $this->getRecipientsByChannel('email');
 
         $templates = BlastMessageTemplate::query()
@@ -517,7 +521,7 @@ class BlastController extends Controller
             );
         }
 
-        $statusMessage = 'Email blast queued.';
+        $statusMessage = 'Email blast diproses.';
         if ($blastMessage === null) {
             $statusMessage = 'Tidak ada target email valid untuk diproses.';
         }
@@ -584,13 +588,16 @@ class BlastController extends Controller
             ->limit(25)
             ->get(['id', 'channel', 'campaign_status', 'priority', 'scheduled_at', 'created_at'])
             ->map(function (BlastMessage $campaign) {
+                $scheduledAt = $campaign->scheduled_at?->copy()->timezone(self::WIB_TIMEZONE);
+                $createdAt = $campaign->created_at?->copy()->timezone(self::WIB_TIMEZONE);
+
                 return [
                     'id' => $campaign->id,
                     'channel' => strtoupper((string) $campaign->channel),
                     'status' => strtoupper((string) $campaign->campaign_status),
                     'priority' => strtolower((string) $campaign->priority),
-                    'scheduledAt' => $campaign->scheduled_at?->format('Y-m-d H:i:s'),
-                    'createdAt' => $campaign->created_at?->format('Y-m-d H:i:s'),
+                    'scheduledAt' => $scheduledAt?->format('Y-m-d H:i:s'),
+                    'createdAt' => $createdAt?->format('Y-m-d H:i:s'),
                     'stats' => [
                         'total' => (int) ($campaign->logs_total_count ?? 0),
                         'sent' => (int) ($campaign->logs_sent_count ?? 0),
@@ -615,7 +622,7 @@ class BlastController extends Controller
         $campaign = BlastMessage::query()->findOrFail($validated['campaign_id']);
         $campaign->update([
             'campaign_status' => 'PAUSED',
-            'paused_at' => now(),
+            'paused_at' => now(self::WIB_TIMEZONE),
             'completed_at' => null,
         ]);
 
@@ -639,7 +646,7 @@ class BlastController extends Controller
         $campaign->update([
             'campaign_status' => $nextStatus,
             'paused_at' => null,
-            'started_at' => $campaign->started_at ?? now(),
+            'started_at' => $campaign->started_at ?? now(self::WIB_TIMEZONE),
         ]);
 
         return back()
@@ -655,7 +662,7 @@ class BlastController extends Controller
         $campaign = BlastMessage::query()->findOrFail($validated['campaign_id']);
         $campaign->update([
             'campaign_status' => 'STOPPED',
-            'completed_at' => now(),
+            'completed_at' => now(self::WIB_TIMEZONE),
             'paused_at' => null,
         ]);
 
@@ -665,7 +672,7 @@ class BlastController extends Controller
             ->update([
                 'status' => 'FAILED',
                 'error_message' => 'Campaign stopped by operator.',
-                'sent_at' => now(),
+                'sent_at' => now(self::WIB_TIMEZONE),
             ]);
 
         return back()
@@ -738,6 +745,7 @@ class BlastController extends Controller
                 : ($this->normalizeWhatsappTarget($target) ?? $target);
             $recipient = $recipientMap[$targetKey] ?? null;
             $timestamp = $log->sent_at ?? $log->updated_at ?? $log->created_at;
+            $wibTimestamp = $timestamp?->copy()->timezone(self::WIB_TIMEZONE);
             $status = strtoupper((string) $log->status);
             $statusKey = match ($status) {
                 'SENT' => 'success',
@@ -746,8 +754,8 @@ class BlastController extends Controller
             };
 
             $row = [
-                'date' => $timestamp ? $timestamp->format('d/m/Y') : '-',
-                'time' => $timestamp ? $timestamp->format('H:i:s') : '-',
+                'date' => $wibTimestamp ? $wibTimestamp->format('d/m/Y') : '-',
+                'time' => $wibTimestamp ? $wibTimestamp->format('H:i:s') : '-',
                 'studentName' => $recipient?->nama_siswa ?: '-',
                 'studentClass' => $recipient?->kelas ?: '-',
                 'parentName' => $recipient?->nama_wali ?: '-',
@@ -868,10 +876,10 @@ class BlastController extends Controller
 
         $scheduledAt = null;
         if (!empty($validatedData['scheduled_at'])) {
-            $scheduledAt = Carbon::parse((string) $validatedData['scheduled_at'], config('app.timezone'));
+            $scheduledAt = Carbon::parse((string) $validatedData['scheduled_at'], self::WIB_TIMEZONE);
         }
-        if ($normalizedChannel === 'whatsapp') {
-            // Temporarily force WhatsApp blasting to send immediately.
+        if (in_array($normalizedChannel, ['whatsapp', 'email'], true)) {
+            // Temporarily force blast channels to send immediately.
             $scheduledAt = null;
         }
 
@@ -896,8 +904,8 @@ class BlastController extends Controller
             (int) ($validatedData['batch_delay_seconds'] ?? config('blast.batch.delay_seconds', 10))
         );
 
-        if ($normalizedChannel === 'whatsapp') {
-            // Disable delay behavior for WhatsApp until campaign flow is stabilized.
+        if (in_array($normalizedChannel, ['whatsapp', 'email'], true)) {
+            // Disable delay behavior until campaign flow is stabilized.
             $rateLimitPerMinute = 5000;
             $batchSize = 2000;
             $batchDelaySeconds = 0;
@@ -916,7 +924,7 @@ class BlastController extends Controller
         if ($scheduledAt instanceof CarbonInterface) {
             $scheduledDelaySeconds = max(
                 0,
-                now()->diffInSeconds($scheduledAt, false)
+                now(self::WIB_TIMEZONE)->diffInSeconds($scheduledAt, false)
             );
         }
 
@@ -993,11 +1001,11 @@ class BlastController extends Controller
         );
 
         $normalizedChannel = strtoupper($channel);
-        if ($normalizedChannel !== 'WHATSAPP' && !empty($campaignOptions['queue_name'])) {
+        if (!in_array($normalizedChannel, ['WHATSAPP', 'EMAIL'], true) && !empty($campaignOptions['queue_name'])) {
             $job->onQueue((string) $campaignOptions['queue_name']);
         }
 
-        if ($normalizedChannel === 'WHATSAPP') {
+        if (in_array($normalizedChannel, ['WHATSAPP', 'EMAIL'], true)) {
             app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
             $dispatchIndex++;
             return;
@@ -1008,7 +1016,7 @@ class BlastController extends Controller
             $dispatchIndex
         );
         if ($delaySeconds > 0) {
-            $job->delay(now()->addSeconds($delaySeconds));
+            $job->delay(now(self::WIB_TIMEZONE)->addSeconds($delaySeconds));
         }
 
         dispatch($job);

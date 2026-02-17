@@ -22,6 +22,8 @@ class FinanceDashboardRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'filter_type' => 'nullable|string|in:monthly,daily',
+            'date' => 'required_if:filter_type,daily|date',
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
             'page' => 'nullable|integer|min:1',

@@ -10,6 +10,10 @@
         : route('admin.announcements.store');
     $defaultChannels = $isEdit ? [] : ['email', 'whatsapp'];
     $selectedChannels = old('channels', $defaultChannels);
+    $focusedReminderId = (int) ($focusedReminderId ?? 0);
+    $focusedAnnouncementId = (int) ($focusedAnnouncementId ?? 0);
+    $focusedReminder = $focusedReminder ?? null;
+    $pendingAnnouncementReminders = $pendingAnnouncementReminders ?? collect();
 @endphp
 
 @if ($errors->any())
@@ -36,7 +40,30 @@
                     @method('PUT')
                 @endif
 
+                @if (! $isEdit && $focusedReminder)
+                    <input type="hidden" name="reminder_id" value="{{ $focusedReminder->id }}">
+                @endif
+
                 <div class="card-body">
+                    @if (! $isEdit && $focusedReminder)
+                        <div class="alert alert-warning">
+                            <strong>Reminder Sumber:</strong>
+                            #{{ $focusedReminder->id }} - {{ $focusedReminder->title }}<br>
+                            <small>
+                                Jadwal reminder: {{ $focusedReminder->remind_at?->format('d/m/Y H:i') ?? '-' }} |
+                                Dibuat oleh: {{ $focusedReminder->creator?->name ?? '-' }}
+                            </small><br>
+                            <small>
+                                Saat publish announcement, reminder ini akan otomatis ditautkan.
+                            </small>
+                            <div class="mt-2">
+                                <a href="{{ route('admin.announcements.index') }}" class="btn btn-sm btn-default">
+                                    Lepas Fokus Reminder
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="form-group">
                         <label for="title">Judul</label>
                         <input
@@ -44,7 +71,7 @@
                             class="form-control @error('title') is-invalid @enderror"
                             id="title"
                             name="title"
-                            value="{{ old('title', $editingAnnouncement->title ?? '') }}"
+                            value="{{ old('title', $editingAnnouncement->title ?? ($focusedReminder?->title ?? '')) }}"
                             required
                         >
                     </div>
@@ -57,7 +84,7 @@
                             name="message"
                             rows="6"
                             required
-                        >{{ old('message', $editingAnnouncement->message ?? '') }}</textarea>
+                        >{{ old('message', $editingAnnouncement->message ?? ($focusedReminder?->description ?? '')) }}</textarea>
                     </div>
 
                     <div class="form-group">
@@ -125,9 +152,103 @@
                 </div>
             </form>
         </div>
+
+        @if ($isEdit)
+            @php
+                $editingAnnouncementReminders = $editingAnnouncement->reminders ?? collect();
+            @endphp
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">Reminder Terkait Announcement Ini</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">ID</th>
+                                    <th>Reminder</th>
+                                    <th style="width: 130px;">Status</th>
+                                    <th style="width: 150px;">Jadwal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($editingAnnouncementReminders as $reminder)
+                                    <tr class="{{ $focusedReminderId === (int) $reminder->id ? 'table-warning' : '' }}">
+                                        <td>{{ $reminder->id }}</td>
+                                        <td>
+                                            <div><strong>{{ $reminder->title }}</strong></div>
+                                            <small class="text-muted">{{ \Illuminate\Support\Str::limit((string) $reminder->description, 80) ?: '-' }}</small>
+                                        </td>
+                                        <td>
+                                            @if ($reminder->is_active)
+                                                <span class="badge badge-success">Aktif</span>
+                                            @else
+                                                <span class="badge badge-secondary">Nonaktif</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $reminder->remind_at?->format('d/m/Y H:i') ?? '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">
+                                            Belum ada reminder yang terhubung.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="col-lg-8">
+        @if ($pendingAnnouncementReminders->isNotEmpty())
+            <div class="card card-warning">
+                <div class="card-header">
+                    <h3 class="card-title">Reminder Announcement Belum Ditautkan</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">ID</th>
+                                    <th>Reminder</th>
+                                    <th style="width: 150px;">Jadwal</th>
+                                    <th style="width: 160px;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($pendingAnnouncementReminders as $pendingReminder)
+                                    <tr class="{{ $focusedReminderId === (int) $pendingReminder->id ? 'table-warning' : '' }}">
+                                        <td>{{ $pendingReminder->id }}</td>
+                                        <td>
+                                            <div><strong>{{ $pendingReminder->title }}</strong></div>
+                                            <small class="text-muted">
+                                                {{ \Illuminate\Support\Str::limit((string) $pendingReminder->description, 80) ?: '-' }}
+                                            </small>
+                                        </td>
+                                        <td>{{ $pendingReminder->remind_at?->format('d/m/Y H:i') ?? '-' }}</td>
+                                        <td>
+                                            <a
+                                                href="{{ route('admin.announcements.index', ['focus_reminder' => $pendingReminder->id]) }}"
+                                                class="btn btn-sm btn-primary"
+                                            >
+                                                Gunakan Reminder Ini
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Data Announcement Yang Sudah Dibuat</h3>
@@ -164,12 +285,20 @@
                                 <th>Judul / Pesan</th>
                                 <th style="width: 170px;">Dibuat Oleh</th>
                                 <th style="width: 180px;">Log Blasting</th>
+                                <th style="width: 220px;">Reminder Terkait</th>
                                 <th style="width: 170px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($announcements as $announcement)
-                                <tr>
+                                @php
+                                    $announcementReminders = $announcement->reminders ?? collect();
+                                    $nextActiveReminder = $announcementReminders
+                                        ->where('is_active', true)
+                                        ->sortBy('remind_at')
+                                        ->first();
+                                @endphp
+                                <tr class="{{ $focusedAnnouncementId === (int) $announcement->id ? 'table-warning' : '' }}">
                                     <td>{{ $announcement->id }}</td>
                                     <td>
                                         <div><strong>{{ $announcement->title }}</strong></div>
@@ -197,6 +326,35 @@
                                         <span class="badge badge-warning">PENDING: {{ $announcement->logs_pending_count }}</span>
                                     </td>
                                     <td>
+                                        <span class="badge badge-info">Total: {{ $announcement->reminders_total_count ?? 0 }}</span>
+                                        <span class="badge badge-success">Aktif: {{ $announcement->reminders_active_count ?? 0 }}</span>
+                                        <div class="mt-1">
+                                            @if ($nextActiveReminder)
+                                                <small class="text-muted">
+                                                    Reminder aktif terdekat:
+                                                    {{ $nextActiveReminder->remind_at?->format('d/m/Y H:i') ?? '-' }}
+                                                </small>
+                                            @else
+                                                <small class="text-muted">Belum ada reminder aktif.</small>
+                                            @endif
+                                        </div>
+                                        @if ($announcementReminders->isNotEmpty())
+                                            <div class="mt-1">
+                                                @foreach ($announcementReminders->take(2) as $reminder)
+                                                    <div class="{{ $focusedReminderId === (int) $reminder->id ? 'bg-warning p-1 rounded mb-1' : '' }}">
+                                                        <small>
+                                                            #{{ $reminder->id }} {{ \Illuminate\Support\Str::limit($reminder->title, 35) }}
+                                                            ({{ $reminder->remind_at?->format('d/m H:i') ?? '-' }})
+                                                        </small>
+                                                    </div>
+                                                @endforeach
+                                                @if ($announcementReminders->count() > 2)
+                                                    <small class="text-muted">+{{ $announcementReminders->count() - 2 }} reminder lainnya</small>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <a
                                             href="{{ route('admin.announcements.edit', $announcement->id) }}"
                                             class="btn btn-sm btn-warning mb-1"
@@ -219,7 +377,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted">Belum ada data announcement.</td>
+                                    <td colspan="6" class="text-center text-muted">Belum ada data announcement.</td>
                                 </tr>
                             @endforelse
                         </tbody>

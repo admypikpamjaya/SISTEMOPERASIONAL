@@ -5,6 +5,8 @@ namespace App\Repositories\Finance;
 use App\Models\FinanceReport;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 class FinanceReportRepository
 {
@@ -93,5 +95,108 @@ class FinanceReportRepository
 
         return $query->orderByDesc('finance_report_snapshots.generated_at')
             ->paginate($perPage, ['finance_report_snapshots.*'], 'page', $page);
+    }
+
+    public function paginateByFilters(
+        ?string $periodType = null,
+        ?string $reportDate = null,
+        ?int $year = null,
+        ?int $month = null,
+        bool $readOnlyOnly = true,
+        int $page = 1,
+        int $perPage = 20
+    ): LengthAwarePaginator {
+        $query = $this->buildFilteredQuery(
+            periodType: $periodType,
+            reportDate: $reportDate,
+            year: $year,
+            month: $month,
+            readOnlyOnly: $readOnlyOnly
+        );
+
+        return $query->orderByDesc('generated_at')
+            ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    public function getByFilters(
+        ?string $periodType = null,
+        ?string $reportDate = null,
+        ?int $year = null,
+        ?int $month = null,
+        bool $readOnlyOnly = true
+    ): Collection {
+        return $this->buildFilteredQuery(
+            periodType: $periodType,
+            reportDate: $reportDate,
+            year: $year,
+            month: $month,
+            readOnlyOnly: $readOnlyOnly
+        )
+            ->orderByDesc('generated_at')
+            ->get();
+    }
+
+    public function findLatestByPeriodKey(
+        string $periodType,
+        int $year,
+        int $month = 0,
+        int $day = 0
+    ): ?FinanceReport {
+        return FinanceReport::query()
+            ->with(['user', 'period'])
+            ->where('is_read_only', true)
+            ->whereHas('period', function ($periodQuery) use ($periodType, $year, $month, $day) {
+                $periodQuery
+                    ->where('period_type', strtoupper($periodType))
+                    ->where('year', $year)
+                    ->where('month', $month);
+
+                if ($this->hasDayColumn()) {
+                    $periodQuery->where('day', $day);
+                }
+            })
+            ->orderByDesc('version_no')
+            ->orderByDesc('generated_at')
+            ->first();
+    }
+
+    private function hasDayColumn(): bool
+    {
+        return Schema::hasColumn('finance_periods', 'day');
+    }
+
+    private function buildFilteredQuery(
+        ?string $periodType = null,
+        ?string $reportDate = null,
+        ?int $year = null,
+        ?int $month = null,
+        bool $readOnlyOnly = true
+    ): Builder {
+        $query = FinanceReport::query()
+            ->with(['user', 'period']);
+
+        if ($readOnlyOnly) {
+            $query->where('is_read_only', true);
+        }
+
+        $query->whereHas('period', function ($periodQuery) use ($periodType, $reportDate, $year, $month) {
+            if (!empty($periodType) && strtoupper((string) $periodType) !== 'ALL') {
+                $periodQuery->where('period_type', strtoupper($periodType));
+            }
+
+            if (!empty($reportDate)) {
+                $periodQuery->whereDate('start_date', $reportDate);
+            }
+
+            if ($year !== null) {
+                $periodQuery->where('year', $year);
+            }
+
+            if ($month !== null) {
+                $periodQuery->where('month', $month);
+            }
+        });
+
+        return $query;
     }
 }

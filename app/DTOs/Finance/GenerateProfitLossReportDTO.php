@@ -10,6 +10,8 @@ class GenerateProfitLossReportDTO
     public function __construct(
         public int $year,
         public ?int $month,
+        public ?int $day,
+        public ?string $reportDate,
         public string $reportType,
         public float $openingBalance,
         public array $entries,
@@ -26,6 +28,8 @@ class GenerateProfitLossReportDTO
         return new self(
             (int) $data['year'],
             isset($data['month']) ? (int) $data['month'] : null,
+            isset($data['day']) ? (int) $data['day'] : null,
+            isset($data['report_date']) ? (string) $data['report_date'] : null,
             strtoupper((string) $data['report_type']),
             (float) ($data['opening_balance'] ?? 0),
             $entries,

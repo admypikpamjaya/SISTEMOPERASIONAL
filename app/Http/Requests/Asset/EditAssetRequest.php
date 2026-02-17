@@ -24,6 +24,9 @@ class EditAssetRequest extends FormRequest
      */
     public function rules(): array
     {
+        $category = strtoupper((string) $this->input('category'));
+        $useAcLikeDetail = in_array($category, ['AC', 'OTHER'], true);
+
         return [
             'id' => 'required|string',
             'category' => ['required', Rule::enum(AssetCategory::class)],
@@ -32,7 +35,7 @@ class EditAssetRequest extends FormRequest
             'unit' => ['required', Rule::enum(AssetUnit::class)],
             'location' => 'required|string',
             'purchase_year'=> ['nullable', 'string'],
-            'detail' => 'required|array'
+            'detail' => ['nullable', 'array', Rule::requiredIf($useAcLikeDetail)],
         ];
     }
 

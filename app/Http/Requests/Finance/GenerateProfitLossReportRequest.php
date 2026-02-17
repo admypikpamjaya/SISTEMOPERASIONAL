@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Finance;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -23,9 +24,11 @@ class GenerateProfitLossReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'report_type' => 'required|string|in:MONTHLY,YEARLY',
-            'year' => 'required|integer|digits:4|between:1900,2100',
+            'report_type' => 'required|string|in:DAILY,MONTHLY,YEARLY',
+            'report_date' => 'nullable|date|required_if:report_type,DAILY',
+            'year' => 'nullable|integer|digits:4|between:1900,2100|required_unless:report_type,DAILY',
             'month' => 'nullable|integer|between:1,12|required_if:report_type,MONTHLY',
+            'day' => 'nullable|integer|between:1,31',
             'opening_balance' => 'required|numeric|min:0',
             'entries' => 'required|array|min:1',
             'entries.*.type' => 'required|string|in:INCOME,EXPENSE',
@@ -63,8 +66,29 @@ class GenerateProfitLossReportRequest extends FormRequest
             'entries' => $entries,
         ]);
 
+        if ($reportType === 'DAILY' && $this->filled('report_date')) {
+            $date = Carbon::parse((string) $this->input('report_date'));
+            $this->merge([
+                'year' => (int) $date->year,
+                'month' => (int) $date->month,
+                'day' => (int) $date->day,
+                'report_date' => $date->toDateString(),
+            ]);
+        }
+
         if ($reportType === 'YEARLY') {
-            $this->merge(['month' => null]);
+            $this->merge([
+                'month' => null,
+                'day' => null,
+                'report_date' => null,
+            ]);
+        }
+
+        if ($reportType === 'MONTHLY') {
+            $this->merge([
+                'day' => null,
+                'report_date' => null,
+            ]);
         }
     }
 
@@ -89,8 +113,10 @@ class GenerateProfitLossReportRequest extends FormRequest
     {
         return [
             'report_type.required' => 'Tipe laporan wajib dipilih.',
-            'report_type.in' => 'Tipe laporan harus MONTHLY atau YEARLY.',
-            'year.required' => 'Tahun wajib diisi.',
+            'report_type.in' => 'Tipe laporan harus DAILY, MONTHLY, atau YEARLY.',
+            'report_date.required_if' => 'Tanggal wajib diisi untuk laporan harian.',
+            'report_date.date' => 'Tanggal laporan tidak valid.',
+            'year.required_unless' => 'Tahun wajib diisi.',
             'year.digits' => 'Tahun harus 4 digit.',
             'year.between' => 'Tahun tidak valid.',
             'month.required_if' => 'Bulan wajib diisi untuk laporan bulanan.',

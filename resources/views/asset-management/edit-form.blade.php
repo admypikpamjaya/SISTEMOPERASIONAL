@@ -73,32 +73,51 @@ use App\Enums\Asset\AssetUnit;
             <div class="col">
                 <form id="asset-detail-form" class="card">
                     <div class="card-body">
-                        @if(!empty($asset->detail))
-                            @if($asset->category->value == 'AC')
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label for="brand">Brand <span class="text-red">*</span></label>
-                                            <input type="text" name="brand" class="form-control" id="brand" value="{{ $asset->detail['brand'] }}" placeholder="Masukkan brand">
-                                        </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label for="dimension">Dimensi <span class="text-red">*</span></label>
-                                            <input type="text" name="dimension" class="form-control" id="dimension" value="{{ $asset->detail['dimension'] }}" placeholder="Masukkan dimensi">
-                                        </div>
+                        @if(in_array($asset->category->value, ['AC', 'OTHER'], true))
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="brand">Brand <span class="text-red">*</span></label>
+                                        <input
+                                            type="text"
+                                            name="brand"
+                                            class="form-control"
+                                            id="brand"
+                                            value="{{ data_get($asset->detail, 'brand') }}"
+                                            placeholder="Masukkan brand"
+                                        >
                                     </div>
                                 </div>
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="dimension">Dimensi <span class="text-red">*</span></label>
+                                        <input
+                                            type="text"
+                                            name="dimension"
+                                            class="form-control"
+                                            id="dimension"
+                                            value="{{ data_get($asset->detail, 'dimension') }}"
+                                            placeholder="Masukkan dimensi"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
 
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label for="power_rating">Voltase <span class="text-red">*</span></label>
-                                            <input type="number" name="power_rating" class="form-control" id="power_rating" value="{{ $asset->detail['power_rating'] }}" placeholder="Masukkan voltase">
-                                        </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="power_rating">Voltase <span class="text-red">*</span></label>
+                                        <input
+                                            type="number"
+                                            name="power_rating"
+                                            class="form-control"
+                                            id="power_rating"
+                                            value="{{ data_get($asset->detail, 'power_rating') }}"
+                                            placeholder="Masukkan voltase"
+                                        >
                                     </div>
                                 </div>
-                            @endif
+                            </div>
                         @endif
                     </div>
                 </form>

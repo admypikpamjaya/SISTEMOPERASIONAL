@@ -13,6 +13,7 @@ class AssetFactory
         return match($category)
         {
             AssetCategory::AC => new AirConditionerDetailHandler(),
+            AssetCategory::OTHER => new AirConditionerDetailHandler(),
         };
     }
 }

@@ -32,7 +32,7 @@ class AssetDataDTO
             (AssetUnit::from($data['unit']) ?? null),
             $data['location'],
             $data['purchase_year'] ?? null,
-            $data['detail'],
+            $data['detail'] ?? [],
             $data['maintenance_logs'] ?? null
         );
     }
@@ -41,6 +41,10 @@ class AssetDataDTO
     {
         $handler = AssetFactory::createHandler($asset->category);
         $relationName = $handler->getRelationName();
+        $detail = [];
+        if ($relationName !== '' && $asset->{$relationName}) {
+            $detail = $asset->{$relationName}->toArray();
+        }
 
         $logs = $asset->relationLoaded('maintenanceLogs') 
                 ? $asset->maintenanceLogs->map(fn ($log) => MaintenanceReportDataDTO::fromModel($log))->toArray()
@@ -54,7 +58,7 @@ class AssetDataDTO
             $asset->unit,
             $asset->location,
             $asset->purchase_year,
-            $asset->{$relationName}?->toArray(),
+            $detail,
             $logs
         );
     }

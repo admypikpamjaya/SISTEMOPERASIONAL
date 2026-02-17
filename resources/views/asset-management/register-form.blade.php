@@ -23,7 +23,7 @@ use App\Enums\Asset\AssetUnit;
                                     <select name="category" id="category" class="form-control">
                                         <option value="" disabled selected>-- Pilih Kategori Aset --</option>
                                         @foreach(AssetCategory::cases() as $category)
-                                            <option value="{{ $category->value }}">{{ $category->name }}</option>
+                                            <option value="{{ $category->value }}">{{ $category->label() }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -104,6 +104,11 @@ use App\Enums\Asset\AssetUnit;
             { label: 'Brand <span class="text-red">*</span>', name: 'brand', type: 'text' },
             { label: 'Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
             { label: 'Voltase <span class="text-red">*</span>', name: 'power_rating', type: 'number', min: 1 },            
+        ],
+        'OTHER': [
+            { label: 'Brand <span class="text-red">*</span>', name: 'brand', type: 'text' },
+            { label: 'Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
+            { label: 'Voltase <span class="text-red">*</span>', name: 'power_rating', type: 'number', min: 1 },            
         ]
     }
 
@@ -120,7 +125,8 @@ use App\Enums\Asset\AssetUnit;
 
     function constructAssetDetailForm(category)
     {
-        const fields = assetDetailForm[category];
+        const fields = assetDetailForm[category] || assetDetailForm.AC;
+
         const chunkedFields = chunkArray(fields, 2);
 
         let html = ``;

@@ -24,6 +24,9 @@ class RegisterAssetRequest extends FormRequest
      */
     public function rules(): array
     {
+        $category = strtoupper((string) $this->input('category'));
+        $useAcLikeDetail = in_array($category, ['AC', 'OTHER'], true);
+
         return [
             'category' => ['required', Rule::enum(AssetCategory::class)],
             'account_code' => ['required', 'unique:assets,account_code'],
@@ -31,7 +34,7 @@ class RegisterAssetRequest extends FormRequest
             'unit' => ['required', Rule::enum(AssetUnit::class)],
             'location' => ['required', 'string'],
             'purchase_year'=> ['nullable', 'string'],
-            'detail' => ['required', 'array']
+            'detail' => ['nullable', 'array', Rule::requiredIf($useAcLikeDetail)],
         ];
     }
 

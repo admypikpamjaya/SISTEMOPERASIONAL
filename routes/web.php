@@ -242,6 +242,12 @@ Route::prefix('admin')
                 Route::post('/', [ReminderController::class, 'store'])
                     ->middleware('check_access:admin_reminder.send')
                     ->name('store');
+                Route::get('/{reminder}/edit', [ReminderController::class, 'edit'])
+                    ->middleware('check_access:admin_reminder.send')
+                    ->name('edit');
+                Route::put('/{reminder}', [ReminderController::class, 'update'])
+                    ->middleware('check_access:admin_reminder.send')
+                    ->name('update');
                 Route::post('/send', [ReminderController::class, 'store'])
                     ->middleware('check_access:admin_reminder.send')
                     ->name('send');

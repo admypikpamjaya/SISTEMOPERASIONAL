@@ -19,6 +19,7 @@ class AnnouncementRequest extends FormRequest
             'attachment'  => ['nullable', 'file', 'max:2048'],
             'channels'    => ['nullable', 'array'],
             'channels.*'  => ['in:email,whatsapp'],
+            'reminder_id' => ['nullable', 'integer', 'exists:reminders,id'],
         ];
     }
 }

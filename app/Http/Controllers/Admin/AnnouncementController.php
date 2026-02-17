@@ -13,6 +13,7 @@ use App\Models\BlastLog;
 use App\Models\BlastMessage;
 use App\Models\BlastRecipient;
 use App\Models\BlastTarget;
+use App\Models\Reminder;
 use Illuminate\Support\Facades\Auth;
 
 class AnnouncementController extends Controller
@@ -46,21 +47,46 @@ class AnnouncementController extends Controller
             'created_by' => (string) Auth::id(),
         ]);
 
+        $linkedReminder = $this->linkReminderToAnnouncement(
+            reminderId: (int) ($validated['reminder_id'] ?? 0),
+            announcement: $announcement
+        );
+
         $dispatchResult = $this->dispatchAnnouncementToBlast(
             $announcement,
             $validated['channels'] ?? []
         );
 
+        $linkMessage = $linkedReminder
+            ? ' Reminder #' . $linkedReminder->id . ' berhasil ditautkan.'
+            : '';
+
         return redirect()
             ->route('admin.announcements.index')
-            ->with('success', $this->buildDispatchMessage('Pengumuman berhasil dibuat.', $dispatchResult));
+            ->with('success', $this->buildDispatchMessage('Pengumuman berhasil dibuat.' . $linkMessage, $dispatchResult));
     }
 
     public function edit(int $id)
     {
-        $editingAnnouncement = Announcement::query()->findOrFail($id);
+        $editingAnnouncement = Announcement::query()
+            ->with([
+                'reminders' => fn ($query) => $query
+                    ->select([
+                        'id',
+                        'announcement_id',
+                        'title',
+                        'description',
+                        'remind_at',
+                        'is_active',
+                        'alert_before_minutes',
+                        'created_at',
+                    ])
+                    ->orderByDesc('remind_at'),
+            ])
+            ->findOrFail($id);
         $viewData = $this->buildIndexViewData();
         $viewData['editingAnnouncement'] = $editingAnnouncement;
+        $viewData['focusedAnnouncementId'] = $editingAnnouncement->id;
 
         return view('admin.announcements.index', $viewData);
     }
@@ -104,17 +130,45 @@ class AnnouncementController extends Controller
     private function buildIndexViewData(): array
     {
         $search = trim((string) request()->query('search', ''));
+        $focusedReminderId = (int) request()->query('focus_reminder', 0);
+        $focusedAnnouncementId = (int) request()->query('focus_announcement', 0);
+        $focusedReminder = null;
+
+        if ($focusedReminderId > 0) {
+            $focusedReminder = Reminder::query()
+                ->with(['creator:id,name', 'announcement:id,title'])
+                ->whereKey($focusedReminderId)
+                ->where('type', 'ANNOUNCEMENT')
+                ->first();
+        }
+
+        if ($focusedReminder && $focusedAnnouncementId <= 0) {
+            $focusedAnnouncementId = (int) ($focusedReminder->announcement_id ?? 0);
+        }
 
         $announcementsQuery = Announcement::query()
             ->with([
                 'creator:id,name',
                 'logs' => fn ($query) => $query->latest('id'),
+                'reminders' => fn ($query) => $query
+                    ->select([
+                        'id',
+                        'announcement_id',
+                        'title',
+                        'remind_at',
+                        'is_active',
+                        'alert_before_minutes',
+                        'created_at',
+                    ])
+                    ->orderByDesc('remind_at'),
             ])
             ->withCount([
                 'logs as logs_total_count',
                 'logs as logs_sent_count' => fn ($query) => $query->where('status', 'SENT'),
                 'logs as logs_failed_count' => fn ($query) => $query->where('status', 'FAILED'),
                 'logs as logs_pending_count' => fn ($query) => $query->where('status', 'PENDING'),
+                'reminders as reminders_total_count',
+                'reminders as reminders_active_count' => fn ($query) => $query->where('is_active', true),
             ]);
 
         if ($search !== '') {
@@ -123,6 +177,10 @@ class AnnouncementController extends Controller
                     ->orWhere('message', 'like', '%' . $search . '%')
                     ->orWhereHas('creator', function ($creatorQuery) use ($search) {
                         $creatorQuery->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('reminders', function ($reminderQuery) use ($search) {
+                        $reminderQuery->where('title', 'like', '%' . $search . '%')
+                            ->orWhere('description', 'like', '%' . $search . '%');
                     });
             });
         }
@@ -172,14 +230,58 @@ class AnnouncementController extends Controller
             )
             ->count();
 
+        $pendingAnnouncementReminders = Reminder::query()
+            ->with('creator:id,name')
+            ->select([
+                'id',
+                'title',
+                'description',
+                'remind_at',
+                'is_active',
+                'announcement_id',
+                'created_by',
+            ])
+            ->where('type', 'ANNOUNCEMENT')
+            ->whereNull('announcement_id')
+            ->orderByDesc('is_active')
+            ->orderBy('remind_at')
+            ->limit(10)
+            ->get();
+
         return [
             'announcements' => $announcements,
             'announcementLogs' => $announcementLogs,
             'emailRecipientCount' => $emailRecipientCount,
             'whatsappRecipientCount' => $whatsappRecipientCount,
+            'focusedReminder' => $focusedReminder,
+            'pendingAnnouncementReminders' => $pendingAnnouncementReminders,
             'search' => $search,
+            'focusedReminderId' => $focusedReminderId,
+            'focusedAnnouncementId' => $focusedAnnouncementId,
             'editingAnnouncement' => null,
         ];
+    }
+
+    private function linkReminderToAnnouncement(int $reminderId, Announcement $announcement): ?Reminder
+    {
+        if ($reminderId <= 0) {
+            return null;
+        }
+
+        $reminder = Reminder::query()
+            ->whereKey($reminderId)
+            ->where('type', 'ANNOUNCEMENT')
+            ->first();
+
+        if (! $reminder) {
+            return null;
+        }
+
+        $reminder->update([
+            'announcement_id' => $announcement->id,
+        ]);
+
+        return $reminder;
     }
 
     /**

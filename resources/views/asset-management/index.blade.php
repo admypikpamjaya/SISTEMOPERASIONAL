@@ -44,7 +44,7 @@ use App\Enums\Asset\AssetUnit;
                             <select name="category" id="filter-category-select" class="form-control">
                                 <option value="">Semua Kategori</option>
                                 @foreach (AssetCategory::cases() as $category)
-                                    <option value="{{ $category->value }}" {{ request('category') == $category->value ? 'selected' : '' }}>{{ $category->name }}</option>
+                                    <option value="{{ $category->value }}" {{ request('category') == $category->value ? 'selected' : '' }}>{{ $category->label() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -102,7 +102,7 @@ use App\Enums\Asset\AssetUnit;
                 @forelse ($assets as $asset)
                     <tr>
                         <td><input class="child-checkbox" type="checkbox" value="{{ $asset->id }}"></td>
-                        <td>{{ $asset->category }}</td>
+                        <td>{{ $asset->category?->label() ?? $asset->category }}</td>
                         <td>{{ $asset->account_code }}</td>
                         <td>{{ $asset->location }}</td>
                         <td>{{ $asset->created_at->format('d M Y') }}</td>
@@ -187,7 +187,7 @@ use App\Enums\Asset\AssetUnit;
                     <select name="category" id="category" class="form-control">
                         <option value="" disabled selected>-- Pilih Kategori Aset --</option>
                         @foreach(AssetCategory::cases() as $category)
-                            <option value="{{ $category->value }}">{{ $category->name }}</option>
+                            <option value="{{ $category->value }}">{{ $category->label() }}</option>
                         @endforeach
                     </select>
                 </div>

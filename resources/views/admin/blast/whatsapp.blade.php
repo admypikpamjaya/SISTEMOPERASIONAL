@@ -22,13 +22,13 @@
 
     @if(session('success'))
         <div class="success-alert">
-            Berhasil: {{ session('success') }}
+            &#9989; {{ session('success') }}
         </div>
     @endif
 
     @if($errors->any())
         <div class="error-alert">
-            Error: {{ $errors->first() }}
+            &#9888;&#65039; {{ $errors->first() }}
         </div>
     @endif
 

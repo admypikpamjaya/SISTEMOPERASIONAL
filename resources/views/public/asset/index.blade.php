@@ -41,9 +41,23 @@
                 'label' => 'Voltase',
                 'key' => 'power_rating'    
             ]
-        ]
+        ],
+        AssetCategory::OTHER->value => [
+            [
+                'label' => 'Brand',
+                'key' => 'brand'    
+            ],
+            [
+                'label' => 'Dimensi',
+                'key' => 'dimension'
+            ],
+            [
+                'label' => 'Voltase',
+                'key' => 'power_rating'    
+            ]
+        ],
     ];
-    $currentAssetDetail = $assetDetailFields[$asset->category->value];
+    $currentAssetDetail = $assetDetailFields[$asset->category->value] ?? [];
 
     $chunkedBasicAssetInfoFields = array_chunk($basicAssetInfoFields, 2);
     $chunkedAssetDetailFields = array_chunk($currentAssetDetail, 2);
@@ -97,7 +111,7 @@
                     <div class="col">
                         <div class="form-group">
                             <label>Kategori</label>
-                            <input type="text" class="form-control" value="{{ $asset->category }}" readonly>
+                            <input type="text" class="form-control" value="{{ $asset->category->label() }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -121,18 +135,24 @@
                 <span class="card-title font-weight-bolder">II. Informasi Detail Aset</span>
             </div>
             <div class="card-body">
-                @foreach($chunkedAssetDetailFields as $chunk) 
-                    <div class="row">
-                        @foreach($chunk as $field)
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>{{ $field['label'] }}</label>
-                                    <input type="text" class="form-control" value="{{ data_get($asset->detail, $field['key']) }}" readonly>
-                                </div>
-                            </div>
-                        @endforeach
+                @if(empty($chunkedAssetDetailFields))
+                    <div class="alert alert-info mb-0">
+                        Kategori aset ini tidak memiliki detail tambahan.
                     </div>
-                @endforeach
+                @else
+                    @foreach($chunkedAssetDetailFields as $chunk) 
+                        <div class="row">
+                            @foreach($chunk as $field)
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ $field['label'] }}</label>
+                                        <input type="text" class="form-control" value="{{ data_get($asset->detail, $field['key']) }}" readonly>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
+                @endif
             </div>
         </div>
 

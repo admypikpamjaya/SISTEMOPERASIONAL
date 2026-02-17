@@ -3,6 +3,18 @@
 @section('section_name', 'Reminder Plan')
 
 @section('content')
+@php
+    $isEdit = (bool) ($editingReminder ?? null);
+    $formAction = $isEdit
+        ? route('admin.reminders.update', $editingReminder->id)
+        : route('admin.reminders.store');
+    $defaultRemindAt = $isEdit && $editingReminder->remind_at
+        ? $editingReminder->remind_at->timezone('Asia/Jakarta')->format('Y-m-d\TH:i')
+        : now('Asia/Jakarta')->format('Y-m-d\TH:i');
+    $selectedType = old('type', $editingReminder->type ?? 'GENERAL');
+    $selectedAnnouncementId = old('announcement_id', $editingReminder->announcement_id ?? '');
+@endphp
+
 @if ($errors->any())
     <div class="alert alert-danger">
         <strong>Terjadi kesalahan validasi:</strong>
@@ -18,10 +30,13 @@
     <div class="col-lg-4">
         <div class="card card-warning">
             <div class="card-header">
-                <h3 class="card-title">Buat Reminder Baru</h3>
+                <h3 class="card-title">{{ $isEdit ? 'Edit Reminder' : 'Buat Reminder Baru' }}</h3>
             </div>
-            <form method="POST" action="{{ route('admin.reminders.store') }}">
+            <form method="POST" action="{{ $formAction }}">
                 @csrf
+                @if ($isEdit)
+                    @method('PUT')
+                @endif
 
                 <div class="card-body">
                     <div class="form-group">
@@ -31,7 +46,7 @@
                             id="title"
                             name="title"
                             class="form-control @error('title') is-invalid @enderror"
-                            value="{{ old('title') }}"
+                            value="{{ old('title', $editingReminder->title ?? '') }}"
                             placeholder="Contoh: Reminder Pengumuman Ujian"
                             required
                         >
@@ -45,7 +60,7 @@
                             rows="3"
                             class="form-control @error('description') is-invalid @enderror"
                             placeholder="Detail reminder atau catatan tambahan..."
-                        >{{ old('description') }}</textarea>
+                        >{{ old('description', $editingReminder->description ?? '') }}</textarea>
                     </div>
 
                     <div class="form-group">
@@ -55,7 +70,7 @@
                             id="remind_at"
                             name="remind_at"
                             class="form-control @error('remind_at') is-invalid @enderror"
-                            value="{{ old('remind_at', now()->format('Y-m-d\TH:i')) }}"
+                            value="{{ old('remind_at', $defaultRemindAt) }}"
                             required
                         >
                         <small class="text-muted">
@@ -72,7 +87,7 @@
                             id="alert_before_minutes"
                             name="alert_before_minutes"
                             class="form-control @error('alert_before_minutes') is-invalid @enderror"
-                            value="{{ old('alert_before_minutes', 30) }}"
+                            value="{{ old('alert_before_minutes', $editingReminder->alert_before_minutes ?? 30) }}"
                             required
                         >
                     </div>
@@ -84,8 +99,8 @@
                             name="type"
                             class="form-control @error('type') is-invalid @enderror"
                         >
-                            <option value="GENERAL" @selected(old('type', 'GENERAL') === 'GENERAL')>Umum</option>
-                            <option value="ANNOUNCEMENT" @selected(old('type') === 'ANNOUNCEMENT')>Announcement</option>
+                            <option value="GENERAL" @selected($selectedType === 'GENERAL')>Umum</option>
+                            <option value="ANNOUNCEMENT" @selected($selectedType === 'ANNOUNCEMENT')>Announcement</option>
                         </select>
                     </div>
 
@@ -100,7 +115,7 @@
                             @foreach ($announcements as $announcement)
                                 <option
                                     value="{{ $announcement->id }}"
-                                    @selected((string) old('announcement_id') === (string) $announcement->id)
+                                    @selected((string) $selectedAnnouncementId === (string) $announcement->id)
                                 >
                                     #{{ $announcement->id }} - {{ \Illuminate\Support\Str::limit($announcement->title, 70) }}
                                 </option>
@@ -109,10 +124,13 @@
                     </div>
                 </div>
 
-                <div class="card-footer">
+                <div class="card-footer d-flex justify-content-between">
                     <button type="submit" class="btn btn-warning">
-                        Simpan Reminder
+                        {{ $isEdit ? 'Update Reminder' : 'Simpan Reminder' }}
                     </button>
+                    @if ($isEdit)
+                        <a href="{{ route('admin.reminders.index') }}" class="btn btn-default">Batal Edit</a>
+                    @endif
                 </div>
             </form>
         </div>
@@ -137,7 +155,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @php $now = now(); @endphp
+                            @php $now = now('Asia/Jakarta'); @endphp
                             @forelse ($reminders as $reminder)
                                 @php
                                     $alertState = $reminder->alertState($now);
@@ -157,8 +175,8 @@
                                         </small>
                                     </td>
                                     <td>
-                                        <div>{{ $reminder->remind_at?->format('d/m/Y H:i') ?? '-' }}</div>
-                                        <small class="text-muted">{{ $reminder->created_at?->format('d/m/Y H:i') ?? '-' }}</small>
+                                        <div>{{ $reminder->remind_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? '-' }}</div>
+                                        <small class="text-muted">{{ $reminder->created_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? '-' }}</small>
                                     </td>
                                     <td>
                                         @if ($reminder->is_active)
@@ -177,7 +195,7 @@
 
                                         @if (! $reminder->is_active && $reminder->deactivated_at)
                                             <div class="text-muted mt-1" style="font-size: 12px;">
-                                                Nonaktif: {{ $reminder->deactivated_at->format('d/m/Y H:i') }}
+                                                Nonaktif: {{ $reminder->deactivated_at->timezone('Asia/Jakarta')->format('d/m/Y H:i') }}
                                             </div>
                                         @endif
                                     </td>
@@ -187,7 +205,7 @@
                                                 <div>#{{ $reminder->announcement->id }}</div>
                                                 <div>{{ \Illuminate\Support\Str::limit($reminder->announcement->title, 60) }}</div>
                                                 <a
-                                                    href="{{ route('admin.announcements.edit', $reminder->announcement->id) }}"
+                                                    href="{{ route('admin.announcements.edit', ['id' => $reminder->announcement->id, 'focus_reminder' => $reminder->id, 'focus_announcement' => $reminder->announcement->id]) }}"
                                                     class="btn btn-xs btn-outline-primary mt-1"
                                                 >
                                                     Buka Announcement
@@ -195,7 +213,7 @@
                                             @else
                                                 <span class="text-muted">Arahkan ke pembuatan announcement baru.</span>
                                                 <a
-                                                    href="{{ route('admin.announcements.index') }}"
+                                                    href="{{ route('admin.announcements.index', ['focus_reminder' => $reminder->id]) }}"
                                                     class="btn btn-xs btn-outline-primary mt-1"
                                                 >
                                                     Buat Announcement
@@ -206,6 +224,12 @@
                                         @endif
                                     </td>
                                     <td>
+                                        <a
+                                            href="{{ route('admin.reminders.edit', $reminder->id) }}"
+                                            class="btn btn-sm btn-warning mb-1"
+                                        >
+                                            Edit
+                                        </a>
                                         <form method="POST" action="{{ route('admin.reminders.toggle', $reminder->id) }}">
                                             @csrf
                                             <input

@@ -21,6 +21,7 @@ class FinancePeriod extends Model
         'period_type',
         'year',
         'month',
+        'day',
         'start_date',
         'end_date',
         'opening_balance',
@@ -33,6 +34,7 @@ class FinancePeriod extends Model
     protected $casts = [
         'year' => 'integer',
         'month' => 'integer',
+        'day' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
         'opening_balance' => 'decimal:2',

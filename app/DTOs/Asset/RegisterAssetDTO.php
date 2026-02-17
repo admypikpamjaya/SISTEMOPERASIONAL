@@ -34,11 +34,11 @@ class RegisterAssetDTO
         return new self(
             AssetCategory::from($data['category']),
             $data['account_code'],
-            $data['asset_serial_number'],
+            $data['asset_serial_number'] ?? null,
             $data['unit'],
             $data['location'],
-            $data['purchase_year'],
-            $data['detail']
+            $data['purchase_year'] ?? null,
+            $data['detail'] ?? []
         );
     }
 }

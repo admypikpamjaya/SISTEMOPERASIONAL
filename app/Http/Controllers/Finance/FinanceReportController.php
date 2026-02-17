@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\DTOs\Finance\FinanceSnapshotFilterDTO;
 use App\DTOs\Finance\GenerateProfitLossReportDTO;
 use App\DTOs\Finance\ProfitLossReportDetailDTO;
 use App\Http\Controllers\Controller;
@@ -9,7 +10,10 @@ use App\Http\Requests\Finance\FinanceReportIndexRequest;
 use App\Http\Requests\Finance\GenerateProfitLossReportRequest;
 use App\Services\Finance\ReportDocumentService;
 use App\Services\Finance\ReportService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use RuntimeException;
+use Throwable;
 
 class FinanceReportController extends Controller
 {
@@ -20,89 +24,160 @@ class FinanceReportController extends Controller
 
     public function index(FinanceReportIndexRequest $request)
     {
-        $validated = $request->validated();
-        $year = (int) ($validated['year'] ?? now()->year);
-        $reportTypeForCreate = strtoupper((string) ($validated['report_type'] ?? 'MONTHLY'));
-        $monthForCreate = $reportTypeForCreate === 'YEARLY'
-            ? null
-            : (isset($validated['month']) ? (int) $validated['month'] : (int) now()->month);
+        try {
+            $validated = $request->validated();
+            $periodType = strtoupper((string) ($validated['period_type'] ?? 'MONTHLY'));
 
-        $suggestedOpeningBalance = $this->reportService->getSuggestedOpeningBalance(
-            $reportTypeForCreate,
-            $year,
-            $monthForCreate
-        );
+            $reportDate = !empty($validated['report_date'])
+                ? Carbon::parse((string) $validated['report_date'])
+                : now();
+            $year = $periodType === 'DAILY'
+                ? (int) $reportDate->year
+                : (int) ($validated['year'] ?? now()->year);
+            $month = $periodType === 'YEARLY'
+                ? null
+                : ($periodType === 'DAILY'
+                    ? (int) $reportDate->month
+                    : (isset($validated['month']) ? (int) $validated['month'] : (int) now()->month));
+            $day = $periodType === 'DAILY' ? (int) $reportDate->day : null;
 
-        return view('finance.report', [
-            'suggestedOpeningBalance' => $suggestedOpeningBalance,
-        ]);
+            $suggestedOpeningBalance = $this->reportService->getSuggestedOpeningBalance(
+                $periodType,
+                $year,
+                $month,
+                $day
+            );
+
+            return view('finance.report', [
+                'suggestedOpeningBalance' => $suggestedOpeningBalance,
+                'defaults' => [
+                    'period_type' => $periodType,
+                    'report_date' => $reportDate->toDateString(),
+                    'year' => $year,
+                    'month' => $month,
+                ],
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('finance.dashboard')
+                ->with('error', 'Gagal memuat halaman input laporan finance.');
+        }
     }
 
     public function snapshots(FinanceReportIndexRequest $request)
     {
-        $validated = $request->validated();
-        $year = (int) ($validated['year'] ?? now()->year);
+        try {
+            $validated = $request->validated();
+            $selectedPeriodType = strtoupper((string) ($validated['period_type'] ?? 'MONTHLY'));
 
-        $reports = $this->reportService->getReports(
-            year: $year,
-            month: isset($validated['month']) ? (int) $validated['month'] : null,
-            reportType: $validated['report_type'] ?? null,
-            page: (int) ($validated['page'] ?? 1),
-            perPage: (int) ($validated['per_page'] ?? 20)
-        );
+            $filter = FinanceSnapshotFilterDTO::fromArray($validated);
+            $result = $this->reportService->getSnapshots($filter);
 
-        return view('finance.snapshots', [
-            'reports' => $reports,
-            'filters' => [
-                'month' => $validated['month'] ?? null,
-                'year' => $year,
-                'report_type' => $validated['report_type'] ?? null,
-            ],
-        ]);
+            return view('finance.snapshots', [
+                'reports' => $result['reports'],
+                'comparisons' => $result['comparisons'],
+                'totals' => $result['totals'],
+                'filters' => [
+                    'period_type' => $selectedPeriodType,
+                    'report_date' => $filter->reportDate,
+                    'month' => $filter->month,
+                    'year' => $filter->year,
+                    'comparison_type' => $filter->comparisonType,
+                    'comparison_offset' => $filter->comparisonOffset,
+                    'comparison_date' => $filter->comparisonDate,
+                ],
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('finance.report.index')
+                ->with('error', 'Gagal memuat snapshot laporan finance.');
+        }
     }
 
     public function store(GenerateProfitLossReportRequest $request)
     {
-        $dto = GenerateProfitLossReportDTO::fromArray(
-            $request->validated(),
-            auth()->id() ? (string) auth()->id() : null
-        );
+        try {
+            $dto = GenerateProfitLossReportDTO::fromArray(
+                $request->validated(),
+                auth()->id() ? (string) auth()->id() : null
+            );
 
-        $snapshot = $this->reportService->createProfitLossReport($dto);
+            $snapshot = $this->reportService->createProfitLossReport($dto);
 
-        return redirect()
-            ->route('finance.report.show', $snapshot->id)
-            ->with('success', 'Laporan laba-rugi berhasil dibuat sebagai snapshot.');
+            return redirect()
+                ->route('finance.report.show', $snapshot->id)
+                ->with('success', 'Laporan laba-rugi berhasil dibuat sebagai snapshot.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal membuat laporan laba-rugi. Silakan coba lagi.');
+        }
     }
 
     public function show(string $id)
     {
-        $detail = $this->findReportOrFail($id);
+        try {
+            $detail = $this->findReportOrFail($id);
 
-        return view('finance.report-show', [
-            'report' => $detail,
-        ]);
+            return view('finance.report-show', [
+                'report' => $detail,
+            ]);
+        } catch (RuntimeException $exception) {
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', $exception->getMessage());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', 'Gagal memuat detail laporan finance.');
+        }
     }
 
-    public function download(string $id)
+    public function download(Request $request, string $id)
     {
-        $detail = $this->findReportOrFail($id);
-        $documentHtml = $this->reportDocumentService->renderProfitLossDocument($detail);
-        $filename = $this->reportDocumentService->buildProfitLossFilename($detail);
+        try {
+            $format = strtolower((string) $request->query('format', 'docx'));
+            if (!in_array($format, ['docx', 'word', 'excel', 'pdf'], true)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Format download tidak valid.');
+            }
+            if ($format === 'word') {
+                $format = 'docx';
+            }
 
-        return response($documentHtml, 200, [
-            'Content-Type' => 'application/msword; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+            $detail = $this->findReportOrFail($id);
+            $exported = $this->reportDocumentService->exportProfitLoss($detail, $format);
+
+            return response($exported['content'], 200, [
+                'Content-Type' => $exported['mime'],
+                'Content-Disposition' => 'attachment; filename="' . $exported['filename'] . '"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (RuntimeException $exception) {
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', $exception->getMessage());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengunduh dokumen laporan.');
+        }
     }
 
     private function findReportOrFail(string $id): ProfitLossReportDetailDTO
     {
-        try {
-            return $this->reportService->getProfitLossReportDetail($id);
-        } catch (RuntimeException $exception) {
-            abort(404, $exception->getMessage());
-        }
+        return $this->reportService->getProfitLossReportDetail($id);
     }
 }

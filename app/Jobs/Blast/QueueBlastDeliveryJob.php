@@ -75,11 +75,12 @@ class QueueBlastDeliveryJob implements ShouldQueue
             $job->onQueue($queueName);
         }
 
-        if ($normalizedChannel === 'WHATSAPP') {
+        if (in_array($normalizedChannel, ['WHATSAPP', 'EMAIL'], true)) {
             try {
                 app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
             } catch (\Throwable $exception) {
-                Log::error('[WHATSAPP SYNC DISPATCH FAILED]', [
+                Log::error('[BLAST SYNC DISPATCH FAILED]', [
+                    'channel' => $normalizedChannel,
                     'target' => $this->target,
                     'error' => $exception->getMessage(),
                 ]);
