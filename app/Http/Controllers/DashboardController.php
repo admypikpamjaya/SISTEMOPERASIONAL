@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\User\UserRole;
 use App\Models\BlastLog;
 use App\Models\FinanceReport;
 use Carbon\Carbon;
@@ -27,52 +28,73 @@ class DashboardController extends Controller
      */
     private function buildDashboardPayload(): array
     {
-        $financeSeries = $this->buildFinanceSeries();
-        $blastSeries = $this->buildBlastSeries();
+        $currentRole = strtolower(trim((string) auth()->user()?->role));
+        $showFinanceWidgets = $currentRole !== strtolower(UserRole::ADMIN->value);
+        $showBlastingWidgets = $currentRole !== strtolower(UserRole::FINANCE->value);
+        $blastSeries = null;
+        $financeSeries = null;
+        $saldo = null;
+        $saldoUpdatedAt = null;
 
-        $latestReport = FinanceReport::query()
-            ->where('is_read_only', true)
-            ->orderByDesc('generated_at')
-            ->orderByDesc('version_no')
-            ->first();
+        if ($showBlastingWidgets) {
+            $blastSeries = $this->buildBlastSeries();
+        }
 
-        $saldo = (float) data_get(
-            $latestReport?->summary,
-            'ending_balance',
-            data_get($latestReport?->summary, 'net_result', 0)
-        );
+        if ($showFinanceWidgets) {
+            $financeSeries = $this->buildFinanceSeries();
 
-        $saldoUpdatedAt = $latestReport?->generated_at
-            ? $latestReport->generated_at
-                ->copy()
-                ->timezone(self::WIB_TIMEZONE)
-                ->format('d/m/Y H:i:s')
-            : null;
+            $allReports = FinanceReport::query()
+                ->where('is_read_only', true)
+                ->get(['summary']);
+
+            $saldo = round($allReports->sum(static function (FinanceReport $report): float {
+                return (float) data_get(
+                    $report->summary,
+                    'ending_balance',
+                    data_get($report->summary, 'net_result', 0)
+                );
+            }), 2);
+
+            $latestReport = FinanceReport::query()
+                ->where('is_read_only', true)
+                ->orderByDesc('generated_at')
+                ->orderByDesc('version_no')
+                ->first();
+
+            $saldoUpdatedAt = $latestReport?->generated_at
+                ? $latestReport->generated_at
+                    ->copy()
+                    ->timezone(self::WIB_TIMEZONE)
+                    ->format('d/m/Y H:i:s')
+                : null;
+        }
 
         return [
+            'showFinanceWidgets' => $showFinanceWidgets,
+            'showBlastingWidgets' => $showBlastingWidgets,
             'saldo' => $saldo,
             'saldoUpdatedAt' => $saldoUpdatedAt,
-            'incomeChart' => [
+            'incomeChart' => $showFinanceWidgets ? [
                 'labels' => $financeSeries['labels'],
                 'values' => $financeSeries['income'],
                 'url' => route('finance.report.snapshots', ['period_type' => 'MONTHLY']),
-            ],
-            'expenseChart' => [
+            ] : null,
+            'expenseChart' => $showFinanceWidgets ? [
                 'labels' => $financeSeries['labels'],
                 'expenseValues' => $financeSeries['expense'],
                 'depreciationValues' => $financeSeries['depreciation'],
                 'url' => route('finance.depreciation.index'),
-            ],
-            'waChart' => [
+            ] : null,
+            'waChart' => $showBlastingWidgets ? [
                 'labels' => $blastSeries['labels'],
                 'values' => $blastSeries['whatsapp'],
                 'url' => route('admin.blast.whatsapp'),
-            ],
-            'emailChart' => [
+            ] : null,
+            'emailChart' => $showBlastingWidgets ? [
                 'labels' => $blastSeries['labels'],
                 'values' => $blastSeries['email'],
                 'url' => route('admin.blast.email'),
-            ],
+            ] : null,
         ];
     }
 
