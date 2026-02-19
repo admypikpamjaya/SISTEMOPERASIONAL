@@ -203,8 +203,11 @@
                             @endphp
                             <tr>
                                 <td>
-                                    <a href="{{ route('finance.report.show', $report->id) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('finance.report.show', $report->id) }}" class="btn btn-sm btn-outline-primary mb-1">
                                         Preview
+                                    </a>
+                                    <a href="{{ route('finance.report.edit', $report->id) }}" class="btn btn-sm btn-outline-warning mb-1">
+                                        Edit
                                     </a>
                                 </td>
                                 <td>{{ $periodLabel }}</td>

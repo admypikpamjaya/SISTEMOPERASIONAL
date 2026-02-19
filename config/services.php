@@ -30,11 +30,35 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
-    
+
+    'whatsapp' => [
+        'provider' => env('WHATSAPP_PROVIDER', 'wablas'),
+    ],
+
+    'wablas' => [
+        'token' => env('WABLAS_TOKEN'),
+        'secret_key' => env('WABLAS_SECRET_KEY'),
+        'base_url' => env('WABLAS_BASE_URL', 'https://wablas.com'),
+        'fallback_base_urls' => env(
+            'WABLAS_FALLBACK_BASE_URLS',
+            implode(',', [
+                'https://tegal.wablas.com',
+                'https://solo.wablas.com',
+                'https://jogja.wablas.com',
+                'https://kudus.wablas.com',
+                'https://pati.wablas.com',
+                'https://sby.wablas.com',
+                'https://bdg.wablas.com',
+                'https://deu.wablas.com',
+                'https://texas.wablas.com',
+            ])
+        ),
+    ],
+
     'fonnte' => [
-    'token' => env('FONNTE_TOKEN'),
-    'base_url' => env('FONNTE_BASE_URL', 'https://api.fonnte.com'),
-],
+        'token' => env('FONNTE_TOKEN'),
+        'base_url' => env('FONNTE_BASE_URL', 'https://api.fonnte.com'),
+    ],
 
 
 ];

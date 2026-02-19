@@ -121,6 +121,62 @@ class FinanceReportController extends Controller
         }
     }
 
+    public function edit(string $id)
+    {
+        try {
+            $payload = $this->reportService->getEditPayload($id);
+
+            return view('finance.report', [
+                'suggestedOpeningBalance' => (float) data_get($payload, 'opening_balance', 0),
+                'defaults' => [
+                    'period_type' => (string) data_get($payload, 'report_type', 'MONTHLY'),
+                    'report_date' => (string) data_get($payload, 'report_date', now()->toDateString()),
+                    'year' => (int) data_get($payload, 'year', now()->year),
+                    'month' => data_get($payload, 'month'),
+                ],
+                'entryRows' => (array) data_get($payload, 'entries', []),
+                'editingReport' => $payload,
+            ]);
+        } catch (RuntimeException $exception) {
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', $exception->getMessage());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', 'Gagal memuat halaman edit snapshot.');
+        }
+    }
+
+    public function update(GenerateProfitLossReportRequest $request, string $id)
+    {
+        try {
+            $dto = GenerateProfitLossReportDTO::fromArray(
+                $request->validated(),
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            $snapshot = $this->reportService->updateProfitLossReport($id, $dto);
+
+            return redirect()
+                ->route('finance.report.show', $snapshot->id)
+                ->with('success', 'Snapshot laporan laba-rugi berhasil diperbarui.');
+        } catch (RuntimeException $exception) {
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', $exception->getMessage());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui snapshot laba-rugi. Silakan coba lagi.');
+        }
+    }
+
     public function show(string $id)
     {
         try {

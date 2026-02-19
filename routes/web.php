@@ -162,6 +162,14 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.generate')
             ->name('report.store');
 
+        Route::get('/report/{id}/edit', [FinanceReportController::class, 'edit'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.edit');
+
+        Route::put('/report/{id}', [FinanceReportController::class, 'update'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.update');
+
         Route::get('/report/snapshots', [FinanceReportController::class, 'snapshots'])
             ->middleware('check_access:finance_report.read')
             ->name('report.snapshots');
@@ -320,6 +328,8 @@ Route::prefix('admin')
                 Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
                 Route::get('/activity-api', [BlastController::class, 'activity'])->name('activity');
                 Route::post('/activity/clear', [BlastController::class, 'clearActivityLogs'])->name('activity.clear');
+                Route::post('/activity/delete', [BlastController::class, 'deleteActivityLog'])->name('activity.delete');
+                Route::post('/activity/retry', [BlastController::class, 'retryActivityLog'])->name('activity.retry');
                 Route::get('/campaign-api', [BlastController::class, 'campaigns'])->name('campaigns');
                 Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])->name('campaign.pause');
                 Route::post('/campaign/resume', [BlastController::class, 'resumeCampaign'])->name('campaign.resume');

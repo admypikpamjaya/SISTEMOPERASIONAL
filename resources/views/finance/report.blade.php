@@ -4,13 +4,42 @@
 
 @section('content')
 @php
+    $isEditMode = isset($editingReport) && is_array($editingReport);
+    $editReportId = $isEditMode ? (string) data_get($editingReport, 'report_id') : null;
+    $formAction = $isEditMode
+        ? route('finance.report.update', $editReportId)
+        : route('finance.report.store');
+    $formTitle = $isEditMode ? 'Edit Snapshot Laba Rugi' : 'Input Laporan Laba Rugi';
+    $submitLabel = $isEditMode ? 'Simpan Perubahan Snapshot' : 'Simpan Snapshot Laba Rugi';
+
     $defaultPeriodType = old('report_type', $defaults['period_type'] ?? 'MONTHLY');
     $defaultReportDate = old('report_date', $defaults['report_date'] ?? now()->toDateString());
     $defaultMonth = (int) old('month', $defaults['month'] ?? now()->month);
     $defaultYear = (int) old('year', $defaults['year'] ?? now()->year);
-    $defaultOpeningBalance = old('opening_balance', $suggestedOpeningBalance ?? 0);
+    $defaultOpeningBalance = old(
+        'opening_balance',
+        $isEditMode
+            ? (float) data_get($editingReport, 'opening_balance', 0)
+            : ($suggestedOpeningBalance ?? 0)
+    );
 
-    $entryRows = old('entries', [
+    $defaultEntryRows = $isEditMode
+        ? ((array) data_get($editingReport, 'entries', []))
+        : [
+            [
+                'type' => 'INCOME',
+                'line_code' => '',
+                'line_label' => '',
+                'invoice_number' => '',
+                'description' => '',
+                'amount' => '',
+                'is_depreciation' => false,
+            ],
+        ];
+
+    $entryRows = old('entries', !empty($entryRows ?? null) ? $entryRows : $defaultEntryRows);
+    if (empty($entryRows)) {
+        $entryRows = [
         [
             'type' => 'INCOME',
             'line_code' => '',
@@ -20,14 +49,15 @@
             'amount' => '',
             'is_depreciation' => false,
         ],
-    ]);
+        ];
+    }
 @endphp
 
 <div class="row">
     <div class="col-12">
         <div class="card card-outline card-success">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title mb-0">Input Laporan Laba Rugi</h3>
+                <h3 class="card-title mb-0">{{ $formTitle }}</h3>
                 <a
                     href="{{ route('finance.report.snapshots', ['period_type' => 'MONTHLY', 'month' => now()->month, 'year' => now()->year]) }}"
                     class="btn btn-sm btn-outline-primary"
@@ -35,8 +65,15 @@
                     <i class="fas fa-list mr-1"></i> Buka Snapshot Laporan
                 </a>
             </div>
-            <form method="POST" action="{{ route('finance.report.store') }}" id="profit-loss-form">
+            <form method="POST" action="{{ $formAction }}" id="profit-loss-form">
                 @csrf
+                @if($isEditMode)
+                    @method('PUT')
+                    <input type="hidden" name="report_type" value="{{ $defaultPeriodType }}">
+                    <input type="hidden" name="report_date" value="{{ $defaultReportDate }}">
+                    <input type="hidden" name="month" value="{{ $defaultMonth }}">
+                    <input type="hidden" name="year" value="{{ $defaultYear }}">
+                @endif
                 <div class="card-body">
                     @if($errors->any())
                         <div class="alert alert-danger">
@@ -48,11 +85,16 @@
                             </ul>
                         </div>
                     @endif
+                    @if($isEditMode)
+                        <div class="alert alert-info">
+                            Mode edit snapshot aktif. Periode snapshot dikunci untuk menjaga konsistensi data periode.
+                        </div>
+                    @endif
 
                     <div class="form-row">
                         <div class="form-group col-md-2">
                             <label for="report_type_create">Periode</label>
-                            <select name="report_type" id="report_type_create" class="form-control" required>
+                            <select name="report_type" id="report_type_create" class="form-control" required {{ $isEditMode ? 'disabled' : '' }}>
                                 <option value="DAILY" {{ $defaultPeriodType === 'DAILY' ? 'selected' : '' }}>Harian</option>
                                 <option value="MONTHLY" {{ $defaultPeriodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
                                 <option value="YEARLY" {{ $defaultPeriodType === 'YEARLY' ? 'selected' : '' }}>Tahunan</option>
@@ -67,12 +109,13 @@
                                 id="report_date_create"
                                 class="form-control"
                                 value="{{ $defaultReportDate }}"
+                                {{ $isEditMode ? 'disabled' : '' }}
                             >
                         </div>
 
                         <div class="form-group col-md-2" id="month_group">
                             <label for="month_create">Bulan</label>
-                            <select name="month" id="month_create" class="form-control">
+                            <select name="month" id="month_create" class="form-control" {{ $isEditMode ? 'disabled' : '' }}>
                                 @for($m = 1; $m <= 12; $m++)
                                     <option value="{{ $m }}" {{ $defaultMonth === $m ? 'selected' : '' }}>{{ $m }}</option>
                                 @endfor
@@ -89,6 +132,7 @@
                                 min="1900"
                                 max="2100"
                                 value="{{ $defaultYear }}"
+                                {{ $isEditMode ? 'disabled' : '' }}
                             >
                         </div>
 
@@ -216,7 +260,7 @@
                         <i class="fas fa-plus mr-1"></i> Tambah Baris
                     </button>
                     <button type="submit" class="btn btn-success float-right">
-                        <i class="fas fa-save mr-1"></i> Simpan Snapshot Laba Rugi
+                        <i class="fas fa-save mr-1"></i> {{ $submitLabel }}
                     </button>
                 </div>
             </form>
@@ -228,6 +272,7 @@
 @section('js')
 <script>
     (function () {
+        const isEditMode = @json($isEditMode);
         const tableBody = document.getElementById('profit-loss-lines-body');
         const addButton = document.getElementById('add-profit-loss-line');
         const reportTypeSelect = document.getElementById('report_type_create');
@@ -369,6 +414,16 @@
             reportDateGroup.style.display = isDaily ? '' : 'none';
             monthGroup.style.display = isMonthly ? '' : 'none';
             yearGroup.style.display = (isMonthly || isYearly) ? '' : 'none';
+
+            if (isEditMode) {
+                reportDateInput.disabled = true;
+                reportDateInput.required = false;
+                monthSelect.disabled = true;
+                monthSelect.required = false;
+                yearInput.disabled = true;
+                yearInput.required = false;
+                return;
+            }
 
             reportDateInput.disabled = !isDaily;
             reportDateInput.required = isDaily;

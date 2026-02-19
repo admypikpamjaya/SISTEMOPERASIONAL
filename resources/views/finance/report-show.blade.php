@@ -25,6 +25,9 @@
                     <a href="{{ route('finance.report.snapshots', ['year' => $report->year]) }}" class="btn btn-sm btn-default">
                         <i class="fas fa-arrow-left mr-1"></i> Kembali
                     </a>
+                    <a href="{{ route('finance.report.edit', $report->reportId) }}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit mr-1"></i> Edit Snapshot
+                    </a>
                     <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-download mr-1"></i> Download
                     </button>

@@ -77,7 +77,12 @@ class SendWhatsappBlastJob implements ShouldQueue
             $sent = $service->send($this->phone, $this->payload);
 
             if (!$sent) {
-                throw new \RuntimeException('WhatsApp provider returned false.');
+                $providerError = trim((string) ($this->payload->meta['provider_error'] ?? ''));
+                throw new \RuntimeException(
+                    $providerError !== ''
+                        ? $providerError
+                        : 'WhatsApp provider returned false.'
+                );
             }
 
             $this->markSuccess($blastLog, $announcementLog);
