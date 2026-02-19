@@ -69,14 +69,11 @@ class ReportDocumentService
 
     private function renderDocxDocument(ProfitLossReportDetailDTO $report): string
     {
-        $lines = $this->buildPdfLines($report);
-        $paragraphs = '';
-
-        foreach ($lines as $line) {
-            $paragraphs .= '<w:p><w:r><w:t xml:space="preserve">'
-                . $this->escapeXmlText($line)
-                . '</w:t></w:r></w:p>';
-        }
+        $rows = $this->buildReportRows($report);
+        $metaRows = [
+            ['Periode', ': ' . $this->resolvePeriodLabel($report), 'Jenis', ': ' . $report->reportType],
+            ['Disusun Oleh', ': ' . ($report->generatedByName ?? '-'), 'Generated At', ': ' . $report->generatedAt->format('Y-m-d H:i:s')],
+        ];
 
         $documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"'
@@ -95,9 +92,27 @@ class ReportDocumentService
             . ' xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"'
             . ' xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"'
             . ' mc:Ignorable="w14 wp14">'
+            . '<w:background w:color="1F232A"/>'
             . '<w:body>'
-            . $paragraphs
-            . '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>'
+            . $this->buildDocxParagraph('LABA DAN RUGI', [
+                'bold' => true,
+                'size' => 42,
+                'color' => 'E8EDF3',
+                'align' => 'center',
+                'after' => 20,
+            ])
+            . $this->buildDocxParagraph('YPIK PAM JAYA', [
+                'size' => 24,
+                'color' => 'D0D7E1',
+                'align' => 'center',
+                'after' => 280,
+            ])
+            . $this->buildDocxMetaTable($metaRows)
+            . $this->buildDocxParagraph('', ['after' => 120])
+            . $this->buildDocxReportTable($rows)
+            . $this->buildDocxParagraph('', ['after' => 720])
+            . $this->buildDocxSignatureTable()
+            . '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="900" w:right="900" w:bottom="1000" w:left="900" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>'
             . '</w:body></w:document>';
 
         $contentTypesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -154,6 +169,410 @@ class ReportDocumentService
         @unlink($tempFile);
 
         return $binary;
+    }
+
+    /**
+     * @param array<int, array<int, string>> $rows
+     */
+    private function buildDocxMetaTable(array $rows): string
+    {
+        $metaRowsXml = '';
+        foreach ($rows as $row) {
+            $metaRowsXml .= $this->buildDocxTableRow([
+                $this->buildDocxTableCell((string) ($row[0] ?? ''), 1800, [
+                    'bold' => true,
+                    'color' => 'E8EDF3',
+                    'borderColor' => null,
+                ]),
+                $this->buildDocxTableCell((string) ($row[1] ?? ''), 2800, [
+                    'color' => 'D3DCE7',
+                    'borderColor' => null,
+                ]),
+                $this->buildDocxTableCell((string) ($row[2] ?? ''), 1700, [
+                    'bold' => true,
+                    'color' => 'E8EDF3',
+                    'borderColor' => null,
+                ]),
+                $this->buildDocxTableCell((string) ($row[3] ?? ''), 2900, [
+                    'color' => 'D3DCE7',
+                    'borderColor' => null,
+                ]),
+            ], 420);
+        }
+
+        return $this->buildDocxTable(
+            9200,
+            [1800, 2800, 1700, 2900],
+            $metaRowsXml,
+            true
+        );
+    }
+
+    /**
+     * @param array<int, array{type:string,label:string,code?:string,amount?:string}> $rows
+     */
+    private function buildDocxReportTable(array $rows): string
+    {
+        $reportRowsXml = $this->buildDocxTableRow([
+            $this->buildDocxTableCell('Kode', 1800, [
+                'bold' => true,
+                'fill' => '2F3844',
+                'color' => 'E8EDF3',
+            ]),
+            $this->buildDocxTableCell('Uraian', 4500, [
+                'bold' => true,
+                'fill' => '2F3844',
+                'color' => 'E8EDF3',
+            ]),
+            $this->buildDocxTableCell('Nominal', 2900, [
+                'bold' => true,
+                'fill' => '2F3844',
+                'color' => 'E8EDF3',
+                'align' => 'right',
+            ]),
+        ], 460);
+
+        foreach ($rows as $row) {
+            $type = $row['type'];
+            if ($type === 'section') {
+                $reportRowsXml .= $this->buildDocxTableRow([
+                    $this->buildDocxTableCell($row['label'], 9200, [
+                        'gridSpan' => 3,
+                        'bold' => true,
+                        'fill' => '3A4350',
+                        'color' => 'E8EDF3',
+                    ]),
+                ], 420);
+                continue;
+            }
+
+            if ($type === 'item') {
+                $reportRowsXml .= $this->buildDocxTableRow([
+                    $this->buildDocxTableCell((string) ($row['code'] ?? '-'), 1800, [
+                        'fill' => '252A33',
+                    ]),
+                    $this->buildDocxTableCell($row['label'], 4500, [
+                        'fill' => '252A33',
+                    ]),
+                    $this->buildDocxTableCell((string) ($row['amount'] ?? '0,00'), 2900, [
+                        'fill' => '252A33',
+                        'align' => 'right',
+                    ]),
+                ], 380);
+                continue;
+            }
+
+            if ($type === 'note') {
+                $reportRowsXml .= $this->buildDocxTableRow([
+                    $this->buildDocxTableCell($row['label'], 9200, [
+                        'gridSpan' => 3,
+                        'fill' => '252A33',
+                        'color' => 'CAD3DE',
+                    ]),
+                ], 380);
+                continue;
+            }
+
+            if ($type === 'surplus') {
+                $reportRowsXml .= $this->buildDocxTableRow([
+                    $this->buildDocxTableCell($row['label'], 6300, [
+                        'gridSpan' => 2,
+                        'bold' => true,
+                        'fill' => '005E2A',
+                        'color' => 'E8F8EE',
+                    ]),
+                    $this->buildDocxTableCell((string) ($row['amount'] ?? '0,00'), 2900, [
+                        'bold' => true,
+                        'fill' => '005E2A',
+                        'color' => 'E8F8EE',
+                        'align' => 'right',
+                    ]),
+                ], 430);
+                continue;
+            }
+
+            $reportRowsXml .= $this->buildDocxTableRow([
+                $this->buildDocxTableCell($row['label'], 6300, [
+                    'gridSpan' => 2,
+                    'bold' => true,
+                    'fill' => '2A303A',
+                ]),
+                $this->buildDocxTableCell((string) ($row['amount'] ?? '0,00'), 2900, [
+                    'bold' => true,
+                    'fill' => '2A303A',
+                    'align' => 'right',
+                ]),
+            ], 420);
+        }
+
+        return $this->buildDocxTable(
+            9200,
+            [1800, 4500, 2900],
+            $reportRowsXml,
+            false
+        );
+    }
+
+    private function buildDocxSignatureTable(): string
+    {
+        $signatureRowsXml = $this->buildDocxTableRow([
+            $this->buildDocxTableCell('Diperiksa,', 4600, [
+                'align' => 'center',
+                'color' => 'D8DFE8',
+                'borderColor' => null,
+            ]),
+            $this->buildDocxTableCell('Mengetahui,', 4600, [
+                'align' => 'center',
+                'color' => 'D8DFE8',
+                'borderColor' => null,
+            ]),
+        ], 420);
+
+        return $this->buildDocxTable(
+            9200,
+            [4600, 4600],
+            $signatureRowsXml,
+            true
+        );
+    }
+
+    /**
+     * @param array<int, int> $gridWidths
+     */
+    private function buildDocxTable(int $width, array $gridWidths, string $rowsXml, bool $borderless): string
+    {
+        $grid = '';
+        foreach ($gridWidths as $gridWidth) {
+            $grid .= '<w:gridCol w:w="' . $gridWidth . '"/>';
+        }
+
+        $tableBorders = '<w:tblBorders>'
+            . ($borderless
+                ? '<w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/>'
+                : '<w:top w:val="single" w:sz="6" w:space="0" w:color="4D596E"/><w:left w:val="single" w:sz="6" w:space="0" w:color="4D596E"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="4D596E"/><w:right w:val="single" w:sz="6" w:space="0" w:color="4D596E"/><w:insideH w:val="single" w:sz="6" w:space="0" w:color="4D596E"/><w:insideV w:val="single" w:sz="6" w:space="0" w:color="4D596E"/>')
+            . '</w:tblBorders>';
+
+        return '<w:tbl>'
+            . '<w:tblPr>'
+            . '<w:tblW w:w="' . $width . '" w:type="dxa"/>'
+            . '<w:jc w:val="center"/>'
+            . $tableBorders
+            . '<w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar>'
+            . '</w:tblPr>'
+            . '<w:tblGrid>' . $grid . '</w:tblGrid>'
+            . $rowsXml
+            . '</w:tbl>';
+    }
+
+    /**
+     * @param array<int, string> $cells
+     */
+    private function buildDocxTableRow(array $cells, int $height): string
+    {
+        return '<w:tr><w:trPr><w:trHeight w:val="' . $height . '" w:hRule="atLeast"/></w:trPr>'
+            . implode('', $cells)
+            . '</w:tr>';
+    }
+
+    /**
+     * @param array{
+     *   align?:string,
+     *   bold?:bool,
+     *   color?:string,
+     *   fill?:string|null,
+     *   gridSpan?:int,
+     *   size?:int,
+     *   borderColor?:string|null
+     * } $options
+     */
+    private function buildDocxTableCell(string $text, int $width, array $options = []): string
+    {
+        $align = $options['align'] ?? 'left';
+        $bold = (bool) ($options['bold'] ?? false);
+        $color = strtoupper((string) ($options['color'] ?? 'E5EAF1'));
+        $fill = $options['fill'] ?? null;
+        $gridSpan = (int) ($options['gridSpan'] ?? 1);
+        $size = (int) ($options['size'] ?? 22);
+        $borderColor = $options['borderColor'] ?? '4D596E';
+
+        $tcPr = '<w:tcW w:w="' . $width . '" w:type="dxa"/>';
+        if ($gridSpan > 1) {
+            $tcPr .= '<w:gridSpan w:val="' . $gridSpan . '"/>';
+        }
+        if ($fill !== null) {
+            $tcPr .= '<w:shd w:val="clear" w:color="auto" w:fill="' . strtoupper((string) $fill) . '"/>';
+        }
+        if ($borderColor !== null) {
+            $tcPr .= '<w:tcBorders>'
+                . '<w:top w:val="single" w:sz="6" w:space="0" w:color="' . $borderColor . '"/>'
+                . '<w:left w:val="single" w:sz="6" w:space="0" w:color="' . $borderColor . '"/>'
+                . '<w:bottom w:val="single" w:sz="6" w:space="0" w:color="' . $borderColor . '"/>'
+                . '<w:right w:val="single" w:sz="6" w:space="0" w:color="' . $borderColor . '"/>'
+                . '</w:tcBorders>';
+        }
+        $tcPr .= '<w:vAlign w:val="center"/>';
+
+        $runProps = '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>'
+            . ($bold ? '<w:b/>' : '')
+            . '<w:color w:val="' . $color . '"/>'
+            . '<w:sz w:val="' . $size . '"/>'
+            . '<w:szCs w:val="' . $size . '"/>';
+
+        $safeText = $text === '' ? ' ' : $text;
+
+        return '<w:tc><w:tcPr>' . $tcPr . '</w:tcPr>'
+            . '<w:p><w:pPr><w:jc w:val="' . $align . '"/><w:spacing w:before="0" w:after="0" w:lineRule="auto"/></w:pPr>'
+            . '<w:r><w:rPr>' . $runProps . '</w:rPr><w:t xml:space="preserve">' . $this->escapeXmlText($safeText) . '</w:t></w:r>'
+            . '</w:p>'
+            . '</w:tc>';
+    }
+
+    /**
+     * @param array{
+     *   align?:string,
+     *   bold?:bool,
+     *   color?:string,
+     *   size?:int,
+     *   before?:int,
+     *   after?:int
+     * } $options
+     */
+    private function buildDocxParagraph(string $text, array $options = []): string
+    {
+        $align = $options['align'] ?? 'left';
+        $bold = (bool) ($options['bold'] ?? false);
+        $color = strtoupper((string) ($options['color'] ?? 'E5EAF1'));
+        $size = (int) ($options['size'] ?? 22);
+        $before = (int) ($options['before'] ?? 0);
+        $after = (int) ($options['after'] ?? 120);
+        $safeText = $text === '' ? ' ' : $text;
+
+        return '<w:p>'
+            . '<w:pPr><w:jc w:val="' . $align . '"/><w:spacing w:before="' . $before . '" w:after="' . $after . '"/></w:pPr>'
+            . '<w:r><w:rPr>'
+            . '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>'
+            . ($bold ? '<w:b/>' : '')
+            . '<w:color w:val="' . $color . '"/>'
+            . '<w:sz w:val="' . $size . '"/>'
+            . '<w:szCs w:val="' . $size . '"/>'
+            . '</w:rPr><w:t xml:space="preserve">' . $this->escapeXmlText($safeText) . '</w:t></w:r>'
+            . '</w:p>';
+    }
+
+    /**
+     * @return array<int, array{type:string,label:string,code?:string,amount?:string}>
+     */
+    private function buildReportRows(ProfitLossReportDetailDTO $report): array
+    {
+        $rows = [];
+
+        $this->appendReportSectionRows(
+            $rows,
+            'Penghasilan',
+            $report->incomeLines,
+            'Tidak ada item penghasilan.'
+        );
+        $rows[] = [
+            'type' => 'total',
+            'label' => 'Total Penghasilan',
+            'amount' => $this->formatNominal($report->totalIncome),
+        ];
+
+        $this->appendReportSectionRows(
+            $rows,
+            'Pengeluaran',
+            $report->expenseLines,
+            'Tidak ada item pengeluaran.'
+        );
+        $rows[] = [
+            'type' => 'total',
+            'label' => 'Total Pengeluaran (non-penyusutan)',
+            'amount' => $this->formatNominal($report->totalExpense),
+        ];
+
+        $this->appendReportSectionRows(
+            $rows,
+            'Penyusutan',
+            $report->depreciationLines,
+            'Tidak ada item penyusutan.'
+        );
+        $rows[] = [
+            'type' => 'total',
+            'label' => 'Total Penyusutan',
+            'amount' => $this->formatNominal($report->totalDepreciation),
+        ];
+        $rows[] = [
+            'type' => 'surplus',
+            'label' => 'Surplus (Defisit)',
+            'amount' => $this->formatNominal($report->surplusDeficit),
+        ];
+
+        return $rows;
+    }
+
+    /**
+     * @param array<int, array{type:string,label:string,code?:string,amount?:string}> $rows
+     * @param array<int, ProfitLossLineDTO> $lines
+     */
+    private function appendReportSectionRows(array &$rows, string $sectionTitle, array $lines, string $emptyMessage): void
+    {
+        $rows[] = [
+            'type' => 'section',
+            'label' => $sectionTitle,
+        ];
+
+        if (count($lines) === 0) {
+            $rows[] = [
+                'type' => 'note',
+                'label' => $emptyMessage,
+            ];
+            return;
+        }
+
+        foreach ($lines as $line) {
+            if (!$line instanceof ProfitLossLineDTO) {
+                continue;
+            }
+
+            $rows[] = [
+                'type' => 'item',
+                'code' => $line->lineCode,
+                'label' => $this->composeLineLabel($line),
+                'amount' => $this->formatNominal($line->amount),
+            ];
+        }
+    }
+
+    private function composeLineLabel(ProfitLossLineDTO $line): string
+    {
+        $invoiceNumber = $line->invoiceNumber !== null ? trim($line->invoiceNumber) : '';
+        if ($invoiceNumber === '') {
+            return $line->lineLabel;
+        }
+
+        return $line->lineLabel . ' (Faktur: ' . $invoiceNumber . ')';
+    }
+
+    private function composeLineDescription(ProfitLossLineDTO $line): string
+    {
+        $description = $line->description !== null ? trim($line->description) : '';
+        $description = $description === '' ? '-' : $description;
+        $invoiceNumber = $line->invoiceNumber !== null ? trim($line->invoiceNumber) : '';
+
+        if ($invoiceNumber === '') {
+            return $description;
+        }
+
+        if ($description === '-') {
+            return 'Faktur: ' . $invoiceNumber;
+        }
+
+        return 'Faktur: ' . $invoiceNumber . ' | ' . $description;
+    }
+
+    private function formatNominal(float $amount): string
+    {
+        return number_format($amount, 2, ',', '.');
     }
 
     private function renderExcelDocument(ProfitLossReportDetailDTO $report): string
@@ -276,7 +695,7 @@ class ReportDocumentService
             $sheet->fromArray([
                 $line->lineCode,
                 $line->lineLabel,
-                $line->description ?? '-',
+                $this->composeLineDescription($line),
                 $line->amount,
             ], null, 'A' . $row);
             $row++;
@@ -316,90 +735,79 @@ class ReportDocumentService
             return $dompdf->output();
         }
 
-        $lines = $this->buildPdfLines($report);
-        return $this->buildSimplePdf($lines);
+        return $this->buildStyledPdfDocument($report);
     }
 
     /**
-     * @return array<int, string>
+     * @return array<int, array{content:string,rowTop:float}>
      */
-    private function buildPdfLines(ProfitLossReportDetailDTO $report): array
+    private function buildStyledPdfPages(ProfitLossReportDetailDTO $report): array
     {
-        $lines = [
-            'LAPORAN LABA RUGI',
-            'Periode: ' . $this->resolvePeriodLabel($report),
-            'Saldo Awal: Rp ' . number_format($report->openingBalance, 2, ',', '.'),
-            'Saldo Akhir: Rp ' . number_format($report->endingBalance, 2, ',', '.'),
-            '',
-            'PENGHASILAN',
-        ];
+        $rows = $this->buildReportRows($report);
+        $pages = [];
 
-        foreach ($report->incomeLines as $line) {
-            $lines[] = $line->lineCode . ' - ' . $line->lineLabel . ' : Rp ' . number_format($line->amount, 2, ',', '.');
+        $rowIndex = 0;
+        $isFirstPage = true;
+        while ($rowIndex < count($rows)) {
+            $pageData = $this->buildStyledPdfPage($report, $rows, $rowIndex, $isFirstPage);
+            $pages[] = [
+                'content' => $pageData['content'],
+                'rowTop' => $pageData['rowTop'],
+            ];
+            $rowIndex = $pageData['nextRowIndex'];
+            $isFirstPage = false;
         }
 
-        $lines[] = 'Total Penghasilan: Rp ' . number_format($report->totalIncome, 2, ',', '.');
-        $lines[] = '';
-        $lines[] = 'PENGELUARAN';
-
-        foreach ($report->expenseLines as $line) {
-            $lines[] = $line->lineCode . ' - ' . $line->lineLabel . ' : Rp ' . number_format($line->amount, 2, ',', '.');
+        if (count($pages) === 0) {
+            $shell = $this->buildPdfPageShell($report, true);
+            $pages[] = [
+                'content' => $shell['content'],
+                'rowTop' => $shell['rowTop'],
+            ];
         }
 
-        $lines[] = 'Total Pengeluaran: Rp ' . number_format($report->totalExpense, 2, ',', '.');
-        $lines[] = '';
-        $lines[] = 'PENYUSUTAN';
-
-        foreach ($report->depreciationLines as $line) {
-            $lines[] = $line->lineCode . ' - ' . $line->lineLabel . ' : Rp ' . number_format($line->amount, 2, ',', '.');
+        $lastIndex = count($pages) - 1;
+        $signatureTop = max($pages[$lastIndex]['rowTop'] + 62, 742.0);
+        if ($signatureTop + 24 > 792.0) {
+            $shell = $this->buildPdfPageShell($report, false);
+            $pages[] = [
+                'content' => $shell['content'] . $this->buildPdfSignature(742.0),
+                'rowTop' => 742.0,
+            ];
+        } else {
+            $pages[$lastIndex]['content'] .= $this->buildPdfSignature($signatureTop);
         }
 
-        $lines[] = 'Total Penyusutan: Rp ' . number_format($report->totalDepreciation, 2, ',', '.');
-        $lines[] = 'Surplus/Defisit: Rp ' . number_format($report->surplusDeficit, 2, ',', '.');
-        $lines[] = 'Saldo Akhir: Rp ' . number_format($report->endingBalance, 2, ',', '.');
-
-        return $lines;
+        return $pages;
     }
 
-    /**
-     * @param array<int, string> $lines
-     */
-    private function buildSimplePdf(array $lines): string
+    private function buildStyledPdfDocument(ProfitLossReportDetailDTO $report): string
     {
-        $maxLinesPerPage = 42;
-        $chunks = array_chunk($lines, $maxLinesPerPage);
+        $pages = $this->buildStyledPdfPages($report);
 
         $objects = [];
         $objectIndex = 1;
 
-        $fontObjectId = ++$objectIndex;
-        $objects[$fontObjectId] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+        $fontRegularId = ++$objectIndex;
+        $objects[$fontRegularId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+
+        $fontBoldId = ++$objectIndex;
+        $objects[$fontBoldId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
 
         $pageObjectIds = [];
-        $contentObjectIds = [];
-
-        foreach ($chunks as $chunk) {
-            $content = "BT\n/F1 10 Tf\n40 800 Td\n";
-            foreach ($chunk as $index => $line) {
-                if ($index > 0) {
-                    $content .= "0 -16 Td\n";
-                }
-                $content .= '(' . $this->escapePdfString($line) . ") Tj\n";
-            }
-            $content .= "ET";
-
+        foreach ($pages as $page) {
+            $stream = $page['content'];
             $contentObjectId = ++$objectIndex;
-            $contentObjectIds[] = $contentObjectId;
-            $objects[$contentObjectId] = "<< /Length " . strlen($content) . " >>\nstream\n" . $content . "\nendstream";
+            $objects[$contentObjectId] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
 
             $pageObjectId = ++$objectIndex;
             $pageObjectIds[] = $pageObjectId;
-            $objects[$pageObjectId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontObjectId} 0 R >> >> /Contents {$contentObjectId} 0 R >>";
+            $objects[$pageObjectId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontRegularId} 0 R /F2 {$fontBoldId} 0 R >> >> /Contents {$contentObjectId} 0 R >>";
         }
 
-        $kids = implode(' ', array_map(static fn ($id) => $id . ' 0 R', $pageObjectIds));
+        $kids = implode(' ', array_map(static fn (int $id) => $id . ' 0 R', $pageObjectIds));
         $objects[2] = "<< /Type /Pages /Kids [ {$kids} ] /Count " . count($pageObjectIds) . " >>";
-        $objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
 
         ksort($objects);
 
@@ -411,17 +819,310 @@ class ReportDocumentService
         }
 
         $xrefOffset = strlen($pdf);
-        $pdf .= "xref\n0 " . (max(array_keys($objects)) + 1) . "\n";
+        $maxObjectId = max(array_keys($objects));
+        $pdf .= "xref\n0 " . ($maxObjectId + 1) . "\n";
         $pdf .= "0000000000 65535 f \n";
-        for ($i = 1; $i <= max(array_keys($objects)); $i++) {
+        for ($i = 1; $i <= $maxObjectId; $i++) {
             $offset = $offsets[$i] ?? 0;
             $pdf .= sprintf('%010d 00000 n ', $offset) . "\n";
         }
 
-        $pdf .= "trailer\n<< /Size " . (max(array_keys($objects)) + 1) . " /Root 1 0 R >>\n";
+        $pdf .= "trailer\n<< /Size " . ($maxObjectId + 1) . " /Root 1 0 R >>\n";
         $pdf .= "startxref\n{$xrefOffset}\n%%EOF";
 
         return $pdf;
+    }
+
+    /**
+     * @param array<int, array{type:string,label:string,code?:string,amount?:string}> $rows
+     * @return array{content:string,nextRowIndex:int,rowTop:float}
+     */
+    private function buildStyledPdfPage(
+        ProfitLossReportDetailDTO $report,
+        array $rows,
+        int $startRowIndex,
+        bool $isFirstPage
+    ): array {
+        $shell = $this->buildPdfPageShell($report, $isFirstPage);
+        $content = $shell['content'];
+        $rowTop = $shell['rowTop'];
+        $rowIndex = $startRowIndex;
+
+        $pageLimitTop = 758.0;
+        while ($rowIndex < count($rows)) {
+            $row = $rows[$rowIndex];
+            $rowHeight = $this->resolvePdfRowHeight($row['type']);
+
+            if ($rowTop + $rowHeight > $pageLimitTop && $rowIndex > $startRowIndex) {
+                break;
+            }
+
+            $content .= $this->drawPdfTableRow($row, $rowTop, $rowHeight);
+            $rowTop += $rowHeight;
+            $rowIndex++;
+        }
+
+        return [
+            'content' => $content,
+            'nextRowIndex' => $rowIndex,
+            'rowTop' => $rowTop,
+        ];
+    }
+
+    /**
+     * @return array{content:string,rowTop:float}
+     */
+    private function buildPdfPageShell(ProfitLossReportDetailDTO $report, bool $isFirstPage): array
+    {
+        $tableX = 50.0;
+        $tableCodeWidth = 130.0;
+        $tableLabelWidth = 210.0;
+        $tableAmountWidth = 170.0;
+        $tableWidth = $tableCodeWidth + $tableLabelWidth + $tableAmountWidth;
+
+        $content = '';
+        $content .= $this->pdfDrawRect(0, 0, 595, 842, [30, 31, 35], null);
+        $content .= $this->pdfDrawRect(16, 14, 563, 814, [39, 41, 47], null);
+
+        if ($isFirstPage) {
+            $content .= $this->pdfDrawText('LABA DAN RUGI', $tableX, 76, 32, true, [230, 236, 244], 'center', $tableWidth);
+            $content .= $this->pdfDrawText('YPIK PAM JAYA', $tableX, 109, 16, false, [206, 215, 228], 'center', $tableWidth);
+
+            $metaLeftX = 62.0;
+            $metaRightX = 305.0;
+            $valueOffset = 114.0;
+
+            $content .= $this->pdfDrawText('Periode', $metaLeftX, 150, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(': ' . $this->resolvePeriodLabel($report), $metaLeftX + $valueOffset, 150, 12, false, [211, 220, 230]);
+            $content .= $this->pdfDrawText('Jenis', $metaRightX, 150, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(': ' . $report->reportType, $metaRightX + $valueOffset, 150, 12, false, [211, 220, 230]);
+
+            $content .= $this->pdfDrawText('Disusun Oleh', $metaLeftX, 188, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(': ' . ($report->generatedByName ?? '-'), $metaLeftX + $valueOffset, 188, 12, false, [211, 220, 230]);
+            $content .= $this->pdfDrawText('Generated At', $metaRightX, 188, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(': ' . $report->generatedAt->format('Y-m-d H:i:s'), $metaRightX + $valueOffset, 188, 12, false, [211, 220, 230]);
+            $tableTop = 248.0;
+        } else {
+            $content .= $this->pdfDrawText('LABA DAN RUGI (lanjutan)', $tableX, 72, 18, true, [230, 236, 244], 'center', $tableWidth);
+            $tableTop = 108.0;
+        }
+
+        $borderColor = [78, 92, 111];
+        $content .= $this->pdfDrawRect($tableX, $tableTop, $tableCodeWidth, 34, [47, 56, 68], $borderColor);
+        $content .= $this->pdfDrawRect($tableX + $tableCodeWidth, $tableTop, $tableLabelWidth, 34, [47, 56, 68], $borderColor);
+        $content .= $this->pdfDrawRect($tableX + $tableCodeWidth + $tableLabelWidth, $tableTop, $tableAmountWidth, 34, [47, 56, 68], $borderColor);
+        $content .= $this->pdfDrawText('Kode', $tableX + 10, $tableTop + 10, 12, true, [232, 238, 245]);
+        $content .= $this->pdfDrawText('Uraian', $tableX + $tableCodeWidth + 10, $tableTop + 10, 12, true, [232, 238, 245]);
+        $content .= $this->pdfDrawText('Nominal', $tableX + $tableCodeWidth + $tableLabelWidth + 10, $tableTop + 10, 12, true, [232, 238, 245], 'right', $tableAmountWidth - 20);
+
+        return [
+            'content' => $content,
+            'rowTop' => $tableTop + 34.0,
+        ];
+    }
+
+    /**
+     * @param array{type:string,label:string,code?:string,amount?:string} $row
+     */
+    private function drawPdfTableRow(array $row, float $top, float $height): string
+    {
+        $tableX = 50.0;
+        $tableCodeWidth = 130.0;
+        $tableLabelWidth = 210.0;
+        $tableAmountWidth = 170.0;
+        $tableWidth = $tableCodeWidth + $tableLabelWidth + $tableAmountWidth;
+        $borderColor = [78, 92, 111];
+
+        $textTop = $top + (($height - 13.0) / 2);
+        $type = $row['type'];
+
+        if ($type === 'section') {
+            return $this->pdfDrawRect($tableX, $top, $tableWidth, $height, [59, 68, 82], $borderColor)
+                . $this->pdfDrawText($row['label'], $tableX + 10, $textTop, 13, true, [231, 238, 245]);
+        }
+
+        if ($type === 'item') {
+            $label = $this->truncatePdfText($row['label'], $tableLabelWidth - 16, 12);
+            $amount = (string) ($row['amount'] ?? '0,00');
+
+            return $this->pdfDrawRect($tableX, $top, $tableCodeWidth, $height, [38, 43, 52], $borderColor)
+                . $this->pdfDrawRect($tableX + $tableCodeWidth, $top, $tableLabelWidth, $height, [38, 43, 52], $borderColor)
+                . $this->pdfDrawRect($tableX + $tableCodeWidth + $tableLabelWidth, $top, $tableAmountWidth, $height, [38, 43, 52], $borderColor)
+                . $this->pdfDrawText((string) ($row['code'] ?? '-'), $tableX + 10, $textTop, 12, false, [222, 229, 237])
+                . $this->pdfDrawText($label, $tableX + $tableCodeWidth + 10, $textTop, 12, false, [222, 229, 237])
+                . $this->pdfDrawText($amount, $tableX + $tableCodeWidth + $tableLabelWidth + 10, $textTop, 12, false, [222, 229, 237], 'right', $tableAmountWidth - 20);
+        }
+
+        if ($type === 'note') {
+            return $this->pdfDrawRect($tableX, $top, $tableWidth, $height, [38, 43, 52], $borderColor)
+                . $this->pdfDrawText($row['label'], $tableX + 10, $textTop, 12, false, [204, 214, 225]);
+        }
+
+        if ($type === 'surplus') {
+            $amount = (string) ($row['amount'] ?? '0,00');
+            return $this->pdfDrawRect($tableX, $top, $tableCodeWidth + $tableLabelWidth, $height, [0, 94, 42], $borderColor)
+                . $this->pdfDrawRect($tableX + $tableCodeWidth + $tableLabelWidth, $top, $tableAmountWidth, $height, [0, 94, 42], $borderColor)
+                . $this->pdfDrawText($row['label'], $tableX + 10, $textTop, 13, true, [231, 248, 238])
+                . $this->pdfDrawText($amount, $tableX + $tableCodeWidth + $tableLabelWidth + 10, $textTop, 13, true, [231, 248, 238], 'right', $tableAmountWidth - 20);
+        }
+
+        $amount = (string) ($row['amount'] ?? '0,00');
+        return $this->pdfDrawRect($tableX, $top, $tableCodeWidth + $tableLabelWidth, $height, [43, 49, 58], $borderColor)
+            . $this->pdfDrawRect($tableX + $tableCodeWidth + $tableLabelWidth, $top, $tableAmountWidth, $height, [43, 49, 58], $borderColor)
+            . $this->pdfDrawText($row['label'], $tableX + 10, $textTop, 13, true, [229, 236, 243])
+            . $this->pdfDrawText($amount, $tableX + $tableCodeWidth + $tableLabelWidth + 10, $textTop, 13, true, [229, 236, 243], 'right', $tableAmountWidth - 20);
+    }
+
+    private function resolvePdfRowHeight(string $rowType): float
+    {
+        return match ($rowType) {
+            'section' => 32.0,
+            'item' => 34.0,
+            'note' => 34.0,
+            'surplus' => 38.0,
+            default => 35.0,
+        };
+    }
+
+    private function buildPdfSignature(float $top): string
+    {
+        $tableX = 50.0;
+        $tableWidth = 510.0;
+        $halfWidth = $tableWidth / 2;
+
+        return $this->pdfDrawText('Diperiksa,', $tableX, $top, 14, false, [223, 231, 240], 'center', $halfWidth)
+            . $this->pdfDrawText('Mengetahui,', $tableX + $halfWidth, $top, 14, false, [223, 231, 240], 'center', $halfWidth);
+    }
+
+    /**
+     * @param array{0:int,1:int,2:int}|null $fillRgb
+     * @param array{0:int,1:int,2:int}|null $strokeRgb
+     */
+    private function pdfDrawRect(float $x, float $top, float $width, float $height, ?array $fillRgb, ?array $strokeRgb): string
+    {
+        $y = 842.0 - $top - $height;
+        $commands = [];
+
+        if ($fillRgb !== null) {
+            $commands[] = $this->pdfRgb($fillRgb, false);
+        }
+        if ($strokeRgb !== null) {
+            $commands[] = $this->pdfRgb($strokeRgb, true);
+            $commands[] = '0.8 w';
+        }
+
+        $operator = $fillRgb !== null && $strokeRgb !== null
+            ? 'B'
+            : ($fillRgb !== null ? 'f' : 'S');
+
+        $commands[] = $this->formatPdfNumber($x) . ' '
+            . $this->formatPdfNumber($y) . ' '
+            . $this->formatPdfNumber($width) . ' '
+            . $this->formatPdfNumber($height) . ' re ' . $operator;
+
+        return implode("\n", $commands) . "\n";
+    }
+
+    /**
+     * @param array{0:int,1:int,2:int} $rgb
+     */
+    private function pdfDrawText(
+        string $text,
+        float $x,
+        float $top,
+        int $fontSize,
+        bool $bold,
+        array $rgb,
+        string $align = 'left',
+        ?float $maxWidth = null
+    ): string {
+        $safeText = $this->normalizePdfText($text);
+        if ($maxWidth !== null) {
+            $textWidth = $this->estimatePdfTextWidth($safeText, $fontSize);
+            if ($align === 'right') {
+                $x += max(0.0, $maxWidth - $textWidth);
+            } elseif ($align === 'center') {
+                $x += max(0.0, ($maxWidth - $textWidth) / 2);
+            }
+        }
+
+        $y = 842.0 - $top - ($fontSize * 0.90);
+
+        return "BT\n"
+            . '/F' . ($bold ? '2' : '1') . ' ' . $fontSize . " Tf\n"
+            . $this->pdfRgb($rgb, false) . "\n"
+            . '1 0 0 1 ' . $this->formatPdfNumber($x) . ' ' . $this->formatPdfNumber($y) . " Tm\n"
+            . '(' . $this->escapePdfString($safeText) . ") Tj\n"
+            . "ET\n";
+    }
+
+    private function estimatePdfTextWidth(string $text, int $fontSize): float
+    {
+        return strlen($text) * ($fontSize * 0.52);
+    }
+
+    private function truncatePdfText(string $text, float $maxWidth, int $fontSize): string
+    {
+        $candidate = $text;
+        $normalized = $this->normalizePdfText($candidate);
+        if ($this->estimatePdfTextWidth($normalized, $fontSize) <= $maxWidth) {
+            return $candidate;
+        }
+
+        while ($this->stringLength($candidate) > 1) {
+            $candidate = rtrim($this->stringSlice($candidate, 0, $this->stringLength($candidate) - 1));
+            $trial = $candidate . '...';
+            if ($this->estimatePdfTextWidth($this->normalizePdfText($trial), $fontSize) <= $maxWidth) {
+                return $trial;
+            }
+        }
+
+        return '...';
+    }
+
+    private function stringLength(string $value): int
+    {
+        return function_exists('mb_strlen')
+            ? (int) mb_strlen($value, 'UTF-8')
+            : strlen($value);
+    }
+
+    private function stringSlice(string $value, int $start, int $length): string
+    {
+        if (function_exists('mb_substr')) {
+            return (string) mb_substr($value, $start, $length, 'UTF-8');
+        }
+
+        return substr($value, $start, $length);
+    }
+
+    private function normalizePdfText(string $value): string
+    {
+        $normalized = iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $value);
+        if ($normalized === false) {
+            $normalized = preg_replace('/[^\x20-\x7E]/', '?', $value);
+        }
+
+        return (string) ($normalized ?? '');
+    }
+
+    /**
+     * @param array{0:int,1:int,2:int} $rgb
+     */
+    private function pdfRgb(array $rgb, bool $stroke): string
+    {
+        $r = $this->formatPdfNumber($rgb[0] / 255);
+        $g = $this->formatPdfNumber($rgb[1] / 255);
+        $b = $this->formatPdfNumber($rgb[2] / 255);
+
+        return $r . ' ' . $g . ' ' . $b . ' ' . ($stroke ? 'RG' : 'rg');
+    }
+
+    private function formatPdfNumber(float $value): string
+    {
+        $formatted = number_format($value, 3, '.', '');
+        $formatted = rtrim(rtrim($formatted, '0'), '.');
+        return $formatted === '' ? '0' : $formatted;
     }
 
     private function escapePdfString(string $value): string

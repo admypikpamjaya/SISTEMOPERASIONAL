@@ -34,6 +34,7 @@ class GenerateProfitLossReportRequest extends FormRequest
             'entries.*.type' => 'required|string|in:INCOME,EXPENSE',
             'entries.*.line_code' => 'required|string|max:64|distinct',
             'entries.*.line_label' => 'required|string|max:255',
+            'entries.*.invoice_number' => 'nullable|string|max:100',
             'entries.*.description' => 'nullable|string|max:500',
             'entries.*.amount' => 'required|numeric|min:0',
             'entries.*.is_depreciation' => 'nullable|boolean',
@@ -47,11 +48,13 @@ class GenerateProfitLossReportRequest extends FormRequest
             static function ($entry): array {
                 $entry = is_array($entry) ? $entry : [];
                 $description = isset($entry['description']) ? trim((string) $entry['description']) : null;
+                $invoiceNumber = isset($entry['invoice_number']) ? trim((string) $entry['invoice_number']) : null;
 
                 return [
                     'type' => strtoupper((string) ($entry['type'] ?? '')),
                     'line_code' => isset($entry['line_code']) ? (string) $entry['line_code'] : null,
                     'line_label' => isset($entry['line_label']) ? (string) $entry['line_label'] : null,
+                    'invoice_number' => $invoiceNumber === '' ? null : $invoiceNumber,
                     'description' => $description === '' ? null : $description,
                     'amount' => $entry['amount'] ?? null,
                     'is_depreciation' => (bool) ($entry['is_depreciation'] ?? false),
@@ -131,6 +134,7 @@ class GenerateProfitLossReportRequest extends FormRequest
             'entries.*.line_code.required' => 'Kode akun wajib diisi.',
             'entries.*.line_code.distinct' => 'Kode akun tidak boleh duplikat dalam satu laporan.',
             'entries.*.line_label.required' => 'Nama akun wajib diisi.',
+            'entries.*.invoice_number.max' => 'Nomor faktur maksimal 100 karakter.',
             'entries.*.description.max' => 'Keterangan maksimal 500 karakter.',
             'entries.*.amount.required' => 'Nominal wajib diisi.',
             'entries.*.amount.numeric' => 'Nominal harus berupa angka.',

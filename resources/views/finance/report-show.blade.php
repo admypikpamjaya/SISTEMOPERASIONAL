@@ -79,7 +79,16 @@
                                 <tr>
                                     <td>{{ $line->lineCode }}</td>
                                     <td>{{ $line->lineLabel }}</td>
-                                    <td>{{ $line->description ?: '-' }}</td>
+                                    <td>
+                                        @if($line->invoiceNumber)
+                                            <div class="text-primary small font-weight-bold mb-1">Faktur: {{ $line->invoiceNumber }}</div>
+                                        @endif
+                                        @if($line->description)
+                                            {{ $line->description }}
+                                        @elseif(!$line->invoiceNumber)
+                                            -
+                                        @endif
+                                    </td>
                                     <td class="text-right">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                                 </tr>
                             @empty
@@ -99,7 +108,16 @@
                                 <tr>
                                     <td>{{ $line->lineCode }}</td>
                                     <td>{{ $line->lineLabel }}</td>
-                                    <td>{{ $line->description ?: '-' }}</td>
+                                    <td>
+                                        @if($line->invoiceNumber)
+                                            <div class="text-primary small font-weight-bold mb-1">Faktur: {{ $line->invoiceNumber }}</div>
+                                        @endif
+                                        @if($line->description)
+                                            {{ $line->description }}
+                                        @elseif(!$line->invoiceNumber)
+                                            -
+                                        @endif
+                                    </td>
                                     <td class="text-right">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                                 </tr>
                             @empty
@@ -119,7 +137,16 @@
                                 <tr>
                                     <td>{{ $line->lineCode }}</td>
                                     <td>{{ $line->lineLabel }}</td>
-                                    <td>{{ $line->description ?: '-' }}</td>
+                                    <td>
+                                        @if($line->invoiceNumber)
+                                            <div class="text-primary small font-weight-bold mb-1">Faktur: {{ $line->invoiceNumber }}</div>
+                                        @endif
+                                        @if($line->description)
+                                            {{ $line->description }}
+                                        @elseif(!$line->invoiceNumber)
+                                            -
+                                        @endif
+                                    </td>
                                     <td class="text-right">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
                                 </tr>
                             @empty

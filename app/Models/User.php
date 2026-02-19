@@ -38,4 +38,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(FinanceReport::class, 'generated_by');
     }
+
+    public function financeInvoices(): HasMany
+    {
+        return $this->hasMany(FinanceInvoice::class, 'created_by');
+    }
+
+    public function financeInvoiceNotes(): HasMany
+    {
+        return $this->hasMany(FinanceInvoiceNote::class, 'user_id');
+    }
 }

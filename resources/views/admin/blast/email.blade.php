@@ -1790,6 +1790,34 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const flashSuccess = @json(session('success'));
+        const flashError = @json(session('error') ?? ($errors->any() ? $errors->first() : null));
+
+        function showResultAlert(type, message) {
+            if (!message) {
+                return;
+            }
+
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({
+                    icon: type === 'success' ? 'success' : 'error',
+                    title: type === 'success' ? 'Berhasil' : 'Gagal',
+                    text: message,
+                    timer: 2600,
+                    showConfirmButton: false,
+                });
+                return;
+            }
+
+            alert(message);
+        }
+
+        if (flashSuccess) {
+            showResultAlert('success', flashSuccess);
+        } else if (flashError) {
+            showResultAlert('error', flashError);
+        }
+
         // Chip Input functionality FROM CODE PERTAMA (Working Blasting)
         const emailInput = document.getElementById('emailInput');
         const chipList = document.getElementById('emailChips');

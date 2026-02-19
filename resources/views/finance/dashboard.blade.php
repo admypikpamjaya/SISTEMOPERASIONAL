@@ -169,6 +169,9 @@
                     <a href="{{ route('finance.depreciation.index') }}" class="btn btn-sm btn-light shadow-sm">
                         <i class="fas fa-calculator mr-1"></i> Hitung Penyusutan
                     </a>
+                    <a href="{{ route('finance.invoice.index') }}" class="btn btn-sm btn-light shadow-sm ml-1">
+                        <i class="fas fa-file-invoice-dollar mr-1"></i> Faktur / Jurnal
+                    </a>
                 </div>
             </div>
             <div class="card-body p-0">

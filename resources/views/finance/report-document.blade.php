@@ -6,26 +6,39 @@
     <title>Laporan Laba Rugi</title>
     <style>
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            color: #1f2937;
+            margin: 0;
+            padding: 24px;
+            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
             font-size: 12px;
-            margin: 20px;
+            color: #dce3eb;
+            background: #1f2229;
+        }
+
+        .document-shell {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 36px 38px 64px;
+            background: linear-gradient(90deg, #22252d 0%, #2b2e35 100%);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 18px;
+            margin-bottom: 22px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 22px;
-            letter-spacing: 0.5px;
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #e8eef4;
         }
 
         .header p {
-            margin: 4px 0 0 0;
-            font-size: 12px;
+            margin: 6px 0 0;
+            font-size: 23px;
+            color: #d2dae5;
+            letter-spacing: 0.4px;
         }
 
         .meta {
@@ -35,68 +48,75 @@
         }
 
         .meta td {
-            padding: 4px 6px;
+            padding: 6px 8px;
             vertical-align: top;
+            color: #d6dee8;
         }
 
         .meta .label {
-            width: 140px;
-            font-weight: bold;
+            width: 160px;
+            font-weight: 700;
+            color: #e7edf4;
         }
 
         .report-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 8px;
         }
 
         .report-table th,
         .report-table td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 8px;
+            border: 1px solid #4d596d;
+            padding: 8px 10px;
         }
 
-        .report-table th {
-            background: #f1f5f9;
+        .report-table thead th {
+            background: #2f3844;
+            color: #e8edf4;
+            font-weight: 700;
             text-align: left;
+        }
+
+        .report-table td {
+            background: #252a33;
+        }
+
+        .report-table .section-row td {
+            background: #3a4350;
+            font-weight: 700;
+            color: #e8edf4;
+        }
+
+        .report-table .total-row td {
+            background: #2a303a;
+            font-weight: 700;
+        }
+
+        .report-table .surplus-row td {
+            background: #005e2a;
+            font-weight: 700;
+            color: #e8f8ee;
         }
 
         .report-table .amount {
             text-align: right;
             white-space: nowrap;
-        }
-
-        .section-row td {
-            background: #e2e8f0;
-            font-weight: bold;
-        }
-
-        .total-row td {
-            background: #f8fafc;
-            font-weight: bold;
-        }
-
-        .surplus-row td {
-            background: #dcfce7;
-            font-weight: bold;
+            width: 220px;
         }
 
         .signature {
-            margin-top: 48px;
             width: 100%;
             border-collapse: collapse;
+            margin-top: 56px;
         }
 
         .signature td {
             width: 50%;
             text-align: center;
-            vertical-align: top;
-            padding: 0 20px;
-        }
-
-        .signature .name {
-            margin-top: 64px;
-            font-weight: bold;
-            text-decoration: underline;
+            color: #d6dee8;
+            padding-top: 4px;
         }
     </style>
 </head>
@@ -112,124 +132,127 @@
         }
     @endphp
 
-    <div class="header">
-        <h1>LABA DAN RUGI</h1>
-        <p>YPIK PAM JAYA</p>
-    </div>
+    <div class="document-shell">
+        <div class="header">
+            <h1>LABA DAN RUGI</h1>
+            <p>YPIK PAM JAYA</p>
+        </div>
 
-    <table class="meta">
-        <tr>
-            <td class="label">Periode</td>
-            <td>: {{ $periodLabel }}</td>
-            <td class="label">Jenis</td>
-            <td>: {{ $report->reportType }}</td>
-        </tr>
-        <tr>
-            <td class="label">Saldo Awal</td>
-            <td>: Rp {{ number_format($report->openingBalance, 2, ',', '.') }}</td>
-            <td class="label">Saldo Akhir</td>
-            <td>: Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</td>
-        </tr>
-        <tr>
-            <td class="label">Disusun Oleh</td>
-            <td>: {{ $report->generatedByName ?? '-' }}</td>
-            <td class="label">Generated At</td>
-            <td>: {{ $report->generatedAt->format('Y-m-d H:i:s') }}</td>
-        </tr>
-    </table>
-
-    <table class="report-table">
-        <thead>
+        <table class="meta">
             <tr>
-                <th style="width: 150px;">Kode</th>
-                <th style="width: 260px;">Uraian</th>
-                <th>Keterangan</th>
-                <th style="width: 220px;" class="amount">Nominal</th>
+                <td class="label">Periode</td>
+                <td>: {{ $periodLabel }}</td>
+                <td class="label">Jenis</td>
+                <td>: {{ $report->reportType }}</td>
             </tr>
-        </thead>
-        <tbody>
-            <tr class="section-row">
-                <td colspan="4">Penghasilan</td>
+            <tr>
+                <td class="label">Disusun Oleh</td>
+                <td>: {{ $report->generatedByName ?? '-' }}</td>
+                <td class="label">Generated At</td>
+                <td>: {{ $report->generatedAt->format('Y-m-d H:i:s') }}</td>
             </tr>
-            @forelse($report->incomeLines as $line)
-                <tr>
-                    <td>{{ $line->lineCode }}</td>
-                    <td>{{ $line->lineLabel }}</td>
-                    <td>{{ $line->description ?: '-' }}</td>
-                    <td class="amount">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4">Tidak ada item penghasilan.</td>
-                </tr>
-            @endforelse
-            <tr class="total-row">
-                <td colspan="3">Total Penghasilan</td>
-                <td class="amount">Rp {{ number_format($report->totalIncome, 2, ',', '.') }}</td>
-            </tr>
+        </table>
 
-            <tr class="section-row">
-                <td colspan="4">Pengeluaran</td>
-            </tr>
-            @forelse($report->expenseLines as $line)
+        <table class="report-table">
+            <thead>
                 <tr>
-                    <td>{{ $line->lineCode }}</td>
-                    <td>{{ $line->lineLabel }}</td>
-                    <td>{{ $line->description ?: '-' }}</td>
-                    <td class="amount">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
+                    <th style="width: 170px;">Kode</th>
+                    <th>Uraian</th>
+                    <th class="amount">Nominal</th>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="4">Tidak ada item pengeluaran.</td>
+            </thead>
+            <tbody>
+                <tr class="section-row">
+                    <td colspan="3">Penghasilan</td>
                 </tr>
-            @endforelse
-            <tr class="total-row">
-                <td colspan="3">Total Pengeluaran (non-penyusutan)</td>
-                <td class="amount">Rp {{ number_format($report->totalExpense, 2, ',', '.') }}</td>
-            </tr>
+                @forelse($report->incomeLines as $line)
+                    <tr>
+                        <td>{{ $line->lineCode }}</td>
+                        <td>
+                            {{ $line->lineLabel }}
+                            @if($line->invoiceNumber)
+                                <div style="font-size: 10px; color: #b9c6d8; margin-top: 2px;">
+                                    Faktur: {{ $line->invoiceNumber }}
+                                </div>
+                            @endif
+                        </td>
+                        <td class="amount">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3">Tidak ada item penghasilan.</td>
+                    </tr>
+                @endforelse
+                <tr class="total-row">
+                    <td colspan="2">Total Penghasilan</td>
+                    <td class="amount">{{ number_format($report->totalIncome, 2, ',', '.') }}</td>
+                </tr>
 
-            <tr class="section-row">
-                <td colspan="4">Penyusutan</td>
-            </tr>
-            @forelse($report->depreciationLines as $line)
-                <tr>
-                    <td>{{ $line->lineCode }}</td>
-                    <td>{{ $line->lineLabel }}</td>
-                    <td>{{ $line->description ?: '-' }}</td>
-                    <td class="amount">Rp {{ number_format($line->amount, 2, ',', '.') }}</td>
+                <tr class="section-row">
+                    <td colspan="3">Pengeluaran</td>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="4">Tidak ada item penyusutan.</td>
+                @forelse($report->expenseLines as $line)
+                    <tr>
+                        <td>{{ $line->lineCode }}</td>
+                        <td>
+                            {{ $line->lineLabel }}
+                            @if($line->invoiceNumber)
+                                <div style="font-size: 10px; color: #b9c6d8; margin-top: 2px;">
+                                    Faktur: {{ $line->invoiceNumber }}
+                                </div>
+                            @endif
+                        </td>
+                        <td class="amount">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3">Tidak ada item pengeluaran.</td>
+                    </tr>
+                @endforelse
+                <tr class="total-row">
+                    <td colspan="2">Total Pengeluaran (non-penyusutan)</td>
+                    <td class="amount">{{ number_format($report->totalExpense, 2, ',', '.') }}</td>
                 </tr>
-            @endforelse
-            <tr class="total-row">
-                <td colspan="3">Total Penyusutan</td>
-                <td class="amount">Rp {{ number_format($report->totalDepreciation, 2, ',', '.') }}</td>
-            </tr>
 
-            <tr class="surplus-row">
-                <td colspan="3">Surplus (Defisit)</td>
-                <td class="amount">Rp {{ number_format($report->surplusDeficit, 2, ',', '.') }}</td>
-            </tr>
-            <tr class="total-row">
-                <td colspan="3">Saldo Akhir</td>
-                <td class="amount">Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</td>
-            </tr>
-        </tbody>
-    </table>
+                <tr class="section-row">
+                    <td colspan="3">Penyusutan</td>
+                </tr>
+                @forelse($report->depreciationLines as $line)
+                    <tr>
+                        <td>{{ $line->lineCode }}</td>
+                        <td>
+                            {{ $line->lineLabel }}
+                            @if($line->invoiceNumber)
+                                <div style="font-size: 10px; color: #b9c6d8; margin-top: 2px;">
+                                    Faktur: {{ $line->invoiceNumber }}
+                                </div>
+                            @endif
+                        </td>
+                        <td class="amount">{{ number_format($line->amount, 2, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3">Tidak ada item penyusutan.</td>
+                    </tr>
+                @endforelse
+                <tr class="total-row">
+                    <td colspan="2">Total Penyusutan</td>
+                    <td class="amount">{{ number_format($report->totalDepreciation, 2, ',', '.') }}</td>
+                </tr>
 
-    <table class="signature">
-        <tr>
-            <td>
-                Diperiksa,
-                <div class="name">Bendahara</div>
-            </td>
-            <td>
-                Mengetahui,
-                <div class="name">Ketua Pengurus</div>
-            </td>
-        </tr>
-    </table>
+                <tr class="surplus-row">
+                    <td colspan="2">Surplus (Defisit)</td>
+                    <td class="amount">{{ number_format($report->surplusDeficit, 2, ',', '.') }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="signature">
+            <tr>
+                <td>Diperiksa,</td>
+                <td>Mengetahui,</td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>

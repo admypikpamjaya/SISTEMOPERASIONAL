@@ -14,6 +14,7 @@ use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
 use App\Http\Controllers\Finance\AssetDepreciationController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
 
 // ADMIN
@@ -172,6 +173,50 @@ Route::prefix('finance')
         Route::get('/report/{id}', [FinanceReportController::class, 'show'])
             ->middleware('check_access:finance_report.read')
             ->name('report.show');
+
+        Route::prefix('invoices')
+            ->name('invoice.')
+            ->group(function () {
+                Route::get('/', [FinanceInvoiceController::class, 'index'])
+                    ->middleware('check_access:finance_invoice.read')
+                    ->name('index');
+
+                Route::get('/create', [FinanceInvoiceController::class, 'create'])
+                    ->middleware('check_access:finance_invoice.create')
+                    ->name('create');
+
+                Route::post('/', [FinanceInvoiceController::class, 'store'])
+                    ->middleware('check_access:finance_invoice.create')
+                    ->name('store');
+
+                Route::get('/{invoice}', [FinanceInvoiceController::class, 'show'])
+                    ->middleware('check_access:finance_invoice.read')
+                    ->name('show');
+
+                Route::get('/{invoice}/edit', [FinanceInvoiceController::class, 'edit'])
+                    ->middleware('check_access:finance_invoice.update')
+                    ->name('edit');
+
+                Route::put('/{invoice}', [FinanceInvoiceController::class, 'update'])
+                    ->middleware('check_access:finance_invoice.update')
+                    ->name('update');
+
+                Route::delete('/{invoice}', [FinanceInvoiceController::class, 'destroy'])
+                    ->middleware('check_access:finance_invoice.delete')
+                    ->name('destroy');
+
+                Route::post('/{invoice}/post', [FinanceInvoiceController::class, 'post'])
+                    ->middleware('check_access:finance_invoice.update')
+                    ->name('post');
+
+                Route::post('/{invoice}/set-draft', [FinanceInvoiceController::class, 'setDraft'])
+                    ->middleware('check_access:finance_invoice.update')
+                    ->name('set-draft');
+
+                Route::post('/{invoice}/notes', [FinanceInvoiceController::class, 'storeNote'])
+                    ->middleware('check_access:finance_invoice.note')
+                    ->name('notes.store');
+            });
     });
 
 /*

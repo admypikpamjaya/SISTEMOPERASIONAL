@@ -15,6 +15,7 @@
             'type' => 'INCOME',
             'line_code' => '',
             'line_label' => '',
+            'invoice_number' => '',
             'description' => '',
             'amount' => '',
             'is_depreciation' => false,
@@ -123,6 +124,7 @@
                                     <th style="width: 130px;">Jenis</th>
                                     <th style="width: 140px;">Kode Akun</th>
                                     <th style="width: 220px;">Nama Akun</th>
+                                    <th style="width: 200px;">Nomor Faktur</th>
                                     <th>Keterangan</th>
                                     <th style="width: 180px;">Nominal</th>
                                     <th style="width: 130px;">Penyusutan</th>
@@ -154,6 +156,16 @@
                                                 class="form-control form-control-sm"
                                                 value="{{ $entry['line_label'] ?? '' }}"
                                                 required
+                                            >
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                name="entries[{{ $index }}][invoice_number]"
+                                                class="form-control form-control-sm"
+                                                value="{{ $entry['invoice_number'] ?? '' }}"
+                                                placeholder="Nomor faktur (opsional)"
+                                                maxlength="100"
                                             >
                                         </td>
                                         <td>
@@ -316,6 +328,15 @@
                 </td>
                 <td>
                     <input type="text" name="entries[0][line_label]" class="form-control form-control-sm" required>
+                </td>
+                <td>
+                    <input
+                        type="text"
+                        name="entries[0][invoice_number]"
+                        class="form-control form-control-sm"
+                        placeholder="Nomor faktur (opsional)"
+                        maxlength="100"
+                    >
                 </td>
                 <td>
                     <input type="text" name="entries[0][description]" class="form-control form-control-sm" placeholder="Keterangan detail pemasukan/pengeluaran">

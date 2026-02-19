@@ -5,12 +5,33 @@
     <title>Email Blast</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f3f4f6;">
+@php
+    $logoCandidates = [
+        public_path('images/logo_ypik.png'),
+        public_path('images/logo_ypik.webp'),
+    ];
+    $logoPath = null;
+    foreach ($logoCandidates as $candidate) {
+        if (is_file($candidate)) {
+            $logoPath = $candidate;
+            break;
+        }
+    }
+
+    $logoSrc = $logoPath ? asset('images/' . basename($logoPath)) : '';
+    if (isset($message) && $logoPath !== null) {
+        try {
+            $logoSrc = $message->embed($logoPath);
+        } catch (\Throwable $exception) {
+            // Keep fallback URL if embed is not available on current mailer.
+        }
+    }
+@endphp
 
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;">
 <tr>
 <td align="center" style="padding:30px 15px;">
 
-    <!-- MAIN CONTAINER -->
     <table width="600" cellpadding="0" cellspacing="0" style="
         background-color:#ffffff;
         border-radius:12px;
@@ -18,8 +39,6 @@
         font-family:Arial, Helvetica, sans-serif;
         box-shadow:0 10px 30px rgba(0,0,0,0.08);
     ">
-
-        <!-- HEADER -->
         <tr>
             <td style="
                 background:linear-gradient(90deg,#4F46E5,#9333EA);
@@ -28,8 +47,14 @@
             ">
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td width="50" valign="middle">
-                           <img src="{{ asset('images/logo_ypik.webp') }}" alt="logo_ypik" height="100" />
+                        <td width="72" valign="middle">
+                            <img
+                                src="{{ $logoSrc }}"
+                                alt="Logo YPIK"
+                                width="72"
+                                height="72"
+                                style="display:block;border:0;outline:none;text-decoration:none;object-fit:contain;"
+                            />
                         </td>
                         <td valign="middle" style="padding-left:12px;">
                             <div style="font-size:16px;font-weight:bold;color:#ffffff;">
@@ -44,14 +69,12 @@
             </td>
         </tr>
 
-        <!-- CONTENT -->
         <tr>
             <td style="padding:28px 24px;color:#1f2937;font-size:14px;line-height:1.6;">
                 @yield('content')
             </td>
         </tr>
 
-        <!-- FOOTER -->
         <tr>
             <td style="background-color:#f9fafb;padding:18px 24px;">
                 <table width="100%" cellpadding="0" cellspacing="0">
@@ -65,15 +88,13 @@
                     </tr>
                     <tr>
                         <td style="padding-top:10px;font-size:11px;color:#9ca3af;">
-                            © {{ date('Y') }} Yayasan YPIK PAM JAYA. All rights reserved.
+                            &copy; {{ date('Y') }} Yayasan YPIK PAM JAYA. All rights reserved.
                         </td>
                     </tr>
                 </table>
             </td>
         </tr>
-
     </table>
-    <!-- END MAIN CONTAINER -->
 
 </td>
 </tr>

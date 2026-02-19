@@ -268,6 +268,7 @@ class ReportService
                     'meta' => json_encode([
                         'type' => $entry->type,
                         'is_depreciation' => $entry->isDepreciation,
+                        'invoice_number' => $entry->invoiceNumber,
                         'description' => $entry->description,
                         'balance_before' => round($balanceBefore, 2),
                         'balance_after' => round($runningBalance, 2),
@@ -303,10 +304,12 @@ class ReportService
         foreach ($report->items as $item) {
             $type = strtoupper((string) data_get($item->meta, 'type', 'EXPENSE'));
             $description = data_get($item->meta, 'description');
+            $invoiceNumber = data_get($item->meta, 'invoice_number');
             $line = new ProfitLossLineDTO(
                 lineCode: (string) $item->line_code,
                 lineLabel: (string) $item->line_label,
                 description: $description !== null ? (string) $description : null,
+                invoiceNumber: $invoiceNumber !== null ? (string) $invoiceNumber : null,
                 amount: (float) $item->amount,
                 isDepreciation: (bool) data_get($item->meta, 'is_depreciation', false)
             );

@@ -111,6 +111,11 @@ return [
                 'icon'  => 'fas fa-book',
                 'route' => 'finance.report.snapshots',
             ],
+            [
+                'label' => 'Faktur / Jurnal',
+                'icon'  => 'fas fa-file-invoice-dollar',
+                'route' => 'finance.invoice.index',
+            ],
         ],
     ],
 

@@ -1772,6 +1772,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const flashSuccess = @json(session('success'));
+        const flashError = @json(session('error') ?? ($errors->any() ? $errors->first() : null));
+
+        function showResultAlert(type, message) {
+            if (!message) {
+                return;
+            }
+
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({
+                    icon: type === 'success' ? 'success' : 'error',
+                    title: type === 'success' ? 'Berhasil' : 'Gagal',
+                    text: message,
+                    timer: 2600,
+                    showConfirmButton: false,
+                });
+                return;
+            }
+
+            alert(message);
+        }
+
+        if (flashSuccess) {
+            showResultAlert('success', flashSuccess);
+        } else if (flashError) {
+            showResultAlert('error', flashError);
+        }
+
         const phoneInput = document.getElementById('phoneInput');
         const addPhoneBtn = document.getElementById('addPhoneBtn');
         const recipientList = document.getElementById('recipientList');

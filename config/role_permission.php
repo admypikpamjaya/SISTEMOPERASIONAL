@@ -59,5 +59,10 @@ return [
         PortalPermission::FINANCE_DEPRECIATION_CALCULATE,
         PortalPermission::FINANCE_REPORT_READ,
         PortalPermission::FINANCE_REPORT_GENERATE,
+        PortalPermission::FINANCE_INVOICE_READ,
+        PortalPermission::FINANCE_INVOICE_CREATE,
+        PortalPermission::FINANCE_INVOICE_UPDATE,
+        PortalPermission::FINANCE_INVOICE_DELETE,
+        PortalPermission::FINANCE_INVOICE_NOTE,
     ],
 ];
