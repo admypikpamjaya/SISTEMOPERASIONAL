@@ -107,12 +107,12 @@ return [
                 'route' => 'finance.report.index',
             ],
             [
-                'label' => 'Snapshot Laporan',
+                'label' => 'Snapshot Report',
                 'icon'  => 'fas fa-book',
                 'route' => 'finance.report.snapshots',
             ],
             [
-                'label' => 'Faktur / Jurnal',
+                'label' => 'Invoice',
                 'icon'  => 'fas fa-file-invoice-dollar',
                 'route' => 'finance.invoice.index',
             ],

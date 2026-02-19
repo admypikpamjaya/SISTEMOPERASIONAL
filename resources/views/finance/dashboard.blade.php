@@ -1,284 +1,508 @@
 @extends('layouts.app')
 
-@section('section_name', 'Finance Dashboard')
-
 @section('content')
-<div class="row">
-    <div class="col-lg-8 col-md-12">
-        <div class="card card-primary card-outline animate__animated animate__fadeInLeft">
-            <div class="card-header bg-gradient-primary text-white">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-filter mr-2"></i>Filter Snapshot Finance
-                </h3>
-                <div class="card-tools">
-                    <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
-                        <i class="fas fa-minus"></i>
-                    </button>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    /* ── Design Tokens — Blue-Slate palette (matches dark sidebar + blue accent) ── */
+    :root {
+        --p1:        #3B82F6;
+        --p2:        #2563EB;
+        --p3:        #1E40AF;
+        --grad:      linear-gradient(135deg, #3B82F6 0%, #2563EB 55%, #1D4ED8 100%);
+        --grad-hero: linear-gradient(135deg, #1E3A5F 0%, #1E40AF 55%, #2563EB 100%);
+        --surface:   #FFFFFF;
+        --bg:        #F0F4FF;
+        --border:    #DBEAFE;
+        --text:      #1E293B;
+        --muted:     #64748B;
+        --success:   #22C55E;
+        --s-bg:      #F0FDF4;
+        --s-b:       #BBF7D0;
+        --warn:      #F59E0B;
+        --w-bg:      #FFFBEB;
+        --w-b:       #FDE68A;
+        --danger:    #EF4444;
+        --d-bg:      #FFF1F2;
+        --d-b:       #FECDD3;
+        --radius:    18px;
+        --radius-sm: 11px;
+        --shadow:    0 4px 24px rgba(37,99,235,.09);
+        --shadow-lg: 0 8px 32px rgba(37,99,235,.16);
+        --font:      'Plus Jakarta Sans', 'Nunito', 'Segoe UI', sans-serif;
+    }
+
+    .fd, .fd * {
+        font-family: var(--font) !important;
+        box-sizing: border-box;
+    }
+
+    /* pastikan Font Awesome tidak di-override */
+    .fd .fas,
+    .fd .far,
+    .fd .fab,
+    .fd .fal {
+        font-family: 'Font Awesome 5 Free' !important;
+        font-style: normal !important;
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        line-height: 1;
+        vertical-align: middle;
+    }
+
+    /* ── Icon wrapper ── */
+    .ico {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+    .ico-md { width: 38px; height: 38px; font-size: 1rem; }
+    .ico-sm { width: 30px; height: 30px; font-size: .85rem; }
+    .ico-xs { width: 24px; height: 24px; font-size: .72rem; border-radius: 6px; }
+
+    .ico-white  { background: rgba(255,255,255,.18); color: #fff; }
+    .ico-blue   { background: #EFF6FF; color: var(--p1); border: 1px solid #BFDBFE; }
+    .ico-green  { background: var(--s-bg); color: #16A34A; border: 1px solid var(--s-b); }
+    .ico-yellow { background: var(--w-bg); color: #B45309; border: 1px solid var(--w-b); }
+    .ico-red    { background: var(--d-bg); color: var(--danger); border: 1px solid var(--d-b); }
+    .ico-gray   { background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; }
+    .ico-circle { border-radius: 50% !important; }
+
+    /* ── Page brand ── */
+    .fd-brand {
+        display: flex; align-items: center; gap: 14px;
+        margin-bottom: 24px;
+    }
+    .fd-brand-logo {
+        width: 52px; height: 52px;
+        background: var(--grad);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.4rem;
+        box-shadow: 0 4px 16px rgba(37,99,235,.28);
+        flex-shrink: 0;
+    }
+    .fd-brand-logo .fas { font-size: 1.4rem !important; color: #fff !important; }
+    .fd-brand h1 {
+        font-size: 1.3rem; font-weight: 800;
+        color: var(--text); margin: 0 0 2px; line-height: 1.2;
+    }
+    .fd-brand p {
+        font-size: .8rem; color: var(--muted); font-weight: 500; margin: 0;
+    }
+
+    /* ── Card ── */
+    .fd-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1.5px solid var(--border);
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: box-shadow .2s, transform .2s;
+    }
+    .fd-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    .fd-card-header {
+        background: var(--grad);
+        padding: 15px 22px;
+        display: flex; align-items: center;
+        justify-content: space-between; gap: 12px;
+    }
+    .fd-card-header-left { display: flex; align-items: center; gap: 12px; }
+    .fd-card-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #fff; }
+
+    .fd-card-body { padding: 22px; }
+
+    .fd-card-footer {
+        padding: 13px 22px;
+        background: #F8FAFF;
+        border-top: 1.5px solid var(--border);
+        display: flex; align-items: center;
+        justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        font-size: .83rem; color: var(--muted);
+    }
+    .fd-card-footer .pagination { margin: 0; }
+
+    /* ── Hero snapshot ── */
+    .fd-hero {
+        background: var(--grad-hero);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        padding: 26px 24px 0;
+        margin-bottom: 24px;
+        position: relative; overflow: hidden;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .fd-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(37,99,235,.24); }
+    .fd-hero .deco  { position: absolute; right: -16px; top: -16px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,.08); pointer-events: none; }
+    .fd-hero .deco2 { position: absolute; right: 50px; bottom: 22px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.06); pointer-events: none; }
+    .fd-hero .hero-icon { font-size: 2rem; color: rgba(255,255,255,.30); margin-bottom: 8px; display: block; }
+    .fd-hero .hero-icon .fas { font-size: 2rem !important; color: rgba(255,255,255,.30) !important; }
+    .fd-hero .hero-num   { font-size: 2.8rem; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 4px; }
+    .fd-hero .hero-label { font-size: .88rem; color: rgba(255,255,255,.72); font-weight: 500; margin-bottom: 18px; }
+    .fd-hero .hero-footer {
+        display: flex; align-items: center; gap: 8px;
+        margin: 0 -24px;
+        padding: 11px 24px;
+        background: rgba(0,0,0,.16);
+        color: rgba(255,255,255,.88);
+        font-size: .82rem; font-weight: 600;
+        text-decoration: none;
+        transition: background .2s;
+    }
+    .fd-hero .hero-footer:hover { background: rgba(0,0,0,.26); color: #fff; text-decoration: none; }
+    .fd-hero .hero-footer .fas { font-size: .9rem !important; color: rgba(255,255,255,.88) !important; }
+
+    /* ── Form labels ── */
+    .fd-label {
+        font-size: .74rem; font-weight: 700;
+        color: var(--muted); text-transform: uppercase;
+        letter-spacing: .04em; margin-bottom: 6px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .fd-label .fas, .fd-label .far {
+        font-size: .78rem !important;
+        color: var(--p1) !important;
+        width: 14px; text-align: center;
+    }
+
+    /* ── Inputs ── */
+    .fd-input, .fd-select {
+        width: 100%;
+        background: #F8FAFF;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 9px 13px;
+        font-size: .9rem; color: var(--text);
+        font-family: var(--font) !important; outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        height: auto; appearance: auto;
+    }
+    .fd-input:focus, .fd-select:focus {
+        border-color: var(--p1);
+        box-shadow: 0 0 0 3px rgba(59,130,246,.14);
+        background: #fff;
+    }
+
+    /* ── Buttons ── */
+    .fd-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 20px; border-radius: var(--radius-sm);
+        font-size: .88rem; font-weight: 700;
+        cursor: pointer; border: none;
+        transition: transform .15s, box-shadow .15s;
+        text-decoration: none; font-family: var(--font) !important;
+        white-space: nowrap; line-height: 1;
+    }
+    .fd-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,99,235,.22); text-decoration: none; }
+    .fd-btn .fas, .fd-btn .far { font-size: .88rem !important; }
+
+    .fd-btn-primary { background: var(--grad); color: #fff !important; }
+    .fd-btn-primary .fas { color: #fff !important; }
+
+    .fd-btn-outline { background: var(--surface); color: var(--p1) !important; border: 1.5px solid var(--border); }
+    .fd-btn-outline .fas { color: var(--p1) !important; }
+
+    .fd-btn-sm { padding: 7px 14px; font-size: .8rem; border-radius: 9px; }
+    .fd-btn-sm .fas { font-size: .8rem !important; }
+
+    .fd-btn-light { background: rgba(255,255,255,.15); color: #fff !important; border: 1.5px solid rgba(255,255,255,.25); }
+    .fd-btn-light .fas { color: #fff !important; }
+    .fd-btn-light:hover { background: rgba(255,255,255,.28); color: #fff !important; }
+
+    /* ── Table ── */
+    .fd-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .fd-table thead th {
+        font-size: .71rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: .05em;
+        color: var(--muted); padding: 12px 16px;
+        background: #F8FAFF; border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+    }
+    .fd-table thead th .fas,
+    .fd-table thead th .far {
+        font-size: .72rem !important;
+        color: var(--p1) !important;
+        margin-right: 5px; opacity: .85;
+    }
+    .fd-table tbody tr { transition: background .15s; }
+    .fd-table tbody tr:hover { background: #F0F6FF; }
+    .fd-table tbody td {
+        padding: 13px 16px; vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+        font-size: .88rem; color: var(--text);
+    }
+    .fd-table tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Badges ── */
+    .fd-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 11px; border-radius: 20px;
+        font-size: .74rem; font-weight: 700; line-height: 1;
+    }
+    .fd-badge .fas { font-size: .68rem !important; }
+
+    /* Biru — menggantikan ungu sebelumnya */
+    .fb-info    { background: #EFF6FF; color: var(--p1); border: 1px solid #BFDBFE; }
+    .fb-info .fas { color: var(--p1) !important; }
+
+    .fb-gray    { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+    .fb-gray .fas { color: #64748B !important; }
+
+    .fb-success { background: var(--s-bg); color: #16A34A; border: 1px solid var(--s-b); }
+    .fb-success .fas { color: #16A34A !important; }
+
+    .fb-warn    { background: var(--w-bg); color: #B45309; border: 1px solid var(--w-b); }
+    .fb-warn .fas { color: #B45309 !important; }
+
+    /* ── Currency ── */
+    .cur-p { font-weight: 700; color: var(--p2); }
+    .cur-s { font-weight: 700; color: #16A34A; }
+
+    /* ── User chip ── */
+    .user-chip { display: inline-flex; align-items: center; gap: 8px; }
+    .user-chip .avatar {
+        width: 28px; height: 28px;
+        background: #EFF6FF; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; border: 1.5px solid #BFDBFE;
+    }
+    .user-chip .avatar .fas { font-size: .72rem !important; color: var(--p1) !important; }
+    .user-chip .uname { font-weight: 600; font-size: .87rem; }
+
+    /* ── Generated at ── */
+    .gen-date { font-weight: 600; font-size: .87rem; color: var(--text); }
+    .gen-time { font-size: .76rem; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+    .gen-time .fas { font-size: .72rem !important; color: var(--muted) !important; }
+
+    /* ── Empty ── */
+    .fd-empty { text-align: center; padding: 52px 24px; }
+    .fd-empty .ei { font-size: 3rem; color: #BFDBFE; margin-bottom: 12px; display: block; }
+    .fd-empty .ei .fas { font-size: 3rem !important; color: #BFDBFE !important; }
+    .fd-empty h5 { color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+    .fd-empty p  { color: var(--muted); font-size: .87rem; margin-bottom: 18px; }
+
+    /* ── Footer info ── */
+    .fd-footer-info { display: flex; align-items: center; gap: 6px; }
+    .fd-footer-info .fas { font-size: .82rem !important; color: var(--p1) !important; }
+
+    /* ── Pagination ── */
+    .pagination .page-link {
+        border: none; margin: 0 2px;
+        border-radius: 9px !important;
+        color: var(--p1); padding: 6px 11px;
+        font-size: .82rem; font-weight: 600;
+        transition: background .15s, color .15s;
+    }
+    .pagination .page-item.active .page-link {
+        background: var(--grad); color: #fff;
+        box-shadow: 0 2px 10px rgba(37,99,235,.28);
+    }
+    .pagination .page-link:hover { background: #EFF6FF; color: var(--p1); }
+
+    @media (max-width: 768px) {
+        .fd-card-body { padding: 16px; }
+        .fd-card-header { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+
+<div class="fd">
+
+    {{-- ── Brand Header ── --}}
+    <div class="fd-brand">
+        <div class="fd-brand-logo">
+            <i class="fas fa-chart-pie"></i>
+        </div>
+        <div>
+            <h1>Finance Dashboard</h1>
+            <p>Monitoring &amp; Snapshot Laporan Keuangan</p>
+        </div>
+    </div>
+
+    <div class="row">
+
+        {{-- ══ Filter Card ══ --}}
+        <div class="col-lg-8 col-md-12">
+            <div class="fd-card">
+                <div class="fd-card-header">
+                    <div class="fd-card-header-left">
+                        <span class="ico ico-sm ico-white">
+                            <i class="fas fa-filter"></i>
+                        </span>
+                        <h3>Filter Snapshot Finance</h3>
+                    </div>
+                </div>
+                <div class="fd-card-body">
+                    <form method="GET" action="{{ route('finance.dashboard') }}">
+                        <div class="form-row">
+                            <div class="form-group col-md-3">
+                                <label class="fd-label" for="month">
+                                    <i class="fas fa-calendar"></i> Bulan
+                                </label>
+                                <select name="month" id="month" class="fd-select">
+                                    <option value="">Semua</option>
+                                    @for($m = 1; $m <= 12; $m++)
+                                        <option value="{{ $m }}" {{ (int) ($filters['month'] ?? 0) === $m ? 'selected' : '' }}>
+                                            {{ $m }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <div class="form-group col-md-3">
+                                <label class="fd-label" for="year">
+                                    <i class="fas fa-calendar-alt"></i> Tahun
+                                </label>
+                                <input
+                                    type="number" name="year" id="year"
+                                    class="fd-input" min="1900" max="2100"
+                                    value="{{ $filters['year'] }}"
+                                >
+                            </div>
+
+                            <div class="form-group col-md-2">
+                                <label class="fd-label" for="per_page">
+                                    <i class="fas fa-list-ol"></i> Per Page
+                                </label>
+                                <select name="per_page" id="per_page" class="fd-select">
+                                    @foreach([5, 10, 20, 50] as $size)
+                                        <option value="{{ $size }}" {{ (int) request('per_page', 5) === $size ? 'selected' : '' }}>
+                                            {{ $size }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group col-md-4 d-flex align-items-end" style="gap: 8px;">
+                                <button type="submit" class="fd-btn fd-btn-primary">
+                                    <i class="fas fa-filter"></i>
+                                    <span>Filter</span>
+                                </button>
+                                <a href="{{ route('finance.dashboard') }}" class="fd-btn fd-btn-outline">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Reset</span>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div class="card-body">
-                <form method="GET" action="{{ route('finance.dashboard') }}" class="form-row align-items-end">
-                    <div class="form-group col-md-2">
-                        <label for="filter_type">Tipe Filter</label>
-                        <select name="filter_type" id="filter_type" class="form-control">
-                            <option value="monthly" {{ ($filters['filter_type'] ?? 'monthly') === 'monthly' ? 'selected' : '' }}>Bulanan</option>
-                            <option value="yearly" {{ ($filters['filter_type'] ?? '') === 'yearly' ? 'selected' : '' }}>Tahunan</option>
-                            <option value="custom" {{ ($filters['filter_type'] ?? '') === 'custom' ? 'selected' : '' }}>Custom (Tanggal/Bulan/Tahun)</option>
-                        </select>
-                    </div>
+        </div>
 
-                    <div class="form-group col-md-2" id="month-wrapper">
-                        <label for="month">Bulan</label>
-                        <select name="month" id="month" class="form-control">
-                            <option value="">Semua</option>
-                            @for($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}" {{ (int) ($filters['month'] ?? 0) === $m ? 'selected' : '' }}>
-                                    {{ sprintf('%02d', $m) }}
-                                </option>
-                            @endfor
-                        </select>
-                    </div>
+        {{-- ══ Hero Snapshot ══ --}}
+        <div class="col-lg-4 col-md-12">
+            <div class="fd-hero">
+                <div class="deco"></div>
+                <div class="deco2"></div>
+                <span class="hero-icon"><i class="fas fa-file-invoice"></i></span>
+                <div class="hero-num">{{ $totalReports }}</div>
+                <div class="hero-label">Total Snapshot</div>
+                <a href="{{ route('finance.report.snapshots', ['year' => $filters['year']]) }}" class="hero-footer">
+                    <i class="fas fa-arrow-circle-right"></i>
+                    <span>Buka Snapshot Laporan</span>
+                </a>
+            </div>
+        </div>
 
-                    <div class="form-group col-md-2" id="year-wrapper">
-                        <label for="year">Tahun</label>
-                        <input
-                            type="number"
-                            name="year"
-                            id="year"
-                            class="form-control"
-                            min="1900"
-                            max="2100"
-                            value="{{ $filters['year'] }}"
-                        >
-                    </div>
+    </div>
 
-                    <div class="form-group col-md-3" id="date-wrapper">
-                        <label for="date">Tanggal</label>
-                        <input
-                            type="date"
-                            name="date"
-                            id="date"
-                            class="form-control"
-                            value="{{ $filters['date'] ?? '' }}"
-                        >
+    {{-- ══ Snapshot Table ══ --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="fd-card">
+                <div class="fd-card-header">
+                    <div class="fd-card-header-left">
+                        <span class="ico ico-sm ico-white">
+                            <i class="fas fa-history"></i>
+                        </span>
+                        <h3>Snapshot Terbaru</h3>
                     </div>
-                    <div class="form-group col-md-2">
-                        <label for="per_page">
-                            <i class="fas fa-list-ol mr-1 text-primary"></i>Per Page
-                        </label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light border-right-0">
-                                    <i class="fas fa-sort-amount-down text-primary"></i>
-                                </span>
-                            </div>
-                            <select name="per_page" id="per_page" class="form-control border-left-0">
-                                @foreach([5, 10, 20, 50, 100] as $size)
-                                    <option value="{{ $size }}" {{ (int) request('per_page', 5) === $size ? 'selected' : '' }}>
-                                        {{ $size }} Data
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary mr-2 shadow-sm px-4">
-                            <i class="fas fa-filter mr-2"></i> Terapkan Filter
-                        </button>
-                        <a href="{{ route('finance.dashboard') }}" class="btn btn-outline-secondary shadow-sm px-4">
-                            <i class="fas fa-sync-alt mr-2"></i> Reset
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="{{ route('finance.depreciation.index') }}" class="fd-btn fd-btn-light fd-btn-sm">
+                            <i class="fas fa-calculator"></i>
+                            <span>Hitung Penyusutan</span>
+                        </a>
+                        <a href="{{ route('finance.invoice.index') }}" class="fd-btn fd-btn-light fd-btn-sm">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Faktur / Jurnal</span>
                         </a>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-12">
-        <div class="small-box bg-gradient-info shadow-lg animate__animated animate__fadeInRight">
-            <div class="inner">
-                <h3 class="font-weight-bold counter">{{ $totalReports }}</h3>
-                <p class="mb-0">Total Snapshot Laporan</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-file-invoice fa-3x"></i>
-            </div>
-            <a href="{{ route('finance.report.snapshots', ['year' => $filters['year']]) }}" class="small-box-footer">
-                <span>Buka Snapshot Laporan</span>
-                <i class="fas fa-arrow-circle-right ml-1"></i>
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Summary Cards -->
-<div class="row mt-4">
-    <div class="col-lg-3 col-6">
-        <div class="small-box bg-gradient-success animate__animated animate__fadeInUp" style="animation-delay: 0.1s">
-            <div class="inner">
-                <h3 class="counter">{{ $reports->total() }}</h3>
-                <p>Total Data Ditampilkan</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-database"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box bg-gradient-warning animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
-            <div class="inner">
-                <h3 class="counter">{{ $reports->where('is_read_only', true)->count() }}</h3>
-                <p>Snapshot Read Only</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-lock"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box bg-gradient-danger animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
-            <div class="inner">
-                <h3 class="counter">{{ $reports->where('is_read_only', false)->count() }}</h3>
-                <p>Snapshot Editable</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-pen"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box bg-gradient-secondary animate__animated animate__fadeInUp" style="animation-delay: 0.4s">
-            <div class="inner">
-                <h3 class="counter">{{ $reports->unique('report_type')->count() }}</h3>
-                <p>Tipe Laporan</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-tags"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card card-primary card-outline animate__animated animate__fadeInUp">
-            <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center py-3">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-history mr-2"></i>Snapshot Terbaru
-                </h3>
-                <div>
-                    <a href="{{ route('finance.depreciation.index') }}" class="btn btn-sm btn-light shadow-sm">
-                        <i class="fas fa-calculator mr-1"></i> Hitung Penyusutan
-                    </a>
-                    <a href="{{ route('finance.invoice.index') }}" class="btn btn-sm btn-light shadow-sm ml-1">
-                        <i class="fas fa-file-invoice-dollar mr-1"></i> Faktur / Jurnal
-                    </a>
                 </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="snapshotTable">
-                        <thead class="bg-light">
+
+                <div style="overflow-x: auto;">
+                    <table class="fd-table">
+                        <thead>
                             <tr>
-                                <th class="border-top-0">
-                                    <i class="fas fa-tag mr-1 text-muted"></i>Tipe
-                                </th>
-                                <th class="border-top-0">
-                                    <i class="fas fa-code-branch mr-1 text-muted"></i>Versi
-                                </th>
-                                <th class="border-top-0">
-                                    <i class="fas fa-arrow-up mr-1 text-primary"></i>Saldo Awal
-                                </th>
-                                <th class="border-top-0">
-                                    <i class="fas fa-arrow-down mr-1 text-success"></i>Saldo Akhir
-                                </th>
-                                <th class="border-top-0">
-                                    <i class="far fa-clock mr-1 text-muted"></i>Generated At
-                                </th>
-                                <th class="border-top-0">
-                                    <i class="far fa-user mr-1 text-muted"></i>Generated By
-                                </th>
-                                <th class="border-top-0 text-center">
-                                    <i class="fas fa-shield-alt mr-1 text-muted"></i>Status
-                                </th>
-                                <th class="border-top-0 text-center">Aksi</th>
+                                <th><i class="fas fa-tag"></i>Tipe</th>
+                                <th><i class="fas fa-code-branch"></i>Versi</th>
+                                <th><i class="fas fa-arrow-up"></i>Saldo Awal</th>
+                                <th><i class="fas fa-arrow-down"></i>Saldo Akhir</th>
+                                <th><i class="far fa-clock"></i>Generated At</th>
+                                <th><i class="far fa-user"></i>Generated By</th>
+                                <th style="text-align: center;"><i class="fas fa-shield-alt"></i>Read Only</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($reports as $report)
                                 <tr>
                                     <td>
-                                        <span class="badge badge-info p-2">
-                                            <i class="fas fa-file-invoice mr-1"></i>
+                                        <span class="fd-badge fb-info">
+                                            <i class="fas fa-file-invoice"></i>
                                             {{ $report->report_type }}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge badge-secondary p-2">
-                                            <i class="fas fa-tag mr-1"></i>
+                                        <span class="fd-badge fb-gray">
+                                            <i class="fas fa-tag"></i>
                                             v{{ $report->version_no }}
                                         </span>
                                     </td>
-                                    <td class="font-weight-bold text-primary">
-                                        <span class="currency-value">
-                                            Rp {{ number_format((float) data_get($report->summary, 'opening_balance', 0), 2, ',', '.') }}
-                                        </span>
+                                    <td class="cur-p">
+                                        Rp {{ number_format((float) data_get($report->summary, 'opening_balance', 0), 2, ',', '.') }}
                                     </td>
-                                    <td class="font-weight-bold text-success">
-                                        <span class="currency-value">
-                                            Rp {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}
-                                        </span>
+                                    <td class="cur-s">
+                                        Rp {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}
                                     </td>
                                     <td>
-                                        <span class="badge badge-light" data-toggle="tooltip" title="{{ optional($report->generated_at)->format('l, d F Y H:i:s') }}">
-                                            <i class="far fa-calendar-alt text-primary mr-1"></i>
+                                        <div class="gen-date">
                                             {{ optional($report->generated_at)->format('Y-m-d') ?? '-' }}
-                                            <br>
-                                            <small class="text-muted">
-                                                <i class="far fa-clock mr-1"></i>
-                                                {{ optional($report->generated_at)->format('H:i:s') ?? '-' }}
-                                            </small>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="user-info">
-                                            <i class="far fa-user-circle text-primary mr-1"></i>
-                                            <span class="font-weight-bold">{{ $report->user?->name ?? '-' }}</span>
+                                        </div>
+                                        <div class="gen-time">
+                                            <i class="fas fa-clock"></i>
+                                            {{ optional($report->generated_at)->format('H:i:s') ?? '-' }}
                                         </div>
                                     </td>
-                                    <td class="text-center">
+                                    <td>
+                                        <div class="user-chip">
+                                            <span class="avatar">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                            <span class="uname">{{ $report->user?->name ?? '-' }}</span>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center;">
                                         @if($report->is_read_only)
-                                            <span class="badge badge-success p-2">
-                                                <i class="fas fa-check-circle mr-1"></i>Read Only
+                                            <span class="fd-badge fb-success">
+                                                <i class="fas fa-check-circle"></i> Yes
                                             </span>
                                         @else
-                                            <span class="badge badge-warning p-2">
-                                                <i class="fas fa-pen mr-1"></i>Editable
+                                            <span class="fd-badge fb-warn">
+                                                <i class="fas fa-pen"></i> No
                                             </span>
                                         @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="tooltip" title="Lihat Detail">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            @if(!$report->is_read_only)
-                                                <button type="button" class="btn btn-sm btn-outline-warning" data-toggle="tooltip" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                            @endif
-                                        </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-5">
-                                        <div class="empty-state">
-                                            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
-                                            <h5 class="text-muted">Belum ada snapshot laporan finance</h5>
-                                            <p class="text-muted mb-3">Mulai dengan membuat snapshot laporan baru</p>
-                                            <a href="{{ route('finance.depreciation.index') }}" class="btn btn-primary">
-                                                <i class="fas fa-plus-circle mr-2"></i>Buat Snapshot Baru
-                                            </a>
+                                    <td colspan="7">
+                                        <div class="fd-empty">
+                                            <span class="ei"><i class="fas fa-inbox"></i></span>
+                                            <h5>Belum ada snapshot laporan finance.</h5>
+                                            <p>Mulai dengan membuat snapshot laporan baru.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -286,372 +510,17 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-            <div class="card-footer bg-white clearfix border-top">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <div class="text-muted mb-2 mb-md-0">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Menampilkan {{ $reports->firstItem() ?? 0 }} - {{ $reports->lastItem() ?? 0 }} 
-                        dari <span class="font-weight-bold">{{ $reports->total() }}</span> data
+
+                <div class="fd-card-footer">
+                    <div class="fd-footer-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Menampilkan data snapshot</span>
                     </div>
-                    <div class="pagination-wrapper">
-                        {{ $reports->appends(request()->query())->links('pagination::bootstrap-4') }}
-                    </div>
+                    <div>{{ $reports->appends(request()->query())->links() }}</div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+</div>{{-- /fd --}}
 @endsection
-
-@push('css')
-<!-- Animate.css -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-
-<style>
-    /* Modern Dashboard Styling */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-        --warning-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-        --danger-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        --secondary-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-    }
-
-    .bg-gradient-primary {
-        background: var(--primary-gradient);
-    }
-    
-    .bg-gradient-success {
-        background: var(--success-gradient);
-        color: #333;
-    }
-    
-    .bg-gradient-warning {
-        background: var(--warning-gradient);
-        color: #333;
-    }
-    
-    .bg-gradient-danger {
-        background: var(--danger-gradient);
-        color: #333;
-    }
-    
-    .bg-gradient-info {
-        background: var(--info-gradient);
-    }
-    
-    .bg-gradient-secondary {
-        background: var(--secondary-gradient);
-        color: #333;
-    }
-    
-    .card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow: hidden;
-    }
-    
-    .card:hover {
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
-    }
-    
-    .card-header {
-        border-bottom: none;
-        padding: 1.25rem;
-    }
-    
-    .small-box {
-        border-radius: 15px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .small-box:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    }
-    
-    .small-box .inner {
-        padding: 20px;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .small-box .icon {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 0;
-        opacity: 0.3;
-        transition: all 0.3s ease;
-    }
-    
-    .small-box:hover .icon {
-        transform: scale(1.2) rotate(5deg);
-        opacity: 0.4;
-    }
-    
-    .small-box-footer {
-        display: block;
-        padding: 10px 20px;
-        background: rgba(0,0,0,0.1);
-        color: white;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-    
-    .small-box-footer:hover {
-        background: rgba(0,0,0,0.2);
-        color: white;
-        text-decoration: none;
-    }
-    
-    .table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 0.5px;
-        border-bottom-width: 1px;
-        padding: 1rem;
-    }
-    
-    .table td {
-        padding: 1rem;
-        vertical-align: middle;
-    }
-    
-    .badge {
-        font-weight: 500;
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
-        transition: all 0.3s ease;
-    }
-    
-    .badge:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    
-    .btn {
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-    
-    .btn-group .btn {
-        border-radius: 8px !important;
-        margin: 0 2px;
-    }
-    
-    .form-control {
-        border-radius: 10px;
-        border: 1px solid #e0e0e0;
-        transition: all 0.3s ease;
-        height: calc(2.5rem + 2px);
-    }
-    
-    .form-control:focus {
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        border-color: #667eea;
-    }
-    
-    .input-group-text {
-        border-radius: 10px 0 0 10px;
-        border: 1px solid #e0e0e0;
-    }
-    
-    /* Pagination Styling */
-    .pagination {
-        margin-bottom: 0;
-    }
-    
-    .pagination .page-link {
-        border: none;
-        margin: 0 3px;
-        border-radius: 10px;
-        color: #667eea;
-        padding: 0.5rem 0.75rem;
-        transition: all 0.3s ease;
-    }
-    
-    .pagination .page-item.active .page-link {
-        background: var(--primary-gradient);
-        border: none;
-        color: white;
-        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
-    }
-    
-    .pagination .page-link:hover {
-        background: var(--primary-gradient);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
-    }
-    
-    /* Empty State */
-    .empty-state {
-        padding: 40px 20px;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-radius: 15px;
-    }
-    
-    /* Currency Animation */
-    .currency-value {
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-    
-    .currency-value:hover {
-        transform: scale(1.05);
-        color: #333;
-    }
-    
-    /* Counter Animation */
-    .counter {
-        animation: countUp 2s ease-out;
-    }
-    
-    @keyframes countUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Tooltip Customization */
-    .tooltip .tooltip-inner {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-        padding: 8px 12px;
-        box-shadow: 0 3px 15px rgba(0,0,0,0.2);
-    }
-    
-    .tooltip.bs-tooltip-top .arrow::before {
-        border-top-color: #764ba2;
-    }
-    
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        .card-header {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .btn-group {
-            margin-top: 10px;
-        }
-        
-        .table td {
-            white-space: nowrap;
-        }
-        
-        .small-box .inner {
-            padding: 15px;
-        }
-        
-        .small-box h3 {
-            font-size: 1.5rem;
-        }
-    }
-    
-    /* Loading Animation */
-    .fa-spinner {
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-</style>
-@endpush
-
-@push('js')
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/waypoints@4.0.1/lib/jquery.waypoints.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/counterup2@2.0.2/dist/index.min.js"></script>
-
-<script>
-    $(document).ready(function() {
-        // Initialize tooltips
-        $('[data-toggle="tooltip"]').tooltip();
-        
-        // Counter animation for numbers
-        const counterUp = window.counterUp.default;
-        const counters = document.querySelectorAll('.counter');
-        
-        counters.forEach(el => {
-            new Waypoint({
-                element: el,
-                handler: function() {
-                    counterUp(el, {
-                        duration: 2000,
-                        delay: 16,
-                    });
-                    this.destroy();
-                },
-                offset: 'bottom-in-view',
-            });
-        });
-        
-        // Loading effect on form submit
-        document.querySelector('form').addEventListener('submit', function() {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
-            submitBtn.disabled = true;
-        });
-        
-        // Smooth scroll to table
-        $('a[href*="#"]').on('click', function(e) {
-            if (this.hash !== '') {
-                e.preventDefault();
-                const hash = this.hash;
-                $('html, body').animate({
-                    scrollTop: $(hash).offset().top
-                }, 800);
-            }
-        });
-        
-        // Add hover effect to table rows
-        $('#snapshotTable tbody tr').hover(
-            function() {
-                $(this).addClass('shadow-sm');
-            },
-            function() {
-                $(this).removeClass('shadow-sm');
-            }
-        );
-        
-        // Auto close alerts
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
-        
-        // Refresh button effect
-        $('.btn-refresh').click(function() {
-            $(this).find('i').addClass('fa-spin');
-            setTimeout(() => {
-                $(this).find('i').removeClass('fa-spin');
-            }, 1000);
-        });
-    });
-</script>
-@endpush

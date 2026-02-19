@@ -1,469 +1,539 @@
 @extends('layouts.app')
 
-@section('section_name', 'Asset Depreciation')
-
 @section('content')
 @php
     $nowWib = now(config('app.timezone'));
 @endphp
 
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-:root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --success-gradient: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-    --info-gradient: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-    --warning-gradient: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%);
-}
-
-.card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    overflow: hidden;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-}
-
-.card-header {
-    background: var(--primary-gradient);
-    color: white;
-    border-bottom: none;
-    padding: 1.25rem 1.5rem;
-}
-
-.card-header h3 {
-    font-weight: 600;
-    font-size: 1.25rem;
-    margin: 0;
-    letter-spacing: 0.5px;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    font-weight: 500;
-    color: #4a5568;
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-    letter-spacing: 0.3px;
-}
-
-.form-control {
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 0.625rem 1rem;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    background: #f8fafc;
-}
-
-.form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    background: white;
-}
-
-.form-control[type="number"] {
-    -moz-appearance: textfield;
-}
-
-.form-control[type="number"]::-webkit-outer-spin-button,
-.form-control[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.form-row {
-    display: flex;
-    gap: 1rem;
-}
-
-.form-row > .form-group {
-    flex: 1;
-}
-
-.btn-primary {
-    background: var(--primary-gradient);
-    border: none;
-    border-radius: 10px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    transition: all 0.3s ease;
-    width: 100%;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.text-muted {
-    color: #718096 !important;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-    display: block;
-}
-
-/* Result Card Styles */
-.result-card {
-    background: linear-gradient(135deg, #f6f9fc 0%, #f1f4f8 100%);
-}
-
-.result-card .dl-horizontal {
-    margin: 0;
-}
-
-.result-card dt {
-    font-weight: 500;
-    color: #4a5568;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed #e2e8f0;
-}
-
-.result-card dd {
-    font-weight: 600;
-    color: #2d3748;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed #e2e8f0;
-}
-
-.result-card .row:last-child dt,
-.result-card .row:last-child dd {
-    border-bottom: none;
-}
-
-.result-value {
-    background: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    display: inline-block;
-    font-weight: 600;
-}
-
-/* Table Styles */
-.table {
-    margin-bottom: 0;
-}
-
-.table thead th {
-    background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
-    color: #4a5568;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-top: none;
-    padding: 1rem;
-    white-space: nowrap;
-}
-
-.table tbody td {
-    padding: 1rem;
-    vertical-align: middle;
-    color: #4a5568;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* Alert Styles */
-.alert {
-    border: none;
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
-}
-
-.alert-success {
-    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-    color: #22543d;
-}
-
-.alert-danger {
-    background: linear-gradient(135deg, #feb692 0%, #ea5455 100%);
-    color: #742a2a;
-}
-
-.alert-warning {
-    background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%);
-    color: #744210;
-}
-
-/* Badge Styles */
-.badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 500;
-    font-size: 0.75rem;
-}
-
-.badge-primary {
-    background: var(--primary-gradient);
-    color: white;
-}
-
-/* Small Text */
-.small.text-muted {
-    font-size: 0.75rem;
-    color: #a0aec0 !important;
-}
-
-/* Loading State */
-.btn-loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.btn-loading:after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    top: 50%;
-    left: 50%;
-    margin-left: -10px;
-    margin-top: -10px;
-    border: 2px solid white;
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spinner 0.6s linear infinite;
-}
-
-@keyframes spinner {
-    to { transform: rotate(360deg); }
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 3rem !important;
-}
-
-.empty-state i {
-    font-size: 3rem;
-    color: #cbd5e0;
-    margin-bottom: 1rem;
-}
-
-.empty-state p {
-    color: #a0aec0;
-    font-size: 1rem;
-    margin: 0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .card-body {
-        padding: 1rem;
+    /* ── Design Tokens — Blue palette (matches Finance Dashboard & sidebar) ── */
+    :root {
+        --p1:        #3B82F6;
+        --p2:        #2563EB;
+        --p3:        #1D4ED8;
+        --grad:      linear-gradient(135deg, #3B82F6 0%, #2563EB 55%, #1D4ED8 100%);
+        --grad-hero: linear-gradient(135deg, #1E3A5F 0%, #1E40AF 55%, #2563EB 100%);
+        --surface:   #FFFFFF;
+        --surface-alt: #F8FAFF;
+        --border:    #DBEAFE;
+        --text:      #1E293B;
+        --muted:     #64748B;
+        --success:   #22C55E;
+        --s-bg:      #F0FDF4;
+        --s-b:       #BBF7D0;
+        --warn:      #F59E0B;
+        --w-bg:      #FFFBEB;
+        --w-b:       #FDE68A;
+        --danger:    #EF4444;
+        --d-bg:      #FFF1F2;
+        --d-b:       #FECDD3;
+        --shadow:    0 4px 24px rgba(37,99,235,.09);
+        --shadow-lg: 0 8px 32px rgba(37,99,235,.16);
+        --radius:    18px;
+        --radius-sm: 11px;
+        --font:      'Plus Jakarta Sans', 'Nunito', 'Segoe UI', sans-serif;
     }
-    
-    .form-row {
-        flex-direction: column;
-        gap: 0;
+
+    .ad, .ad * {
+        font-family: var(--font) !important;
+        box-sizing: border-box;
     }
-    
-    .table {
-        font-size: 0.85rem;
+
+    /* Font Awesome protection */
+    .ad .fas, .ad .far, .ad .fab {
+        font-family: 'Font Awesome 5 Free' !important;
+        font-style: normal !important;
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        line-height: 1;
+        vertical-align: middle;
     }
-    
-    .table td, .table th {
-        padding: 0.75rem;
+
+    /* ── Card ── */
+    .ad-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1.5px solid var(--border);
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: box-shadow .2s, transform .2s;
     }
-}
+    .ad-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    /* ── Card header ── */
+    .ad-card-header {
+        background: var(--grad);
+        padding: 15px 22px;
+        display: flex; align-items: center;
+        justify-content: space-between; gap: 12px;
+    }
+    .ad-card-header-left { display: flex; align-items: center; gap: 12px; }
+    .ad-card-header .hicon {
+        width: 30px; height: 30px;
+        background: rgba(255,255,255,.18);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .ad-card-header .hicon .fas { font-size: .88rem !important; color: #fff !important; }
+    .ad-card-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #fff; }
+
+    /* Result card header — dark gradient */
+    .ad-card-header-result { background: var(--grad-hero); }
+
+    /* ── Card body ── */
+    .ad-card-body { padding: 22px; }
+    .ad-card-body-p0 { padding: 0; }
+
+    /* ── Card footer ── */
+    .ad-card-footer {
+        padding: 14px 22px;
+        background: var(--surface-alt);
+        border-top: 1.5px solid var(--border);
+    }
+
+    /* ── Form groups ── */
+    .ad-form-group { margin-bottom: 18px; }
+    .ad-form-group label {
+        display: flex; align-items: center; gap: 6px;
+        font-size: .74rem; font-weight: 700;
+        color: var(--muted); text-transform: uppercase;
+        letter-spacing: .04em; margin-bottom: 6px;
+    }
+    .ad-form-group label .fas {
+        font-size: .78rem !important;
+        color: var(--p1) !important;
+        width: 14px; text-align: center;
+    }
+
+    .ad-input, .ad-select {
+        width: 100%;
+        background: var(--surface-alt);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-size: .9rem; color: var(--text);
+        font-family: var(--font) !important;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        height: auto; appearance: auto;
+    }
+    .ad-input:focus, .ad-select:focus {
+        border-color: var(--p1);
+        box-shadow: 0 0 0 3px rgba(59,130,246,.14);
+        background: #fff;
+    }
+    .ad-input[type="number"] { -moz-appearance: textfield; }
+    .ad-input[type="number"]::-webkit-outer-spin-button,
+    .ad-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Input group (Rp prefix) */
+    .ad-input-group { display: flex; align-items: stretch; }
+    .ad-input-group .ad-prefix {
+        background: #EFF6FF;
+        border: 1.5px solid var(--border);
+        border-right: none;
+        border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        padding: 10px 14px;
+        color: var(--p1); font-weight: 700; font-size: .9rem;
+        display: flex; align-items: center;
+        white-space: nowrap;
+    }
+    .ad-input-group .ad-input {
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    .ad-hint {
+        font-size: .77rem; color: var(--muted);
+        margin-top: 5px; display: flex; align-items: center; gap: 5px;
+    }
+    .ad-hint .fas { font-size: .72rem !important; color: var(--muted) !important; }
+
+    /* ── Submit button ── */
+    .ad-btn-submit {
+        width: 100%;
+        display: flex; align-items: center; justify-content: center; gap: 9px;
+        padding: 12px 20px;
+        background: var(--grad);
+        color: #fff !important;
+        border: none; border-radius: var(--radius-sm);
+        font-size: .95rem; font-weight: 700;
+        cursor: pointer;
+        transition: transform .15s, box-shadow .15s;
+        font-family: var(--font) !important;
+    }
+    .ad-btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.30); }
+    .ad-btn-submit .fas { font-size: .92rem !important; color: #fff !important; }
+    .ad-btn-submit:disabled { opacity: .65; pointer-events: none; }
+
+    /* ── Result DL ── */
+    .ad-result-list { margin: 0; }
+    .ad-result-row {
+        display: flex; align-items: center;
+        padding: 11px 0;
+        border-bottom: 1px dashed var(--border);
+    }
+    .ad-result-row:last-child { border-bottom: none; }
+    .ad-result-label {
+        flex: 0 0 52%;
+        font-size: .84rem; font-weight: 600; color: var(--muted);
+        display: flex; align-items: center; gap: 7px;
+    }
+    .ad-result-label .fas { font-size: .78rem !important; color: var(--p1) !important; width: 15px; text-align: center; }
+    .ad-result-value {
+        flex: 1;
+        font-size: .9rem; font-weight: 700; color: var(--text);
+        text-align: right;
+    }
+
+    /* pill chips inside result */
+    .ad-chip {
+        display: inline-flex; align-items: center;
+        background: var(--grad);
+        color: #fff !important;
+        padding: 3px 13px; border-radius: 20px;
+        font-size: .78rem; font-weight: 700;
+    }
+
+    /* ── Alerts ── */
+    .ad-alert {
+        border-radius: var(--radius-sm);
+        padding: 12px 16px;
+        font-size: .88rem; font-weight: 600;
+        margin-bottom: 16px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .ad-alert .fas { font-size: .88rem !important; }
+    .ad-alert.d-none { display: none !important; }
+    .ad-alert-success { background: var(--s-bg); color: #15803D; border: 1.5px solid var(--s-b); }
+    .ad-alert-success .fas { color: #15803D !important; }
+    .ad-alert-danger  { background: var(--d-bg); color: #BE123C; border: 1.5px solid var(--d-b); }
+    .ad-alert-danger .fas  { color: #BE123C !important; }
+    .ad-alert-warning { background: var(--w-bg); color: #92400E; border: 1.5px solid var(--w-b); }
+    .ad-alert-warning .fas { color: #92400E !important; }
+
+    /* ── Table ── */
+    .ad-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .ad-table thead th {
+        font-size: .71rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: .05em;
+        color: var(--muted); padding: 12px 16px;
+        background: var(--surface-alt);
+        border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+    }
+    .ad-table thead th .fas, .ad-table thead th .far {
+        font-size: .72rem !important; color: var(--p1) !important;
+        margin-right: 4px; opacity: .85;
+    }
+    .ad-table tbody tr { transition: background .15s; }
+    .ad-table tbody tr:hover { background: #F0F6FF; }
+    .ad-table tbody td {
+        padding: 13px 16px; vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+        font-size: .88rem; color: var(--text);
+    }
+    .ad-table tbody tr:last-child td { border-bottom: none; }
+
+    .ad-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: var(--grad); color: #fff;
+        padding: 3px 11px; border-radius: 20px;
+        font-size: .73rem; font-weight: 700;
+    }
+
+    .ad-asset-code { font-weight: 700; color: var(--text); }
+    .ad-asset-sub  { font-size: .76rem; color: var(--muted); margin-top: 1px; }
+
+    /* ── Empty state ── */
+    .ad-empty { text-align: center; padding: 52px 24px; }
+    .ad-empty .ei { font-size: 2.8rem; color: #BFDBFE; margin-bottom: 12px; display: block; }
+    .ad-empty .ei .fas { font-size: 2.8rem !important; color: #BFDBFE !important; }
+    .ad-empty p { color: var(--muted); font-size: .92rem; margin: 0; }
+
+    /* ── Loading spinner ── */
+    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+    .btn-loading::after {
+        content: '';
+        position: absolute; width: 18px; height: 18px;
+        top: 50%; left: 50%;
+        margin: -9px 0 0 -9px;
+        border: 2px solid #fff; border-top-color: transparent;
+        border-radius: 50%;
+        animation: adSpin .6s linear infinite;
+    }
+    @keyframes adSpin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+        .ad-card-body { padding: 16px; }
+        .ad-card-header { flex-direction: column; align-items: flex-start; }
+    }
 </style>
 
-<div class="row">
-    <div class="col-lg-6 col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-calculator mr-2"></i>
-                    Kalkulasi Penyusutan Garis Lurus
-                </h3>
-            </div>
-            <form id="depreciation-form" action="{{ route('finance.depreciation.calc') }}" method="POST">
-                @csrf
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="asset_id">
-                            <i class="fas fa-barcode mr-1"></i>
-                            Asset ID
-                        </label>
-                        <select id="asset_id" name="asset_id" class="form-control" required>
-                            <option value="">Pilih asset dari database</option>
-                            @foreach(($assets ?? collect()) as $asset)
-                                <option value="{{ $asset->id }}">
-                                    #{{ $asset->id }} - {{ $asset->account_code }} ({{ $asset->category }})
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">
-                            <i class="fas fa-database mr-1"></i>
-                            Total asset tersedia: {{ ($assets ?? collect())->count() }}
-                        </small>
+<div class="ad">
+
+    {{-- ── Brand Header ── --}}
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
+        <div style="
+            width:52px; height:52px;
+            background: var(--grad);
+            border-radius:14px;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 4px 16px rgba(37,99,235,.28);
+            flex-shrink:0;
+        ">
+            <i class="fas fa-calculator" style="font-size:1.35rem; color:#fff;"></i>
+        </div>
+        <div>
+            <h1 style="font-size:1.3rem; font-weight:800; color:var(--text); margin:0 0 2px; line-height:1.2;">
+                Asset Depreciation
+            </h1>
+            <p style="font-size:.8rem; color:var(--muted); font-weight:500; margin:0;">
+                Kalkulasi penyusutan aset metode garis lurus
+            </p>
+        </div>
+    </div>
+
+    {{-- ══ Row 1 : Form + Result ══ --}}
+    <div class="row">
+
+        {{-- ── Form Kalkulasi ── --}}
+        <div class="col-lg-6 col-md-12">
+            <div class="ad-card">
+                <div class="ad-card-header">
+                    <div class="ad-card-header-left">
+                        <span class="hicon"><i class="fas fa-calculator"></i></span>
+                        <h3>Kalkulasi Penyusutan Garis Lurus</h3>
                     </div>
-                    <div class="form-group">
-                        <label for="acquisition_cost">
-                            <i class="fas fa-money-bill-wave mr-1"></i>
-                            Nilai Perolehan
-                        </label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Rp</span>
-                            </div>
-                            <input type="number" id="acquisition_cost" name="acquisition_cost" class="form-control" min="0" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="useful_life_months">
-                            <i class="fas fa-clock mr-1"></i>
-                            Umur Manfaat (bulan)
-                        </label>
-                        <input type="number" id="useful_life_months" name="useful_life_months" class="form-control" min="1" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="month">
-                                <i class="fas fa-calendar-alt mr-1"></i>
-                                Bulan
+                </div>
+
+                <form id="depreciation-form" action="{{ route('finance.depreciation.calc') }}" method="POST">
+                    @csrf
+                    <div class="ad-card-body">
+
+                        {{-- Asset ID --}}
+                        <div class="ad-form-group">
+                            <label for="asset_id">
+                                <i class="fas fa-barcode"></i> Asset ID
                             </label>
-                            <select id="month" name="month" class="form-control" required>
-                                @for($m = 1; $m <= 12; $m++)
-                                    <option value="{{ $m }}" {{ $nowWib->month === $m ? 'selected' : '' }}>
-                                        {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                            <select id="asset_id" name="asset_id" class="ad-select" required>
+                                <option value="">Pilih asset dari database</option>
+                                @foreach(($assets ?? collect()) as $asset)
+                                    <option value="{{ $asset->id }}">
+                                        #{{ $asset->id }} - {{ $asset->account_code }} ({{ $asset->category }})
                                     </option>
-                                @endfor
+                                @endforeach
                             </select>
+                            <div class="ad-hint">
+                                <i class="fas fa-database"></i>
+                                Total asset tersedia: {{ ($assets ?? collect())->count() }}
+                            </div>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label for="year">
-                                <i class="fas fa-calendar-check mr-1"></i>
-                                Tahun
+
+                        {{-- Nilai Perolehan --}}
+                        <div class="ad-form-group">
+                            <label for="acquisition_cost">
+                                <i class="fas fa-money-bill-wave"></i> Nilai Perolehan
                             </label>
-                            <input type="number" id="year" name="year" class="form-control" min="1900" max="2100" value="{{ $nowWib->year }}" required>
+                            <div class="ad-input-group">
+                                <span class="ad-prefix">Rp</span>
+                                <input
+                                    type="number" id="acquisition_cost" name="acquisition_cost"
+                                    class="ad-input" min="0" step="0.01" required
+                                >
+                            </div>
                         </div>
+
+                        {{-- Umur Manfaat --}}
+                        <div class="ad-form-group">
+                            <label for="useful_life_months">
+                                <i class="fas fa-clock"></i> Umur Manfaat (bulan)
+                            </label>
+                            <input
+                                type="number" id="useful_life_months" name="useful_life_months"
+                                class="ad-input" min="1" required
+                            >
+                        </div>
+
+                        {{-- Bulan & Tahun --}}
+                        <div class="form-row" style="gap:0 12px;">
+                            <div class="ad-form-group col-md-6" style="padding:0;">
+                                <label for="month">
+                                    <i class="fas fa-calendar-alt"></i> Bulan
+                                </label>
+                                <select id="month" name="month" class="ad-select" required>
+                                    @for($m = 1; $m <= 12; $m++)
+                                        <option value="{{ $m }}" {{ $nowWib->month === $m ? 'selected' : '' }}>
+                                            {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="ad-form-group col-md-6" style="padding:0;">
+                                <label for="year">
+                                    <i class="fas fa-calendar-check"></i> Tahun
+                                </label>
+                                <input
+                                    type="number" id="year" name="year"
+                                    class="ad-input" min="1900" max="2100"
+                                    value="{{ $nowWib->year }}" required
+                                >
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="ad-card-footer">
+                        <button type="submit" class="ad-btn-submit" id="submit-btn">
+                            <i class="fas fa-calculator"></i>
+                            <span>Hitung Penyusutan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- ── Hasil Perhitungan ── --}}
+        <div class="col-lg-6 col-md-12">
+            <div class="ad-card">
+                <div class="ad-card-header ad-card-header-result">
+                    <div class="ad-card-header-left">
+                        <span class="hicon"><i class="fas fa-chart-line"></i></span>
+                        <h3>Hasil Perhitungan</h3>
                     </div>
                 </div>
-                <div class="card-footer bg-transparent">
-                    <button type="submit" class="btn btn-primary" id="submit-btn">
-                        <i class="fas fa-calculator mr-1"></i> 
-                        Hitung Penyusutan
-                    </button>
+                <div class="ad-card-body">
+
+                    {{-- Alert --}}
+                    <div id="depreciation-alert" class="ad-alert d-none" role="alert"></div>
+
+                    {{-- Result list --}}
+                    <div class="ad-result-list">
+
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="fas fa-barcode"></i> Asset ID
+                            </div>
+                            <div class="ad-result-value" id="result-asset-id">
+                                <span class="ad-chip">-</span>
+                            </div>
+                        </div>
+
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="fas fa-money-bill-wave"></i> Nilai Perolehan
+                            </div>
+                            <div class="ad-result-value" id="result-acquisition-cost">-</div>
+                        </div>
+
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="fas fa-hourglass-half"></i> Umur Bulan
+                            </div>
+                            <div class="ad-result-value" id="result-useful-life">
+                                <span class="ad-chip">-</span>
+                            </div>
+                        </div>
+
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="fas fa-divide"></i> Penyusutan / Bulan
+                            </div>
+                            <div class="ad-result-value" id="result-depreciation-per-month">-</div>
+                        </div>
+
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="fas fa-calendar-alt"></i> Periode
+                            </div>
+                            <div class="ad-result-value" id="result-period">
+                                <span class="ad-chip">-</span>
+                            </div>
+                        </div>
+
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="far fa-clock"></i> Waktu Hitung (WIB)
+                            </div>
+                            <div class="ad-result-value" id="result-calculated-at" style="font-size:.84rem;">-</div>
+                        </div>
+
+                    </div>
                 </div>
-            </form>
-        </div>
-    </div>
-    <div class="col-lg-6 col-md-12">
-        <div class="card result-card">
-            <div class="card-header">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-chart-line mr-2"></i>
-                    Hasil Perhitungan
-                </h3>
-            </div>
-            <div class="card-body">
-                <div id="depreciation-alert" class="alert d-none" role="alert"></div>
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Asset ID</dt>
-                    <dd class="col-sm-7" id="result-asset-id">
-                        <span class="badge badge-primary">-</span>
-                    </dd>
-
-                    <dt class="col-sm-5">Nilai Perolehan</dt>
-                    <dd class="col-sm-7" id="result-acquisition-cost">-</dd>
-
-                    <dt class="col-sm-5">Umur Bulan</dt>
-                    <dd class="col-sm-7" id="result-useful-life">
-                        <span class="result-value">-</span>
-                    </dd>
-
-                    <dt class="col-sm-5">Penyusutan / Bulan</dt>
-                    <dd class="col-sm-7" id="result-depreciation-per-month">-</dd>
-
-                    <dt class="col-sm-5">Periode</dt>
-                    <dd class="col-sm-7" id="result-period">
-                        <span class="result-value">-</span>
-                    </dd>
-
-                    <dt class="col-sm-5">Waktu Hitung (WIB)</dt>
-                    <dd class="col-sm-7" id="result-calculated-at">
-                        <i class="far fa-clock mr-1"></i>
-                        <span>-</span>
-                    </dd>
-                </dl>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card mt-3">
-            <div class="card-header">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-history mr-2"></i>
-                    Log Kalkulasi Penyusutan
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+    </div>
+
+    {{-- ══ Row 2 : Log Table ══ --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="ad-card">
+                <div class="ad-card-header">
+                    <div class="ad-card-header-left">
+                        <span class="hicon"><i class="fas fa-history"></i></span>
+                        <h3>Log Kalkulasi Penyusutan</h3>
+                    </div>
+                </div>
+
+                <div class="ad-card-body-p0" style="overflow-x:auto;">
+                    <table class="ad-table">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Waktu Hitung (WIB)</th>
-                                <th>Asset</th>
-                                <th>Periode</th>
-                                <th>Nilai Perolehan</th>
-                                <th>Umur Manfaat (Bulan)</th>
-                                <th>Penyusutan / Bulan</th>
-                                <th>Dihitung Oleh</th>
+                                <th><i class="fas fa-hashtag"></i>#</th>
+                                <th><i class="far fa-clock"></i>Waktu Hitung (WIB)</th>
+                                <th><i class="fas fa-cube"></i>Asset</th>
+                                <th><i class="fas fa-calendar-alt"></i>Periode</th>
+                                <th><i class="fas fa-money-bill-wave"></i>Nilai Perolehan</th>
+                                <th><i class="fas fa-hourglass-half"></i>Umur (Bln)</th>
+                                <th><i class="fas fa-divide"></i>Penyusutan / Bulan</th>
+                                <th><i class="far fa-user"></i>Dihitung Oleh</th>
                             </tr>
                         </thead>
                         <tbody id="depreciation-log-body">
                             @forelse(($logs ?? collect()) as $index => $log)
                                 <tr>
-                                    <td><span class="badge badge-primary">{{ $index + 1 }}</span></td>
-                                    <td>{{ $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}</td>
                                     <td>
-                                        <div><strong>{{ $log->asset?->account_code ?? '-' }}</strong></div>
-                                        <small class="text-muted">ID: {{ $log->asset_id }}</small>
+                                        <span class="ad-badge">{{ $index + 1 }}</span>
                                     </td>
-                                    <td><span class="badge badge-primary">{{ sprintf('%02d/%04d', (int) $log->period_month, (int) $log->period_year) }}</span></td>
-                                    <td>Rp {{ number_format((float) $log->acquisition_cost, 2, ',', '.') }}</td>
-                                    <td>{{ (int) $log->useful_life_months }}</td>
-                                    <td>Rp {{ number_format((float) $log->depreciation_per_month, 2, ',', '.') }}</td>
-                                    <td>{{ $log->calculator?->name ?? '-' }}</td>
+                                    <td style="font-size:.84rem;">
+                                        {{ $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}
+                                    </td>
+                                    <td>
+                                        <div class="ad-asset-code">{{ $log->asset?->account_code ?? '-' }}</div>
+                                        <div class="ad-asset-sub">ID: {{ $log->asset_id }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="ad-badge">{{ sprintf('%02d/%04d', (int) $log->period_month, (int) $log->period_year) }}</span>
+                                    </td>
+                                    <td style="font-weight:700; color:var(--p2);">
+                                        Rp {{ number_format((float) $log->acquisition_cost, 2, ',', '.') }}
+                                    </td>
+                                    <td style="font-weight:600; text-align:center;">
+                                        {{ (int) $log->useful_life_months }}
+                                    </td>
+                                    <td style="font-weight:700; color:#16A34A;">
+                                        Rp {{ number_format((float) $log->depreciation_per_month, 2, ',', '.') }}
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:7px;">
+                                            <span style="width:26px;height:26px;background:#EFF6FF;border-radius:50%;border:1.5px solid #BFDBFE;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                <i class="fas fa-user" style="font-size:.68rem !important; color:var(--p1) !important;"></i>
+                                            </span>
+                                            <span style="font-weight:600; font-size:.87rem;">{{ $log->calculator?->name ?? '-' }}</span>
+                                        </div>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr id="depreciation-log-empty-row">
-                                    <td colspan="8" class="empty-state">
-                                        <i class="fas fa-calculator"></i>
-                                        <p>Belum ada log kalkulasi penyusutan.</p>
+                                    <td colspan="8">
+                                        <div class="ad-empty">
+                                            <span class="ei"><i class="fas fa-calculator"></i></span>
+                                            <p>Belum ada log kalkulasi penyusutan.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforelse
@@ -473,104 +543,87 @@
             </div>
         </div>
     </div>
-</div>
+
+</div>{{-- /ad --}}
 @endsection
 
 @section('js')
 <script>
     (function () {
-        const form = document.getElementById('depreciation-form');
+        const form      = document.getElementById('depreciation-form');
         const submitBtn = document.getElementById('submit-btn');
-        const alertBox = document.getElementById('depreciation-alert');
-        const logBody = document.getElementById('depreciation-log-body');
+        const alertBox  = document.getElementById('depreciation-alert');
+        const logBody   = document.getElementById('depreciation-log-body');
 
+        /* ── alert helper ── */
         function setAlert(type, message) {
-            alertBox.className = 'alert alert-' + type;
-            alertBox.textContent = message;
-            alertBox.classList.remove('d-none');
-            
-            // Auto hide alert after 5 seconds for success messages
-            if (type === 'success') {
-                setTimeout(() => {
-                    alertBox.classList.add('d-none');
-                }, 5000);
-            }
+            const iconMap = { success: 'fa-check-circle', danger: 'fa-times-circle', warning: 'fa-exclamation-triangle' };
+            alertBox.className = 'ad-alert ad-alert-' + type;
+            alertBox.innerHTML = `<i class="fas ${iconMap[type] || ''}"></i> ${message}`;
+            if (type === 'success') setTimeout(() => alertBox.classList.add('d-none'), 5000);
         }
 
         function formatNumber(value) {
-            const number = Number(value);
-            if (Number.isNaN(number)) {
-                return '-';
-            }
-
-            return number.toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            const n = Number(value);
+            if (Number.isNaN(n)) return '-';
+            return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        function escapeHtml(value) {
-            return String(value ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        function escapeHtml(v) {
+            return String(v ?? '')
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
         }
 
         function renumberLogRows() {
-            if (!logBody) {
-                return;
-            }
-
-            const rows = Array.from(logBody.querySelectorAll('tr')).filter((row) => row.id !== 'depreciation-log-empty-row');
-            rows.forEach((row, index) => {
-                const badge = row.querySelector('td:first-child .badge');
-                if (badge) {
-                    badge.textContent = String(index + 1);
-                }
-            });
+            if (!logBody) return;
+            Array.from(logBody.querySelectorAll('tr'))
+                .filter(r => r.id !== 'depreciation-log-empty-row')
+                .forEach((row, i) => {
+                    const b = row.querySelector('td:first-child .ad-badge');
+                    if (b) b.textContent = String(i + 1);
+                });
         }
 
         function prependLogRow(log) {
-            if (!logBody || !log) {
-                return;
-            }
-
-            const emptyRow = document.getElementById('depreciation-log-empty-row');
-            if (emptyRow) {
-                emptyRow.remove();
-            }
+            if (!logBody || !log) return;
+            const empty = document.getElementById('depreciation-log-empty-row');
+            if (empty) empty.remove();
 
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><span class="badge badge-primary">1</span></td>
-                <td>${escapeHtml(log.calculated_at_label || '-')}</td>
+                <td><span class="ad-badge">1</span></td>
+                <td style="font-size:.84rem;">${escapeHtml(log.calculated_at_label || '-')}</td>
                 <td>
-                    <div><strong>${escapeHtml(log.asset_account_code || '-')}</strong></div>
-                    <small class="text-muted">ID: ${escapeHtml(log.asset_id || '-')}</small>
+                    <div class="ad-asset-code">${escapeHtml(log.asset_account_code || '-')}</div>
+                    <div class="ad-asset-sub">ID: ${escapeHtml(log.asset_id || '-')}</div>
                 </td>
-                <td><span class="badge badge-primary">${escapeHtml(log.period_label || '-')}</span></td>
-                <td>Rp ${formatNumber(log.acquisition_cost)}</td>
-                <td>${escapeHtml(log.useful_life_months ?? '-')}</td>
-                <td>Rp ${formatNumber(log.depreciation_per_month)}</td>
-                <td>${escapeHtml(log.calculated_by_name || '-')}</td>
+                <td><span class="ad-badge">${escapeHtml(log.period_label || '-')}</span></td>
+                <td style="font-weight:700;color:var(--p2);">Rp ${formatNumber(log.acquisition_cost)}</td>
+                <td style="font-weight:600;text-align:center;">${escapeHtml(log.useful_life_months ?? '-')}</td>
+                <td style="font-weight:700;color:#16A34A;">Rp ${formatNumber(log.depreciation_per_month)}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:7px;">
+                        <span style="width:26px;height:26px;background:#EFF6FF;border-radius:50%;border:1.5px solid #BFDBFE;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas fa-user" style="font-size:.68rem !important;color:var(--p1) !important;"></i>
+                        </span>
+                        <span style="font-weight:600;font-size:.87rem;">${escapeHtml(log.calculated_by_name || '-')}</span>
+                    </div>
+                </td>
             `;
-
             logBody.prepend(row);
             renumberLogRows();
         }
 
-        form.addEventListener('submit', async function (event) {
-            event.preventDefault();
+        /* ── Form submit ── */
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
             alertBox.classList.add('d-none');
-            
-            // Add loading state to button
             submitBtn.classList.add('btn-loading');
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch(form.action, {
+                const resp = await fetch(form.action, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -579,52 +632,56 @@
                     body: new FormData(form)
                 });
 
-                const payload = await response.json();
+                const payload = await resp.json();
 
-                if (!response.ok) {
-                    const firstError = payload.errors ? Object.values(payload.errors)[0][0] : (payload.message || 'Gagal menghitung penyusutan.');
-                    setAlert('danger', firstError);
+                if (!resp.ok) {
+                    const err = payload.errors
+                        ? Object.values(payload.errors)[0][0]
+                        : (payload.message || 'Gagal menghitung penyusutan.');
+                    setAlert('danger', err);
                     return;
                 }
 
                 const data = payload.data || {};
-                
-                // Update result display
-                document.getElementById('result-asset-id').innerHTML = `<span class="badge badge-primary">${data.asset_id || '-'}</span>`;
-                document.getElementById('result-acquisition-cost').textContent = 'Rp ' + formatNumber(data.acquisition_cost);
-                document.getElementById('result-useful-life').innerHTML = `<span class="result-value">${data.useful_life_months ?? '-'}</span>`;
-                document.getElementById('result-depreciation-per-month').textContent = 'Rp ' + formatNumber(data.depreciation_per_month);
-                
+
+                document.getElementById('result-asset-id').innerHTML =
+                    `<span class="ad-chip">${data.asset_id || '-'}</span>`;
+                document.getElementById('result-acquisition-cost').textContent =
+                    'Rp ' + formatNumber(data.acquisition_cost);
+                document.getElementById('result-useful-life').innerHTML =
+                    `<span class="ad-chip">${data.useful_life_months ?? '-'}</span>`;
+                document.getElementById('result-depreciation-per-month').textContent =
+                    'Rp ' + formatNumber(data.depreciation_per_month);
+
                 const periodLabel = (data.period_month && data.period_year)
                     ? String(data.period_month).padStart(2, '0') + '/' + data.period_year
                     : '-';
-                document.getElementById('result-period').innerHTML = `<span class="result-value">${periodLabel}</span>`;
-                
-                const timeElement = document.getElementById('result-calculated-at');
-                timeElement.innerHTML = `<i class="far fa-clock mr-1"></i><span>${data.calculated_at || '-'}</span>`;
-                
+                document.getElementById('result-period').innerHTML =
+                    `<span class="ad-chip">${periodLabel}</span>`;
+                document.getElementById('result-calculated-at').textContent =
+                    data.calculated_at || '-';
+
                 if (data.log_saved && data.log) {
                     prependLogRow(data.log);
                     setAlert('success', payload.message || 'Perhitungan berhasil.');
                 } else {
                     setAlert('warning', payload.message || 'Perhitungan berhasil, tetapi log belum tersimpan.');
                 }
-            } catch (error) {
+
+            } catch (err) {
                 setAlert('danger', 'Terjadi kesalahan saat mengirim request.');
-                console.error('Error:', error);
+                console.error(err);
             } finally {
-                // Remove loading state
                 submitBtn.classList.remove('btn-loading');
                 submitBtn.disabled = false;
             }
         });
 
-        // Add input validation
-        document.getElementById('acquisition_cost').addEventListener('input', function(e) {
+        /* ── Input validation ── */
+        document.getElementById('acquisition_cost').addEventListener('input', function () {
             if (this.value < 0) this.value = 0;
         });
-
-        document.getElementById('useful_life_months').addEventListener('input', function(e) {
+        document.getElementById('useful_life_months').addEventListener('input', function () {
             if (this.value < 1) this.value = 1;
         });
     })();
