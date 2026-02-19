@@ -44,7 +44,7 @@
         display: flex; align-items: center; justify-content: center;
         color: white; font-size: 1.2rem; box-shadow: var(--shadow-md); flex-shrink: 0;
     }
-    .ivd-header-title { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.02em; line-height: 1.2; font-family: 'DM Mono', monospace; }
+    .ivd-header-title { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.01em; line-height: 1.2; font-family: 'Plus Jakarta Sans', sans-serif; }
     .ivd-header-sub { font-size: 0.8rem; color: var(--text-muted); margin: 0.1rem 0 0; font-weight: 500; font-family: 'Plus Jakarta Sans', sans-serif; }
     .ivd-header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -116,8 +116,8 @@
         display: flex; align-items: center; gap: 0.3rem;
     }
     .ivd-sum-value {
-        font-size: 0.95rem; font-weight: 800; color: var(--text-primary);
-        font-family: 'DM Mono', monospace; line-height: 1.2;
+        font-size: 0.95rem; font-weight: 500; color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.2;
     }
     .ivd-sum-value.blue   { color: var(--blue-primary); }
     .ivd-sum-value.red    { color: var(--accent-red); }
@@ -143,7 +143,7 @@
     }
     .ivd-meta-key i { font-size: 0.6rem; color: var(--blue-primary); }
     .ivd-meta-val { font-size: 0.83rem; font-weight: 600; color: var(--text-primary); }
-    .ivd-meta-val.mono { font-family: 'DM Mono', monospace; font-size: 0.8rem; }
+    .ivd-meta-val.mono { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.83rem; font-weight: 500; }
 
     /* Badges */
     .badge-ivd {
@@ -201,13 +201,13 @@
         background: #f0f4fd; border-top: 2px solid var(--border-table);
         font-size: 0.78rem; padding: 0.65rem 0.9rem; color: var(--text-primary);
     }
-    .cell-no-sm { font-size: 0.72rem; color: var(--text-muted); font-family: 'DM Mono', monospace; text-align: center; }
-    .cell-code  { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text-primary); font-weight: 600; }
-    .cell-muted { color: var(--text-muted); font-size: 0.78rem; }
-    .cell-amount-th { text-align: right; font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 800; }
+    .cell-no-sm  { font-size: 0.72rem; color: var(--text-muted); font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; }
+    .cell-code   { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.78rem; color: var(--text-primary); font-weight: 500; }
+    .cell-muted  { color: var(--text-muted); font-size: 0.78rem; }
+    .cell-amount-th { text-align: right; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; font-weight: 700; }
     .cell-amount-th.blue { color: var(--blue-primary); }
     .cell-amount-th.red  { color: var(--accent-red); }
-    .cell-amount-td { text-align: right; font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+    .cell-amount-td { text-align: right; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; font-weight: 400; color: var(--text-primary); white-space: nowrap; }
     .empty-row td { text-align: center; color: var(--text-muted); font-size: 0.82rem; font-style: italic; padding: 2rem; }
 
     /* ── Notes ────────────────────────────────── */
@@ -250,9 +250,7 @@
         display: flex; align-items: center; justify-content: space-between;
         margin-bottom: 0.55rem; flex-wrap: wrap; gap: 0.4rem;
     }
-    .ivd-note-user {
-        display: flex; align-items: center; gap: 0.5rem;
-    }
+    .ivd-note-user { display: flex; align-items: center; gap: 0.5rem; }
     .ivd-note-avatar {
         width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
         background: linear-gradient(135deg, var(--blue-primary), var(--blue-light));
@@ -262,10 +260,9 @@
     .ivd-note-name { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
     .ivd-note-role {
         font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
-        background: rgba(37,99,235,0.07); padding: 0.1rem 0.45rem;
-        border-radius: 999px;
+        background: rgba(37,99,235,0.07); padding: 0.1rem 0.45rem; border-radius: 999px;
     }
-    .ivd-note-time { font-size: 0.72rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+    .ivd-note-time { font-size: 0.72rem; color: var(--text-muted); font-family: 'Plus Jakarta Sans', sans-serif; }
     .ivd-note-body { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.55; }
     .ivd-notes-empty {
         text-align: center; padding: 2rem 1rem; color: var(--text-muted);
@@ -364,13 +361,13 @@
         </div>
         <div class="ivd-sum-item si-creator">
             <div class="ivd-sum-label"><i class="fas fa-user" style="font-size:.6rem;color:var(--accent-green);"></i> Dibuat Oleh</div>
-            <div class="ivd-sum-value" style="font-size:.85rem;font-family:'Plus Jakarta Sans',sans-serif;">{{ $invoice->creator?->name ?? '-' }}</div>
+            <div class="ivd-sum-value" style="font-size:.85rem;">{{ $invoice->creator?->name ?? '-' }}</div>
         </div>
         <div class="ivd-sum-item si-posted">
             <div class="ivd-sum-label"><i class="fas fa-stamp" style="font-size:.6rem;color:var(--accent-purple);"></i> Terekam Oleh</div>
-            <div class="ivd-sum-value" style="font-size:.85rem;font-family:'Plus Jakarta Sans',sans-serif;">{{ $invoice->poster?->name ?? '—' }}</div>
+            <div class="ivd-sum-value" style="font-size:.85rem;">{{ $invoice->poster?->name ?? '—' }}</div>
             @if($invoice->posted_at)
-                <div class="ivd-sum-sub mono" style="font-family:'DM Mono',monospace;">{{ $invoice->posted_at->format('d/m/Y H:i') }}</div>
+                <div class="ivd-sum-sub" style="font-family:'Plus Jakarta Sans',sans-serif;">{{ $invoice->posted_at->format('d/m/Y H:i') }}</div>
             @endif
         </div>
     </div>
@@ -436,7 +433,7 @@
                 <div class="ivd-meta-val">
                     {{ $invoice->poster?->name ?? '—' }}
                     @if($invoice->posted_at)
-                        <span class="ivd-sum-sub mono" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-muted);display:block;">{{ $invoice->posted_at->format('d/m/Y H:i:s') }}</span>
+                        <span class="ivd-sum-sub" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;color:var(--text-muted);display:block;">{{ $invoice->posted_at->format('d/m/Y H:i:s') }}</span>
                     @endif
                 </div>
             </div>

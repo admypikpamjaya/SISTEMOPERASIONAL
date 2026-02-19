@@ -154,21 +154,30 @@
     .inv-table tbody tr:hover td { background: rgba(37,99,235,0.025); }
 
     /* Row number */
-    .cell-no { font-size: 0.72rem; color: var(--text-muted); font-family: 'DM Mono', monospace; text-align: center; }
+    .cell-no {
+        font-size: 0.72rem; color: var(--text-muted);
+        font-family: 'Plus Jakarta Sans', sans-serif; text-align: center;
+    }
 
     /* Invoice number link */
     .inv-no-link {
-        font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 700;
-        color: var(--blue-primary); text-decoration: none; letter-spacing: 0.02em;
+        font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.8rem; font-weight: 700;
+        color: var(--blue-primary); text-decoration: none; letter-spacing: 0;
         transition: color 0.15s;
     }
     .inv-no-link:hover { color: var(--blue-dark); text-decoration: underline; }
 
     /* Date */
-    .cell-date { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; }
+    .cell-date {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap;
+    }
 
     /* Amount */
-    .cell-amount { font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 600; text-align: right; white-space: nowrap; }
+    .cell-amount {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.82rem; font-weight: 400; text-align: right; white-space: nowrap;
+    }
     .cell-amount.debit  { color: var(--blue-primary); }
     .cell-amount.credit { color: var(--accent-red); }
 
@@ -242,8 +251,8 @@
     }
 
     /* ── Journal / Reference text ─────────────── */
-    .cell-journal  { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); max-width: 160px; }
-    .cell-ref      { font-size: 0.78rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+    .cell-journal { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); max-width: 160px; }
+    .cell-ref     { font-size: 0.78rem; color: var(--text-muted); font-family: 'Plus Jakarta Sans', sans-serif; }
 
     /* ── Animations ───────────────────────────── */
     @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }

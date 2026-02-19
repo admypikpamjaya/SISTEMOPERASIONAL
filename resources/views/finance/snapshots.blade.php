@@ -162,8 +162,8 @@
     .sc-icon-ending  { background: rgba(37,99,235,0.1); color: var(--blue-primary); }
     .sc-icon-surplus { background: rgba(16,185,129,0.1); color: var(--accent-green); }
     .sc-value {
-        font-size: 1.25rem; font-weight: 800; color: var(--text-primary);
-        font-family: 'DM Mono', monospace; line-height: 1.1; letter-spacing: -0.02em;
+        font-size: 1.25rem; font-weight: 400; color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.1; letter-spacing: -0.01em;
     }
     .sc-value.blue   { color: var(--blue-primary); }
     .sc-value.green  { color: var(--accent-green); }
@@ -220,13 +220,18 @@
     .badge-version {
         display: inline-flex; align-items: center; gap: 0.2rem;
         background: #f1f5f9; color: var(--text-secondary);
-        font-size: 0.7rem; font-weight: 700; font-family: 'DM Mono', monospace;
+        font-size: 0.7rem; font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         padding: 0.2rem 0.55rem; border-radius: 999px;
     }
     .badge-version i { font-size: 0.55rem; color: var(--blue-primary); }
 
-    /* ── Mono amounts ─────────────────────────── */
-    .amount-cell { font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+    /* ── Amount cells ─────────────────────────── */
+    .amount-cell {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.82rem; font-weight: 400; white-space: nowrap;
+        color: var(--text-secondary);
+    }
     .amount-cell.positive { color: var(--accent-green); }
     .amount-cell.negative { color: var(--accent-red); }
 
@@ -496,7 +501,7 @@
                             </a>
                         </td>
                         <td>
-                            <span style="font-family:'DM Mono',monospace;font-size:.82rem;font-weight:600;color:var(--text-primary);">
+                            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--text-primary);">
                                 {{ $periodLabel }}
                             </span>
                         </td>
@@ -512,7 +517,7 @@
                             </span>
                         </td>
                         <td><span class="amount-cell">Rp {{ number_format($openingBalance, 2, ',', '.') }}</span></td>
-                        <td><span class="amount-cell blue">Rp {{ number_format($endingBalance, 2, ',', '.') }}</span></td>
+                        <td><span class="amount-cell" style="color:var(--blue-primary);">Rp {{ number_format($endingBalance, 2, ',', '.') }}</span></td>
                         <td>
                             <span class="amount-cell {{ $netResult >= 0 ? 'positive' : 'negative' }}">
                                 {{ $netResult >= 0 ? '' : '-' }}Rp {{ number_format(abs($netResult), 2, ',', '.') }}
@@ -541,7 +546,7 @@
                             @endif
                         </td>
                         <td>
-                            <span style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--text-muted);">
+                            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.75rem;color:var(--text-muted);">
                                 {{ optional($report->generated_at)->format('Y-m-d H:i:s') ?? '-' }}
                             </span>
                         </td>

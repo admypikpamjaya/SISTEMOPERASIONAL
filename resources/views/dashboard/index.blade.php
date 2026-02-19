@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
     :root {
         --blue-primary: #1a56db;
@@ -194,10 +194,10 @@
     }
     .saldo-value {
         font-size: 1.7rem;
-        font-weight: 800;
+        font-weight: 400;
         color: var(--text-primary);
-        letter-spacing: -0.03em;
-        font-family: 'DM Mono', monospace;
+        letter-spacing: -0.01em;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         line-height: 1.1;
         margin-bottom: 0.4rem;
     }

@@ -128,8 +128,8 @@
         flex-wrap: wrap; gap: 0.75rem;
     }
     .ivf-meta-no {
-        font-family: 'DM Mono', monospace; font-size: 1.25rem; font-weight: 700;
-        color: var(--text-primary); letter-spacing: 0.02em; margin: 0 0 0.15rem;
+        font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 700;
+        color: var(--text-primary); letter-spacing: 0; margin: 0 0 0.15rem;
     }
     .ivf-meta-sub { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
 
@@ -209,7 +209,7 @@
     }
     .ivf-cell-input:focus { outline: none; border-color: var(--blue-primary); background: white; box-shadow: 0 0 0 2px rgba(37,99,235,0.10); }
     .ivf-cell-input:disabled { color: var(--text-muted); cursor: not-allowed; }
-    .ivf-cell-input.text-right { text-align: right; font-family: 'DM Mono', monospace; }
+    .ivf-cell-input.text-right { text-align: right; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400; }
 
     /* tfoot totals */
     .ivf-items-table tfoot th {
@@ -217,7 +217,7 @@
         font-size: 0.78rem; padding: 0.65rem 0.75rem; color: var(--text-primary);
     }
     .ivf-items-table tfoot .total-amount {
-        font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 800;
+        font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; font-weight: 600;
         color: var(--blue-primary); text-align: right;
     }
 
