@@ -197,6 +197,10 @@ Route::prefix('finance')
                     ->middleware('check_access:finance_invoice.create')
                     ->name('store');
 
+                Route::get('/{invoice}/download', [FinanceInvoiceController::class, 'download'])
+                    ->middleware('check_access:finance_invoice.read')
+                    ->name('download');
+
                 Route::get('/{invoice}', [FinanceInvoiceController::class, 'show'])
                     ->middleware('check_access:finance_invoice.read')
                     ->name('show');

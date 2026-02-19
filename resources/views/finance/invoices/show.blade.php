@@ -61,6 +61,10 @@
     .btn-ivd-back:hover { border-color: var(--blue-light); color: var(--text-primary); text-decoration: none; }
     .btn-ivd-edit   { background: rgba(245,158,11,0.09); border-color: rgba(245,158,11,0.28); color: #92400e; }
     .btn-ivd-edit:hover { background: var(--accent-amber); color: white; border-color: var(--accent-amber); text-decoration: none; }
+    .btn-ivd-pdf    { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #991b1b; }
+    .btn-ivd-pdf:hover { background: var(--accent-red); color: white; border-color: var(--accent-red); text-decoration: none; }
+    .btn-ivd-excel  { background: rgba(16,185,129,0.10); border-color: rgba(16,185,129,0.25); color: #065f46; }
+    .btn-ivd-excel:hover { background: var(--accent-green); color: white; border-color: var(--accent-green); text-decoration: none; }
     .btn-ivd-post   { background: linear-gradient(135deg, var(--blue-primary), var(--blue-mid)); color: white; border-color: transparent; box-shadow: 0 3px 10px rgba(37,99,235,0.3); }
     .btn-ivd-post:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.4); }
     .btn-ivd-delete { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: #991b1b; }
@@ -320,6 +324,14 @@
     <div class="ivd-header-actions">
         <a href="{{ route('finance.invoice.index') }}" class="btn-ivd btn-ivd-back">
             <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+        <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'pdf']) }}"
+            class="btn-ivd btn-ivd-pdf">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'excel']) }}"
+            class="btn-ivd btn-ivd-excel">
+            <i class="fas fa-file-excel"></i> Excel
         </a>
         <a href="{{ route('finance.invoice.edit', $invoice->id) }}" class="btn-ivd btn-ivd-edit">
             <i class="fas fa-pen"></i> Edit
