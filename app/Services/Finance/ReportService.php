@@ -290,6 +290,193 @@ class ReportService
         });
     }
 
+    /**
+     * @return array{
+     *   report_id:string,
+     *   report_type:string,
+     *   report_date:string,
+     *   year:int,
+     *   month:int|null,
+     *   day:int|null,
+     *   opening_balance:float,
+     *   entries:array<int, array<string, mixed>>
+     * }
+     */
+    public function getEditPayload(string $reportId): array
+    {
+        $report = $this->financeReportRepository->getByIdWithItems($reportId);
+        if ($report === null) {
+            throw new RuntimeException('Snapshot laporan finance tidak ditemukan.');
+        }
+
+        $period = $report->period;
+        if ($period === null) {
+            throw new RuntimeException('Periode snapshot laporan tidak ditemukan.');
+        }
+
+        $reportType = strtoupper((string) $report->report_type);
+        $year = (int) data_get($report->summary, 'year', (int) $period->year);
+        $month = (int) data_get($report->summary, 'month', (int) $period->month);
+        $day = (int) data_get($report->summary, 'day', (int) ($period->day ?? 0));
+        $reportDate = $period->start_date?->format('Y-m-d') ?? now()->toDateString();
+
+        $entries = [];
+        foreach ($report->items->sortBy('sort_order')->values() as $item) {
+            $entries[] = [
+                'type' => strtoupper((string) data_get($item->meta, 'type', 'EXPENSE')),
+                'line_code' => (string) $item->line_code,
+                'line_label' => (string) $item->line_label,
+                'invoice_number' => data_get($item->meta, 'invoice_number'),
+                'description' => data_get($item->meta, 'description'),
+                'amount' => (float) $item->amount,
+                'is_depreciation' => (bool) data_get($item->meta, 'is_depreciation', false),
+            ];
+        }
+
+        return [
+            'report_id' => $report->id,
+            'report_type' => $reportType,
+            'report_date' => $reportDate,
+            'year' => $year,
+            'month' => $reportType === 'YEARLY' ? null : $month,
+            'day' => $reportType === 'DAILY' ? $day : null,
+            'opening_balance' => (float) data_get(
+                $report->summary,
+                'opening_balance',
+                (float) ($period->opening_balance ?? 0)
+            ),
+            'entries' => $entries,
+        ];
+    }
+
+    public function updateProfitLossReport(string $reportId, GenerateProfitLossReportDTO $dto): FinanceReportSnapshotDTO
+    {
+        return DB::transaction(function () use ($reportId, $dto) {
+            $report = FinanceReport::query()
+                ->with(['period', 'reconciliationSnapshot', 'items'])
+                ->lockForUpdate()
+                ->find($reportId);
+
+            if ($report === null) {
+                throw new RuntimeException('Snapshot laporan finance tidak ditemukan.');
+            }
+
+            $period = $report->period;
+            if ($period === null) {
+                throw new RuntimeException('Periode snapshot laporan tidak ditemukan.');
+            }
+
+            $periodOpeningBalance = (float) ($period->opening_balance ?? 0);
+            $openingBalance = round($dto->openingBalance, 2);
+            if ($openingBalance == 0.0 && $periodOpeningBalance > 0) {
+                $openingBalance = $periodOpeningBalance;
+            }
+
+            $totalIncome = 0.0;
+            $totalExpense = 0.0;
+            $totalDepreciation = 0.0;
+
+            foreach ($dto->entries as $entry) {
+                if ($entry->type === 'INCOME') {
+                    $totalIncome += $entry->amount;
+                    continue;
+                }
+
+                if ($entry->isDepreciation) {
+                    $totalDepreciation += $entry->amount;
+                    continue;
+                }
+
+                $totalExpense += $entry->amount;
+            }
+
+            $reconciliation = $this->reconciliationService->calculate(
+                $totalIncome,
+                $totalExpense,
+                $totalDepreciation
+            );
+            $endingBalance = round($openingBalance + $totalIncome - $totalExpense, 2);
+
+            $this->financePeriodRepository->updateBalances(
+                $period->id,
+                $openingBalance,
+                $endingBalance
+            );
+
+            if ($report->reconciliationSnapshot !== null) {
+                $report->reconciliationSnapshot->update([
+                    'income_total' => $reconciliation->totalIncome,
+                    'expense_total' => $reconciliation->totalExpense,
+                    'depreciation_total' => $reconciliation->totalDepreciation,
+                    'net_result' => $reconciliation->netResult,
+                    'generated_by' => $dto->generatedBy,
+                    'generated_at' => now(),
+                    'notes' => 'Updated from manual profit-loss snapshot edit.',
+                ]);
+            }
+
+            $summary = new ReportSummaryDTO(
+                month: (int) $period->month,
+                year: (int) $period->year,
+                day: (int) ($period->day ?? 0),
+                totalIncome: $reconciliation->totalIncome,
+                totalExpense: $reconciliation->totalExpense,
+                totalDepreciation: $reconciliation->totalDepreciation,
+                netResult: $reconciliation->netResult,
+                openingBalance: $openingBalance,
+                endingBalance: $endingBalance
+            );
+
+            $report->update([
+                'summary' => $summary->toArray(),
+                'generated_by' => $dto->generatedBy,
+                'generated_at' => now(),
+            ]);
+
+            $report->items()->delete();
+
+            $now = now();
+            $rows = [];
+            $runningBalance = $openingBalance;
+            foreach ($dto->entries as $index => $entry) {
+                $balanceBefore = $runningBalance;
+                if ($entry->type === 'INCOME') {
+                    $runningBalance += $entry->amount;
+                } elseif (!$entry->isDepreciation) {
+                    $runningBalance -= $entry->amount;
+                }
+
+                $rows[] = [
+                    'report_snapshot_id' => $report->id,
+                    'line_code' => $entry->lineCode,
+                    'line_label' => $entry->lineLabel,
+                    'amount' => $entry->amount,
+                    'sort_order' => $index + 1,
+                    'meta' => json_encode([
+                        'type' => $entry->type,
+                        'is_depreciation' => $entry->isDepreciation,
+                        'invoice_number' => $entry->invoiceNumber,
+                        'description' => $entry->description,
+                        'balance_before' => round($balanceBefore, 2),
+                        'balance_after' => round($runningBalance, 2),
+                    ], JSON_THROW_ON_ERROR),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (!empty($rows)) {
+                $this->financeReportItemRepository->createMany($rows);
+            }
+
+            if (!empty($dto->generatedBy)) {
+                $this->writeUpdateReportAuditLog($report->id, $period->id, $dto);
+            }
+
+            return FinanceReportSnapshotDTO::fromModel($report->fresh());
+        });
+    }
+
     public function getProfitLossReportDetail(string $reportId): ProfitLossReportDetailDTO
     {
         $report = $this->financeReportRepository->getByIdWithItems($reportId);
@@ -585,6 +772,33 @@ class ReportService
             $this->auditLogRepository->create([
                 'user_id' => $dto->generatedBy,
                 'action' => 'finance_report.generate',
+                'entity' => 'finance_report_snapshot',
+                'entity_id' => 0,
+                'payload' => [
+                    'report_snapshot_id' => $reportSnapshotId,
+                    'period_id' => $periodId,
+                    'report_type' => $dto->reportType,
+                    'year' => $dto->year,
+                    'month' => $dto->month,
+                    'day' => $dto->day,
+                    'opening_balance' => $dto->openingBalance,
+                    'entries_count' => count($dto->entries),
+                ],
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    private function writeUpdateReportAuditLog(
+        string $reportSnapshotId,
+        string $periodId,
+        GenerateProfitLossReportDTO $dto
+    ): void {
+        try {
+            $this->auditLogRepository->create([
+                'user_id' => $dto->generatedBy,
+                'action' => 'finance_report.update',
                 'entity' => 'finance_report_snapshot',
                 'entity_id' => 0,
                 'payload' => [

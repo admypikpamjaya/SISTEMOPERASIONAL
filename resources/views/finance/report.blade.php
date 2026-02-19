@@ -2,13 +2,42 @@
 
 @section('content')
 @php
+    $isEditMode = isset($editingReport) && is_array($editingReport);
+    $editReportId = $isEditMode ? (string) data_get($editingReport, 'report_id') : null;
+    $formAction = $isEditMode
+        ? route('finance.report.update', $editReportId)
+        : route('finance.report.store');
+    $formTitle = $isEditMode ? 'Edit Snapshot Laba Rugi' : 'Input Laporan Laba Rugi';
+    $submitLabel = $isEditMode ? 'Simpan Perubahan Snapshot' : 'Simpan Snapshot Laba Rugi';
+
     $defaultPeriodType = old('report_type', $defaults['period_type'] ?? 'MONTHLY');
     $defaultReportDate = old('report_date', $defaults['report_date'] ?? now()->toDateString());
     $defaultMonth = (int) old('month', $defaults['month'] ?? now()->month);
     $defaultYear = (int) old('year', $defaults['year'] ?? now()->year);
-    $defaultOpeningBalance = old('opening_balance', $suggestedOpeningBalance ?? 0);
+    $defaultOpeningBalance = old(
+        'opening_balance',
+        $isEditMode
+            ? (float) data_get($editingReport, 'opening_balance', 0)
+            : ($suggestedOpeningBalance ?? 0)
+    );
 
-    $entryRows = old('entries', [
+    $defaultEntryRows = $isEditMode
+        ? ((array) data_get($editingReport, 'entries', []))
+        : [
+            [
+                'type' => 'INCOME',
+                'line_code' => '',
+                'line_label' => '',
+                'invoice_number' => '',
+                'description' => '',
+                'amount' => '',
+                'is_depreciation' => false,
+            ],
+        ];
+
+    $entryRows = old('entries', !empty($entryRows ?? null) ? $entryRows : $defaultEntryRows);
+    if (empty($entryRows)) {
+        $entryRows = [
         [
             'type' => 'INCOME',
             'line_code' => '',
@@ -18,7 +47,8 @@
             'amount' => '',
             'is_depreciation' => false,
         ],
-    ]);
+        ];
+    }
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -609,6 +639,16 @@
             reportDateGroup.style.display = isDaily   ? '' : 'none';
             monthGroup.style.display      = isMonthly ? '' : 'none';
             yearGroup.style.display       = (isMonthly || isYearly) ? '' : 'none';
+
+            if (isEditMode) {
+                reportDateInput.disabled = true;
+                reportDateInput.required = false;
+                monthSelect.disabled = true;
+                monthSelect.required = false;
+                yearInput.disabled = true;
+                yearInput.required = false;
+                return;
+            }
 
             reportDateInput.disabled = !isDaily;
             reportDateInput.required = isDaily;

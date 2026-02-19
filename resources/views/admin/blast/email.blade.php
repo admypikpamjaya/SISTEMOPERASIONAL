@@ -218,6 +218,9 @@
                                         name="recipient_ids[]"
                                         value="{{ $recipient->id }}"
                                         data-email="{{ $recipient->email_wali }}"
+                                        data-student-name="{{ $recipient->nama_siswa }}"
+                                        data-student-class="{{ $recipient->kelas }}"
+                                        data-parent-name="{{ $recipient->nama_wali }}"
                                     >
                                     <div class="recipient-db-info">
                                         <div class="recipient-db-name">
@@ -483,9 +486,10 @@
                     <div class="col-kelas">Kelas</div>
                     <div class="col-wali">Nama Wali</div>
                     <div class="col-email">Email Penerima</div>
-                    <div class="col-email">Subjek</div>
+                    <div class="col-subject">Subjek</div>
                     <div class="col-attachment">Lampiran</div>
                     <div class="col-status">Status</div>
+                    <div class="col-action">Aksi</div>
                 </div>
                 <div class="activity-table-body" id="activityLog">
                     <div class="activity-empty">Belum ada aktivitas</div>
@@ -1486,7 +1490,7 @@
 
     .activity-table-header {
         display: grid;
-        grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px;
+        grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px 130px;
         gap: 12px;
         padding: 12px;
         background: #f8f9fa;
@@ -1511,7 +1515,7 @@
 
     .activity-row {
         display: grid;
-        grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px;
+        grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px 130px;
         gap: 12px;
         padding: 12px;
         border-bottom: 1px solid #f0f0f0;
@@ -1560,6 +1564,40 @@
     .col-attachment {
         font-size: 11px;
         color: #666;
+    }
+
+    .col-action {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .activity-action-btn {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        line-height: 1.2;
+    }
+
+    .activity-action-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .activity-action-btn.retry {
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+        border-color: rgba(37, 99, 235, 0.25);
+    }
+
+    .activity-action-btn.delete {
+        background: rgba(239, 68, 68, 0.12);
+        color: #dc2626;
+        border-color: rgba(239, 68, 68, 0.25);
     }
 
     .status-badge {
@@ -1661,7 +1699,7 @@
 
         .activity-table-header,
         .activity-row {
-            grid-template-columns: 100px 1fr 80px 1fr 150px 1fr 90px 90px;
+            grid-template-columns: 100px 1fr 80px 1fr 150px 1fr 90px 90px 120px;
             font-size: 11px;
         }
     }
@@ -1672,7 +1710,7 @@
             grid-template-columns: 100px 1fr 1fr 1fr 1fr;
             grid-template-areas: 
                 "waktu siswa kelas wali email"
-                "subject subject attachment attachment status";
+                "subject subject attachment status action";
         }
         
         .col-waktu { grid-area: waktu; }
@@ -1683,6 +1721,7 @@
         .col-subject { grid-area: subject; }
         .col-attachment { grid-area: attachment; }
         .col-status { grid-area: status; }
+        .col-action { grid-area: action; }
     }
 
     @media (max-width: 768px) {
@@ -1766,6 +1805,7 @@
         .col-subject::before { content: 'Subject: '; font-weight: 600; }
         .col-attachment::before { content: 'Lampiran: '; font-weight: 600; }
         .col-status::before { content: 'Status: '; font-weight: 600; }
+        .col-action::before { content: 'Aksi: '; font-weight: 600; }
     }
 
     /* Scrollbar Styling */
@@ -2004,6 +2044,30 @@ SEKOLAH TERPADU JAKARTA`
 
             delete overrideState[`db:${recipientId}`];
             delete attachmentBufferByKey[`db:${recipientId}`];
+            syncRecipientProfileFromDbSelection();
+        }
+
+        function getPrimaryCheckedDbRecipient(preferredRecipient = null) {
+            if (preferredRecipient && preferredRecipient.checked) {
+                return preferredRecipient;
+            }
+
+            return Array.from(recipientDbCheckboxes).find((cb) => cb.checked) || null;
+        }
+
+        function syncRecipientProfileFromDbSelection(preferredRecipient = null) {
+            if (!studentName || !studentClass || !parentName) {
+                return;
+            }
+
+            const sourceRecipient = getPrimaryCheckedDbRecipient(preferredRecipient);
+            if (!sourceRecipient) {
+                return;
+            }
+
+            studentName.value = (sourceRecipient.getAttribute('data-student-name') || '').trim();
+            studentClass.value = (sourceRecipient.getAttribute('data-student-class') || '').trim();
+            parentName.value = (sourceRecipient.getAttribute('data-parent-name') || '').trim();
         }
 
         function keyToToken(key) {
@@ -2274,12 +2338,14 @@ SEKOLAH TERPADU JAKARTA`
                     ? 'Unselect All'
                     : 'Select All';
 
+                syncRecipientProfileFromDbSelection();
                 renderRecipientMessageMatrix();
             });
         }
 
         recipientDbCheckboxes.forEach((cb) => {
             cb.addEventListener('change', () => {
+                syncRecipientProfileFromDbSelection(cb);
                 renderRecipientMessageMatrix();
             });
         });
@@ -2658,8 +2724,13 @@ function removeFile(index) {
         const campaignTargetInputs = Array.from(document.querySelectorAll('.campaign-target-input'));
         const campaignClearButtons = Array.from(document.querySelectorAll('.campaign-clear-btn'));
         const activityApiUrl = @json(route('admin.blast.activity'));
+        const activityDeleteApiUrl = @json(route('admin.blast.activity.delete'));
+        const activityRetryApiUrl = @json(route('admin.blast.activity.retry'));
         const campaignApiUrl = @json(route('admin.blast.campaigns'));
         const activityChannel = 'email';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            || document.querySelector('input[name="_token"]')?.value
+            || '';
         let activities = @json($activityLogs ?? []);
         let isRefreshingActivities = false;
 
@@ -2732,6 +2803,33 @@ function removeFile(index) {
                                   activity.status === 'failed' ? 'failed' : 'pending';
                 const statusText = activity.status === 'success' ? 'Terkirim' : 
                                  activity.status === 'failed' ? 'Gagal' : 'Pending';
+                const logId = Number(activity.logId || 0);
+                const canRetry = Boolean(activity.canRetry) && activity.status === 'failed' && logId > 0;
+
+                const actionButtons = [];
+                if (canRetry) {
+                    actionButtons.push(`
+                        <button
+                            type="button"
+                            class="activity-action-btn retry"
+                            data-action="retry"
+                            data-log-id="${logId}"
+                        >Retry</button>
+                    `);
+                }
+                if (logId > 0) {
+                    actionButtons.push(`
+                        <button
+                            type="button"
+                            class="activity-action-btn delete"
+                            data-action="delete"
+                            data-log-id="${logId}"
+                        >Hapus</button>
+                    `);
+                }
+                const actionHtml = actionButtons.length > 0
+                    ? actionButtons.join('')
+                    : '-';
                 
                 row.innerHTML = `
                     <div class="col-waktu">
@@ -2747,6 +2845,7 @@ function removeFile(index) {
                     <div class="col-status">
                         <span class="status-badge ${statusClass}">${statusText}</span>
                     </div>
+                    <div class="col-action">${actionHtml}</div>
                 `;
                 
                 activityLog.appendChild(row);
@@ -2770,6 +2869,42 @@ function removeFile(index) {
             });
 
             renderActivities(filtered);
+        }
+
+        async function submitActivityLogAction(action, logId) {
+            const endpoint = action === 'retry'
+                ? activityRetryApiUrl
+                : activityDeleteApiUrl;
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    channel: activityChannel,
+                    log_id: Number(logId),
+                }),
+            });
+
+            let payload = null;
+            try {
+                payload = await response.json();
+            } catch (error) {
+                payload = null;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    payload?.message
+                    || 'Gagal memproses activity log.'
+                );
+            }
+
+            return payload;
         }
 
         function syncCampaignClearButtons() {
@@ -2935,6 +3070,44 @@ function removeFile(index) {
             });
         }
 
+        if (activityLog) {
+            activityLog.addEventListener('click', async function(event) {
+                const actionBtn = event.target.closest('.activity-action-btn');
+                if (!actionBtn) {
+                    return;
+                }
+
+                const action = String(actionBtn.getAttribute('data-action') || '');
+                const logId = Number(actionBtn.getAttribute('data-log-id') || 0);
+                if (!['retry', 'delete'].includes(action) || logId <= 0) {
+                    return;
+                }
+
+                const confirmationMessage = action === 'retry'
+                    ? 'Retry kirim ulang untuk log ini?'
+                    : 'Hapus log activity ini?';
+
+                if (!window.confirm(confirmationMessage)) {
+                    return;
+                }
+
+                const originalText = actionBtn.textContent || '';
+                actionBtn.disabled = true;
+                actionBtn.textContent = action === 'retry' ? 'Retry...' : 'Hapus...';
+
+                try {
+                    const payload = await submitActivityLogAction(action, logId);
+                    showResultAlert('success', payload?.message || 'Aksi berhasil diproses.');
+                    await refreshActivityLogs();
+                } catch (error) {
+                    showResultAlert('error', error?.message || 'Gagal memproses activity log.');
+                } finally {
+                    actionBtn.disabled = false;
+                    actionBtn.textContent = originalText;
+                }
+            });
+        }
+
         if (campaignSearchBtn) {
             campaignSearchBtn.addEventListener('click', function () {
                 searchCampaignsByUuid();
@@ -2975,6 +3148,7 @@ function removeFile(index) {
         // We'll keep the validation but remove the preventDefault() that blocks form submission
         
         const emailForm = document.getElementById('emailForm');
+        syncRecipientProfileFromDbSelection();
         renderRecipientMessageMatrix();
         
         if (emailForm) {

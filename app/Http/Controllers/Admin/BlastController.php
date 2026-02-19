@@ -128,6 +128,171 @@ class BlastController extends Controller
         );
     }
 
+    public function deleteActivityLog(Request $request)
+    {
+        $validated = $request->validate([
+            'channel' => 'required|in:email,whatsapp',
+            'log_id' => 'required|integer|exists:blast_logs,id',
+        ]);
+
+        $channel = strtoupper((string) $validated['channel']);
+        $channelLabel = $channel === 'WHATSAPP' ? 'WhatsApp' : 'Email';
+
+        $blastLog = BlastLog::query()
+            ->with(['message:id,channel', 'target:id'])
+            ->whereKey((int) $validated['log_id'])
+            ->whereHas('message', function ($query) use ($channel) {
+                $query->where('channel', $channel);
+            })
+            ->first();
+
+        if ($blastLog === null) {
+            return $this->activityActionError(
+                $request,
+                'Activity log ' . $channelLabel . ' tidak ditemukan.',
+                404
+            );
+        }
+
+        $blastTarget = $blastLog->target;
+        $blastLog->delete();
+
+        if (
+            $blastTarget !== null
+            && !BlastLog::query()->where('blast_target_id', $blastTarget->id)->exists()
+        ) {
+            $blastTarget->delete();
+        }
+
+        return $this->activityActionSuccess(
+            $request,
+            'Activity log ' . $channelLabel . ' berhasil dihapus.'
+        );
+    }
+
+    public function retryActivityLog(Request $request)
+    {
+        $validated = $request->validate([
+            'channel' => 'required|in:email,whatsapp',
+            'log_id' => 'required|integer|exists:blast_logs,id',
+        ]);
+
+        $requestedChannel = strtoupper((string) $validated['channel']);
+
+        $blastLog = BlastLog::query()
+            ->with([
+                'message:id,channel,subject,message,meta,priority,campaign_status',
+                'target:id,target',
+            ])
+            ->whereKey((int) $validated['log_id'])
+            ->whereHas('message', function ($query) use ($requestedChannel) {
+                $query->where('channel', $requestedChannel);
+            })
+            ->first();
+
+        if ($blastLog === null || $blastLog->message === null) {
+            return $this->activityActionError(
+                $request,
+                'Activity log tidak ditemukan atau campaign sudah tidak tersedia.',
+                404
+            );
+        }
+
+        if (strtoupper((string) $blastLog->status) !== 'FAILED') {
+            return $this->activityActionError(
+                $request,
+                'Hanya activity log dengan status gagal yang bisa di-retry.',
+                422
+            );
+        }
+
+        if (strtoupper((string) $blastLog->message->campaign_status) === 'STOPPED') {
+            return $this->activityActionError(
+                $request,
+                'Campaign masih berstatus STOPPED. Resume campaign terlebih dahulu.',
+                422
+            );
+        }
+
+        $channel = strtoupper((string) $blastLog->message->channel);
+        $channelLabel = $channel === 'WHATSAPP' ? 'WhatsApp' : 'Email';
+
+        $target = trim((string) optional($blastLog->target)->target);
+        if ($target === '') {
+            return $this->activityActionError(
+                $request,
+                'Target penerima untuk retry tidak ditemukan.',
+                422
+            );
+        }
+
+        $messageSnapshot = trim((string) $blastLog->message_snapshot);
+        if ($messageSnapshot === '') {
+            $messageSnapshot = trim((string) $blastLog->message->message);
+        }
+
+        if ($messageSnapshot === '') {
+            return $this->activityActionError(
+                $request,
+                'Isi pesan snapshot tidak tersedia untuk proses retry.',
+                422
+            );
+        }
+
+        $campaignMeta = $this->extractCampaignMeta($blastLog->message->meta);
+        $priority = strtolower((string) ($blastLog->message->priority ?? 'normal'));
+        if (!in_array($priority, ['high', 'normal', 'low'], true)) {
+            $priority = 'normal';
+        }
+
+        $queueName = trim((string) (
+            $campaignMeta['queue_name']
+            ?? $this->resolveQueueName(strtolower($channel), $priority)
+        ));
+
+        $retryAttempts = max(
+            1,
+            (int) ($campaignMeta['retry_attempts'] ?? config('blast.retry.max_attempts', 3))
+        );
+        $retryBackoffSeconds = $this->normalizeRetryBackoffSeconds(
+            $campaignMeta['retry_backoff_seconds'] ?? null
+        );
+
+        $payload = new BlastPayload($messageSnapshot);
+        $payload->setMeta('channel', $channel);
+        $payload->setMeta('sent_by', Auth::id());
+        $payload->setMeta('blast_log_id', $blastLog->id);
+        $payload->setMeta('blast_message_id', $blastLog->blast_message_id);
+        $payload->setMeta('queue_name', $queueName);
+        $payload->setMeta('retry_attempts', $retryAttempts);
+        $payload->setMeta('retry_backoff_seconds', $retryBackoffSeconds);
+
+        $subject = $channel === 'EMAIL'
+            ? trim((string) $blastLog->message->subject)
+            : null;
+
+        $blastLog->update([
+            'status' => 'PENDING',
+            'response' => 'Retry requested by operator.',
+            'error_message' => null,
+            'sent_at' => null,
+            'attempt' => 0,
+        ]);
+
+        $job = new QueueBlastDeliveryJob(
+            $channel,
+            $target,
+            $subject,
+            $payload
+        );
+        app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
+
+        return $this->activityActionSuccess(
+            $request,
+            'Retry blast ' . $channelLabel . ' diproses.'
+        );
+    }
+
     /* =======================
      |  WHATSAPP BLAST
      ======================= */
@@ -679,6 +844,76 @@ class BlastController extends Controller
             ->with('success', 'Campaign stopped.');
     }
 
+    private function activityActionSuccess(
+        Request $request,
+        string $message
+    ) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    private function activityActionError(
+        Request $request,
+        string $message,
+        int $status = 422
+    ) {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'message' => $message,
+            ], $status);
+        }
+
+        return back()->with('error', $message);
+    }
+
+    private function extractCampaignMeta(mixed $meta): array
+    {
+        if (!is_array($meta)) {
+            return [];
+        }
+
+        $campaign = $meta['campaign'] ?? null;
+        return is_array($campaign) ? $campaign : [];
+    }
+
+    /**
+     * @return int[]
+     */
+    private function normalizeRetryBackoffSeconds(mixed $raw): array
+    {
+        if (is_array($raw)) {
+            $normalized = [];
+            foreach ($raw as $seconds) {
+                $seconds = (int) $seconds;
+                if ($seconds < 0) {
+                    continue;
+                }
+
+                $normalized[] = $seconds;
+            }
+
+            if ($normalized !== []) {
+                return array_values(array_unique($normalized));
+            }
+        }
+
+        if (is_string($raw) || is_numeric($raw)) {
+            return $this->parseRetryBackoffSeconds((string) $raw);
+        }
+
+        $configuredDefault = config('blast.retry.backoff_seconds', [30, 120, 300]);
+        if (is_array($configuredDefault)) {
+            return $this->normalizeRetryBackoffSeconds($configuredDefault);
+        }
+
+        return [30, 120, 300];
+    }
+
     /**
      * @param iterable<BlastRecipient> $recipients
      * @return array{
@@ -754,12 +989,17 @@ class BlastController extends Controller
             };
 
             $row = [
+                'logId' => (int) $log->id,
                 'date' => $wibTimestamp ? $wibTimestamp->format('d/m/Y') : '-',
                 'time' => $wibTimestamp ? $wibTimestamp->format('H:i:s') : '-',
                 'studentName' => $recipient?->nama_siswa ?: '-',
                 'studentClass' => $recipient?->kelas ?: '-',
                 'parentName' => $recipient?->nama_wali ?: '-',
                 'status' => $statusKey,
+                'rawStatus' => $status,
+                'canRetry' => $status === 'FAILED',
+                'canDelete' => true,
+                'errorMessage' => trim((string) ($log->error_message ?? '')),
                 'campaignId' => (string) $log->blast_message_id,
             ];
 

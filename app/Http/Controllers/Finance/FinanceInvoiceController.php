@@ -7,6 +7,7 @@ use App\Http\Requests\Finance\FinanceInvoiceNoteStoreRequest;
 use App\Http\Requests\Finance\FinanceInvoiceStoreRequest;
 use App\Http\Requests\Finance\FinanceInvoiceUpdateRequest;
 use App\Models\FinanceInvoice;
+use App\Services\Finance\FinanceInvoiceDocumentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,10 @@ use Throwable;
 
 class FinanceInvoiceController extends Controller
 {
+    public function __construct(
+        private FinanceInvoiceDocumentService $invoiceDocumentService
+    ) {}
+
     public function index(Request $request)
     {
         $filters = $request->validate([
@@ -160,6 +165,44 @@ class FinanceInvoiceController extends Controller
         return view('finance.invoices.show', [
             'invoice' => $invoice,
         ]);
+    }
+
+    public function download(Request $request, FinanceInvoice $invoice)
+    {
+        try {
+            $format = strtolower((string) $request->query('format', 'pdf'));
+            if (!in_array($format, ['pdf', 'excel', 'xlsx'], true)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Format download faktur tidak valid.');
+            }
+
+            if ($format === 'xlsx') {
+                $format = 'excel';
+            }
+
+            $invoice->loadMissing([
+                'items',
+                'notes.user:id,name,role',
+                'creator:id,name',
+                'poster:id,name',
+                'updater:id,name',
+            ]);
+
+            $exported = $this->invoiceDocumentService->exportInvoice($invoice, $format);
+
+            return response($exported['content'], 200, [
+                'Content-Type' => $exported['mime'],
+                'Content-Disposition' => 'attachment; filename="' . $exported['filename'] . '"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengunduh dokumen faktur.');
+        }
     }
 
     public function edit(FinanceInvoice $invoice)

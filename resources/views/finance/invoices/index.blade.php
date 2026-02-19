@@ -211,6 +211,10 @@
     .btn-act i { font-size: 0.62rem; }
     .btn-act-detail { background: rgba(37,99,235,0.08); color: var(--blue-primary); border-color: rgba(37,99,235,0.2); }
     .btn-act-detail:hover { background: var(--blue-primary); color: white; border-color: var(--blue-primary); text-decoration: none; }
+    .btn-act-pdf    { background: rgba(239,68,68,0.08); color: #991b1b; border-color: rgba(239,68,68,0.22); }
+    .btn-act-pdf:hover { background: var(--accent-red); color: white; border-color: var(--accent-red); text-decoration: none; }
+    .btn-act-excel  { background: rgba(16,185,129,0.10); color: #065f46; border-color: rgba(16,185,129,0.25); }
+    .btn-act-excel:hover { background: var(--accent-green); color: white; border-color: var(--accent-green); text-decoration: none; }
     .btn-act-edit   { background: rgba(245,158,11,0.08); color: #92400e; border-color: rgba(245,158,11,0.25); }
     .btn-act-edit:hover { background: var(--accent-amber); color: white; border-color: var(--accent-amber); text-decoration: none; }
     .btn-act-delete { background: rgba(239,68,68,0.08); color: #991b1b; border-color: rgba(239,68,68,0.2); }
@@ -372,7 +376,7 @@
                     <th style="width:150px;text-align:right;">Kredit</th>
                     <th style="width:110px;">Status</th>
                     <th style="width:140px;">Dibuat Oleh</th>
-                    <th style="width:190px;">Aksi</th>
+                    <th style="width:300px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -439,6 +443,14 @@
                             <div class="action-group">
                                 <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="btn-act btn-act-detail">
                                     <i class="fas fa-eye"></i> Detail
+                                </a>
+                                <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'pdf']) }}"
+                                    class="btn-act btn-act-pdf">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </a>
+                                <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'excel']) }}"
+                                    class="btn-act btn-act-excel">
+                                    <i class="fas fa-file-excel"></i> Excel
                                 </a>
                                 <a href="{{ route('finance.invoice.edit', $invoice->id) }}" class="btn-act btn-act-edit">
                                     <i class="fas fa-pen"></i> Edit
