@@ -122,9 +122,10 @@
     }
     .plr-meta-label i { font-size: 0.65rem; }
     .plr-meta-value {
-        font-size: 0.92rem; font-weight: 700; color: var(--text-primary);
+        font-size: 0.92rem; font-weight: 500; color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
-    .plr-meta-value.mono { font-family: 'DM Mono', monospace; font-size: 0.88rem; }
+    .plr-meta-value.mono { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.88rem; font-weight: 400; }
     .plr-meta-value.green { color: var(--accent-green); }
     .plr-meta-value.blue  { color: var(--blue-primary); }
 
@@ -142,14 +143,15 @@
         text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border-table);
     }
     .plr-section-header .sh-icon {
-        width: 24px; height: 24px; border-radius: 6px;
-        display: flex; align-items: center; justify-content: center; font-size: 0.7rem;
+        width: 26px; height: 26px; border-radius: 6px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.75rem; flex-shrink: 0;
     }
-    .sh-income   { background: rgba(37,99,235,0.08);  color: var(--blue-primary); }
-    .sh-expense  { background: rgba(239,68,68,0.08);  color: var(--accent-red); }
-    .sh-deprec   { background: rgba(245,158,11,0.08); color: var(--accent-amber); }
-    .sh-surplus  { background: rgba(16,185,129,0.12); color: var(--accent-green); }
-    .sh-saldo    { background: rgba(37,99,235,0.10);  color: var(--blue-primary); }
+    .sh-income  { background: rgba(37,99,235,0.08);  color: var(--blue-primary) !important; }
+    .sh-expense { background: rgba(239,68,68,0.08);  color: var(--accent-red) !important; }
+    .sh-deprec  { background: rgba(245,158,11,0.08); color: var(--accent-amber) !important; }
+    .sh-surplus { background: rgba(16,185,129,0.12); color: var(--accent-green) !important; }
+    .sh-saldo   { background: rgba(37,99,235,0.10);  color: var(--blue-primary) !important; }
 
     .row-income   td { color: var(--text-primary); }
     .row-expense  td { color: var(--text-primary); }
@@ -171,9 +173,19 @@
     }
     .plr-table tbody tr:last-child td { border-bottom: none; }
     .plr-table tbody tr:hover td { background: rgba(37,99,235,0.025); }
-    .plr-table .col-code  { width: 130px; font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Column styles ───────────────────────────── */
+    .plr-table .col-code {
+        width: 130px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.78rem; color: var(--text-muted);
+    }
     .plr-table .col-label { width: 240px; font-weight: 600; color: var(--text-primary); }
-    .plr-table .col-amount{ width: 200px; text-align: right; font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .plr-table .col-amount {
+        width: 200px; text-align: right;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.82rem; font-weight: 400; white-space: nowrap;
+    }
     .plr-table .faktur-badge {
         display: inline-flex; align-items: center; gap: 0.3rem;
         background: rgba(37,99,235,0.08); color: var(--blue-primary);
@@ -187,7 +199,7 @@
         color: var(--text-primary) !important; border-top: 1.5px solid var(--border-table);
         border-bottom: 1.5px solid var(--border-table) !important;
     }
-    .row-subtotal td.col-amount { color: var(--text-primary) !important; }
+    .row-subtotal td.col-amount { color: var(--text-primary) !important; font-weight: 600; }
 
     /* ── Summary Rows ────────────────────────────── */
     .row-surplus td {
@@ -197,7 +209,7 @@
         border-bottom: 1px solid rgba(16,185,129,0.15) !important;
     }
     .row-surplus td:first-child { color: var(--accent-green); }
-    .row-surplus .col-amount    { color: var(--accent-green); font-size: 0.92rem; }
+    .row-surplus .col-amount    { color: var(--accent-green); font-size: 0.92rem; font-weight: 600; }
 
     .row-saldo-akhir td {
         background: linear-gradient(90deg, rgba(37,99,235,0.07), rgba(37,99,235,0.03));
@@ -205,7 +217,7 @@
         border-top: 2px solid rgba(37,99,235,0.2) !important;
     }
     .row-saldo-akhir td:first-child { color: var(--blue-primary); }
-    .row-saldo-akhir .col-amount    { color: var(--blue-primary); font-size: 0.95rem; }
+    .row-saldo-akhir .col-amount    { color: var(--blue-primary); font-size: 0.95rem; font-weight: 600; }
 
     /* ── Divider between sections ────────────────── */
     .plr-section-divider { height: 6px; background: var(--surface-bg); border: none; }
@@ -325,7 +337,9 @@
                 <tr>
                     <td colspan="4" style="padding:0;">
                         <div class="plr-section-header" style="color:var(--blue-primary);">
-                            <span class="sh-icon sh-income"><i class="fas fa-arrow-trend-up"></i></span>
+                            <span class="sh-icon sh-income">
+                                <i class="fas fa-arrow-up"></i>
+                            </span>
                             Penghasilan
                         </div>
                     </td>
@@ -362,7 +376,9 @@
                 <tr>
                     <td colspan="4" style="padding:0;">
                         <div class="plr-section-header" style="color:var(--accent-red);">
-                            <span class="sh-icon sh-expense"><i class="fas fa-arrow-trend-down"></i></span>
+                            <span class="sh-icon sh-expense">
+                                <i class="fas fa-arrow-down"></i>
+                            </span>
                             Pengeluaran
                         </div>
                     </td>
@@ -399,7 +415,9 @@
                 <tr>
                     <td colspan="4" style="padding:0;">
                         <div class="plr-section-header" style="color:var(--accent-amber);">
-                            <span class="sh-icon sh-deprec"><i class="fas fa-chart-bar"></i></span>
+                            <span class="sh-icon sh-deprec">
+                                <i class="fas fa-chart-line"></i>
+                            </span>
                             Penyusutan
                         </div>
                     </td>
@@ -434,7 +452,9 @@
                 <tr class="row-surplus">
                     <td colspan="3">
                         <span style="display:inline-flex;align-items:center;gap:.5rem;">
-                            <span style="width:20px;height:20px;border-radius:6px;background:rgba(16,185,129,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;"><i class="fas fa-balance-scale" style="color:var(--accent-green);"></i></span>
+                            <span style="width:20px;height:20px;border-radius:6px;background:rgba(16,185,129,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;">
+                                <i class="fas fa-balance-scale" style="color:var(--accent-green);"></i>
+                            </span>
                             Surplus (Defisit)
                         </span>
                     </td>
@@ -443,7 +463,9 @@
                 <tr class="row-saldo-akhir">
                     <td colspan="3">
                         <span style="display:inline-flex;align-items:center;gap:.5rem;">
-                            <span style="width:20px;height:20px;border-radius:6px;background:rgba(37,99,235,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;"><i class="fas fa-wallet" style="color:var(--blue-primary);"></i></span>
+                            <span style="width:20px;height:20px;border-radius:6px;background:rgba(37,99,235,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;">
+                                <i class="fas fa-wallet" style="color:var(--blue-primary);"></i>
+                            </span>
                             Saldo Akhir
                         </span>
                     </td>
