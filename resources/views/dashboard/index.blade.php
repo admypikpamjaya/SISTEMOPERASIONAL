@@ -274,10 +274,11 @@
         width: 26px;
         height: 26px;
         border-radius: 7px;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.7rem;
+        font-size: 0.75rem;
+        flex-shrink: 0;
     }
     .dash-chart-card .chart-card-body {
         padding: 0.5rem 0.75rem 0.5rem;
@@ -447,8 +448,8 @@
             <div class="dash-chart-card accent-income dashboard-chart-card anim-delay-1" data-href="{{ data_get($incomeChart, 'url') }}">
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">
-                        <span class="title-icon icon-income"><i class="fas fa-arrow-trend-up"></i></span>
-                        Income
+                        <span class="title-icon icon-income"><i class="fas fa-arrow-up"></i></span>
+                        Penghasilan
                     </h3>
                     <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> Buka</span>
                 </div>
@@ -465,7 +466,7 @@
             <div class="dash-chart-card accent-expense dashboard-chart-card anim-delay-2" data-href="{{ data_get($expenseChart, 'url') }}">
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">
-                        <span class="title-icon icon-expense"><i class="fas fa-arrow-trend-down"></i></span>
+                        <span class="title-icon icon-expense"><i class="fas fa-arrow-down"></i></span>
                         Penyusutan / Pengeluaran
                     </h3>
                     <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> Buka</span>

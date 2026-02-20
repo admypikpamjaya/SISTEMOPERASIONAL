@@ -8,7 +8,7 @@ return [
     ],
 
     [
-        'label' => 'Diskusi',
+        'label' => 'Discussion',
         'icon'  => 'fas fa-comments',
         'route' => 'discussion.index',
     ],
