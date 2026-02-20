@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiscussionController;
 
 use App\Http\Controllers\Asset\AssetManagementController;
 use App\Http\Controllers\Asset\PublicAssetController;
@@ -65,6 +66,25 @@ Route::prefix('dashboard')
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::get('/chart-data', [DashboardController::class, 'chartData'])->name('chart-data');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Discussion
+|--------------------------------------------------------------------------
+*/
+Route::prefix('discussion')
+    ->name('discussion.')
+    ->middleware('auth')
+    ->controller(DiscussionController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/messages', 'messages')->name('messages');
+        Route::post('/messages', 'store')->name('messages.store');
+        Route::post('/messages/{message}/pin', 'pin')->name('messages.pin');
+        Route::delete('/messages/{message}', 'destroy')->name('messages.destroy');
+        Route::get('/messages/{message}/voice-note', 'voiceNote')->name('messages.voice-note');
+        Route::get('/messages/{message}/attachment', 'attachment')->name('messages.attachment');
     });
 
 /*

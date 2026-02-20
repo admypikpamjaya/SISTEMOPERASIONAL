@@ -8,6 +8,12 @@ return [
     ],
 
     [
+        'label' => 'Diskusi',
+        'icon'  => 'fas fa-comments',
+        'route' => 'discussion.index',
+    ],
+
+    [
         'module_name' => 'asset_management',
         'label'       => 'Asset Management',
         'icon'        => 'fas fa-boxes',

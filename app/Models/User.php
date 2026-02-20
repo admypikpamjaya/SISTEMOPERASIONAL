@@ -48,4 +48,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(FinanceInvoiceNote::class, 'user_id');
     }
+
+    public function discussionMessages(): HasMany
+    {
+        return $this->hasMany(DiscussionMessage::class, 'user_id');
+    }
 }
