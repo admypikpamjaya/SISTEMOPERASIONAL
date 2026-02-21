@@ -75,14 +75,14 @@ return [
                 'route' => 'admin.announcements.index',
             ],
         ],
-         [
+        
+    ],
+ [
         'module_name' => 'admin_reminder',
         'label' => 'Reminders',
         'icon'  => 'fas fa-bell',
         'route' => 'admin.reminders.index',
     ],
-    ],
-
    
 
     [

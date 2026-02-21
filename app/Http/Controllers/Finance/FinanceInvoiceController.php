@@ -25,8 +25,10 @@ class FinanceInvoiceController extends Controller
             'q' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:ALL,DRAFT,POSTED,CANCELLED',
             'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
+            'accounting_date' => 'nullable|date_format:Y-m-d',
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
+            'journal_name' => 'nullable|string|max:255',
             'per_page' => 'nullable|integer|min:5|max:100',
         ]);
 
@@ -54,6 +56,11 @@ class FinanceInvoiceController extends Controller
             $query->where('entry_type', $entryType);
         }
 
+        $accountingDate = $filters['accounting_date'] ?? null;
+        if ($accountingDate !== null) {
+            $query->whereDate('accounting_date', $accountingDate);
+        }
+
         $year = isset($filters['year']) ? (int) $filters['year'] : null;
         if ($year !== null) {
             $query->whereYear('accounting_date', $year);
@@ -64,17 +71,27 @@ class FinanceInvoiceController extends Controller
             $query->whereMonth('accounting_date', $month);
         }
 
+        $journalName = trim((string) ($filters['journal_name'] ?? ''));
+        if ($journalName !== '') {
+            $query->where('journal_name', $journalName);
+        }
+
+        $journalOptions = $this->getJournalOptions();
+
         $perPage = (int) ($filters['per_page'] ?? 15);
         $invoices = $query->paginate($perPage)->withQueryString();
 
         return view('finance.invoices.index', [
             'invoices' => $invoices,
+            'journalOptions' => $journalOptions,
             'filters' => [
                 'q' => $search,
                 'status' => $status,
                 'entry_type' => $entryType,
+                'accounting_date' => $accountingDate,
                 'month' => $month,
                 'year' => $year,
+                'journal_name' => $journalName,
                 'per_page' => $perPage,
             ],
         ]);
@@ -86,6 +103,7 @@ class FinanceInvoiceController extends Controller
             'invoice' => null,
             'items' => [],
             'isReadOnly' => false,
+            'journalOptions' => $this->getJournalOptions(),
         ]);
     }
 
@@ -214,6 +232,7 @@ class FinanceInvoiceController extends Controller
             'invoice' => $invoice,
             'items' => $invoice->items,
             'isReadOnly' => $isReadOnly,
+            'journalOptions' => $this->getJournalOptions(),
         ]);
     }
 
@@ -410,5 +429,34 @@ class FinanceInvoiceController extends Controller
         }
 
         return $base . str_pad((string) ($lastSequence + 1), 4, '0', STR_PAD_LEFT);
+    }
+
+    private function getJournalOptions()
+    {
+        $presetOptions = collect([
+            'J.BSM.PMB-Keluar',
+            'J.BSI.UP-Keluar-2020232310',
+            'J.BSI.UP-Masuk-2020232310',
+            'J.BSM.PMB-Masuk',
+            'J.BSI.SPP-Keluar-AKADEMIK SPP - 2423242388',
+            'J.BSI.SPP-Masuk-AKADEMIK SPP - 2423242388',
+            'J.BMI.SPP-Keluar-3470010591',
+            'J.BCA-Masuk',
+        ]);
+
+        $storedOptions = FinanceInvoice::query()
+            ->whereNotNull('journal_name')
+            ->where('journal_name', '!=', '')
+            ->select('journal_name')
+            ->distinct()
+            ->orderBy('journal_name')
+            ->pluck('journal_name');
+
+        return $presetOptions
+            ->merge($storedOptions)
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->unique()
+            ->values();
     }
 }

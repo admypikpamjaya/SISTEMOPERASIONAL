@@ -32,7 +32,6 @@
 
     body, .content-wrapper { background: var(--surface-bg) !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-    /* ── Page Header ──────────────────────────── */
     .inv-page-header {
         display: flex; align-items: center; justify-content: space-between;
         margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
@@ -58,7 +57,6 @@
     }
     .btn-inv-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.45); color: white; text-decoration: none; }
 
-    /* ── Filter Card ──────────────────────────── */
     .inv-filter-card {
         background: white; border-radius: var(--radius-lg);
         box-shadow: var(--shadow-md); border: 1px solid var(--border-light);
@@ -78,9 +76,17 @@
     }
     .inv-filter-header h3 { font-size: 0.9rem; font-weight: 700; color: white; margin: 0; }
     .inv-filter-body { padding: 1.2rem 1.25rem 0.5rem; }
+    .inv-filter-form {
+        display: flex; align-items: flex-end; gap: 0.75rem;
+        flex-wrap: nowrap; overflow-x: auto; padding-bottom: 0.2rem;
+    }
+    .inv-filter-form::-webkit-scrollbar { height: 7px; }
+    .inv-filter-form::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.6); border-radius: 999px; }
 
-    /* ── Form Controls ────────────────────────── */
-    .inv-form-group { margin-bottom: 1rem; }
+    .inv-form-group { margin-bottom: 1rem; min-width: 130px; flex: 1 0 130px; }
+    .inv-form-group.is-wide { min-width: 250px; flex-basis: 250px; }
+    .inv-form-group.is-mid { min-width: 180px; flex-basis: 180px; }
+    .inv-form-group.is-narrow { min-width: 110px; flex: 0 0 110px; }
     .inv-label {
         display: flex; align-items: center; gap: 0.3rem;
         font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
@@ -99,7 +105,10 @@
         background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem;
     }
 
-    .inv-filter-actions { display: flex; align-items: flex-end; gap: 0.6rem; padding-bottom: 1rem; flex-wrap: wrap; }
+    .inv-filter-actions {
+        display: flex; align-items: flex-end; gap: 0.6rem; padding-bottom: 1rem;
+        flex: 0 0 auto; margin-left: auto; white-space: nowrap;
+    }
     .btn-apply {
         display: inline-flex; align-items: center; gap: 0.4rem;
         background: linear-gradient(135deg, var(--blue-primary), var(--blue-mid));
@@ -118,7 +127,6 @@
     }
     .btn-reset:hover { border-color: var(--blue-light); color: var(--text-primary); text-decoration: none; }
 
-    /* ── Main Table Card ──────────────────────── */
     .inv-table-card {
         background: white; border-radius: var(--radius-lg);
         box-shadow: var(--shadow-md); border: 1px solid var(--border-light);
@@ -138,7 +146,87 @@
         justify-content: center; font-size: 0.7rem; color: var(--blue-primary);
     }
 
-    /* ── Table ────────────────────────────────── */
+    .inv-grid-wrap { padding: 1rem 1.25rem 1.25rem; }
+    .inv-grid {
+        display: grid; gap: 1rem;
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    @media (min-width: 768px) {
+        .inv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1200px) {
+        .inv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .inv-item-card {
+        min-height: 205px;
+        border: 1px solid #d9e1ee;
+        border-radius: var(--radius-md);
+        background: #f8fafc;
+        padding: 0.95rem 0.95rem 0.9rem;
+        display: flex; flex-direction: column; gap: 0.7rem;
+        transition: all 0.2s ease;
+    }
+    .inv-item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+        border-color: #c5d3eb;
+    }
+    .inv-item-top {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 0.65rem;
+    }
+    .inv-item-title {
+        font-size: 1rem; line-height: 1.3; font-weight: 700;
+        color: #4e5a97; text-decoration: none;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .inv-item-title:hover { color: var(--blue-primary); text-decoration: none; }
+    .inv-item-menu-btn {
+        width: 28px; height: 28px; border-radius: 50%;
+        border: none; background: transparent; color: #4a5568;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; padding: 0;
+    }
+    .inv-item-menu-btn::after { display: none; }
+    .inv-item-menu-btn:hover { background: rgba(37,99,235,0.1); color: var(--blue-primary); }
+    .inv-item-menu {
+        border-radius: 10px; border: 1px solid var(--border-table);
+        box-shadow: var(--shadow-sm); font-size: 0.8rem;
+    }
+    .inv-item-sub {
+        display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+        font-size: 0.73rem; color: var(--text-muted);
+    }
+    .inv-item-sub .mono {
+        font-family: 'DM Mono', monospace;
+        color: #64748b;
+    }
+    .inv-item-tags { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+    .inv-item-amounts {
+        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem;
+    }
+    .inv-item-amount {
+        border: 1px solid var(--border-table);
+        border-radius: 9px; padding: 0.45rem 0.55rem;
+        background: #fff;
+        display: flex; flex-direction: column; gap: 0.1rem;
+    }
+    .inv-item-amount span { font-size: 0.67rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .inv-item-amount strong { font-size: 0.79rem; font-weight: 700; }
+    .inv-item-amount.debit strong { color: var(--blue-primary); }
+    .inv-item-amount.credit strong { color: var(--accent-red); }
+    .inv-item-footer {
+        margin-top: auto;
+        display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+    }
+    .inv-item-main-btn {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: #6d5cae; color: #fff; border: none;
+        border-radius: 8px; padding: 0.45rem 0.78rem;
+        font-size: 0.78rem; font-weight: 700; text-decoration: none;
+    }
+    .inv-item-main-btn:hover { color: #fff; text-decoration: none; background: #5a4a9a; }
+    .inv-item-main-btn i { font-size: 0.68rem; }
+
     .inv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
     .inv-table th {
         background: #f8fafc; color: var(--text-muted);
@@ -153,13 +241,11 @@
     .inv-table tbody tr:last-child td { border-bottom: none; }
     .inv-table tbody tr:hover td { background: rgba(37,99,235,0.025); }
 
-    /* Row number */
     .cell-no {
         font-size: 0.72rem; color: var(--text-muted);
         font-family: 'Plus Jakarta Sans', sans-serif; text-align: center;
     }
 
-    /* Invoice number link */
     .inv-no-link {
         font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.8rem; font-weight: 700;
         color: var(--blue-primary); text-decoration: none; letter-spacing: 0;
@@ -167,13 +253,11 @@
     }
     .inv-no-link:hover { color: var(--blue-dark); text-decoration: underline; }
 
-    /* Date */
     .cell-date {
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap;
     }
 
-    /* Amount */
     .cell-amount {
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 0.82rem; font-weight: 400; text-align: right; white-space: nowrap;
@@ -181,7 +265,6 @@
     .cell-amount.debit  { color: var(--blue-primary); }
     .cell-amount.credit { color: var(--accent-red); }
 
-    /* ── Badges ───────────────────────────────── */
     .badge-type {
         display: inline-flex; align-items: center; gap: 0.3rem;
         border-radius: 999px; padding: 0.22rem 0.65rem;
@@ -199,7 +282,6 @@
     .badge-draft     { background: rgba(245,158,11,0.1);  color: #92400e; }
     .badge-cancelled { background: rgba(100,116,139,0.1); color: #475569; }
 
-    /* ── Action Buttons ───────────────────────── */
     .action-group { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
     .btn-act {
         display: inline-flex; align-items: center; gap: 0.25rem;
@@ -222,7 +304,6 @@
     .btn-act-delete[type="submit"] { background: rgba(239,68,68,0.08); color: #991b1b; border-color: rgba(239,68,68,0.2); }
     .btn-act-delete[type="submit"]:hover { background: var(--accent-red); color: white; border-color: var(--accent-red); }
 
-    /* ── Creator avatar ───────────────────────── */
     .creator-cell { display: flex; align-items: center; gap: 0.45rem; }
     .creator-avatar {
         width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
@@ -232,8 +313,13 @@
     }
     .creator-name { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); }
 
-    /* ── Empty & Footer ───────────────────────── */
-    .inv-empty-state { padding: 3rem 1rem; text-align: center; }
+    .inv-empty-state {
+        grid-column: 1 / -1;
+        padding: 3rem 1rem; text-align: center;
+        border: 1px dashed var(--border-table);
+        border-radius: var(--radius-md);
+        background: #fff;
+    }
     .inv-empty-icon {
         width: 56px; height: 56px; border-radius: var(--radius-md);
         background: rgba(37,99,235,0.07); display: flex; align-items: center;
@@ -254,18 +340,18 @@
         background: var(--blue-primary); border-color: var(--blue-primary); color: white;
     }
 
-    /* ── Journal / Reference text ─────────────── */
     .cell-journal { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); max-width: 160px; }
     .cell-ref     { font-size: 0.78rem; color: var(--text-muted); font-family: 'Plus Jakarta Sans', sans-serif; }
 
-    /* ── Animations ───────────────────────────── */
     @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
 </style>
 
-@php $filters = $filters ?? []; @endphp
+@php
+    $filters = $filters ?? [];
+    $journalOptions = $journalOptions ?? [];
+@endphp
 
-{{-- ── Page Header ──────────────────────────────────── --}}
 <div class="inv-page-header">
     <div class="inv-header-left">
         <div class="inv-header-icon"><i class="fas fa-file-invoice"></i></div>
@@ -279,7 +365,6 @@
     </a>
 </div>
 
-{{-- ── Filter Card ──────────────────────────────────── --}}
 <div class="inv-filter-card">
     <div class="inv-filter-header">
         <span class="fh-icon"><i class="fas fa-sliders-h"></i></span>
@@ -287,14 +372,14 @@
     </div>
     <div class="inv-filter-body">
         <form method="GET" action="{{ route('finance.invoice.index') }}">
-            <div class="row">
-                <div class="col-md-3 inv-form-group">
+            <div class="inv-filter-form">
+                <div class="inv-form-group is-wide">
                     <label class="inv-label"><i class="fas fa-search"></i> Cari</label>
                     <input type="text" name="q" id="q" class="inv-control"
                         placeholder="No faktur / jurnal / referensi"
                         value="{{ $filters['q'] ?? '' }}">
                 </div>
-                <div class="col-md-2 inv-form-group">
+                <div class="inv-form-group">
                     <label class="inv-label"><i class="fas fa-toggle-on"></i> Status</label>
                     <select name="status" id="status" class="inv-control">
                         <option value="ALL"       {{ ($filters['status'] ?? 'ALL') === 'ALL'       ? 'selected' : '' }}>Semua</option>
@@ -303,7 +388,7 @@
                         <option value="CANCELLED" {{ ($filters['status'] ?? '') === 'CANCELLED'     ? 'selected' : '' }}>Batal</option>
                     </select>
                 </div>
-                <div class="col-md-2 inv-form-group">
+                <div class="inv-form-group">
                     <label class="inv-label"><i class="fas fa-tags"></i> Jenis</label>
                     <select name="entry_type" id="entry_type" class="inv-control">
                         <option value="ALL"     {{ ($filters['entry_type'] ?? 'ALL') === 'ALL'     ? 'selected' : '' }}>Semua</option>
@@ -311,7 +396,23 @@
                         <option value="EXPENSE" {{ ($filters['entry_type'] ?? '') === 'EXPENSE'    ? 'selected' : '' }}>Pengeluaran</option>
                     </select>
                 </div>
-                <div class="col-md-1 inv-form-group">
+                <div class="inv-form-group is-mid">
+                    <label class="inv-label"><i class="fas fa-book"></i> Jurnal</label>
+                    <select name="journal_name" id="journal_name" class="inv-control">
+                        <option value="">Semua Jurnal</option>
+                        @foreach($journalOptions as $journalOption)
+                            <option value="{{ $journalOption }}" {{ ($filters['journal_name'] ?? '') === $journalOption ? 'selected' : '' }}>
+                                {{ $journalOption }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="inv-form-group is-mid">
+                    <label class="inv-label"><i class="fas fa-calendar-day"></i> Harian</label>
+                    <input type="date" name="accounting_date" id="accounting_date" class="inv-control"
+                        value="{{ $filters['accounting_date'] ?? '' }}">
+                </div>
+                <div class="inv-form-group is-narrow">
                     <label class="inv-label"><i class="fas fa-calendar-week"></i> Bulan</label>
                     <select name="month" id="month" class="inv-control">
                         <option value="">-</option>
@@ -322,12 +423,12 @@
                         @endfor
                     </select>
                 </div>
-                <div class="col-md-2 inv-form-group">
+                <div class="inv-form-group is-narrow">
                     <label class="inv-label"><i class="fas fa-calendar"></i> Tahun</label>
                     <input type="number" name="year" id="year" class="inv-control"
                         min="1900" max="2100" value="{{ $filters['year'] ?? '' }}">
                 </div>
-                <div class="col-md-2 inv-form-group">
+                <div class="inv-form-group is-narrow">
                     <label class="inv-label"><i class="fas fa-list-ol"></i> Per Halaman</label>
                     <select name="per_page" id="per_page" class="inv-control">
                         @foreach([10, 15, 25, 50, 100] as $size)
@@ -337,20 +438,19 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
-            <div class="inv-filter-actions">
-                <button type="submit" class="btn-apply">
-                    <i class="fas fa-filter"></i> Terapkan Filter
-                </button>
-                <a href="{{ route('finance.invoice.index') }}" class="btn-reset">
-                    <i class="fas fa-sync"></i> Reset
-                </a>
+                <div class="inv-filter-actions">
+                    <button type="submit" class="btn-apply">
+                        <i class="fas fa-filter"></i> Terapkan Filter
+                    </button>
+                    <a href="{{ route('finance.invoice.index') }}" class="btn-reset">
+                        <i class="fas fa-sync"></i> Reset
+                    </a>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-{{-- ── Table Card ───────────────────────────────────── --}}
 <div class="inv-table-card">
     <div class="inv-table-header">
         <h3 class="inv-table-title">
@@ -362,130 +462,111 @@
         </span>
     </div>
 
-    <div class="table-responsive">
-        <table class="inv-table">
-            <thead>
-                <tr>
-                    <th style="width:50px;text-align:center;">#</th>
-                    <th>No Faktur</th>
-                    <th style="width:110px;">Tanggal</th>
-                    <th style="width:120px;">Jenis</th>
-                    <th>Jurnal</th>
-                    <th>Referensi</th>
-                    <th style="width:150px;text-align:right;">Debit</th>
-                    <th style="width:150px;text-align:right;">Kredit</th>
-                    <th style="width:110px;">Status</th>
-                    <th style="width:140px;">Dibuat Oleh</th>
-                    <th style="width:300px;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($invoices as $invoice)
-                    @php
-                        $status = strtoupper((string) $invoice->status);
-                        $statusClass = match($status) {
-                            'POSTED'    => 'badge-posted',
-                            'CANCELLED' => 'badge-cancelled',
-                            default     => 'badge-draft',
-                        };
-                        $statusIcon = match($status) {
-                            'POSTED'    => 'fa-check-circle',
-                            'CANCELLED' => 'fa-times-circle',
-                            default     => 'fa-clock',
-                        };
-                        $creatorName = $invoice->creator?->name ?? '-';
-                        $creatorInitial = strtoupper(substr($creatorName, 0, 1));
-                    @endphp
-                    <tr>
-                        <td class="cell-no">
-                            {{ $loop->iteration + (($invoices->currentPage() - 1) * $invoices->perPage()) }}
-                        </td>
-                        <td>
-                            <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="inv-no-link">
-                                {{ $invoice->invoice_no }}
-                            </a>
-                        </td>
-                        <td class="cell-date">
-                            {{ optional($invoice->accounting_date)->format('d/m/Y') ?? '-' }}
-                        </td>
-                        <td>
-                            @if($invoice->entry_type === 'INCOME')
-                                <span class="badge-type badge-income">
-                                    <i class="fas fa-arrow-up" style="font-size:.55rem;"></i> Pemasukan
-                                </span>
-                            @else
-                                <span class="badge-type badge-expense">
-                                    <i class="fas fa-arrow-down" style="font-size:.55rem;"></i> Pengeluaran
-                                </span>
-                            @endif
-                        </td>
-                        <td class="cell-journal">{{ $invoice->journal_name }}</td>
-                        <td class="cell-ref">{{ $invoice->reference ?: '—' }}</td>
-                        <td class="cell-amount debit">
-                            Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}
-                        </td>
-                        <td class="cell-amount credit">
-                            Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}
-                        </td>
-                        <td>
-                            <span class="badge-status {{ $statusClass }}">
-                                <i class="fas {{ $statusIcon }}" style="font-size:.55rem;"></i>
-                                {{ $status }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="creator-cell">
-                                <div class="creator-avatar">{{ $creatorInitial }}</div>
-                                <span class="creator-name">{{ $creatorName }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="action-group">
-                                <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="btn-act btn-act-detail">
-                                    <i class="fas fa-eye"></i> Detail
+    <div class="inv-grid-wrap">
+        <div class="inv-grid">
+            @forelse($invoices as $invoice)
+                @php
+                    $status = strtoupper((string) $invoice->status);
+                    $statusClass = match($status) {
+                        'POSTED'    => 'badge-posted',
+                        'CANCELLED' => 'badge-cancelled',
+                        default     => 'badge-draft',
+                    };
+                    $statusIcon = match($status) {
+                        'POSTED'    => 'fa-check-circle',
+                        'CANCELLED' => 'fa-times-circle',
+                        default     => 'fa-clock',
+                    };
+                    $creatorName = $invoice->creator?->name ?? '-';
+                    $creatorInitial = strtoupper(substr($creatorName, 0, 1));
+                @endphp
+
+                <div class="inv-item-card">
+                    <div class="inv-item-top">
+                        <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="inv-item-title">
+                            {{ $invoice->journal_name ?: $invoice->invoice_no }}
+                        </a>
+                        <div class="dropdown">
+                            <button type="button" class="inv-item-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right inv-item-menu">
+                                <a class="dropdown-item" href="{{ route('finance.invoice.show', $invoice->id) }}">
+                                    <i class="fas fa-eye mr-2"></i>Detail
                                 </a>
-                                <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'pdf']) }}"
-                                    class="btn-act btn-act-pdf">
-                                    <i class="fas fa-file-pdf"></i> PDF
+                                <a class="dropdown-item" href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'pdf']) }}">
+                                    <i class="fas fa-file-pdf mr-2"></i>Download PDF
                                 </a>
-                                <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'excel']) }}"
-                                    class="btn-act btn-act-excel">
-                                    <i class="fas fa-file-excel"></i> Excel
+                                <a class="dropdown-item" href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'excel']) }}">
+                                    <i class="fas fa-file-excel mr-2"></i>Download Excel
                                 </a>
-                                <a href="{{ route('finance.invoice.edit', $invoice->id) }}" class="btn-act btn-act-edit">
-                                    <i class="fas fa-pen"></i> Edit
+                                <a class="dropdown-item" href="{{ route('finance.invoice.edit', $invoice->id) }}">
+                                    <i class="fas fa-pen mr-2"></i>Edit
                                 </a>
                                 @if($invoice->status !== 'POSTED')
-                                    <form
-                                        action="{{ route('finance.invoice.destroy', $invoice->id) }}"
-                                        method="POST"
-                                        class="d-inline"
-                                        onsubmit="return confirm('Hapus faktur ini?');"
-                                    >
+                                    <div class="dropdown-divider"></div>
+                                    <form action="{{ route('finance.invoice.destroy', $invoice->id) }}" method="POST" onsubmit="return confirm('Hapus faktur ini?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn-act btn-act-delete">
-                                            <i class="fas fa-trash"></i> Hapus
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-trash mr-2"></i>Hapus
                                         </button>
                                     </form>
                                 @endif
                             </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="11">
-                            <div class="inv-empty-state">
-                                <div class="inv-empty-icon"><i class="fas fa-file-invoice"></i></div>
-                                <div class="inv-empty-text">Belum ada data faktur / jurnal.</div>
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </div>
 
+                    <div class="inv-item-sub">
+                        <span class="mono">{{ $invoice->invoice_no }}</span>
+                        <span>{{ optional($invoice->accounting_date)->format('d/m/Y') ?? '-' }}</span>
+                    </div>
+
+                    <div class="inv-item-tags">
+                        @if($invoice->entry_type === 'INCOME')
+                            <span class="badge-type badge-income">
+                                <i class="fas fa-arrow-up" style="font-size:.55rem;"></i> Pemasukan
+                            </span>
+                        @else
+                            <span class="badge-type badge-expense">
+                                <i class="fas fa-arrow-down" style="font-size:.55rem;"></i> Pengeluaran
+                            </span>
+                        @endif
+                        <span class="badge-status {{ $statusClass }}">
+                            <i class="fas {{ $statusIcon }}" style="font-size:.55rem;"></i>
+                            {{ $status }}
+                        </span>
+                    </div>
+
+                    <div class="inv-item-amounts">
+                        <div class="inv-item-amount debit">
+                            <span>Debit</span>
+                            <strong>Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}</strong>
+                        </div>
+                        <div class="inv-item-amount credit">
+                            <span>Kredit</span>
+                            <strong>Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="inv-item-footer">
+                        <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="inv-item-main-btn">
+                            <i class="fas fa-folder-open"></i> Lihat Entri
+                        </a>
+                        <div class="creator-cell">
+                            <div class="creator-avatar">{{ $creatorInitial }}</div>
+                            <span class="creator-name">{{ $creatorName }}</span>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="inv-empty-state">
+                    <div class="inv-empty-icon"><i class="fas fa-file-invoice"></i></div>
+                    <div class="inv-empty-text">Belum ada data faktur / jurnal.</div>
+                </div>
+            @endforelse
+        </div>
+    </div>
     @if($invoices->hasPages())
         <div class="inv-table-footer">
             {{ $invoices->links() }}

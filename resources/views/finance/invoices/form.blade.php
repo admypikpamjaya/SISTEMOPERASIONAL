@@ -253,6 +253,14 @@
     $defaultJournalName = old('journal_name', $isEdit ? $invoice->journal_name : '');
     $defaultReference = old('reference', $isEdit ? $invoice->reference : '');
     $defaultAction = old('action', 'save_draft');
+    $journalOptions = collect($journalOptions ?? [])
+        ->filter(fn ($item) => is_string($item) && trim($item) !== '')
+        ->map(fn ($item) => trim($item))
+        ->unique()
+        ->values();
+    if ($defaultJournalName !== '' && !$journalOptions->contains($defaultJournalName)) {
+        $journalOptions->prepend($defaultJournalName);
+    }
 
     $rowItems = old('items');
     if (!is_array($rowItems)) {
@@ -387,10 +395,15 @@
                 </div>
                 <div class="col-md-6 ivf-form-group">
                     <label class="ivf-label"><i class="fas fa-book"></i> Jurnal</label>
-                    <input type="text" name="journal_name" id="journal_name"
-                        class="ivf-control" placeholder="Contoh: J.BSM.PMB-Keluar"
-                        value="{{ $defaultJournalName }}"
+                    <select name="journal_name" id="journal_name" class="ivf-control"
                         {{ $isReadOnly ? 'disabled' : '' }} required>
+                        <option value="" {{ $defaultJournalName === '' ? 'selected' : '' }} disabled>Pilih Jurnal</option>
+                        @foreach($journalOptions as $journalOption)
+                            <option value="{{ $journalOption }}" {{ $defaultJournalName === $journalOption ? 'selected' : '' }}>
+                                {{ $journalOption }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-12 ivf-form-group">
                     <label class="ivf-label"><i class="fas fa-link"></i> Referensi</label>
