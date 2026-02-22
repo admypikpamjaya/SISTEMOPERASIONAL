@@ -18,10 +18,6 @@ return [
         PortalPermission::ADMIN_ANNOUNCEMENT_READ,
         PortalPermission::ADMIN_ANNOUNCEMENT_CREATE,
 
-        // BILLING
-        PortalPermission::ADMIN_BILLING_READ,
-        PortalPermission::ADMIN_BILLING_CONFIRM,
-
         // REMINDER
         PortalPermission::ADMIN_REMINDER_READ,
         PortalPermission::ADMIN_REMINDER_SEND,

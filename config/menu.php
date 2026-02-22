@@ -86,13 +86,6 @@ return [
    
 
     [
-        'module_name' => 'admin_billing',
-        'label' => 'Billing',
-        'icon'  => 'fas fa-file-invoice-dollar',
-        'route' => 'admin.billings.index',
-    ],
-
-    [
         'module_name' => 'finance_report',
         'label'       => 'Finance',
         'icon'        => 'fas fa-chart-line',

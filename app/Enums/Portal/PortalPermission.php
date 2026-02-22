@@ -59,10 +59,6 @@ enum PortalPermission: string
     case ADMIN_ANNOUNCEMENT_READ   = 'admin_announcement.read';
     case ADMIN_ANNOUNCEMENT_CREATE = 'admin_announcement.create';
 
-    // Billing
-    case ADMIN_BILLING_READ    = 'admin_billing.read';
-    case ADMIN_BILLING_CONFIRM = 'admin_billing.confirm';
-
     // Reminder
     case ADMIN_REMINDER_READ = 'admin_reminder.read';
     case ADMIN_REMINDER_SEND = 'admin_reminder.send';

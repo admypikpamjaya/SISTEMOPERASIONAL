@@ -20,7 +20,6 @@ use App\Http\Controllers\Finance\FinanceReportController;
 
 // ADMIN
 use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\ReminderController;
 use App\Http\Controllers\Admin\BlastController;
 use App\Http\Controllers\Admin\BlastRecipientController;
@@ -296,17 +295,6 @@ Route::prefix('admin')
                 Route::delete('/{id}', [AnnouncementController::class, 'destroy'])
                     ->middleware('check_access:admin_announcement.create')
                     ->name('announcements.destroy');
-            });
-
-        /* ================= BILLINGS ================= */
-        Route::prefix('billings')
-            ->middleware('check_access:admin_billing.read')
-            ->group(function () {
-                Route::get('/', [BillingController::class, 'index'])
-                    ->name('billings.index');
-                Route::post('/{billingId}/confirm', [BillingController::class, 'confirmPayment'])
-                    ->middleware('check_access:admin_billing.confirm')
-                    ->name('billings.confirm');
             });
 
         /* ================= REMINDERS ================= */

@@ -395,15 +395,21 @@
                 </div>
                 <div class="col-md-6 ivf-form-group">
                     <label class="ivf-label"><i class="fas fa-book"></i> Jurnal</label>
-                    <select name="journal_name" id="journal_name" class="ivf-control"
-                        {{ $isReadOnly ? 'disabled' : '' }} required>
-                        <option value="" {{ $defaultJournalName === '' ? 'selected' : '' }} disabled>Pilih Jurnal</option>
+                    <input type="text"
+                        name="journal_name"
+                        id="journal_name"
+                        class="ivf-control"
+                        value="{{ $defaultJournalName }}"
+                        list="journal_name_options"
+                        placeholder="Pilih dari daftar atau ketik nama jurnal sendiri"
+                        autocomplete="off"
+                        {{ $isReadOnly ? 'disabled' : '' }}
+                        required>
+                    <datalist id="journal_name_options">
                         @foreach($journalOptions as $journalOption)
-                            <option value="{{ $journalOption }}" {{ $defaultJournalName === $journalOption ? 'selected' : '' }}>
-                                {{ $journalOption }}
-                            </option>
+                            <option value="{{ $journalOption }}">{{ $journalOption }}</option>
                         @endforeach
-                    </select>
+                    </datalist>
                 </div>
                 <div class="col-12 ivf-form-group">
                     <label class="ivf-label"><i class="fas fa-link"></i> Referensi</label>
