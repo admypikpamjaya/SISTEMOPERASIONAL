@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DiscussionMessage extends Model
 {
@@ -14,6 +15,7 @@ class DiscussionMessage extends Model
         'channel_id',
         'user_id',
         'message',
+        'reply_to_message_id',
         'attachment_path',
         'attachment_name',
         'attachment_size',
@@ -43,5 +45,15 @@ class DiscussionMessage extends Model
     public function pinnedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pinned_by');
+    }
+
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reply_to_message_id');
+    }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(self::class, 'reply_to_message_id');
     }
 }

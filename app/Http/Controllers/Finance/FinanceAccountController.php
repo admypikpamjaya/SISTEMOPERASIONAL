@@ -77,7 +77,7 @@ class FinanceAccountController extends Controller
         try {
             $validated = $request->validated();
             $type = (string) $validated['type'];
-            $classNo = FinanceAccount::classForType($type);
+            $classNo = (int) $validated['class_no'];
             $actorId = auth()->id() ? (string) auth()->id() : null;
 
             $account = FinanceAccount::query()->create([
@@ -116,7 +116,7 @@ class FinanceAccountController extends Controller
         try {
             $validated = $request->validated();
             $type = (string) $validated['type'];
-            $classNo = FinanceAccount::classForType($type);
+            $classNo = (int) $validated['class_no'];
             $actorId = auth()->id() ? (string) auth()->id() : null;
             $beforeData = $this->serializeAccount($account);
 

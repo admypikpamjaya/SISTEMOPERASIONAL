@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Discussion;
 
+use App\Models\DiscussionMessage;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DiscussionMessageStoreRequest extends FormRequest
@@ -23,6 +24,30 @@ class DiscussionMessageStoreRequest extends FormRequest
     {
         return [
             'channel_id' => ['required', 'integer', 'exists:discussion_channels,id'],
+            'reply_to_message_id' => [
+                'nullable',
+                'integer',
+                'exists:discussion_messages,id',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+
+                    $channelId = (int) $this->input('channel_id');
+                    if ($channelId <= 0) {
+                        return;
+                    }
+
+                    $exists = DiscussionMessage::query()
+                        ->where('id', (int) $value)
+                        ->where('channel_id', $channelId)
+                        ->exists();
+
+                    if (!$exists) {
+                        $fail('Pesan reply harus berasal dari channel yang sama.');
+                    }
+                },
+            ],
             'message' => ['nullable', 'string', 'max:5000', 'required_without_all:attachment,voice_note'],
             'attachment' => [
                 'nullable',
@@ -74,6 +99,7 @@ class DiscussionMessageStoreRequest extends FormRequest
             'message.required_without_all' => 'Isi pesan, upload file, atau kirim voice note.',
             'attachment.required_without_all' => 'Isi pesan, upload file, atau kirim voice note.',
             'voice_note.required_without_all' => 'Isi pesan, upload file, atau kirim voice note.',
+            'reply_to_message_id.exists' => 'Pesan yang direply tidak ditemukan.',
             'attachment.max' => 'Ukuran file maksimal 10 MB.',
             'attachment.mimes' => 'Format file tidak didukung.',
             'voice_note.max' => 'Ukuran voice note maksimal 10 MB.',

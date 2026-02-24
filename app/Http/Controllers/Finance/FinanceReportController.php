@@ -8,6 +8,8 @@ use App\DTOs\Finance\ProfitLossReportDetailDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\FinanceReportIndexRequest;
 use App\Http\Requests\Finance\GenerateProfitLossReportRequest;
+use App\Models\FinanceAccount;
+use App\Models\FinanceInvoice;
 use App\Services\Finance\ReportDocumentService;
 use App\Services\Finance\ReportService;
 use Carbon\Carbon;
@@ -56,6 +58,8 @@ class FinanceReportController extends Controller
                     'year' => $year,
                     'month' => $month,
                 ],
+                'accountOptions' => $this->getAccountOptions(),
+                'invoiceOptions' => $this->getInvoiceNumberOptions(),
             ]);
         } catch (Throwable $exception) {
             report($exception);
@@ -136,6 +140,8 @@ class FinanceReportController extends Controller
                 ],
                 'entryRows' => (array) data_get($payload, 'entries', []),
                 'editingReport' => $payload,
+                'accountOptions' => $this->getAccountOptions(),
+                'invoiceOptions' => $this->getInvoiceNumberOptions(),
             ]);
         } catch (RuntimeException $exception) {
             return redirect()
@@ -235,5 +241,37 @@ class FinanceReportController extends Controller
     private function findReportOrFail(string $id): ProfitLossReportDetailDTO
     {
         return $this->reportService->getProfitLossReportDetail($id);
+    }
+
+    private function getAccountOptions()
+    {
+        return FinanceAccount::query()
+            ->active()
+            ->orderBy('class_no')
+            ->orderBy('code')
+            ->get(['code', 'name', 'type', 'class_no'])
+            ->map(fn (FinanceAccount $account): array => [
+                'code' => (string) $account->code,
+                'name' => (string) $account->name,
+                'type' => (string) $account->type,
+                'type_label' => (string) $account->type_label,
+                'class_no' => (int) $account->class_no,
+            ])
+            ->values();
+    }
+
+    private function getInvoiceNumberOptions()
+    {
+        return FinanceInvoice::query()
+            ->whereNotNull('invoice_no')
+            ->where('invoice_no', '!=', '')
+            ->orderByDesc('accounting_date')
+            ->orderByDesc('created_at')
+            ->limit(300)
+            ->pluck('invoice_no')
+            ->map(fn ($invoiceNo) => trim((string) $invoiceNo))
+            ->filter()
+            ->unique()
+            ->values();
     }
 }

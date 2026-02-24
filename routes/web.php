@@ -85,6 +85,7 @@ Route::prefix('discussion')
         Route::delete('/messages/{message}', 'destroy')->name('messages.destroy');
         Route::get('/messages/{message}/voice-note', 'voiceNote')->name('messages.voice-note');
         Route::get('/messages/{message}/attachment', 'attachment')->name('messages.attachment');
+        Route::get('/messages/{message}/attachment-preview', 'attachmentPreview')->name('messages.attachment-preview');
     });
 
 /*

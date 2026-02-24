@@ -346,7 +346,12 @@
     $isEditing = isset($editAccount) && $editAccount;
 
     $currentType = old('type', $isEditing ? $editAccount->type : '');
-    $currentClass = $currentType !== '' ? ($typeClassMap[$currentType] ?? '-') : '-';
+    $currentClassNo = old(
+        'class_no',
+        $isEditing
+            ? (int) $editAccount->class_no
+            : ($selectedGroup ?? ($typeClassMap[$currentType] ?? ''))
+    );
     $formAction = $isEditing
         ? route('finance.accounts.update', $editAccount->id)
         : route('finance.accounts.store');
@@ -448,13 +453,15 @@
                             </select>
                         </div>
                         <div class="coa-field">
-                            <label for="class_preview">Urutan Kiri</label>
-                            <input
-                                type="text"
-                                id="class_preview"
-                                class="coa-input"
-                                value="{{ $currentClass }}"
-                                readonly>
+                            <label for="class_no">No Klasifikasi Kiri</label>
+                            <select id="class_no" name="class_no" class="coa-select" required>
+                                <option value="">Pilih no klasifikasi</option>
+                                @foreach($groupOrder as $groupNo)
+                                    <option value="{{ $groupNo }}" {{ (string) $currentClassNo === (string) $groupNo ? 'selected' : '' }}>
+                                        {{ $groupNo }} - {{ $groupLabels[$groupNo] ?? ('Kelas ' . $groupNo) }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
@@ -626,20 +633,38 @@
 <script>
     (function () {
         const typeSelect = document.getElementById('type');
-        const classPreview = document.getElementById('class_preview');
+        const classSelect = document.getElementById('class_no');
+        let classOverridden = false;
 
-        if (!typeSelect || !classPreview) {
+        if (!typeSelect || !classSelect) {
             return;
         }
 
-        function syncClassPreview() {
+        function syncClassByType(forceUpdate) {
+            if (classOverridden && !forceUpdate) {
+                return;
+            }
+
+            if (forceUpdate && classSelect.value !== '') {
+                return;
+            }
+
             const selectedOption = typeSelect.options[typeSelect.selectedIndex];
             const classNo = selectedOption ? selectedOption.getAttribute('data-class') : '';
-            classPreview.value = classNo || '-';
+            if (classNo) {
+                classSelect.value = classNo;
+            }
         }
 
-        typeSelect.addEventListener('change', syncClassPreview);
-        syncClassPreview();
+        classSelect.addEventListener('change', function () {
+            classOverridden = true;
+        });
+
+        typeSelect.addEventListener('change', function () {
+            syncClassByType(false);
+        });
+
+        syncClassByType(true);
     })();
 </script>
 @endsection

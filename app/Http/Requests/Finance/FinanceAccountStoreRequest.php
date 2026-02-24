@@ -27,6 +27,7 @@ class FinanceAccountStoreRequest extends FormRequest
             'code' => ['required', 'string', 'max:64', Rule::unique('finance_accounts', 'code')],
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', Rule::in(FinanceAccount::allowedTypes())],
+            'class_no' => ['required', 'integer', Rule::in(FinanceAccount::classOrder())],
             'is_active' => ['required', 'boolean'],
         ];
     }
@@ -43,6 +44,9 @@ class FinanceAccountStoreRequest extends FormRequest
             'code' => strtoupper(trim((string) $this->input('code', ''))),
             'name' => trim((string) $this->input('name', '')),
             'type' => strtoupper(trim((string) $this->input('type', ''))),
+            'class_no' => is_numeric($this->input('class_no'))
+                ? (int) $this->input('class_no')
+                : $this->input('class_no'),
             'is_active' => (bool) $isActive,
         ]);
     }
@@ -57,6 +61,9 @@ class FinanceAccountStoreRequest extends FormRequest
             'name.max' => 'Nama akun maksimal 255 karakter.',
             'type.required' => 'Jenis akun wajib dipilih.',
             'type.in' => 'Jenis akun tidak valid.',
+            'class_no.required' => 'No klasifikasi kiri wajib dipilih.',
+            'class_no.integer' => 'No klasifikasi kiri tidak valid.',
+            'class_no.in' => 'No klasifikasi kiri tidak tersedia.',
         ];
     }
 }
