@@ -20,6 +20,24 @@
             ? (float) data_get($editingReport, 'opening_balance', 0)
             : ($suggestedOpeningBalance ?? 0)
     );
+    $accountOptions = collect($accountOptions ?? [])
+        ->map(function ($item): array {
+            return [
+                'code' => strtoupper(trim((string) data_get($item, 'code'))),
+                'name' => trim((string) data_get($item, 'name')),
+                'type' => strtoupper(trim((string) data_get($item, 'type'))),
+                'class_no' => (int) data_get($item, 'class_no', 0),
+            ];
+        })
+        ->filter(fn ($item) => $item['code'] !== '' && $item['name'] !== '')
+        ->unique('code')
+        ->sortBy('code')
+        ->values();
+    $invoiceOptions = collect($invoiceOptions ?? [])
+        ->map(fn ($item) => trim((string) $item))
+        ->filter()
+        ->unique()
+        ->values();
 
     $defaultEntryRows = $isEditMode
         ? ((array) data_get($editingReport, 'entries', []))
@@ -49,6 +67,56 @@
         ],
         ];
     }
+
+    $existingEntryCodes = collect($entryRows)
+        ->map(fn ($entry) => strtoupper(trim((string) data_get($entry, 'line_code', ''))))
+        ->filter()
+        ->unique()
+        ->values();
+    foreach ($existingEntryCodes as $existingCode) {
+        if (!$accountOptions->contains(fn ($option) => $option['code'] === $existingCode)) {
+            $accountOptions->push([
+                'code' => $existingCode,
+                'name' => '',
+                'type' => '',
+                'class_no' => 0,
+            ]);
+        }
+    }
+
+    $existingEntryNames = collect($entryRows)
+        ->map(fn ($entry) => trim((string) data_get($entry, 'line_label', '')))
+        ->filter()
+        ->unique()
+        ->values();
+    foreach ($existingEntryNames as $existingName) {
+        if (!$accountOptions->contains(fn ($option) => strcasecmp($option['name'], $existingName) === 0)) {
+            $accountOptions->push([
+                'code' => '',
+                'name' => $existingName,
+                'type' => '',
+                'class_no' => 0,
+            ]);
+        }
+    }
+
+    $accountOptions = $accountOptions
+        ->sortBy(function ($option) {
+            $prefix = $option['code'] === '' ? 'ZZZZ' : $option['code'];
+            return $prefix . '|' . strtoupper($option['name']);
+        })
+        ->values();
+
+    $existingInvoiceNumbers = collect($entryRows)
+        ->map(fn ($entry) => trim((string) data_get($entry, 'invoice_number', '')))
+        ->filter()
+        ->unique()
+        ->values();
+    $invoiceOptions = $invoiceOptions
+        ->merge($existingInvoiceNumbers)
+        ->filter()
+        ->unique()
+        ->values();
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -333,7 +401,7 @@
                 <div class="fr-card-header">
                     <div class="fr-card-header-left">
                         <span class="hicon"><i class="fas fa-clipboard-list"></i></span>
-                        <h3>Input Laporan Laba Rugi</h3>
+                        <h3>{{ $formTitle }}</h3>
                     </div>
                     <a
                         href="{{ route('finance.report.snapshots', ['period_type' => 'MONTHLY', 'month' => now()->month, 'year' => now()->year]) }}"
@@ -344,8 +412,15 @@
                     </a>
                 </div>
 
-                <form method="POST" action="{{ route('finance.report.store') }}" id="profit-loss-form">
+                <form method="POST" action="{{ $formAction }}" id="profit-loss-form">
                     @csrf
+                    @if($isEditMode)
+                        @method('PUT')
+                        <input type="hidden" name="report_type" value="{{ $defaultPeriodType }}">
+                        <input type="hidden" name="report_date" value="{{ $defaultReportDate }}">
+                        <input type="hidden" name="month" value="{{ $defaultMonth }}">
+                        <input type="hidden" name="year" value="{{ $defaultYear }}">
+                    @endif
 
                     <div class="fr-card-body">
 
@@ -368,7 +443,7 @@
                                 <label for="report_type_create">
                                     <i class="fas fa-layer-group"></i> Periode
                                 </label>
-                                <select name="report_type" id="report_type_create" class="fr-select" required>
+                                <select name="report_type" id="report_type_create" class="fr-select" {{ $isEditMode ? 'disabled' : '' }} required>
                                     <option value="DAILY"   {{ $defaultPeriodType === 'DAILY'   ? 'selected' : '' }}>Harian</option>
                                     <option value="MONTHLY" {{ $defaultPeriodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
                                     <option value="YEARLY"  {{ $defaultPeriodType === 'YEARLY'  ? 'selected' : '' }}>Tahunan</option>
@@ -381,7 +456,7 @@
                                 </label>
                                 <input
                                     type="date" name="report_date" id="report_date_create"
-                                    class="fr-input" value="{{ $defaultReportDate }}"
+                                    class="fr-input" value="{{ $defaultReportDate }}" {{ $isEditMode ? 'disabled' : '' }}
                                 >
                             </div>
 
@@ -389,7 +464,7 @@
                                 <label for="month_create">
                                     <i class="fas fa-calendar-alt"></i> Bulan
                                 </label>
-                                <select name="month" id="month_create" class="fr-select">
+                                <select name="month" id="month_create" class="fr-select" {{ $isEditMode ? 'disabled' : '' }}>
                                     @for($m = 1; $m <= 12; $m++)
                                         <option value="{{ $m }}" {{ $defaultMonth === $m ? 'selected' : '' }}>{{ $m }}</option>
                                     @endfor
@@ -403,7 +478,7 @@
                                 <input
                                     type="number" name="year" id="year_create"
                                     class="fr-input" min="1900" max="2100"
-                                    value="{{ $defaultYear }}"
+                                    value="{{ $defaultYear }}" {{ $isEditMode ? 'disabled' : '' }}
                                 >
                             </div>
 
@@ -433,6 +508,9 @@
                         </div>
 
                         {{-- Entry lines table --}}
+                        <div style="font-size:.78rem;color:var(--muted);margin:0 0 10px;">
+                            Kode akun, nama akun, dan nomor faktur tersedia dari database melalui dropdown, tetap bisa diketik manual.
+                        </div>
                         <div class="fr-table-wrap">
                             <table class="fr-table" id="profit-loss-lines-table">
                                 <thead>
@@ -458,16 +536,27 @@
                                             </td>
                                             <td>
                                                 <input type="text" name="entries[{{ $index }}][line_code]"
-                                                    class="td-input" value="{{ $entry['line_code'] ?? '' }}" required>
+                                                    class="td-input js-line-code"
+                                                    value="{{ $entry['line_code'] ?? '' }}"
+                                                    list="finance-line-code-options"
+                                                    placeholder="Pilih kode akun / ketik manual"
+                                                    required>
                                             </td>
                                             <td>
                                                 <input type="text" name="entries[{{ $index }}][line_label]"
-                                                    class="td-input" value="{{ $entry['line_label'] ?? '' }}" required>
+                                                    class="td-input js-line-label"
+                                                    value="{{ $entry['line_label'] ?? '' }}"
+                                                    list="finance-line-label-options"
+                                                    placeholder="Pilih nama akun / ketik manual"
+                                                    required>
                                             </td>
                                             <td>
                                                 <input type="text" name="entries[{{ $index }}][invoice_number]"
-                                                    class="td-input" value="{{ $entry['invoice_number'] ?? '' }}"
-                                                    placeholder="Opsional" maxlength="100">
+                                                    class="td-input js-invoice-number"
+                                                    value="{{ $entry['invoice_number'] ?? '' }}"
+                                                    list="finance-invoice-number-options"
+                                                    placeholder="Pilih no faktur / ketik manual"
+                                                    maxlength="100">
                                             </td>
                                             <td>
                                                 <input type="text" name="entries[{{ $index }}][description]"
@@ -480,7 +569,7 @@
                                                     value="{{ $entry['amount'] ?? '' }}" required>
                                             </td>
                                             <td style="text-align:center;">
-                                                <input type="checkbox" class="fr-table .td-check"
+                                                <input type="checkbox" class="td-check"
                                                     name="entries[{{ $index }}][is_depreciation]"
                                                     value="1"
                                                     {{ !empty($entry['is_depreciation']) ? 'checked' : '' }}
@@ -498,6 +587,25 @@
                                 </tbody>
                             </table>
                         </div>
+                        <datalist id="finance-line-code-options">
+                            @foreach($accountOptions->filter(fn ($option) => $option['code'] !== '') as $option)
+                                <option value="{{ $option['code'] }}">
+                                    {{ $option['name'] !== '' ? ($option['code'] . ' - ' . $option['name']) : $option['code'] }}
+                                </option>
+                            @endforeach
+                        </datalist>
+                        <datalist id="finance-line-label-options">
+                            @foreach($accountOptions->filter(fn ($option) => $option['name'] !== '')->unique(fn ($option) => strtoupper($option['name'])) as $option)
+                                <option value="{{ $option['name'] }}">
+                                    {{ $option['code'] !== '' ? ($option['name'] . ' (' . $option['code'] . ')') : $option['name'] }}
+                                </option>
+                            @endforeach
+                        </datalist>
+                        <datalist id="finance-invoice-number-options">
+                            @foreach($invoiceOptions as $invoiceOption)
+                                <option value="{{ $invoiceOption }}">{{ $invoiceOption }}</option>
+                            @endforeach
+                        </datalist>
 
                     </div>{{-- /card-body --}}
 
@@ -508,7 +616,7 @@
                         </button>
                         <button type="submit" class="fr-btn fr-btn-success">
                             <i class="fas fa-save"></i>
-                            <span>Simpan Snapshot Laba Rugi</span>
+                            <span>{{ $submitLabel }}</span>
                         </button>
                     </div>
 
@@ -523,6 +631,8 @@
 @section('js')
 <script>
     (function () {
+        const isEditMode = @json($isEditMode);
+        const accountOptions = @json($accountOptions);
         const tableBody            = document.getElementById('profit-loss-lines-body');
         const addButton            = document.getElementById('add-profit-loss-line');
         const reportTypeSelect     = document.getElementById('report_type_create');
@@ -534,6 +644,30 @@
         const yearInput            = document.getElementById('year_create');
         const openingBalanceInput  = document.getElementById('opening_balance_create');
         const estimatedEndingBalance = document.getElementById('estimated-ending-balance');
+        const accountByCode        = new Map();
+        const accountByName        = new Map();
+
+        if (!tableBody || !addButton || !reportTypeSelect || !openingBalanceInput || !estimatedEndingBalance) {
+            return;
+        }
+
+        function normalizeLookup(value) {
+            return String(value ?? '').trim().toUpperCase();
+        }
+
+        accountOptions.forEach(function (option) {
+            const code = String(option.code ?? '').trim();
+            const name = String(option.name ?? '').trim();
+            const codeKey = normalizeLookup(code);
+            const nameKey = normalizeLookup(name);
+
+            if (codeKey) {
+                accountByCode.set(codeKey, option);
+            }
+            if (nameKey && !accountByName.has(nameKey)) {
+                accountByName.set(nameKey, option);
+            }
+        });
 
         function parseAmount(value) {
             const number = Number(value);
@@ -570,6 +704,47 @@
             estimatedEndingBalance.textContent = formatRupiah(balance);
         }
 
+        function syncAccountByCode(row, forceLabelUpdate) {
+            const codeInput = row.querySelector('input[name*="[line_code]"]');
+            const labelInput = row.querySelector('input[name*="[line_label]"]');
+            if (!codeInput || !labelInput) return;
+
+            const account = accountByCode.get(normalizeLookup(codeInput.value));
+            if (!account) return;
+
+            if (forceLabelUpdate || normalizeLookup(labelInput.value) === '') {
+                labelInput.value = String(account.name ?? '').trim();
+            }
+        }
+
+        function syncAccountByName(row) {
+            const codeInput = row.querySelector('input[name*="[line_code]"]');
+            const labelInput = row.querySelector('input[name*="[line_label]"]');
+            if (!codeInput || !labelInput) return;
+
+            const account = accountByName.get(normalizeLookup(labelInput.value));
+            if (!account) return;
+
+            if (normalizeLookup(codeInput.value) === '') {
+                codeInput.value = String(account.code ?? '').trim();
+            }
+        }
+
+        function hydrateAccountRow(row) {
+            const codeInput = row.querySelector('input[name*="[line_code]"]');
+            const labelInput = row.querySelector('input[name*="[line_label]"]');
+            if (!codeInput || !labelInput) return;
+
+            if (normalizeLookup(codeInput.value) !== '') {
+                syncAccountByCode(row, false);
+                return;
+            }
+
+            if (normalizeLookup(labelInput.value) !== '') {
+                syncAccountByName(row);
+            }
+        }
+
         function syncDepreciationCheckbox(row) {
             const typeSelect = row.querySelector('select[name*="[type]"]');
             const checkbox   = row.querySelector('input[type="checkbox"][name*="[is_depreciation]"]');
@@ -596,6 +771,7 @@
                     removeButton.disabled = tableBody.querySelectorAll('tr').length === 1;
                 }
 
+                hydrateAccountRow(row);
                 syncDepreciationCheckbox(row);
             });
         }
@@ -609,9 +785,9 @@
                         <option value="EXPENSE">EXPENSE</option>
                     </select>
                 </td>
-                <td><input type="text" name="entries[0][line_code]" class="td-input" required></td>
-                <td><input type="text" name="entries[0][line_label]" class="td-input" required></td>
-                <td><input type="text" name="entries[0][invoice_number]" class="td-input" placeholder="Opsional" maxlength="100"></td>
+                <td><input type="text" name="entries[0][line_code]" class="td-input js-line-code" list="finance-line-code-options" placeholder="Pilih kode akun / ketik manual" required></td>
+                <td><input type="text" name="entries[0][line_label]" class="td-input js-line-label" list="finance-line-label-options" placeholder="Pilih nama akun / ketik manual" required></td>
+                <td><input type="text" name="entries[0][invoice_number]" class="td-input js-invoice-number" list="finance-invoice-number-options" placeholder="Pilih no faktur / ketik manual" maxlength="100"></td>
                 <td><input type="text" name="entries[0][description]" class="td-input" placeholder="Detail pemasukan/pengeluaran"></td>
                 <td><input type="number" name="entries[0][amount]" class="td-input" min="0" step="0.01" required></td>
                 <td style="text-align:center;">
@@ -677,6 +853,16 @@
         });
 
         tableBody.addEventListener('change', function (event) {
+            if (event.target.matches('.js-line-code')) {
+                const row = event.target.closest('tr');
+                if (row) syncAccountByCode(row, true);
+            }
+
+            if (event.target.matches('.js-line-label')) {
+                const row = event.target.closest('tr');
+                if (row) syncAccountByName(row);
+            }
+
             if (event.target.matches('select[name*="[type]"]')) {
                 const row = event.target.closest('tr');
                 if (row) syncDepreciationCheckbox(row);
@@ -690,6 +876,16 @@
         tableBody.addEventListener('input', function (event) {
             if (event.target.matches('input[name*="[amount]"]')) {
                 updateEstimatedBalance();
+            }
+
+            if (event.target.matches('.js-line-code')) {
+                const row = event.target.closest('tr');
+                if (row) syncAccountByCode(row, false);
+            }
+
+            if (event.target.matches('.js-line-label')) {
+                const row = event.target.closest('tr');
+                if (row) syncAccountByName(row);
             }
         });
 

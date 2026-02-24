@@ -28,7 +28,12 @@ class DiscussionController extends Controller
         $this->releaseExpiredPins((int) $activeChannel->id);
 
         $messages = DiscussionMessage::query()
-            ->with(['user:id,name,role', 'pinnedBy:id,name'])
+            ->with([
+                'user:id,name,role',
+                'pinnedBy:id,name',
+                'replyTo:id,channel_id,user_id,message,attachment_name,voice_note_name',
+                'replyTo.user:id,name',
+            ])
             ->where('channel_id', $activeChannel->id)
             ->orderByDesc('id')
             ->limit(150)
@@ -57,7 +62,12 @@ class DiscussionController extends Controller
         $this->releaseExpiredPins($channelId);
 
         $query = DiscussionMessage::query()
-            ->with(['user:id,name,role', 'pinnedBy:id,name'])
+            ->with([
+                'user:id,name,role',
+                'pinnedBy:id,name',
+                'replyTo:id,channel_id,user_id,message,attachment_name,voice_note_name',
+                'replyTo.user:id,name',
+            ])
             ->where('channel_id', $channelId)
             ->orderBy('id');
 
@@ -107,6 +117,9 @@ class DiscussionController extends Controller
             'channel_id' => (int) $validated['channel_id'],
             'user_id' => auth()->id(),
             'message' => $validated['message'] ?? null,
+            'reply_to_message_id' => !empty($validated['reply_to_message_id'])
+                ? (int) $validated['reply_to_message_id']
+                : null,
             'attachment_path' => $attachmentPath,
             'attachment_name' => $attachmentName,
             'attachment_size' => $attachmentSize,
@@ -115,7 +128,12 @@ class DiscussionController extends Controller
             'voice_note_size' => $voiceNoteSize,
         ]);
 
-        $discussionMessage->load(['user:id,name,role', 'pinnedBy:id,name']);
+        $discussionMessage->load([
+            'user:id,name,role',
+            'pinnedBy:id,name',
+            'replyTo:id,channel_id,user_id,message,attachment_name,voice_note_name',
+            'replyTo.user:id,name',
+        ]);
 
         return response()->json([
             'message' => 'Pesan berhasil dikirim.',
@@ -223,6 +241,22 @@ class DiscussionController extends Controller
         );
     }
 
+    public function attachmentPreview(DiscussionMessage $message): StreamedResponse
+    {
+        abort_if(empty($message->attachment_path) || empty($message->attachment_name), 404);
+        abort_unless($this->isImageAttachment($message->attachment_name), 404);
+        abort_unless(Storage::disk('local')->exists($message->attachment_path), 404);
+
+        return Storage::disk('local')->response(
+            $message->attachment_path,
+            $message->attachment_name,
+            [
+                'Content-Type' => Storage::disk('local')->mimeType($message->attachment_path) ?: 'image/jpeg',
+                'Content-Disposition' => 'inline; filename="' . $message->attachment_name . '"',
+            ]
+        );
+    }
+
     public function voiceNote(DiscussionMessage $message): StreamedResponse
     {
         abort_if(empty($message->voice_note_path) || empty($message->voice_note_name), 404);
@@ -246,6 +280,15 @@ class DiscussionController extends Controller
         $createdAt = $message->created_at?->copy()->timezone(self::DISPLAY_TIMEZONE);
         $pinnedAt = $message->pinned_at?->copy()->timezone(self::DISPLAY_TIMEZONE);
         $pinExpiresAt = $message->pin_expires_at?->copy()->timezone(self::DISPLAY_TIMEZONE);
+        $attachmentIsImage = $this->isImageAttachment($message->attachment_name);
+        $replyTo = $message->replyTo;
+        $replyMessage = trim((string) ($replyTo?->message ?? ''));
+        if ($replyMessage === '' && !empty($replyTo?->attachment_name)) {
+            $replyMessage = '[Lampiran] ' . (string) $replyTo->attachment_name;
+        }
+        if ($replyMessage === '' && !empty($replyTo?->voice_note_name)) {
+            $replyMessage = '[Voice Note]';
+        }
 
         return [
             'id' => (int) $message->id,
@@ -254,13 +297,23 @@ class DiscussionController extends Controller
             'attachment_url' => $message->attachment_path
                 ? route('discussion.messages.attachment', $message)
                 : null,
+            'attachment_preview_url' => $message->attachment_path && $attachmentIsImage
+                ? route('discussion.messages.attachment-preview', $message)
+                : null,
             'attachment_name' => $message->attachment_name,
             'attachment_size' => $message->attachment_size ? (int) $message->attachment_size : null,
+            'attachment_is_image' => $attachmentIsImage,
             'voice_note_url' => $message->voice_note_path
                 ? route('discussion.messages.voice-note', $message)
                 : null,
             'voice_note_name' => $message->voice_note_name,
             'voice_note_size' => $message->voice_note_size ? (int) $message->voice_note_size : null,
+            'reply_to_message_id' => $message->reply_to_message_id ? (int) $message->reply_to_message_id : null,
+            'reply_to' => $replyTo ? [
+                'id' => (int) $replyTo->id,
+                'message' => $replyMessage,
+                'sender_name' => $replyTo->user?->name ?? 'Pengguna',
+            ] : null,
             'is_pinned' => !empty($message->pinned_at),
             'pinned_by_id' => $message->pinnedBy?->id ? (string) $message->pinnedBy->id : null,
             'pinned_by_name' => $message->pinnedBy?->name,
@@ -327,5 +380,15 @@ class DiscussionController extends Controller
             '1m' => now()->addMonth(),
             default => now()->addHours(24),
         };
+    }
+
+    private function isImageAttachment(?string $attachmentName): bool
+    {
+        if (empty($attachmentName)) {
+            return false;
+        }
+
+        $extension = strtolower((string) pathinfo($attachmentName, PATHINFO_EXTENSION));
+        return in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'], true);
     }
 }

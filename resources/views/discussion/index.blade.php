@@ -459,6 +459,58 @@
     }
     .dc-file:hover { background: var(--blue-light); text-decoration: none; }
 
+    .dc-photo-link {
+        display: inline-block;
+        margin-top: 7px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--blue-border);
+        background: #fff;
+    }
+    .dc-photo-link:hover { text-decoration: none; }
+    .dc-photo {
+        display: block;
+        max-width: min(320px, 100%);
+        max-height: 280px;
+        object-fit: cover;
+    }
+    .dc-photo-meta {
+        padding: 6px 8px;
+        font-size: 11px;
+        color: var(--text-muted);
+        border-top: 1px solid var(--blue-border);
+        background: var(--blue-lighter);
+        font-weight: 600;
+    }
+
+    .dc-reply-box {
+        margin-bottom: 7px;
+        border-left: 3px solid var(--blue-mid);
+        background: var(--blue-lighter);
+        border-radius: 8px;
+        padding: 6px 8px;
+    }
+    .dc-msg.own .dc-reply-box {
+        background: rgba(255,255,255,.2);
+        border-left-color: rgba(255,255,255,.8);
+    }
+    .dc-reply-sender {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 2px;
+    }
+    .dc-msg.own .dc-reply-sender { color: #fff; }
+    .dc-reply-text {
+        font-size: 11.5px;
+        color: #334155;
+        line-height: 1.35;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .dc-msg.own .dc-reply-text { color: rgba(255,255,255,.9); }
+
     .dc-vn {
         margin-top: 7px;
         border: 1px solid var(--blue-border);
@@ -569,6 +621,49 @@
     }
     .dc-vn-preview audio { width: min(360px, 100%); height: 34px; }
 
+    .dc-reply-preview {
+        margin-top: 8px;
+        border: 1px solid var(--blue-border);
+        background: var(--blue-lighter);
+        border-radius: 10px;
+        padding: 8px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .dc-reply-preview-main { min-width: 0; }
+    .dc-reply-preview-title {
+        font-size: 11px;
+        color: var(--accent);
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 3px;
+    }
+    .dc-reply-preview-text {
+        font-size: 12px;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 540px;
+    }
+    .dc-reply-preview-cancel {
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 7px;
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        cursor: pointer;
+    }
+    .dc-reply-preview-cancel:hover { background: var(--bg-main); }
+
     /* Row buttons */
     .dc-row {
         margin-top: 10px;
@@ -660,6 +755,40 @@
     .dc-send:hover { opacity: .92; transform: translateY(-1px); }
     .dc-send:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
+    .dc-emoji-picker {
+        position: absolute;
+        bottom: 58px;
+        left: 16px;
+        z-index: 20;
+        width: min(300px, calc(100vw - 52px));
+        background: #fff;
+        border: 1px solid var(--blue-border);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 10px;
+    }
+    .dc-emoji-list {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .dc-emoji-btn {
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: 7px;
+        font-size: 18px;
+        line-height: 1;
+        padding: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .dc-emoji-btn:hover {
+        background: var(--blue-lighter);
+        border-color: var(--blue-border);
+    }
+
     /* ─── RESPONSIVE ─────────────────────────── */
     @media(max-width:991px){
         .dc-wrap { grid-template-columns: 1fr; height: calc(100vh - 70px); }
@@ -743,9 +872,23 @@
                     <option value="1m">1 Bulan</option>
                 </select>
                 <button type="button" id="dcPinAction" class="dc-act-btn pin"><i class="fas fa-thumbtack"></i> Pin Chat</button>
+                <button type="button" id="dcReplyAction" class="dc-act-btn"><i class="fas fa-reply"></i> Reply</button>
                 <button type="button" id="dcUnpin" class="dc-act-btn"><i class="fas fa-times"></i> Lepas Pin</button>
                 <button type="button" id="dcDelete" class="dc-act-btn warn"><i class="fas fa-trash-alt"></i> Hapus</button>
                 <button type="button" id="dcCancelSel" class="dc-act-btn"><i class="fas fa-ban"></i> Batal</button>
+            </div>
+
+            <input type="hidden" id="dcReplyToMessageId" name="reply_to_message_id" value="">
+            <div id="dcReplyPreview" class="dc-reply-preview" style="display:none;">
+                <div class="dc-reply-preview-main">
+                    <div class="dc-reply-preview-title">
+                        <i class="fas fa-reply"></i> Membalas <span id="dcReplySender">-</span>
+                    </div>
+                    <div id="dcReplyText" class="dc-reply-preview-text">-</div>
+                </div>
+                <button type="button" id="dcReplyCancel" class="dc-reply-preview-cancel">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
 
             <textarea id="dcMessage" name="message" class="dc-ta" placeholder="Ketik pesan untuk semua role..."></textarea>
@@ -773,6 +916,14 @@
                 </button>
                 <span id="dcVoiceStat" class="dc-note">Belum ada voice note.</span>
 
+                <button id="dcEmojiToggle" type="button" class="dc-rec" aria-label="Emoji">
+                    <i class="far fa-smile"></i> Emoji
+                </button>
+
+                <div id="dcEmojiPicker" class="dc-emoji-picker" style="display:none;">
+                    <div id="dcEmojiList" class="dc-emoji-list"></div>
+                </div>
+
                 <button id="dcSend" type="submit" class="dc-send">
                     <i class="fas fa-paper-plane"></i> Kirim
                 </button>
@@ -795,15 +946,25 @@
     const voiceInput=document.getElementById('dcVoice'),voiceStat=document.getElementById('dcVoiceStat'),voicePrev=document.getElementById('dcVoicePreview');
     const voicePrevWrap=document.getElementById('dcVoicePreviewWrap'),voicePrevLabel=document.getElementById('dcVoicePreviewLabel');
     const recBtn=document.getElementById('dcRec'),clearRecBtn=document.getElementById('dcRecClear'),sendBtn=document.getElementById('dcSend'),searchInput=document.getElementById('dcSearch');
-    const actionBox=document.getElementById('dcAction'),actionLabel=document.getElementById('dcActionLabel'),pinDurationSel=document.getElementById('dcPinDuration'),pinActionBtn=document.getElementById('dcPinAction'),unpinBtn=document.getElementById('dcUnpin'),delBtn=document.getElementById('dcDelete'),cancelSelBtn=document.getElementById('dcCancelSel');
-    const st={lastId:0,known:new Set(),pinned:new Set(),polling:false,submit:false,pinning:false,mr:null,stream:null,chunks:[],timer:null,sec:0,selectedId:null,selectedMine:false,selectedPinned:false,selectedHasAttachment:false,previewUrl:null,discardRecording:false,searchQuery:''};
+    const actionBox=document.getElementById('dcAction'),actionLabel=document.getElementById('dcActionLabel'),pinDurationSel=document.getElementById('dcPinDuration'),pinActionBtn=document.getElementById('dcPinAction'),replyBtn=document.getElementById('dcReplyAction'),unpinBtn=document.getElementById('dcUnpin'),delBtn=document.getElementById('dcDelete'),cancelSelBtn=document.getElementById('dcCancelSel');
+    const replyInput=document.getElementById('dcReplyToMessageId'),replyPreview=document.getElementById('dcReplyPreview'),replySender=document.getElementById('dcReplySender'),replyText=document.getElementById('dcReplyText'),replyCancelBtn=document.getElementById('dcReplyCancel');
+    const emojiToggle=document.getElementById('dcEmojiToggle'),emojiPicker=document.getElementById('dcEmojiPicker'),emojiList=document.getElementById('dcEmojiList');
+    const EMOJIS=['\u{1F600}','\u{1F601}','\u{1F602}','\u{1F923}','\u{1F60A}','\u{1F60D}','\u{1F970}','\u{1F60E}','\u{1F44D}','\u{1F64F}','\u{1F44F}','\u{1F525}','\u{1F4AF}','\u{1F389}','\u{2764}\u{FE0F}','\u{1F91D}','\u{1F605}','\u{1F914}','\u{1F64C}','\u{1F44C}','\u{1F607}','\u{1F973}','\u{1F634}','\u{1F932}'];
+    const st={lastId:0,known:new Set(),pinned:new Set(),map:new Map(),polling:false,submit:false,pinning:false,mr:null,stream:null,chunks:[],timer:null,sec:0,selectedId:null,selectedMine:false,selectedPinned:false,selectedHasAttachment:false,previewUrl:null,discardRecording:false,searchQuery:'',emojiOpen:false};
     const fsize=(b)=>{b=Number(b||0);if(!b)return'';const u=['B','KB','MB','GB'];let i=0;while(b>=1024&&i<u.length-1){b/=1024;i++;}return`${b.toFixed(b>=10||i===0?0:1)} ${u[i]}`};
     const ftime=(s)=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
     const esc=(v)=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const escAttr=(v)=>String(v??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const initial=(n)=>((n||'?').trim().charAt(0)||'?').toUpperCase();
     const nearBottom=()=>list.scrollHeight-list.scrollTop-list.clientHeight<140,toBottom=()=>{list.scrollTop=list.scrollHeight};
     const pinUrl=(id)=>pinTpl.replace('__ID__',String(id)),delUrl=(id)=>delTpl.replace('__ID__',String(id));
-    const msgPreview=(m)=>{const t=String(m?.message||'').trim();if(t)return t.length>90?`${t.slice(0,90)}...`:t;if(m?.voice_note_url)return'[Voice Note]';if(m?.attachment_name)return`[Lampiran] ${m.attachment_name}`;return'(Pesan)'};
+    const msgPreview=(m)=>{const t=String(m?.message||'').trim();if(t)return t.length>90?`${t.slice(0,90)}...`:t;if(m?.voice_note_url||m?.voice_note_name)return'[Voice Note]';if(m?.attachment_name)return`${m?.attachment_is_image?'[Foto]':'[Lampiran]'} ${m.attachment_name}`;return'(Pesan)'};
+    function rememberMsg(m){const id=Number(m?.id||0);if(!id)return;const prev=st.map.get(id)||{};st.map.set(id,{...prev,...m})}
+    function setReply(m){if(!m?.id)return;replyInput.value=String(m.id);replySender.textContent=String(m?.sender?.name||'Pengguna');replyText.textContent=msgPreview(m);replyPreview.style.display='flex';selectMessage(null);msgInput.focus()}
+    function clearReply(){replyInput.value='';replySender.textContent='-';replyText.textContent='-';replyPreview.style.display='none'}
+    function renderEmojis(){emojiList.innerHTML='';EMOJIS.forEach((v)=>{const b=document.createElement('button');b.type='button';b.className='dc-emoji-btn';b.dataset.emoji=v;b.setAttribute('aria-label',`Emoji ${v}`);b.textContent=v;emojiList.appendChild(b)})}
+    function toggleEmoji(force){st.emojiOpen=typeof force==='boolean'?force:!st.emojiOpen;emojiPicker.style.display=st.emojiOpen?'block':'none'}
+    function addEmoji(v){const s=typeof msgInput.selectionStart==='number'?msgInput.selectionStart:msgInput.value.length,e=typeof msgInput.selectionEnd==='number'?msgInput.selectionEnd:msgInput.value.length;msgInput.value=`${msgInput.value.slice(0,s)}${v}${msgInput.value.slice(e)}`;const c=s+String(v).length;msgInput.focus();msgInput.setSelectionRange(c,c)}
     function updateFile(){const f=fileInput.files?.[0];fileName.textContent=f?f.name:'Tidak ada file.'}
     function clearPreview(){if(st.previewUrl){URL.revokeObjectURL(st.previewUrl);st.previewUrl=null}voicePrev.removeAttribute('src');voicePrevWrap.style.display='none'}
     function syncPreview(){const f=voiceInput.files?.[0];if(!f){clearPreview();return}clearPreview();st.previewUrl=URL.createObjectURL(f);voicePrev.src=st.previewUrl;voicePrevLabel.textContent=`Preview voice note (${fsize(f.size)})`;voicePrevWrap.style.display='block'}
@@ -821,41 +982,50 @@
         }catch(e){Notification.error('Akses mikrofon ditolak atau tidak tersedia.');clearVoice()}}
     function visibleMessageCount(){return Array.from(list.querySelectorAll('.dc-msg[data-message-id]')).filter((n)=>n.style.display!=='none').length}
     function toggleEmpty(){const count=visibleMessageCount();if(count>0){empty.style.display='none';return}empty.style.display='block';empty.textContent=st.searchQuery?'Tidak ada chat yang cocok.':'Belum ada pesan. Mulai diskusi sekarang.'}
-    function refreshAction(){if(!st.selectedId){actionBox.style.display='none';return}actionBox.style.display='flex';actionLabel.textContent=`Pesan terpilih #${st.selectedId}`;pinActionBtn.innerHTML=`<i class="fas fa-thumbtack"></i> ${st.selectedHasAttachment?'Pin Dokumen':'Pin Chat'}`;unpinBtn.style.display=st.selectedPinned?'inline-block':'none';delBtn.style.display=st.selectedMine?'inline-block':'none'}
+    function refreshAction(){if(!st.selectedId){actionBox.style.display='none';return}actionBox.style.display='flex';actionLabel.textContent=`Pesan terpilih #${st.selectedId}`;pinActionBtn.innerHTML=`<i class="fas fa-thumbtack"></i> ${st.selectedHasAttachment?'Pin Lampiran':'Pin Chat'}`;unpinBtn.style.display=st.selectedPinned?'inline-block':'none';delBtn.style.display=st.selectedMine?'inline-block':'none'}
     function selectMessage(node){list.querySelectorAll('.dc-msg.selected').forEach(n=>n.classList.remove('selected'));if(!node){st.selectedId=null;st.selectedMine=false;st.selectedPinned=false;st.selectedHasAttachment=false;refreshAction();return}
         node.classList.add('selected');st.selectedId=Number(node.dataset.messageId||0);st.selectedMine=node.dataset.isMine==='1';st.selectedPinned=node.dataset.isPinned==='1';st.selectedHasAttachment=node.dataset.hasAttachment==='1';refreshAction()}
     function applySearch(){const q=String(st.searchQuery||'').trim().toLowerCase();list.querySelectorAll('.dc-msg[data-message-id]').forEach((node)=>{const text=String(node.dataset.searchText||'').toLowerCase();const ok=q===''||text.includes(q);node.style.display=ok?'':'none'});const selectedNode=st.selectedId?list.querySelector(`[data-message-id="${st.selectedId}"]`):null;if(selectedNode&&selectedNode.style.display==='none')selectMessage(null);toggleEmpty()}
-    function applyPin(m){if(!m?.id)return;const id=Number(m.id);if(m.is_pinned)st.pinned.add(id);else st.pinned.delete(id);const node=list.querySelector(`[data-message-id="${id}"]`);if(!node)return;node.dataset.isPinned=m.is_pinned?'1':'0';const badge=node.querySelector('.dc-pin-badge');if(badge)badge.style.display=m.is_pinned?'inline-flex':'none';if(st.selectedId===id){st.selectedPinned=!!m.is_pinned;refreshAction()}}
-    function jump(id){const t=document.getElementById(`dc-msg-${id}`);if(!t){Notification.warning('Pesan belum ada di tampilan ini.');return}t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.add('hl');setTimeout(()=>t.classList.remove('hl'),1500);selectMessage(t)}
+    function applyPin(m){if(!m?.id)return;const id=Number(m.id);if(m.is_pinned)st.pinned.add(id);else st.pinned.delete(id);rememberMsg(m);const node=list.querySelector(`[data-message-id="${id}"]`);if(!node)return;node.dataset.isPinned=m.is_pinned?'1':'0';const badge=node.querySelector('.dc-pin-badge');if(badge)badge.style.display=m.is_pinned?'inline-flex':'none';if(st.selectedId===id){st.selectedPinned=!!m.is_pinned;refreshAction()}}
+    function jump(id){const t=document.getElementById(`dc-msg-${id}`);if(!t){Notification.warning('Pesan belum ada di tampilan ini.');return}if(t.style.display==='none'){st.searchQuery='';searchInput.value='';applySearch()}t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.add('hl');setTimeout(()=>t.classList.remove('hl'),1500);selectMessage(t)}
     function renderPins(arr){pinList.innerHTML='';st.pinned.clear();arr=Array.isArray(arr)?arr:[];if(!arr.length){pinEmpty.style.display='block';document.querySelectorAll('.dc-msg[data-message-id]').forEach(n=>applyPin({id:Number(n.dataset.messageId),is_pinned:false}));return}pinEmpty.style.display='none';
-        arr.forEach(m=>{const id=Number(m.id||0);if(id)st.pinned.add(id);const b=document.createElement('div');b.className='dc-pin-item';b.dataset.jumpMessageId=String(id);const meta=[];if(m.pinned_by_name)meta.push(`oleh ${esc(m.pinned_by_name)}`);if(m.pin_expires_at_label)meta.push(`sampai ${esc(m.pin_expires_at_label)}`);
-            const docLink=(m.attachment_url&&m.attachment_name)?`<a class="dc-pin-doc" href="${m.attachment_url}" target="_blank" rel="noopener noreferrer"><i class="far fa-file-alt"></i> Dok</a>`:'';
+        arr.forEach(m=>{const id=Number(m.id||0);if(id)st.pinned.add(id);rememberMsg(m);const b=document.createElement('div');b.className='dc-pin-item';b.dataset.jumpMessageId=String(id);const meta=[];if(m.pinned_by_name)meta.push(`oleh ${esc(m.pinned_by_name)}`);if(m.pin_expires_at_label)meta.push(`sampai ${esc(m.pin_expires_at_label)}`);
+            const icon=m.attachment_is_image?'far fa-image':'far fa-file-alt',label=m.attachment_is_image?'Foto':'Dok';
+            const docLink=(m.attachment_url&&m.attachment_name)?`<a class="dc-pin-doc" href="${escAttr(m.attachment_url)}" target="_blank" rel="noopener noreferrer"><i class="${icon}"></i> ${label}</a>`:'';
             b.innerHTML=`<div class="dc-pin-main"><span class="dc-pin-text">${esc(msgPreview(m))}</span>${docLink}</div>${meta.length?`<span class="dc-pin-meta">${meta.join(' | ')}</span>`:''}`;pinList.appendChild(b)});
         document.querySelectorAll('.dc-msg[data-message-id]').forEach(n=>{const id=Number(n.dataset.messageId);applyPin({id,is_pinned:st.pinned.has(id)})})}
-    function mkMsg(m){const own=!!m.is_mine,p=!!m.is_pinned||st.pinned.has(Number(m.id));const n=document.createElement('div');n.id=`dc-msg-${m.id}`;n.className=`dc-msg ${own?'own':'other'}`;n.dataset.messageId=String(m.id||'');n.dataset.isMine=own?'1':'0';n.dataset.isPinned=p?'1':'0';n.dataset.hasAttachment=(m.attachment_url&&m.attachment_name)?'1':'0';
-        n.dataset.searchText=[m?.sender?.name,m?.sender?.role,m?.message,m?.attachment_name,m?.voice_note_name].filter(Boolean).join(' ').toLowerCase();
+    function mkMsg(m){const id=Number(m.id||0),own=!!m.is_mine||String(m?.sender?.id||'')===String(currentUserId||''),p=!!m.is_pinned||st.pinned.has(id);const n=document.createElement('div');n.id=`dc-msg-${id}`;n.className=`dc-msg ${own?'own':'other'}`;n.dataset.messageId=String(id);n.dataset.isMine=own?'1':'0';n.dataset.isPinned=p?'1':'0';n.dataset.hasAttachment=(m.attachment_url&&m.attachment_name)?'1':'0';
+        n.dataset.searchText=[m?.sender?.name,m?.sender?.role,m?.message,m?.attachment_name,m?.voice_note_name,m?.reply_to?.message,m?.reply_to?.sender_name].filter(Boolean).join(' ').toLowerCase();
         const pinBadge=`<span class="dc-pin-badge" style="display:${p?'inline-flex':'none'}"><i class="fas fa-thumbtack" style="font-size:9px"></i> Pinned</span>`;
-        const vn=m.voice_note_url?`<div class="dc-vn"><span><i class="fas fa-microphone" style="font-size:10px"></i> Voice Note ${m.voice_note_size?`(${fsize(m.voice_note_size)})`:''}</span><audio controls preload="none" src="${m.voice_note_url}"></audio></div>`:'';
-        const f=m.attachment_url&&m.attachment_name?`<a class="dc-file" href="${m.attachment_url}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-download" style="font-size:11px"></i>${esc(m.attachment_name)}${m.attachment_size?` (${fsize(m.attachment_size)})`:''}</a>`:'';
-        n.innerHTML=`<div class="dc-av">${esc(initial(m?.sender?.name||''))}</div><div class="dc-body"><div class="dc-meta"><div class="dc-meta-l"><strong>${esc(m?.sender?.name||'Pengguna')}</strong><span class="dc-role">${esc(m?.sender?.role||'-')}</span><span class="dc-time">${esc(m.created_at_label||'-')}</span>${pinBadge}</div></div>${m.message?`<div class="dc-bub">${esc(m.message)}</div>`:''}${vn}${f}</div>`;
+        const reply=m.reply_to?`<div class="dc-reply-box"${m.reply_to?.id?` data-reply-target-id="${Number(m.reply_to.id)||0}"`:''}><div class="dc-reply-sender">${esc(m.reply_to?.sender_name||'Pengguna')}</div><div class="dc-reply-text">${esc(msgPreview(m.reply_to))}</div></div>`:'';
+        const msg=m.message?`<div class="dc-bub">${esc(m.message)}</div>`:'';
+        const vn=m.voice_note_url?`<div class="dc-vn"><span><i class="fas fa-microphone" style="font-size:10px"></i> Voice Note ${m.voice_note_size?`(${fsize(m.voice_note_size)})`:''}</span><audio controls preload="none" src="${escAttr(m.voice_note_url)}"></audio></div>`:'';
+        let f='';if(m.attachment_url&&m.attachment_name){const label=`${esc(m.attachment_name)}${m.attachment_size?` (${fsize(m.attachment_size)})`:''}`;if(m.attachment_is_image&&m.attachment_preview_url){f=`<a class="dc-photo-link" href="${escAttr(m.attachment_url)}" target="_blank" rel="noopener noreferrer"><img class="dc-photo" src="${escAttr(m.attachment_preview_url)}" alt="${escAttr(m.attachment_name)}" loading="lazy"><div class="dc-photo-meta">${label}</div></a>`}else{f=`<a class="dc-file" href="${escAttr(m.attachment_url)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-download" style="font-size:11px"></i>${label}</a>`}}
+        n.innerHTML=`<div class="dc-av">${esc(initial(m?.sender?.name||''))}</div><div class="dc-body"><div class="dc-meta"><div class="dc-meta-l"><strong>${esc(m?.sender?.name||'Pengguna')}</strong><span class="dc-role">${esc(m?.sender?.role||'-')}</span><span class="dc-time">${esc(m.created_at_label||'-')}</span>${pinBadge}</div></div>${reply}${msg}${vn}${f}</div>`;
         return n}
-    function addMsg(m,force){if(!m?.id||st.known.has(m.id))return false;st.known.add(m.id);st.lastId=Math.max(st.lastId,Number(m.id)||0);const n=mkMsg(m);list.appendChild(n);applyPin(m);applySearch();if(force)toBottom();return true}
-    function removeMsg(id){const node=list.querySelector(`[data-message-id="${id}"]`);if(node)node.remove();if(st.selectedId===Number(id))selectMessage(null);applySearch()}
+    function addMsg(m,force){const id=Number(m?.id||0);if(!id)return false;rememberMsg(m);if(st.known.has(id)){applyPin(m);return false}st.known.add(id);st.lastId=Math.max(st.lastId,id);const n=mkMsg(m);list.appendChild(n);applyPin(m);applySearch();if(force)toBottom();return true}
+    function removeMsg(id){const mid=Number(id||0);const node=list.querySelector(`[data-message-id="${mid}"]`);if(node)node.remove();st.map.delete(mid);if(Number(replyInput.value||0)===mid)clearReply();if(st.selectedId===mid)selectMessage(null);applySearch()}
     function renderInitial(){(Array.isArray(initialMessages)?initialMessages:[]).forEach(m=>addMsg(m,false));applySearch();toBottom()}
     function poll(){if(st.polling)return;st.polling=true;const should=nearBottom();Http.get(fetchUrl,{channel_id:channelId,after_id:st.lastId}).done((r)=>{if(Array.isArray(r?.pinned_messages))renderPins(r.pinned_messages);let fresh=false;(Array.isArray(r?.messages)?r.messages:[]).forEach(m=>{fresh=addMsg(m,false)||fresh});if(r?.latest_id)st.lastId=Math.max(st.lastId,Number(r.latest_id)||0);if(fresh&&should&&st.searchQuery==='')toBottom()}).always(()=>st.polling=false)}
     function pinSelected(duration){if(!st.selectedId||st.pinning)return;st.pinning=true;Http.post(pinUrl(st.selectedId),{channel_id:channelId,action:'pin',pin_duration:duration}).done((r)=>{if(r?.data)applyPin(r.data);if(Array.isArray(r?.pinned_messages))renderPins(r.pinned_messages)}).fail((e)=>Notification.error(e)).always(()=>st.pinning=false)}
     function unpinSelected(){if(!st.selectedId||st.pinning)return;st.pinning=true;Http.post(pinUrl(st.selectedId),{channel_id:channelId,action:'unpin'}).done((r)=>{if(r?.data)applyPin(r.data);if(Array.isArray(r?.pinned_messages))renderPins(r.pinned_messages)}).fail((e)=>Notification.error(e)).always(()=>st.pinning=false)}
+    function replySelected(){if(!st.selectedId)return;const m=st.map.get(st.selectedId);if(!m){Notification.warning('Pesan tidak ditemukan.');return}setReply(m)}
     async function deleteSelected(){if(!st.selectedId)return;if(!st.selectedMine){Notification.warning('Anda hanya bisa menghapus pesan milik sendiri.');return}const confirm=await Notification.confirmation('Yakin ingin menghapus pesan ini?');if(!confirm.isConfirmed)return;
         Http.delete(delUrl(st.selectedId),{channel_id:channelId}).done((r)=>{removeMsg(st.selectedId);if(Array.isArray(r?.pinned_messages))renderPins(r.pinned_messages)}).fail((e)=>Notification.error(e))}
     function submit(e){e.preventDefault();if(st.submit)return;if(st.mr&&st.mr.state==='recording'){Notification.warning('Stop rekaman voice note dulu sebelum kirim pesan.');return}
         const txt=msgInput.value.trim(),hasFile=fileInput.files?.length>0,hasVoice=voiceInput.files?.length>0;if(!txt&&!hasFile&&!hasVoice){Notification.warning('Isi pesan, upload file, atau kirim voice note.');return}
-        st.submit=true;sendBtn.disabled=true;Http.post(storeUrl,new FormData(form)).done((r)=>{if(r?.data)addMsg(r.data,true);if(Array.isArray(r?.pinned_messages))renderPins(r.pinned_messages);form.reset();updateFile();clearVoice();msgInput.focus()}).fail((er)=>Notification.error(er)).always(()=>{st.submit=false;sendBtn.disabled=false})}
+        st.submit=true;sendBtn.disabled=true;Http.post(storeUrl,new FormData(form)).done((r)=>{if(r?.data)addMsg(r.data,true);if(Array.isArray(r?.pinned_messages))renderPins(r.pinned_messages);form.reset();updateFile();clearVoice();clearReply();toggleEmoji(false);msgInput.focus()}).fail((er)=>Notification.error(er)).always(()=>{st.submit=false;sendBtn.disabled=false})}
     form.addEventListener('submit',submit);fileInput.addEventListener('change',updateFile);recBtn.addEventListener('click',recToggle);clearRecBtn.addEventListener('click',clearVoice);
+    replyBtn.addEventListener('click',replySelected);replyCancelBtn.addEventListener('click',clearReply);
     searchInput.addEventListener('input',()=>{st.searchQuery=searchInput.value||'';applySearch()});
     pinActionBtn.addEventListener('click',()=>pinSelected(String(pinDurationSel.value||'1w')));unpinBtn.addEventListener('click',unpinSelected);delBtn.addEventListener('click',deleteSelected);cancelSelBtn.addEventListener('click',()=>selectMessage(null));
     pinList.addEventListener('click',(e)=>{if(e.target.closest('.dc-pin-doc'))return;const t=e.target.closest('[data-jump-message-id]');if(t)jump(Number(t.dataset.jumpMessageId||0))});
-    list.addEventListener('click',(e)=>{if(e.target===list){selectMessage(null);return}if(e.target.closest('a,audio,button'))return;const row=e.target.closest('.dc-msg');if(row)selectMessage(row)});
-    renderInitial();renderPins(initialPinned);updateFile();updateRecBtn();updateVoice();refreshAction();setInterval(poll,POLL);
+    list.addEventListener('click',(e)=>{if(e.target===list){selectMessage(null);return}const replyNode=e.target.closest('[data-reply-target-id]');if(replyNode){jump(Number(replyNode.dataset.replyTargetId||0));return}if(e.target.closest('a,audio,button'))return;const row=e.target.closest('.dc-msg');if(row)selectMessage(row)});
+    emojiToggle.addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();toggleEmoji()});
+    emojiList.addEventListener('click',(e)=>{const t=e.target.closest('[data-emoji]');if(!t)return;addEmoji(String(t.dataset.emoji||''));toggleEmoji(false)});
+    document.addEventListener('click',(e)=>{if(!st.emojiOpen)return;if(emojiPicker.contains(e.target)||emojiToggle.contains(e.target))return;toggleEmoji(false)});
+    document.addEventListener('keydown',(e)=>{if(e.key==='Escape')toggleEmoji(false)});
+    renderEmojis();renderInitial();renderPins(initialPinned);updateFile();updateRecBtn();updateVoice();clearReply();refreshAction();setInterval(poll,POLL);
 })();
 </script>
 @endsection
