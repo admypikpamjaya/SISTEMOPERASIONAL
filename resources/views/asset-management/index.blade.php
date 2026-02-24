@@ -3,6 +3,13 @@
 @php 
 use App\Enums\Asset\AssetCategory;
 use App\Enums\Asset\AssetUnit;
+use App\Enums\Portal\PortalPermission;
+use App\Services\AccessControl\PermissionService;
+
+$permissionService = app(PermissionService::class);
+$canAssetCreate = $permissionService->checkAccess(auth()->user(), PortalPermission::ASSET_MANAGEMENT_CREATE->value);
+$canAssetUpdate = $permissionService->checkAccess(auth()->user(), PortalPermission::ASSET_MANAGEMENT_UPDATE->value);
+$canAssetDelete = $permissionService->checkAccess(auth()->user(), PortalPermission::ASSET_MANAGEMENT_DELETE->value);
 @endphp
 
 @section('content')
@@ -68,12 +75,14 @@ use App\Enums\Asset\AssetUnit;
                     </div>
                     <div class="col-3">
                         <div class="d-flex justify-content-around">
-                            <button id="toggle-asset-registration-via-file-button" type="button" class="btn btn-sm btn-primary" title="Upload File Aset">
-                                <i class="fas fa-upload"></i>
-                            </button>
-                            <a href="{{ route('asset-management.register-form') }}" class="btn btn-sm btn-primary" title="Tambah Aset Baru">
-                                <i class="fas fa-plus"></i>
-                            </a>
+                            @if($canAssetCreate)
+                                <button id="toggle-asset-registration-via-file-button" type="button" class="btn btn-sm btn-primary" title="Upload File Aset">
+                                    <i class="fas fa-upload"></i>
+                                </button>
+                                <a href="{{ route('asset-management.register-form') }}" class="btn btn-sm btn-primary" title="Tambah Aset Baru">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            @endif
                             <a id="download-qr-anchor" href="#" class="d-none"></a>
                             <button id="download-qr-code-button" type="button" class="btn btn-sm btn-primary" title="Download Semua QR Aset">
                                 <i class="fas fa-qrcode"></i>
@@ -111,12 +120,16 @@ use App\Enums\Asset\AssetUnit;
                                 <a href="{{ route('assets.detail', $asset->id) }}" target="_blank" class="btn btn-outline-info">
                                     <div class="fas fa-eye"></div>
                                 </a>
-                                <a href="{{ route('asset-management.edit-form', $asset->id) }}" class="btn btn-outline-warning" >
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button id="delete-asset-button" type="button" class="btn btn-outline-danger" data-url="{{ route('asset-management.delete', $asset->id) }}">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                @if($canAssetUpdate)
+                                    <a href="{{ route('asset-management.edit-form', $asset->id) }}" class="btn btn-outline-warning" >
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                @endif
+                                @if($canAssetDelete)
+                                    <button id="delete-asset-button" type="button" class="btn btn-outline-danger" data-url="{{ route('asset-management.delete', $asset->id) }}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                @endif
                                 <a href="{{ route('asset-management.download-qr-code', ['ids' => [$asset->id]]) }}" class="btn btn-outline-info">
                                     <i class="fas fa-qrcode"></i>
                                 </a>
@@ -134,9 +147,13 @@ use App\Enums\Asset\AssetUnit;
     </div>
     <div class="card-footer">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <button type="button" id="delete-bulk-button" class="btn btn-sm btn-danger">
-                <i class="fas fa-trash-alt"></i>
-            </button>
+            @if($canAssetDelete)
+                <button type="button" id="delete-bulk-button" class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            @else
+                <span></span>
+            @endif
 
             <div class="form-group">
                 <label for="">Row Limit</label>

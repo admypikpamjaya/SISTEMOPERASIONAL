@@ -40,6 +40,7 @@ enum PortalPermission: string
     | FINANCE
     |--------------------------------------------------------------------------
     */
+    case FINANCE_DEPRECIATION_READ      = 'finance_depreciation.read';
     case FINANCE_DEPRECIATION_CALCULATE = 'finance_depreciation.calculate';
     case FINANCE_REPORT_READ            = 'finance_report.read';
     case FINANCE_REPORT_GENERATE        = 'finance_report.generate';

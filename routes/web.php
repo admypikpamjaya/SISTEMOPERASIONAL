@@ -99,14 +99,28 @@ Route::prefix('asset-management')
     ->controller(AssetManagementController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('/register', 'showRegisterForm')->name('register-form');
-        Route::get('/edit/{id}', 'showEditForm')->name('edit-form');
+        Route::get('/register', 'showRegisterForm')
+            ->middleware('check_access:asset_management.write')
+            ->name('register-form');
+        Route::get('/edit/{id}', 'showEditForm')
+            ->middleware('check_access:asset_management.update')
+            ->name('edit-form');
         Route::get('/download-qr-code', 'downloadQrCode')->name('download-qr-code');
-        Route::post('/', 'store')->name('store');
-        Route::post('/file', 'storeWithFile')->name('store-with-file');
-        Route::put('/', 'update')->name('update');
-        Route::delete('/bulk', 'bulkDelete')->name('bulk-delete');
-        Route::delete('/{id}', 'delete')->name('delete');
+        Route::post('/', 'store')
+            ->middleware('check_access:asset_management.write')
+            ->name('store');
+        Route::post('/file', 'storeWithFile')
+            ->middleware('check_access:asset_management.write')
+            ->name('store-with-file');
+        Route::put('/', 'update')
+            ->middleware('check_access:asset_management.update')
+            ->name('update');
+        Route::delete('/bulk', 'bulkDelete')
+            ->middleware('check_access:asset_management.delete')
+            ->name('bulk-delete');
+        Route::delete('/{id}', 'delete')
+            ->middleware('check_access:asset_management.delete')
+            ->name('delete');
     });
 
 /*
@@ -147,11 +161,18 @@ Route::prefix('user-database')
     ->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/{id}', 'show')->name('show');
-        Route::post('/', 'store')->name('store');
+        Route::post('/', 'store')
+            ->middleware('check_access:user_management.write')
+            ->name('store');
         Route::post('/reset-password/{id}', 'sendResetPasswordLink')
+            ->middleware('check_access:user_management.update')
             ->name('send-reset-password-link');
-        Route::put('/', 'update')->name('update');
-        Route::delete('/{id}', 'delete')->name('delete');
+        Route::put('/', 'update')
+            ->middleware('check_access:user_management.update')
+            ->name('update');
+        Route::delete('/{id}', 'delete')
+            ->middleware('check_access:user_management.delete')
+            ->name('delete');
     });
 
 /*
@@ -168,7 +189,7 @@ Route::prefix('finance')
             ->name('dashboard');
 
         Route::get('/depreciation', [AssetDepreciationController::class, 'index'])
-            ->middleware('check_access:finance_depreciation.calculate')
+            ->middleware('check_access:finance_depreciation.read')
             ->name('depreciation.index');
 
         Route::post('/depreciation/calc', [AssetDepreciationController::class, 'calculate'])
@@ -176,11 +197,11 @@ Route::prefix('finance')
             ->name('depreciation.calc');
 
         Route::get('/depreciation/logs/{log}', [AssetDepreciationController::class, 'showLog'])
-            ->middleware('check_access:finance_depreciation.calculate')
+            ->middleware('check_access:finance_depreciation.read')
             ->name('depreciation.logs.show');
 
         Route::get('/depreciation/logs/{log}/download', [AssetDepreciationController::class, 'downloadLogPdf'])
-            ->middleware('check_access:finance_depreciation.calculate')
+            ->middleware('check_access:finance_depreciation.read')
             ->name('depreciation.logs.download');
 
         Route::get('/report', [FinanceReportController::class, 'index'])
@@ -225,6 +246,10 @@ Route::prefix('finance')
                 Route::put('/{account}', [FinanceAccountController::class, 'update'])
                     ->middleware('check_access:finance_report.generate')
                     ->name('update');
+
+                Route::delete('/classifications/{classNo}', [FinanceAccountController::class, 'destroyClassification'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('classifications.destroy');
             });
 
         Route::prefix('invoices')
@@ -359,29 +384,60 @@ Route::prefix('admin')
 
                 // WhatsApp
                 Route::get('/whatsapp', [BlastController::class, 'whatsapp'])->name('whatsapp');
-                Route::post('/whatsapp/send', [BlastController::class, 'sendWhatsapp'])->name('whatsapp.send');
+                Route::post('/whatsapp/send', [BlastController::class, 'sendWhatsapp'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('whatsapp.send');
 
                 // Email
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
-                Route::post('/email/send', [BlastController::class, 'sendEmail'])->name('email.send');
+                Route::post('/email/send', [BlastController::class, 'sendEmail'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.send');
                 Route::get('/activity-api', [BlastController::class, 'activity'])->name('activity');
-                Route::post('/activity/clear', [BlastController::class, 'clearActivityLogs'])->name('activity.clear');
-                Route::post('/activity/delete', [BlastController::class, 'deleteActivityLog'])->name('activity.delete');
-                Route::post('/activity/retry', [BlastController::class, 'retryActivityLog'])->name('activity.retry');
+                Route::post('/activity/clear', [BlastController::class, 'clearActivityLogs'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('activity.clear');
+                Route::post('/activity/delete', [BlastController::class, 'deleteActivityLog'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('activity.delete');
+                Route::post('/activity/retry', [BlastController::class, 'retryActivityLog'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('activity.retry');
                 Route::get('/campaign-api', [BlastController::class, 'campaigns'])->name('campaigns');
-                Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])->name('campaign.pause');
-                Route::post('/campaign/resume', [BlastController::class, 'resumeCampaign'])->name('campaign.resume');
-                Route::post('/campaign/stop', [BlastController::class, 'stopCampaign'])->name('campaign.stop');
+                Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('campaign.pause');
+                Route::post('/campaign/resume', [BlastController::class, 'resumeCampaign'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('campaign.resume');
+                Route::post('/campaign/stop', [BlastController::class, 'stopCampaign'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('campaign.stop');
 
                 /* ===== RECIPIENT CRUD ===== */
-                Route::prefix('recipients')->name('recipients.')->group(function () {
+                Route::prefix('recipients')
+                    ->name('recipients.')
+                    ->middleware('check_access:blast_recipient.read')
+                    ->group(function () {
                     Route::get('/', [BlastRecipientController::class, 'index'])->name('index');
-                    Route::get('/create', [BlastRecipientController::class, 'create'])->name('create');
-                    Route::post('/', [BlastRecipientController::class, 'store'])->name('store');
-                    Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])->name('edit');
-                    Route::put('/{id}', [BlastRecipientController::class, 'update'])->name('update');
-                    Route::post('/import', [BlastRecipientController::class, 'import'])->name('import');
-                    Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])->name('destroy');
+                    Route::get('/create', [BlastRecipientController::class, 'create'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('create');
+                    Route::post('/', [BlastRecipientController::class, 'store'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('store');
+                    Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('edit');
+                    Route::put('/{id}', [BlastRecipientController::class, 'update'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('update');
+                    Route::post('/import', [BlastRecipientController::class, 'import'])
+                        ->middleware('check_access:blast_recipient.import')
+                        ->name('import');
+                    Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('destroy');
                 });
 
                 /* ===== RECIPIENT API (JSON) ===== */

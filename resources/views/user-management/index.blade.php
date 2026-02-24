@@ -141,6 +141,14 @@
     <option value="Finance" {{ old('role', $user->role ?? '') === 'Finance' ? 'selected' : '' }}>
         Finance
     </option>
+
+    <option value="Pembina" {{ old('role', $user->role ?? '') === 'Pembina' ? 'selected' : '' }}>
+        Pembina
+    </option>
+
+    <option value="QC" {{ old('role', $user->role ?? '') === 'QC' ? 'selected' : '' }}>
+        QC
+    </option>
 </select>
 
                 </div>

@@ -23,6 +23,7 @@ class EnsureFinanceAccess
         $allowedRoles = [
             UserRole::FINANCE->value,
             UserRole::IT_SUPPORT->value,
+            UserRole::PEMBINA->value,
         ];
 
         if (!in_array((string) auth()->user()->role, $allowedRoles, true)) {

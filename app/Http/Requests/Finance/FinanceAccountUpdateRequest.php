@@ -24,8 +24,8 @@ class FinanceAccountUpdateRequest extends FinanceAccountStoreRequest
                 Rule::unique('finance_accounts', 'code')->ignore($accountId),
             ],
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', Rule::in(\App\Models\FinanceAccount::allowedTypes())],
-            'class_no' => ['required', 'integer', Rule::in(\App\Models\FinanceAccount::classOrder())],
+            'type' => ['required', 'string', 'max:64'],
+            'class_no' => ['required', 'integer', 'between:1,255'],
             'is_active' => ['required', 'boolean'],
         ];
     }

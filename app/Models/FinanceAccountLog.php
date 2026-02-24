@@ -12,6 +12,7 @@ class FinanceAccountLog extends Model
 
     public const ACTION_CREATED = 'CREATED';
     public const ACTION_UPDATED = 'UPDATED';
+    public const ACTION_DELETED = 'DELETED';
 
     protected $table = 'finance_account_logs';
 

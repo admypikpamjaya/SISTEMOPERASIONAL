@@ -77,7 +77,13 @@
         flex-direction: column;
         gap: .4rem;
     }
+    .coa-side-row {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+    }
     .coa-side-item {
+        flex: 1;
         display: flex;
         align-items: center;
         gap: .6rem;
@@ -96,6 +102,24 @@
     .coa-side-item.active {
         background: rgba(37,99,235,.1);
         border-color: rgba(37,99,235,.22);
+    }
+    .coa-side-delete {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(239,68,68,.22);
+        background: rgba(239,68,68,.08);
+        color: #b91c1c;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+    .coa-side-delete:hover {
+        background: #ef4444;
+        border-color: #ef4444;
+        color: #fff;
     }
     .coa-side-num {
         width: 28px; height: 28px;
@@ -314,6 +338,10 @@
         background: rgba(37,99,235,.12);
         color: #1e40af;
     }
+    .coa-log-badge.delete {
+        background: rgba(239,68,68,.12);
+        color: #b91c1c;
+    }
     .coa-log-meta {
         display: inline-flex;
         align-items: center;
@@ -338,8 +366,11 @@
 @php
     $selectedGroup = isset($selectedGroup) ? (int) $selectedGroup : null;
     $groupOrder = $groupOrder ?? [];
+    $classNoSuggestions = $classNoSuggestions ?? $groupOrder;
+    $coreClassifications = $coreClassifications ?? [1, 2, 3, 4, 5, 8, 9];
     $groupLabels = $groupLabels ?? [];
     $typeLabels = $typeLabels ?? [];
+    $typeSuggestions = $typeSuggestions ?? [];
     $typeClassMap = $typeClassMap ?? [];
     $accountCounts = $accountCounts ?? collect();
     $accountLogs = $accountLogs ?? collect();
@@ -384,22 +415,35 @@
             <h3>Urutan Klasifikasi Kiri</h3>
         </div>
         <ul class="coa-side-list">
-            @foreach($groupOrder as $groupNo)
+            @forelse($groupOrder as $groupNo)
                 @php
                     $isActiveGroup = $selectedGroup === (int) $groupNo;
                     $groupCount = (int) ($accountCounts[$groupNo] ?? 0);
-                    $groupLabel = $groupLabels[$groupNo] ?? ('Kelas ' . $groupNo);
+                    $groupLabel = $groupLabels[$groupNo] ?? ('Klasifikasi ' . $groupNo);
                 @endphp
                 <li>
-                    <a
-                        href="{{ route('finance.accounts.index', ['group' => $groupNo]) }}"
-                        class="coa-side-item {{ $isActiveGroup ? 'active' : '' }}">
-                        <span class="coa-side-num">{{ $groupNo }}</span>
-                        <span class="coa-side-label">{{ $groupLabel }}</span>
-                        <span class="coa-side-count">{{ $groupCount }}</span>
-                    </a>
+                    <div class="coa-side-row">
+                        <a
+                            href="{{ route('finance.accounts.index', ['group' => $groupNo]) }}"
+                            class="coa-side-item {{ $isActiveGroup ? 'active' : '' }}">
+                            <span class="coa-side-num">{{ $groupNo }}</span>
+                            <span class="coa-side-label">{{ $groupLabel }}</span>
+                            <span class="coa-side-count">{{ $groupCount }}</span>
+                        </a>
+                        @if($groupCount > 0 && !in_array((int) $groupNo, $coreClassifications, true))
+                            <form method="POST" action="{{ route('finance.accounts.classifications.destroy', $groupNo) }}" onsubmit="return confirm('Hapus klasifikasi {{ $groupNo }} beserta semua akun di dalamnya?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="coa-side-delete" title="Hapus klasifikasi">
+                                    <i class="fas fa-trash-alt" style="font-size:.72rem;"></i>
+                                </button>
+                            </form>
+                        @endif
+                    </div>
                 </li>
-            @endforeach
+            @empty
+                <li class="coa-empty">Belum ada klasifikasi.</li>
+            @endforelse
         </ul>
     </aside>
 
@@ -440,30 +484,44 @@
                         </div>
                         <div class="coa-field">
                             <label for="type">Jenis</label>
-                            <select id="type" name="type" class="coa-select" required>
-                                <option value="">Pilih jenis akun</option>
-                                @foreach($typeLabels as $typeKey => $typeLabel)
-                                    <option
-                                        value="{{ $typeKey }}"
-                                        data-class="{{ $typeClassMap[$typeKey] ?? '' }}"
-                                        {{ $currentType === $typeKey ? 'selected' : '' }}>
-                                        {{ $typeLabel }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input
+                                type="text"
+                                id="type"
+                                name="type"
+                                class="coa-input"
+                                maxlength="64"
+                                list="type_suggestions"
+                                value="{{ $currentType }}"
+                                placeholder="Contoh: PIUTANG / KREDIT"
+                                required>
                         </div>
                         <div class="coa-field">
                             <label for="class_no">No Klasifikasi Kiri</label>
-                            <select id="class_no" name="class_no" class="coa-select" required>
-                                <option value="">Pilih no klasifikasi</option>
-                                @foreach($groupOrder as $groupNo)
-                                    <option value="{{ $groupNo }}" {{ (string) $currentClassNo === (string) $groupNo ? 'selected' : '' }}>
-                                        {{ $groupNo }} - {{ $groupLabels[$groupNo] ?? ('Kelas ' . $groupNo) }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <input
+                                type="number"
+                                id="class_no"
+                                name="class_no"
+                                class="coa-input"
+                                min="1"
+                                max="255"
+                                list="class_no_suggestions"
+                                value="{{ $currentClassNo }}"
+                                placeholder="Contoh: 6"
+                                required>
                         </div>
                     </div>
+                    <datalist id="type_suggestions">
+                        @foreach($typeSuggestions as $typeSuggestion)
+                            <option value="{{ $typeSuggestion }}">
+                                {{ $typeLabels[$typeSuggestion] ?? $typeSuggestion }}
+                            </option>
+                        @endforeach
+                    </datalist>
+                    <datalist id="class_no_suggestions">
+                        @foreach($classNoSuggestions as $groupNo)
+                            <option value="{{ $groupNo }}">{{ $groupLabels[$groupNo] ?? ('Klasifikasi ' . $groupNo) }}</option>
+                        @endforeach
+                    </datalist>
 
                     <div class="coa-inline">
                         <input type="hidden" name="is_active" value="0">
@@ -492,7 +550,12 @@
 
         <div class="coa-card">
             <div class="coa-card-head">
-                <h3>Daftar Akun {{ $selectedGroup ? '(Kelas ' . $selectedGroup . ')' : '' }}</h3>
+                <h3>
+                    Daftar Akun
+                    {{ $selectedGroup
+                        ? '(' . ($groupLabels[$selectedGroup] ?? ('Klasifikasi ' . $selectedGroup)) . ' - ' . $selectedGroup . ')'
+                        : '' }}
+                </h3>
             </div>
 
             <div class="coa-table-wrap">
@@ -588,8 +651,16 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="coa-log-badge {{ strtoupper((string) $log->action) === 'CREATED' ? 'create' : 'update' }}">
-                                        {{ strtoupper((string) $log->action) === 'CREATED' ? 'CREATE' : 'UPDATE' }}
+                                    @php
+                                        $actionName = strtoupper((string) $log->action);
+                                        $actionClass = match ($actionName) {
+                                            'CREATED' => 'create',
+                                            'DELETED' => 'delete',
+                                            default => 'update',
+                                        };
+                                    @endphp
+                                    <span class="coa-log-badge {{ $actionClass }}">
+                                        {{ in_array($actionName, ['CREATED', 'UPDATED', 'DELETED'], true) ? $actionName : 'UPDATED' }}
                                     </span>
                                 </td>
                                 <td>
@@ -607,12 +678,14 @@
                                     </span>
                                 </td>
                                 <td>
-                                    @if(strtoupper((string) $log->action) === 'CREATED')
+                                    @if($actionName === 'CREATED')
                                         <span>Kode <strong>{{ $codeAfter ?? '-' }}</strong> ditambahkan sebagai <strong>{{ $typeAfter ?? '-' }}</strong>.</span>
+                                    @elseif($actionName === 'DELETED')
+                                        <span>Kode <strong>{{ $codeBefore ?? '-' }}</strong> pada jenis <strong>{{ $typeBefore ?? '-' }}</strong> dihapus dari klasifikasi kiri.</span>
                                     @else
-                                        <div>Kode: <strong>{{ $codeBefore ?? '-' }}</strong> → <strong>{{ $codeAfter ?? '-' }}</strong></div>
-                                        <div>Nama: <strong>{{ $nameBefore ?? '-' }}</strong> → <strong>{{ $nameAfter ?? '-' }}</strong></div>
-                                        <div>Jenis: <strong>{{ $typeBefore ?? '-' }}</strong> → <strong>{{ $typeAfter ?? '-' }}</strong></div>
+                                        <div>Kode: <strong>{{ $codeBefore ?? '-' }}</strong> -> <strong>{{ $codeAfter ?? '-' }}</strong></div>
+                                        <div>Nama: <strong>{{ $nameBefore ?? '-' }}</strong> -> <strong>{{ $nameAfter ?? '-' }}</strong></div>
+                                        <div>Jenis: <strong>{{ $typeBefore ?? '-' }}</strong> -> <strong>{{ $typeAfter ?? '-' }}</strong></div>
                                     @endif
                                 </td>
                             </tr>
@@ -632,12 +705,17 @@
 @section('js')
 <script>
     (function () {
-        const typeSelect = document.getElementById('type');
-        const classSelect = document.getElementById('class_no');
+        const typeInput = document.getElementById('type');
+        const classInput = document.getElementById('class_no');
+        const typeClassMap = @json($typeClassMap);
         let classOverridden = false;
 
-        if (!typeSelect || !classSelect) {
+        if (!typeInput || !classInput) {
             return;
+        }
+
+        function normalizeType(value) {
+            return String(value || '').trim().toUpperCase();
         }
 
         function syncClassByType(forceUpdate) {
@@ -645,26 +723,33 @@
                 return;
             }
 
-            if (forceUpdate && classSelect.value !== '') {
+            if (forceUpdate && classInput.value !== '') {
                 return;
             }
 
-            const selectedOption = typeSelect.options[typeSelect.selectedIndex];
-            const classNo = selectedOption ? selectedOption.getAttribute('data-class') : '';
-            if (classNo) {
-                classSelect.value = classNo;
+            const typeKey = normalizeType(typeInput.value);
+            const classNo = typeClassMap[typeKey];
+            if (typeof classNo !== 'undefined' && String(classNo).trim() !== '') {
+                classInput.value = classNo;
             }
         }
 
-        classSelect.addEventListener('change', function () {
-            classOverridden = true;
+        classInput.addEventListener('input', function () {
+            classOverridden = String(classInput.value).trim() !== '';
         });
 
-        typeSelect.addEventListener('change', function () {
+        typeInput.addEventListener('change', function () {
+            typeInput.value = normalizeType(typeInput.value);
             syncClassByType(false);
+        });
+
+        typeInput.addEventListener('blur', function () {
+            typeInput.value = normalizeType(typeInput.value);
         });
 
         syncClassByType(true);
     })();
 </script>
 @endsection
+
+

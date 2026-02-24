@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Finance;
 
-use App\Models\FinanceAccount;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,8 +25,8 @@ class FinanceAccountStoreRequest extends FormRequest
         return [
             'code' => ['required', 'string', 'max:64', Rule::unique('finance_accounts', 'code')],
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', Rule::in(FinanceAccount::allowedTypes())],
-            'class_no' => ['required', 'integer', Rule::in(FinanceAccount::classOrder())],
+            'type' => ['required', 'string', 'max:64'],
+            'class_no' => ['required', 'integer', 'between:1,255'],
             'is_active' => ['required', 'boolean'],
         ];
     }
@@ -60,10 +59,10 @@ class FinanceAccountStoreRequest extends FormRequest
             'name.required' => 'Nama akun wajib diisi.',
             'name.max' => 'Nama akun maksimal 255 karakter.',
             'type.required' => 'Jenis akun wajib dipilih.',
-            'type.in' => 'Jenis akun tidak valid.',
+            'type.max' => 'Jenis akun maksimal 64 karakter.',
             'class_no.required' => 'No klasifikasi kiri wajib dipilih.',
             'class_no.integer' => 'No klasifikasi kiri tidak valid.',
-            'class_no.in' => 'No klasifikasi kiri tidak tersedia.',
+            'class_no.between' => 'No klasifikasi kiri harus antara 1 sampai 255.',
         ];
     }
 }

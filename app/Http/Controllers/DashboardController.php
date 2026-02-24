@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\User\UserRole;
+use App\Enums\Portal\PortalPermission;
 use App\Models\BlastLog;
 use App\Models\FinanceReport;
+use App\Services\AccessControl\PermissionService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -28,12 +29,21 @@ class DashboardController extends Controller
      */
     private function buildDashboardPayload(): array
     {
-        $currentRole = strtolower(trim((string) auth()->user()?->role));
-        $isAssetManager = $currentRole === strtolower(UserRole::ASSET_MANAGER->value);
-        $showFinanceWidgets = !$isAssetManager
-            && $currentRole !== strtolower(UserRole::ADMIN->value);
-        $showBlastingWidgets = !$isAssetManager
-            && $currentRole !== strtolower(UserRole::FINANCE->value);
+        $currentUser = auth()->user();
+        $permissionService = app(PermissionService::class);
+
+        $showFinanceWidgets = $currentUser !== null
+            && $permissionService->checkAccess(
+                $currentUser,
+                PortalPermission::FINANCE_REPORT_READ->value
+            );
+
+        $showBlastingWidgets = $currentUser !== null
+            && $permissionService->checkAccess(
+                $currentUser,
+                PortalPermission::ADMIN_BLAST_READ->value
+            );
+
         $blastSeries = null;
         $financeSeries = null;
         $saldo = null;
