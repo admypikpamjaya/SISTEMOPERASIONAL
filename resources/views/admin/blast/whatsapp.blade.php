@@ -9,7 +9,7 @@
         <div class="header-left">
             <div class="app-icon">
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                    <path d="M16 2C8.268 2 2 8.268 2 16C2 18.368 2.588 20.596 3.612 22.556L2.132 28.388C2.024 28.796 2.192 29.224 2.552 29.44C2.728 29.548 2.924 29.6 3.12 29.6C3.296 29.6 3.472 29.56 3.632 29.48L9.444 26.388C11.404 27.412 13.632 28 16 28C23.732 28 30 21.732 30 16C30 8.268 23.732 2 16 2Z" fill="#25D366"/>
+                    <path d="M16 2C8.268 2 2 8.268 2 16C2 18.368 2.588 20.596 3.612 22.556L2.132 28.388C2.024 28.796 2.192 29.224 2.552 29.44C2.728 29.548 2.924 29.6 3.12 29.6C3.296 29.6 3.472 29.56 3.632 29.48L9.444 26.388C11.404 27.412 13.632 28 16 28C23.732 28 30 21.732 30 16C30 8.268 23.732 2 16 2Z" fill="#2563EB"/>
                     <path d="M23.36 19.96C23.04 20.92 21.64 21.76 20.56 22.04C19.84 22.24 18.92 22.4 16.04 21.28C12.36 19.84 10.04 16.08 9.84 15.8C9.64 15.52 8.2 13.6 8.2 11.6C8.2 9.6 9.24 8.64 9.64 8.2C10.04 7.76 10.52 7.64 10.84 7.64C10.96 7.64 11.08 7.64 11.2 7.64C11.6 7.64 12 7.64 12.36 8.52C12.76 9.48 13.76 11.48 13.88 11.72C14 11.96 14.12 12.28 13.96 12.56C13.8 12.84 13.68 13 13.48 13.24C13.28 13.48 13.04 13.76 12.88 13.92C12.68 14.12 12.44 14.32 12.68 14.72C12.92 15.12 13.76 16.48 14.96 17.52C16.52 18.88 17.8 19.32 18.24 19.52C18.68 19.72 18.96 19.68 19.2 19.4C19.44 19.12 20.4 18 20.68 17.6C20.96 17.2 21.24 17.28 21.64 17.44C22.04 17.6 24.04 18.6 24.48 18.8C24.92 19 25.2 19.12 25.32 19.32C25.44 19.52 25.44 20.48 23.36 19.96Z" fill="white"/>
                 </svg>
             </div>
@@ -1806,6 +1806,154 @@
 .recipient-list::-webkit-scrollbar-thumb:hover,
 .activity-table-body::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* Theme override: blue palette */
+.whatsapp-blasting-container {
+    background: linear-gradient(180deg, #f5f9ff 0%, #edf4ff 100%);
+}
+
+.whatsapp-blasting-container .header-section {
+    margin-bottom: 18px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+}
+
+.whatsapp-blasting-container .app-icon {
+    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    border: 1px solid #bfdbfe;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14);
+}
+
+.whatsapp-blasting-container .app-title {
+    color: #1d4ed8;
+}
+
+.whatsapp-blasting-container .app-subtitle {
+    color: #475569;
+}
+
+.whatsapp-blasting-container .campaign-control-panel,
+.whatsapp-blasting-container .white-card,
+.whatsapp-blasting-container .stat-card,
+.whatsapp-blasting-container .tips-section {
+    border: 1px solid #dbeafe;
+    box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+    border-radius: 16px;
+}
+
+.whatsapp-blasting-container .campaign-control-title,
+.whatsapp-blasting-container .section-title,
+.whatsapp-blasting-container .tips-title {
+    color: #1e40af;
+}
+
+.whatsapp-blasting-container .campaign-control-note,
+.whatsapp-blasting-container .tip-text,
+.whatsapp-blasting-container .recipient-db-count {
+    color: #64748b;
+}
+
+.whatsapp-blasting-container .campaign-search-item,
+.whatsapp-blasting-container .recipient-db-item,
+.whatsapp-blasting-container .attachment-item {
+    border-color: #dbeafe;
+    background: #f8fbff;
+}
+
+.whatsapp-blasting-container .campaign-search-item:hover,
+.whatsapp-blasting-container .recipient-db-item:hover {
+    border-color: #93c5fd;
+    background: #f0f7ff;
+}
+
+.whatsapp-blasting-container .campaign-control-input,
+.whatsapp-blasting-container .phone-input-main,
+.whatsapp-blasting-container .recipient-db-search-input,
+.whatsapp-blasting-container .form-input,
+.whatsapp-blasting-container .message-textarea,
+.whatsapp-blasting-container .search-input-small {
+    background: #f8fbff;
+    border-color: #bfdbfe;
+}
+
+.whatsapp-blasting-container .campaign-control-input:focus,
+.whatsapp-blasting-container .phone-input-main:focus,
+.whatsapp-blasting-container .recipient-db-search-input:focus,
+.whatsapp-blasting-container .form-input:focus,
+.whatsapp-blasting-container .message-textarea:focus,
+.whatsapp-blasting-container .search-input-small:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.whatsapp-blasting-container .campaign-btn,
+.whatsapp-blasting-container .send-button,
+.whatsapp-blasting-container .add-button,
+.whatsapp-blasting-container .btn-select-db {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    border-color: transparent;
+}
+
+.whatsapp-blasting-container .campaign-btn.warning,
+.whatsapp-blasting-container .campaign-btn.success,
+.whatsapp-blasting-container .campaign-btn.danger,
+.whatsapp-blasting-container .campaign-btn.info {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.whatsapp-blasting-container .send-button:hover,
+.whatsapp-blasting-container .campaign-btn:hover,
+.whatsapp-blasting-container .add-button:hover {
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+}
+
+.whatsapp-blasting-container .btn-select-db {
+    font-weight: 600;
+}
+
+.whatsapp-blasting-container .var-btn,
+.whatsapp-blasting-container .attach-btn {
+    border-color: #bfdbfe;
+    color: #1e40af;
+    background: #eff6ff;
+}
+
+.whatsapp-blasting-container .var-btn:hover,
+.whatsapp-blasting-container .attach-btn:hover {
+    background: #dbeafe;
+    border-color: #60a5fa;
+    color: #1d4ed8;
+}
+
+.whatsapp-blasting-container .activity-table-header {
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+
+.whatsapp-blasting-container .activity-row {
+    border-bottom: 1px solid #dbeafe;
+}
+
+.whatsapp-blasting-container .stat-icon.blue,
+.whatsapp-blasting-container .stat-icon.green,
+.whatsapp-blasting-container .stat-icon.red,
+.whatsapp-blasting-container .stat-icon.yellow {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.whatsapp-blasting-container .excel-import {
+    border-color: #bfdbfe;
+    background: #f0f7ff;
+}
+
+.whatsapp-blasting-container .excel-import:hover {
+    border-color: #3b82f6;
+    background: #dbeafe;
 }
 </style>
 

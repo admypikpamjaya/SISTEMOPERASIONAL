@@ -14,6 +14,7 @@ use App\Http\Controllers\Asset\PublicAssetController;
 use App\Http\Controllers\Report\MaintenanceReportController;
 use App\Http\Controllers\User\UserManagementController;
 use App\Http\Controllers\Finance\AssetDepreciationController;
+use App\Http\Controllers\Finance\FinanceAccountController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
@@ -173,6 +174,14 @@ Route::prefix('finance')
             ->middleware('check_access:finance_depreciation.calculate')
             ->name('depreciation.calc');
 
+        Route::get('/depreciation/logs/{log}', [AssetDepreciationController::class, 'showLog'])
+            ->middleware('check_access:finance_depreciation.calculate')
+            ->name('depreciation.logs.show');
+
+        Route::get('/depreciation/logs/{log}/download', [AssetDepreciationController::class, 'downloadLogPdf'])
+            ->middleware('check_access:finance_depreciation.calculate')
+            ->name('depreciation.logs.download');
+
         Route::get('/report', [FinanceReportController::class, 'index'])
             ->middleware('check_access:finance_report.read')
             ->name('report.index');
@@ -200,6 +209,22 @@ Route::prefix('finance')
         Route::get('/report/{id}', [FinanceReportController::class, 'show'])
             ->middleware('check_access:finance_report.read')
             ->name('report.show');
+
+        Route::prefix('accounts')
+            ->name('accounts.')
+            ->group(function () {
+                Route::get('/', [FinanceAccountController::class, 'index'])
+                    ->middleware('check_access:finance_report.read')
+                    ->name('index');
+
+                Route::post('/', [FinanceAccountController::class, 'store'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('store');
+
+                Route::put('/{account}', [FinanceAccountController::class, 'update'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('update');
+            });
 
         Route::prefix('invoices')
             ->name('invoice.')

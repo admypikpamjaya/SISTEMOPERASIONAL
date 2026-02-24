@@ -29,8 +29,11 @@ class DashboardController extends Controller
     private function buildDashboardPayload(): array
     {
         $currentRole = strtolower(trim((string) auth()->user()?->role));
-        $showFinanceWidgets = $currentRole !== strtolower(UserRole::ADMIN->value);
-        $showBlastingWidgets = $currentRole !== strtolower(UserRole::FINANCE->value);
+        $isAssetManager = $currentRole === strtolower(UserRole::ASSET_MANAGER->value);
+        $showFinanceWidgets = !$isAssetManager
+            && $currentRole !== strtolower(UserRole::ADMIN->value);
+        $showBlastingWidgets = !$isAssetManager
+            && $currentRole !== strtolower(UserRole::FINANCE->value);
         $blastSeries = null;
         $financeSeries = null;
         $saldo = null;

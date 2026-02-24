@@ -135,7 +135,7 @@
     </option>
 
     <option value="Asset Manager" {{ old('role', $user->role ?? '') === 'Asset Manager' ? 'selected' : '' }}>
-        Asset Manager
+        Asset Management
     </option>
 
     <option value="Finance" {{ old('role', $user->role ?? '') === 'Finance' ? 'selected' : '' }}>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\FinanceInvoiceNoteStoreRequest;
 use App\Http\Requests\Finance\FinanceInvoiceStoreRequest;
 use App\Http\Requests\Finance\FinanceInvoiceUpdateRequest;
+use App\Models\FinanceAccount;
 use App\Models\FinanceInvoice;
 use App\Services\Finance\FinanceInvoiceDocumentService;
 use Carbon\Carbon;
@@ -104,6 +105,7 @@ class FinanceInvoiceController extends Controller
             'items' => [],
             'isReadOnly' => false,
             'journalOptions' => $this->getJournalOptions(),
+            'accountOptions' => $this->getAccountOptions(),
         ]);
     }
 
@@ -233,6 +235,7 @@ class FinanceInvoiceController extends Controller
             'items' => $invoice->items,
             'isReadOnly' => $isReadOnly,
             'journalOptions' => $this->getJournalOptions(),
+            'accountOptions' => $this->getAccountOptions(),
         ]);
     }
 
@@ -458,5 +461,21 @@ class FinanceInvoiceController extends Controller
             ->filter()
             ->unique()
             ->values();
+    }
+
+    private function getAccountOptions()
+    {
+        return FinanceAccount::query()
+            ->active()
+            ->orderBy('class_no')
+            ->orderBy('code')
+            ->get(['code', 'name', 'type', 'class_no'])
+            ->map(fn (FinanceAccount $account): array => [
+                'code' => (string) $account->code,
+                'name' => (string) $account->name,
+                'type' => (string) $account->type,
+                'type_label' => (string) $account->type_label,
+                'class_no' => (int) $account->class_no,
+            ]);
     }
 }

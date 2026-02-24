@@ -107,6 +107,11 @@ return [
                 'route' => 'finance.report.index',
             ],
             [
+                'label' => 'Bagan Akun',
+                'icon'  => 'fas fa-sitemap',
+                'route' => 'finance.accounts.index',
+            ],
+            [
                 'label' => 'Snapshot Report',
                 'icon'  => 'fas fa-book',
                 'route' => 'finance.report.snapshots',

@@ -245,6 +245,30 @@
         font-size: .73rem; font-weight: 700;
     }
 
+    .ad-action-group {
+        display: inline-flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .ad-action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 9px;
+        padding: 4px 8px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .ad-action-link:hover {
+        text-decoration: none;
+        color: #1e3a8a;
+        background: #dbeafe;
+    }
+
     .ad-asset-code { font-weight: 700; color: var(--text); }
     .ad-asset-sub  { font-size: .76rem; color: var(--muted); margin-top: 1px; }
 
@@ -491,6 +515,7 @@
                                 <th><i class="fas fa-hourglass-half"></i>Umur (Bln)</th>
                                 <th><i class="fas fa-divide"></i>Penyusutan / Bulan</th>
                                 <th><i class="far fa-user"></i>Dihitung Oleh</th>
+                                <th><i class="fas fa-link"></i>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="depreciation-log-body">
@@ -526,10 +551,20 @@
                                             <span style="font-weight:600; font-size:.87rem;">{{ $log->calculator?->name ?? '-' }}</span>
                                         </div>
                                     </td>
+                                    <td>
+                                        <span class="ad-action-group">
+                                            <a class="ad-action-link" href="{{ route('finance.depreciation.logs.show', ['log' => $log->id]) }}">
+                                                <i class="fas fa-eye"></i> Detail
+                                            </a>
+                                            <a class="ad-action-link" href="{{ route('finance.depreciation.logs.download', ['log' => $log->id]) }}">
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </a>
+                                        </span>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr id="depreciation-log-empty-row">
-                                    <td colspan="8">
+                                    <td colspan="9">
                                         <div class="ad-empty">
                                             <span class="ei"><i class="fas fa-calculator"></i></span>
                                             <p>Belum ada log kalkulasi penyusutan.</p>
@@ -554,6 +589,8 @@
         const submitBtn = document.getElementById('submit-btn');
         const alertBox  = document.getElementById('depreciation-alert');
         const logBody   = document.getElementById('depreciation-log-body');
+        const logShowUrlTemplate = @json(route('finance.depreciation.logs.show', ['log' => '__LOG_ID__']));
+        const logDownloadUrlTemplate = @json(route('finance.depreciation.logs.download', ['log' => '__LOG_ID__']));
 
         /* ── alert helper ── */
         function setAlert(type, message) {
@@ -590,6 +627,10 @@
             const empty = document.getElementById('depreciation-log-empty-row');
             if (empty) empty.remove();
 
+            const logId = String(log.id || '');
+            const detailUrl = logShowUrlTemplate.replace('__LOG_ID__', encodeURIComponent(logId));
+            const downloadUrl = logDownloadUrlTemplate.replace('__LOG_ID__', encodeURIComponent(logId));
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><span class="ad-badge">1</span></td>
@@ -609,6 +650,16 @@
                         </span>
                         <span style="font-weight:600;font-size:.87rem;">${escapeHtml(log.calculated_by_name || '-')}</span>
                     </div>
+                </td>
+                <td>
+                    <span class="ad-action-group">
+                        <a class="ad-action-link" href="${escapeHtml(detailUrl)}">
+                            <i class="fas fa-eye"></i> Detail
+                        </a>
+                        <a class="ad-action-link" href="${escapeHtml(downloadUrl)}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </span>
                 </td>
             `;
             logBody.prepend(row);

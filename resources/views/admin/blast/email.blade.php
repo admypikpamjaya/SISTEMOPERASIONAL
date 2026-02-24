@@ -1826,6 +1826,151 @@
     .activity-table-body::-webkit-scrollbar-thumb:hover {
         background: #a8a8a8;
     }
+
+    /* Theme override: blue palette */
+    .email-blasting-container {
+        background: linear-gradient(180deg, #f5f9ff 0%, #edf4ff 100%);
+    }
+
+    .email-blasting-container .header-section {
+        margin-bottom: 18px;
+        padding: 16px 20px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+    }
+
+    .email-blasting-container .app-icon {
+        background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+        border: 1px solid #bfdbfe;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14);
+    }
+
+    .email-blasting-container .app-title {
+        background: none;
+        -webkit-text-fill-color: #1d4ed8;
+        color: #1d4ed8;
+    }
+
+    .email-blasting-container .app-subtitle {
+        color: #475569;
+    }
+
+    .email-blasting-container .campaign-control-panel,
+    .email-blasting-container .white-card,
+    .email-blasting-container .stat-card,
+    .email-blasting-container .tips-section {
+        border: 1px solid #dbeafe;
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.08);
+        border-radius: 16px;
+    }
+
+    .email-blasting-container .campaign-control-title,
+    .email-blasting-container .section-title,
+    .email-blasting-container .tips-title {
+        color: #1e40af;
+    }
+
+    .email-blasting-container .campaign-control-note,
+    .email-blasting-container .tip-text,
+    .email-blasting-container .recipient-db-count {
+        color: #64748b;
+    }
+
+    .email-blasting-container .campaign-search-item,
+    .email-blasting-container .recipient-db-item,
+    .email-blasting-container .attachment-item {
+        border-color: #dbeafe;
+        background: #f8fbff;
+    }
+
+    .email-blasting-container .campaign-search-item:hover,
+    .email-blasting-container .recipient-db-item:hover {
+        border-color: #93c5fd;
+        background: #f0f7ff;
+    }
+
+    .email-blasting-container .campaign-control-input,
+    .email-blasting-container .email-input-main,
+    .email-blasting-container .recipient-db-search-input,
+    .email-blasting-container .form-input,
+    .email-blasting-container .message-textarea,
+    .email-blasting-container .search-input-small,
+    .email-blasting-container .chip-input-section {
+        background: #f8fbff;
+        border-color: #bfdbfe;
+    }
+
+    .email-blasting-container .campaign-control-input:focus,
+    .email-blasting-container .email-input-main:focus,
+    .email-blasting-container .recipient-db-search-input:focus,
+    .email-blasting-container .form-input:focus,
+    .email-blasting-container .message-textarea:focus,
+    .email-blasting-container .search-input-small:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+    }
+
+    .email-blasting-container .campaign-btn,
+    .email-blasting-container .send-button,
+    .email-blasting-container .btn-select-db,
+    .email-blasting-container .var-btn {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: #ffffff;
+        border-color: transparent;
+    }
+
+    .email-blasting-container .campaign-btn.warning,
+    .email-blasting-container .campaign-btn.success,
+    .email-blasting-container .campaign-btn.danger,
+    .email-blasting-container .campaign-btn.info {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .email-blasting-container .send-button:hover,
+    .email-blasting-container .campaign-btn:hover,
+    .email-blasting-container .btn-select-db:hover {
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+    }
+
+    .email-blasting-container .attach-btn {
+        border-color: #bfdbfe;
+        color: #1e40af;
+        background: #eff6ff;
+    }
+
+    .email-blasting-container .attach-btn:hover {
+        background: #dbeafe;
+        border-color: #60a5fa;
+        color: #1d4ed8;
+    }
+
+    .email-blasting-container .activity-table-header {
+        background: #eff6ff;
+        color: #1e3a8a;
+    }
+
+    .email-blasting-container .activity-row {
+        border-bottom: 1px solid #dbeafe;
+    }
+
+    .email-blasting-container .stat-icon.blue,
+    .email-blasting-container .stat-icon.green,
+    .email-blasting-container .stat-icon.red,
+    .email-blasting-container .stat-icon.yellow {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .email-blasting-container .excel-import {
+        border-color: #bfdbfe;
+        background: #f0f7ff;
+    }
+
+    .email-blasting-container .excel-import:hover {
+        border-color: #3b82f6;
+        background: #dbeafe;
+    }
 </style>
 
 <script>

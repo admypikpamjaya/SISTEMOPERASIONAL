@@ -927,21 +927,6 @@ class BlastController extends Controller
     ): array {
         $normalizedChannel = strtoupper($channel);
 
-        $statusCounts = BlastLog::query()
-            ->whereHas('message', function ($query) use ($normalizedChannel) {
-                $query->where('channel', $normalizedChannel);
-            })
-            ->selectRaw('status, COUNT(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
-
-        $stats = [
-            'total' => (int) $statusCounts->sum(),
-            'sent' => (int) ($statusCounts['SENT'] ?? 0),
-            'failed' => (int) ($statusCounts['FAILED'] ?? 0),
-            'pending' => (int) ($statusCounts['PENDING'] ?? 0),
-        ];
-
         $logs = BlastLog::query()
             ->with([
                 'message:id,channel,subject',
@@ -983,8 +968,8 @@ class BlastController extends Controller
             $wibTimestamp = $timestamp?->copy()->timezone(self::WIB_TIMEZONE);
             $status = strtoupper((string) $log->status);
             $statusKey = match ($status) {
-                'SENT' => 'success',
                 'FAILED' => 'failed',
+                'SENT' => 'success',
                 default => 'pending',
             };
 
@@ -1000,6 +985,7 @@ class BlastController extends Controller
                 'canRetry' => $status === 'FAILED',
                 'canDelete' => true,
                 'errorMessage' => trim((string) ($log->error_message ?? '')),
+                'responseMessage' => trim((string) ($log->response ?? '')),
                 'campaignId' => (string) $log->blast_message_id,
             ];
 
@@ -1014,6 +1000,28 @@ class BlastController extends Controller
 
             return $row;
         })->values()->all();
+
+        $stats = [
+            'total' => count($mappedLogs),
+            'sent' => 0,
+            'failed' => 0,
+            'pending' => 0,
+        ];
+
+        foreach ($mappedLogs as $row) {
+            $status = (string) ($row['status'] ?? 'pending');
+            if ($status === 'success') {
+                $stats['sent']++;
+                continue;
+            }
+
+            if ($status === 'failed') {
+                $stats['failed']++;
+                continue;
+            }
+
+            $stats['pending']++;
+        }
 
         return [
             'stats' => $stats,

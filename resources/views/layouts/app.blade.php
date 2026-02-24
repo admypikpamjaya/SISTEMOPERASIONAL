@@ -118,13 +118,23 @@
                                 @if($hasChildren)
                                     <ul class="nav nav-treeview">
                                         @foreach($menu['children'] as $child)
-                                            <li class="nav-item">
-                                                <a href="{{ route($child['route']) }}"
-                                                   class="nav-link {{ request()->routeIs($child['route']) ? 'active' : '' }}">
-                                                    <i class="nav-icon {{ $child['icon'] }}"></i>
-                                                    <p>{{ $child['label'] }}</p>
-                                                </a>
-                                            </li>
+                                            @php
+                                                $canAccessChild = empty($child['module_name']) || app(\App\Services\AccessControl\PermissionService::class)
+                                                    ->checkAccess(
+                                                        auth()->user(),
+                                                        \App\Enums\Portal\PortalPermission::from($child['module_name'] . '.read')->value
+                                                    );
+                                            @endphp
+
+                                            @if($canAccessChild)
+                                                <li class="nav-item">
+                                                    <a href="{{ route($child['route']) }}"
+                                                       class="nav-link {{ request()->routeIs($child['route']) ? 'active' : '' }}">
+                                                        <i class="nav-icon {{ $child['icon'] }}"></i>
+                                                        <p>{{ $child['label'] }}</p>
+                                                    </a>
+                                                </li>
+                                            @endif
                                         @endforeach
                                     </ul>
                                 @endif

@@ -15,29 +15,32 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('👥 Seeding user data...');
-
-        // ❌ JANGAN TRUNCATE USERS
-        // User::truncate(); // ← INI PENYEBAB ERROR FK (HARUS DIHAPUS)
+        $this->command->info('Seeding user data...');
 
         $users = [
             [
                 'email' => 'ariyapanna@outlook.com',
-                'name'  => 'Ariya',
+                'name' => 'Ariya',
                 'password' => Hash::make('password'),
-                'role' => UserRole::IT_SUPPORT, // aman + konsisten
+                'role' => UserRole::IT_SUPPORT,
+            ],
+            [
+                'email' => 'asset.management@ypik.local',
+                'name' => 'Asset Management',
+                'password' => Hash::make('password'),
+                'role' => UserRole::ASSET_MANAGER,
             ],
         ];
 
         foreach ($users as $user) {
             User::firstOrCreate(
-                ['email' => $user['email']], // unique key
+                ['email' => $user['email']],
                 array_merge($user, [
-                    'id' => Str::uuid(), // UUID wajib
+                    'id' => Str::uuid(),
                 ])
             );
         }
 
-        $this->command->info('👥 User data successfully seeded.');
+        $this->command->info('User data successfully seeded.');
     }
 }

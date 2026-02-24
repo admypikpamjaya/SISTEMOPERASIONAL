@@ -124,11 +124,26 @@ class SendWhatsappBlastJob implements ShouldQueue
         ?BlastLog $blastLog,
         ?AnnouncementLog $announcementLog
     ): void {
+        $providerMessage = trim(
+            (string) ($this->payload->meta['provider_message'] ?? '')
+        );
+        $providerDeliveryStatus = strtolower(
+            trim((string) ($this->payload->meta['provider_delivery_status'] ?? ''))
+        );
+
+        $responseMessage = $providerMessage !== ''
+            ? $providerMessage
+            : 'WhatsApp sent successfully.';
+
+        if ($providerDeliveryStatus === 'pending' && $providerMessage === '') {
+            $responseMessage = 'Message is pending and waiting to be processed';
+        }
+
         if ($blastLog) {
             $blastLog->update([
                 'status' => 'SENT',
                 'error_message' => null,
-                'response' => 'WhatsApp sent successfully.',
+                'response' => $responseMessage,
                 'sent_at' => now(),
                 'attempt' => $this->attempts(),
             ]);
@@ -137,7 +152,7 @@ class SendWhatsappBlastJob implements ShouldQueue
         if ($announcementLog) {
             $announcementLog->update([
                 'status' => 'SENT',
-                'response' => 'WhatsApp sent successfully.',
+                'response' => $responseMessage,
                 'sent_at' => now(),
             ]);
         }

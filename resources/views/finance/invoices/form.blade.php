@@ -210,6 +210,7 @@
     .ivf-cell-input:focus { outline: none; border-color: var(--blue-primary); background: white; box-shadow: 0 0 0 2px rgba(37,99,235,0.10); }
     .ivf-cell-input:disabled { color: var(--text-muted); cursor: not-allowed; }
     .ivf-cell-input.text-right { text-align: right; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 400; }
+    .ivf-account-input { min-width: 240px; }
 
     /* tfoot totals */
     .ivf-items-table tfoot th {
@@ -262,6 +263,18 @@
         $journalOptions->prepend($defaultJournalName);
     }
 
+    $accountOptions = collect($accountOptions ?? [])
+        ->map(function ($item) {
+            return [
+                'code' => trim((string) data_get($item, 'code')),
+                'name' => trim((string) data_get($item, 'name')),
+                'type_label' => trim((string) data_get($item, 'type_label')),
+            ];
+        })
+        ->filter(fn ($item) => $item['code'] !== '')
+        ->unique('code')
+        ->values();
+
     $rowItems = old('items');
     if (!is_array($rowItems)) {
         $rowItems = collect($items ?? [])->map(function ($item) {
@@ -282,6 +295,26 @@
             'label' => '', 'analytic_distribution' => '', 'debit' => 0, 'credit' => 0,
         ]];
     }
+
+    $existingCodes = collect($rowItems)
+        ->map(fn ($item) => trim((string) ($item['account_code'] ?? '')))
+        ->filter()
+        ->unique()
+        ->values();
+
+    foreach ($existingCodes as $existingCode) {
+        if (!$accountOptions->contains(fn ($option) => $option['code'] === $existingCode)) {
+            $accountOptions->push([
+                'code' => $existingCode,
+                'name' => '',
+                'type_label' => '',
+            ]);
+        }
+    }
+
+    $accountOptions = $accountOptions
+        ->sortBy('code')
+        ->values();
 
     $status = strtoupper((string) ($isEdit ? $invoice->status : 'DRAFT'));
     $statusBadge = match($status) {
@@ -422,13 +455,16 @@
 
             {{-- ── Baris Jurnal ── --}}
             <div class="ivf-section-label"><i class="fas fa-table" style="font-size:.65rem;color:var(--blue-primary);"></i> Baris Jurnal</div>
+            <div style="font-size:0.76rem;color:var(--text-muted);margin:-0.35rem 0 0.75rem;">
+                Pilih kode akun dari fitur <strong>Bagan Akun</strong> (boleh ketik manual bila diperlukan).
+            </div>
 
             <div class="ivf-items-wrap">
                 <table class="ivf-items-table" id="invoice-items-table">
                     <thead>
                         <tr>
                             <th style="width:130px;">Asset Category</th>
-                            <th style="width:130px;">Akun <span style="color:var(--accent-red);">*</span></th>
+                            <th style="width:260px;">Akun <span style="color:var(--accent-red);">*</span></th>
                             <th style="width:150px;">Rekanan</th>
                             <th style="width:200px;">Label <span style="color:var(--accent-red);">*</span></th>
                             <th>Analisa Distribusi</th>
@@ -441,7 +477,7 @@
                         @foreach($rowItems as $index => $item)
                             <tr>
                                 <td><input type="text" name="items[{{ $index }}][asset_category]" class="ivf-cell-input" value="{{ $item['asset_category'] ?? '' }}" {{ $isReadOnly ? 'disabled' : '' }}></td>
-                                <td><input type="text" name="items[{{ $index }}][account_code]" class="ivf-cell-input" value="{{ $item['account_code'] ?? '' }}" required {{ $isReadOnly ? 'disabled' : '' }}></td>
+                                <td><input type="text" name="items[{{ $index }}][account_code]" class="ivf-cell-input ivf-account-input" list="account_code_options" value="{{ $item['account_code'] ?? '' }}" required {{ $isReadOnly ? 'disabled' : '' }}></td>
                                 <td><input type="text" name="items[{{ $index }}][partner_name]" class="ivf-cell-input" value="{{ $item['partner_name'] ?? '' }}" {{ $isReadOnly ? 'disabled' : '' }}></td>
                                 <td><input type="text" name="items[{{ $index }}][label]" class="ivf-cell-input" value="{{ $item['label'] ?? '' }}" required {{ $isReadOnly ? 'disabled' : '' }}></td>
                                 <td><input type="text" name="items[{{ $index }}][analytic_distribution]" class="ivf-cell-input" value="{{ $item['analytic_distribution'] ?? '' }}" {{ $isReadOnly ? 'disabled' : '' }}></td>
@@ -469,6 +505,13 @@
             </div>
 
             {{-- ── Catatan ── --}}
+            <datalist id="account_code_options">
+                @foreach($accountOptions as $option)
+                    <option value="{{ $option['code'] }}">
+                        {{ $option['code'] }} - {{ $option['name'] }}{{ $option['type_label'] ? ' (' . $option['type_label'] . ')' : '' }}
+                    </option>
+                @endforeach
+            </datalist>
             <div class="ivf-section-label"><i class="fas fa-sticky-note" style="font-size:.65rem;color:var(--blue-primary);"></i> Catatan</div>
             <div class="ivf-form-group">
                 <label class="ivf-label"><i class="fas fa-comment-alt"></i> Catatan Awal <span style="font-weight:400;text-transform:none;letter-spacing:0;">(opsional)</span></label>
@@ -554,7 +597,7 @@
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input type="text" name="items[0][asset_category]" class="ivf-cell-input"></td>
-                <td><input type="text" name="items[0][account_code]" class="ivf-cell-input" required></td>
+                <td><input type="text" name="items[0][account_code]" class="ivf-cell-input ivf-account-input" list="account_code_options" required></td>
                 <td><input type="text" name="items[0][partner_name]" class="ivf-cell-input"></td>
                 <td><input type="text" name="items[0][label]" class="ivf-cell-input" required></td>
                 <td><input type="text" name="items[0][analytic_distribution]" class="ivf-cell-input"></td>

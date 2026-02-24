@@ -89,6 +89,14 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
                         || (bool) $decoded['status'] === true
                     )
                 ) {
+                    $deliveryStatus = $this->extractDeliveryStatus($decoded);
+                    if ($message !== '') {
+                        $payload->setMeta('provider_message', $message);
+                    }
+                    if ($deliveryStatus !== '') {
+                        $payload->setMeta('provider_delivery_status', $deliveryStatus);
+                    }
+
                     self::$resolvedBaseUrl = $baseUrl;
                     return true;
                 }
@@ -241,6 +249,30 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
         }
 
         return trim($rawBody);
+    }
+
+    private function extractDeliveryStatus(mixed $decoded): string
+    {
+        if (!is_array($decoded)) {
+            return '';
+        }
+
+        $data = $decoded['data'] ?? null;
+        if (!is_array($data)) {
+            return '';
+        }
+
+        $messages = $data['messages'] ?? null;
+        if (!is_array($messages) || $messages === []) {
+            return '';
+        }
+
+        $firstMessage = $messages[0] ?? null;
+        if (!is_array($firstMessage)) {
+            return '';
+        }
+
+        return strtolower(trim((string) ($firstMessage['status'] ?? '')));
     }
 
     private function shouldTryNextBaseUrl(string $message): bool
