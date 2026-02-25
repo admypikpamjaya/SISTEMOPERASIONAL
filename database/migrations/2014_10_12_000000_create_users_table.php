@@ -21,6 +21,8 @@ return new class extends Migration
                 'IT Support',
                 'Asset Manager',
                 'Finance',
+                'Pembina',
+                'Qc',
             ])->default('User');
 
             $table->rememberToken();
