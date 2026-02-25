@@ -79,6 +79,7 @@ class QueueBlastDeliveryJob implements ShouldQueue
             try {
                 app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
             } catch (\Throwable $exception) {
+                $this->markSyncDispatchFailed($normalizedChannel, $exception);
                 Log::error('[BLAST SYNC DISPATCH FAILED]', [
                     'channel' => $normalizedChannel,
                     'target' => $this->target,
@@ -89,6 +90,35 @@ class QueueBlastDeliveryJob implements ShouldQueue
         }
 
         dispatch($job);
+    }
+
+    private function markSyncDispatchFailed(
+        string $channel,
+        \Throwable $exception
+    ): void {
+        $blastLog = $this->resolveBlastLog();
+        if ($blastLog) {
+            $blastLog->update([
+                'status' => 'FAILED',
+                'error_message' => $exception->getMessage(),
+                'response' => strtoupper($channel) === 'EMAIL'
+                    ? 'Email send failed.'
+                    : 'WhatsApp send failed.',
+                'sent_at' => now(),
+                'attempt' => 1,
+            ]);
+        }
+
+        $announcementLogId = $this->payload->meta['announcement_log_id'] ?? null;
+        if ($announcementLogId !== null) {
+            AnnouncementLog::query()
+                ->whereKey($announcementLogId)
+                ->update([
+                    'status' => 'FAILED',
+                    'response' => $exception->getMessage(),
+                    'sent_at' => now(),
+                ]);
+        }
     }
 
     private function resolveBlastLog(): ?BlastLog

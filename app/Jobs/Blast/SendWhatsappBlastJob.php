@@ -6,7 +6,7 @@ use App\DataTransferObjects\BlastPayload;
 use App\Models\AnnouncementLog;
 use App\Models\BlastLog;
 use App\Models\BlastMessage;
-use App\Services\Blast\WhatsappBlastService;
+use App\Services\Blast\WhatsAppBlastService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,13 +29,9 @@ class SendWhatsappBlastJob implements ShouldQueue
 
     public function tries(): int
     {
-        return max(
-            1,
-            (int) (
-                $this->payload->meta['retry_attempts']
-                ?? config('blast.retry.max_attempts', 3)
-            )
-        );
+        // WhatsApp blast is executed synchronously in current flow,
+        // so retries can leave logs stuck in PENDING.
+        return 1;
     }
 
     /**
@@ -63,7 +59,7 @@ class SendWhatsappBlastJob implements ShouldQueue
         return $normalized === [] ? [30, 120, 300] : $normalized;
     }
 
-    public function handle(WhatsappBlastService $service): void
+    public function handle(WhatsAppBlastService $service): void
     {
         $blastLog = $this->resolveBlastLog();
         $announcementLog = $this->resolveAnnouncementLog();
@@ -88,11 +84,8 @@ class SendWhatsappBlastJob implements ShouldQueue
             $this->markSuccess($blastLog, $announcementLog);
             $this->refreshCampaignCompletion($blastLog);
         } catch (\Throwable $exception) {
-            $isFinalAttempt = $this->attempts() >= $this->tries();
-            $this->markFailure($blastLog, $announcementLog, $exception, $isFinalAttempt);
-            if ($isFinalAttempt) {
-                $this->refreshCampaignCompletion($blastLog);
-            }
+            $this->markFailure($blastLog, $announcementLog, $exception);
+            $this->refreshCampaignCompletion($blastLog);
 
             throw $exception;
         }
@@ -161,28 +154,23 @@ class SendWhatsappBlastJob implements ShouldQueue
     private function markFailure(
         ?BlastLog $blastLog,
         ?AnnouncementLog $announcementLog,
-        \Throwable $exception,
-        bool $isFinalAttempt
+        \Throwable $exception
     ): void {
         if ($blastLog) {
             $blastLog->update([
-                'status' => $isFinalAttempt ? 'FAILED' : 'PENDING',
+                'status' => 'FAILED',
                 'error_message' => $exception->getMessage(),
-                'response' => $isFinalAttempt
-                    ? 'WhatsApp send failed.'
-                    : 'Retrying WhatsApp send.',
-                'sent_at' => $isFinalAttempt ? now() : null,
+                'response' => 'WhatsApp send failed.',
+                'sent_at' => now(),
                 'attempt' => $this->attempts(),
             ]);
         }
 
         if ($announcementLog) {
             $announcementLog->update([
-                'status' => $isFinalAttempt ? 'FAILED' : 'PENDING',
-                'response' => $isFinalAttempt
-                    ? $exception->getMessage()
-                    : 'Retrying: ' . $exception->getMessage(),
-                'sent_at' => $isFinalAttempt ? now() : null,
+                'status' => 'FAILED',
+                'response' => $exception->getMessage(),
+                'sent_at' => now(),
             ]);
         }
     }

@@ -5,7 +5,7 @@ namespace App\Services\Blast;
 use App\Contracts\Messaging\WhatsappProviderInterface;
 use App\DataTransferObjects\BlastPayload;
 
-class WhatsappBlastService
+class WhatsAppBlastService
 {
     public function __construct(
         protected WhatsappProviderInterface $provider

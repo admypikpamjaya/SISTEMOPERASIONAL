@@ -254,6 +254,9 @@ class BlastController extends Controller
             1,
             (int) ($campaignMeta['retry_attempts'] ?? config('blast.retry.max_attempts', 3))
         );
+        if ($channel === 'WHATSAPP') {
+            $retryAttempts = 1;
+        }
         $retryBackoffSeconds = $this->normalizeRetryBackoffSeconds(
             $campaignMeta['retry_backoff_seconds'] ?? null
         );
@@ -1163,6 +1166,9 @@ class BlastController extends Controller
             1,
             (int) ($validatedData['retry_attempts'] ?? config('blast.retry.max_attempts', 3))
         );
+        if ($normalizedChannel === 'whatsapp') {
+            $retryAttempts = 1;
+        }
 
         $retryBackoffSeconds = $this->parseRetryBackoffSeconds(
             $validatedData['retry_backoff_seconds'] ?? null
