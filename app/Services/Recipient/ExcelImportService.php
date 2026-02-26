@@ -18,25 +18,42 @@ class ExcelImportService
             throw new \Exception("File tidak ditemukan: {$path}");
         }
 
-        $rows = [];
+        $result = new RecipientImportResultDTO();
+
         if (class_exists(IOFactory::class)) {
             $spreadsheet = IOFactory::load($path);
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray(null, true, true, false);
+
+            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                $rows = $sheet->toArray(null, true, true, false);
+                if (empty($rows)) {
+                    continue;
+                }
+
+                $this->appendRowsToResult($rows, $result);
+            }
+
+            return $result;
         } elseif ($this->isCsvFile($path)) {
             // Fallback import CSV saat library Excel belum terpasang.
             $rows = $this->readCsvRows($path);
+            if (empty($rows)) {
+                return $result;
+            }
+
+            $this->appendRowsToResult($rows, $result);
+            return $result;
         } else {
             throw new RuntimeException(
                 'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.'
             );
         }
+    }
 
-        if (empty($rows)) {
-            return new RecipientImportResultDTO();
-        }
-
-        $result = new RecipientImportResultDTO();
+    /**
+     * @param array<int, array<int, mixed>> $rows
+     */
+    private function appendRowsToResult(array $rows, RecipientImportResultDTO $result): void
+    {
         $headerMap = [];
 
         if (!empty($rows[0]) && is_array($rows[0])) {
@@ -74,8 +91,6 @@ class ExcelImportService
 
             $result->invalid[] = $dto;
         }
-
-        return $result;
     }
 
     /**

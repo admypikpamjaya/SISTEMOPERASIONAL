@@ -12,11 +12,82 @@ use Illuminate\Support\Facades\Log;
 
 class BlastRecipientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $recipients = BlastRecipient::latest()->paginate(20);
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'kelas' => 'nullable|string|max:100',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
 
-        return view('admin.blast.recipients.index', compact('recipients'));
+        $search = trim((string) ($validated['q'] ?? ''));
+        $selectedClass = trim((string) ($validated['kelas'] ?? ''));
+        $allowedPerPage = [20, 50, 100, 200];
+        $perPage = (int) ($validated['per_page'] ?? 50);
+
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        $query = BlastRecipient::query();
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('nama_siswa', 'like', '%' . $search . '%')
+                    ->orWhere('kelas', 'like', '%' . $search . '%')
+                    ->orWhere('nama_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_wali_2', 'like', '%' . $search . '%')
+                    ->orWhere('email_wali', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($selectedClass !== '') {
+            $query->where('kelas', $selectedClass);
+        }
+
+        $recipients = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $kelasOptions = BlastRecipient::query()
+            ->select('kelas')
+            ->whereNotNull('kelas')
+            ->where('kelas', '!=', '')
+            ->distinct()
+            ->orderBy('kelas')
+            ->pluck('kelas');
+
+        $baseStatsQuery = BlastRecipient::query();
+        $totalRecipients = (clone $baseStatsQuery)->count();
+        $completeCount = (clone $baseStatsQuery)
+            ->whereNotNull('nama_siswa')
+            ->whereNotNull('kelas')
+            ->whereNotNull('nama_wali')
+            ->where(function ($query) {
+                $query->whereNotNull('wa_wali')
+                    ->orWhereNotNull('wa_wali_2');
+            })
+            ->whereNotNull('email_wali')
+            ->count();
+        $incompleteCount = max(0, $totalRecipients - $completeCount);
+        $validCount = (clone $baseStatsQuery)
+            ->where('is_valid', true)
+            ->count();
+
+        return view('admin.blast.recipients.index', compact(
+            'recipients',
+            'kelasOptions',
+            'search',
+            'selectedClass',
+            'allowedPerPage',
+            'perPage',
+            'totalRecipients',
+            'completeCount',
+            'incompleteCount',
+            'validCount'
+        ));
     }
 
     public function create()

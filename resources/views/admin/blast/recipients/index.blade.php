@@ -226,6 +226,64 @@
         background: #f8fafc;
     }
 
+    .recipient-filter-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex: 1;
+    }
+
+    .filter-select {
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 9px 10px;
+        font-size: 12.5px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: var(--text-dark);
+        background: white;
+        min-width: 115px;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--blue-primary);
+        box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    }
+
+    .btn-filter,
+    .btn-reset {
+        padding: 9px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        border: 1.5px solid;
+        cursor: pointer;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+
+    .btn-filter {
+        border-color: var(--blue-primary);
+        color: var(--blue-primary);
+        background: white;
+    }
+
+    .btn-filter:hover {
+        background: #eff6ff;
+    }
+
+    .btn-reset {
+        border-color: #cbd5e1;
+        color: var(--text-mid);
+        background: white;
+    }
+
+    .btn-reset:hover {
+        background: #f1f5f9;
+    }
+
     .btn-import {
         padding: 9px 14px;
         border-radius: var(--radius-sm);
@@ -625,6 +683,12 @@
     @media (max-width: 640px) {
         .page-wrapper { padding: 16px; }
         .stats-grid  { grid-template-columns: 1fr 1fr; }
+        .recipient-filter-form {
+            flex-wrap: wrap;
+        }
+        .recipient-filter-form .search-box-wrap {
+            min-width: 100%;
+        }
     }
 </style>
 
@@ -653,7 +717,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Total Siswa</div>
-                <div class="stat-number">{{ $recipients->total() }}</div>
+                <div class="stat-number">{{ $totalRecipients ?? $recipients->total() }}</div>
             </div>
         </div>
         <div class="stat-card lengkap">
@@ -664,7 +728,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Data Lengkap</div>
-                <div class="stat-number">{{ $recipients->total() }}</div>
+                <div class="stat-number">{{ $completeCount ?? $recipients->total() }}</div>
             </div>
         </div>
         <div class="stat-card kurang">
@@ -686,7 +750,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Data Tervalidasi</div>
-                <div class="stat-number">{{ $recipients->total() }}</div>
+                <div class="stat-number">{{ $validCount ?? $recipients->total() }}</div>
             </div>
         </div>
     </div>
@@ -709,12 +773,29 @@
 
             {{-- Toolbar --}}
             <div class="toolbar-area">
-                <div class="search-box-wrap" style="flex:1;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                    </svg>
-                    <input type="text" class="search-box" placeholder="Cari nama siswa, kelas, atau wali..." id="searchInput">
-                </div>
+                <form method="GET" action="{{ route('admin.blast.recipients.index') }}" class="recipient-filter-form">
+                    <div class="search-box-wrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                        <input type="text" class="search-box" placeholder="Cari nama siswa, kelas, atau wali..." id="searchInput" name="q" value="{{ $search ?? '' }}">
+                    </div>
+                    <select name="kelas" class="filter-select" aria-label="Filter kelas">
+                        <option value="">Semua Kelas</option>
+                        @foreach(($kelasOptions ?? collect()) as $kelasOption)
+                            <option value="{{ $kelasOption }}" @selected(($selectedClass ?? '') === $kelasOption)>{{ $kelasOption }}</option>
+                        @endforeach
+                    </select>
+                    <select name="per_page" class="filter-select" aria-label="Jumlah data">
+                        @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
+                            <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ $size }}/halaman</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn-filter">Terapkan</button>
+                    @if(!empty($search) || !empty($selectedClass))
+                        <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">Reset</a>
+                    @endif
+                </form>
 
                 <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
                     @csrf
@@ -871,19 +952,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            const rows = document.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
-    }
-
     // Import form submission
     const excelFileInput = document.getElementById('excelFileInput');
     if (excelFileInput) {

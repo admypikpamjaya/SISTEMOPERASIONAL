@@ -317,7 +317,18 @@ body,
     background: var(--white); color: var(--text-dark); transition: border-color .2s;
 }
 .recipient-db-search-input:focus { outline: none; border-color: var(--blue-mid); }
-.recipient-db-search { margin-bottom: 8px; }
+.recipient-db-class-filter {
+    width: 100%; border: 1px solid var(--blue-border); border-radius: 8px;
+    padding: 7px 11px; font-size: 12px; font-family: inherit;
+    background: var(--white); color: var(--text-dark); transition: border-color .2s;
+}
+.recipient-db-class-filter:focus { outline: none; border-color: var(--blue-mid); }
+.recipient-db-filters {
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px;
+    gap: 6px;
+}
 .recipient-db-list {
     max-height: 220px; overflow-y: auto;
     display: flex; flex-direction: column; gap: 6px;
@@ -577,6 +588,7 @@ body,
     .activity-table-header  { display: none; }
     .activity-row           { grid-template-columns: 1fr; gap: 6px; padding: 12px; background: var(--blue-lighter); border-radius: var(--radius-sm); margin-bottom: 8px; }
     .search-small           { width: 100%; }
+    .recipient-db-filters   { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -740,12 +752,18 @@ body,
                             <button type="button" class="btn-select-db" id="selectAllRecipientsBtn">Select All</button>
                         </div>
                         <div class="recipient-db-count">Total valid recipient: {{ $recipients->count() }}</div>
-                        <div class="recipient-db-search">
+                        <div class="recipient-db-filters">
                             <input type="text" id="recipientDbSearchInput" class="recipient-db-search-input" placeholder="Cari recipient DB...">
+                            <select id="recipientDbClassFilter" class="recipient-db-class-filter">
+                                <option value="">Semua kelas</option>
+                                @foreach(($recipientClasses ?? collect()) as $kelas)
+                                    <option value="{{ strtolower(trim((string) $kelas)) }}">{{ $kelas }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="recipient-db-list">
                             @forelse($recipients as $recipient)
-                                <label class="recipient-db-item" for="recipient_{{ $recipient->id }}">
+                                <label class="recipient-db-item" for="recipient_{{ $recipient->id }}" data-kelas="{{ strtolower(trim((string) $recipient->kelas)) }}">
                                     <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-phone="{{ $recipient->wa_wali }}" data-phone-2="{{ $recipient->wa_wali_2 }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}">
                                     <div class="recipient-db-info">
                                         <div class="recipient-db-name">{{ $recipient->nama_siswa }} ({{ $recipient->kelas }})</div>
@@ -1012,6 +1030,7 @@ body,
         const retryBackoffInput = document.getElementById('retryBackoffInput');
         const selectAllRecipientsBtn = document.getElementById('selectAllRecipientsBtn');
         const recipientDbSearchInput = document.getElementById('recipientDbSearchInput');
+        const recipientDbClassFilter = document.getElementById('recipientDbClassFilter');
         const recipientDbList = document.querySelector('.recipient-db-list');
         const recipientDbItems = Array.from(document.querySelectorAll('.recipient-db-item'));
         const recipientDbCheckboxes = document.querySelectorAll('.recipient-db-checkbox');
@@ -1098,6 +1117,27 @@ body,
         function getPrimaryCheckedDbRecipient(preferredRecipient = null) {
             if (preferredRecipient && preferredRecipient.checked) return preferredRecipient;
             return Array.from(recipientDbCheckboxes).find(cb => cb.checked) || null;
+        }
+
+        function getVisibleRecipientDbCheckboxes() {
+            return recipientDbItems
+                .filter(item => item.style.display !== 'none')
+                .map(item => item.querySelector('.recipient-db-checkbox'))
+                .filter(checkbox => checkbox);
+        }
+
+        function updateSelectAllRecipientsBtnLabel() {
+            if (!selectAllRecipientsBtn) return;
+            const visibleCheckboxes = getVisibleRecipientDbCheckboxes();
+            if (visibleCheckboxes.length === 0) {
+                selectAllRecipientsBtn.disabled = true;
+                selectAllRecipientsBtn.textContent = 'Select Visible';
+                return;
+            }
+
+            selectAllRecipientsBtn.disabled = false;
+            const allVisibleChecked = visibleCheckboxes.every(cb => cb.checked);
+            selectAllRecipientsBtn.textContent = allVisibleChecked ? 'Unselect Visible' : 'Select Visible';
         }
 
         function syncRecipientProfileFromDbSelection(preferredRecipient = null) {
@@ -1323,17 +1363,19 @@ body,
         }
 
         if (selectAllRecipientsBtn && recipientDbCheckboxes.length > 0) {
-            let allRecipientSelected = false;
             selectAllRecipientsBtn.addEventListener('click', function() {
-                allRecipientSelected = !allRecipientSelected;
-                recipientDbCheckboxes.forEach(cb => cb.checked = allRecipientSelected);
-                selectAllRecipientsBtn.textContent = allRecipientSelected ? 'Unselect All' : 'Select All';
+                const visibleCheckboxes = getVisibleRecipientDbCheckboxes();
+                if (visibleCheckboxes.length === 0) return;
+
+                const shouldCheck = visibleCheckboxes.some(cb => !cb.checked);
+                visibleCheckboxes.forEach(cb => cb.checked = shouldCheck);
                 syncRecipientProfileFromDbSelection();
                 renderRecipientMessageMatrix();
+                updateSelectAllRecipientsBtnLabel();
             });
         }
 
-        recipientDbCheckboxes.forEach(cb => { cb.addEventListener('change', function() { syncRecipientProfileFromDbSelection(this); renderRecipientMessageMatrix(); }); });
+        recipientDbCheckboxes.forEach(cb => { cb.addEventListener('change', function() { syncRecipientProfileFromDbSelection(this); renderRecipientMessageMatrix(); updateSelectAllRecipientsBtnLabel(); }); });
         if (dbTemplateSelect) dbTemplateSelect.addEventListener('change', updateDbTemplatePreview);
 
         if (recipientMessageMatrix) {
@@ -1430,9 +1472,13 @@ body,
         function filterRecipientDbList() {
             if (!recipientDbList || recipientDbItems.length === 0) return;
             const searchTerm = (recipientDbSearchInput?.value || '').trim().toLowerCase();
+            const classFilterValue = (recipientDbClassFilter?.value || '').trim().toLowerCase();
             let visibleCount = 0;
             recipientDbItems.forEach(item => {
-                const isMatch = searchTerm === '' || (item.textContent || '').toLowerCase().includes(searchTerm);
+                const itemClass = (item.getAttribute('data-kelas') || '').trim().toLowerCase();
+                const isSearchMatch = searchTerm === '' || (item.textContent || '').toLowerCase().includes(searchTerm);
+                const isClassMatch = classFilterValue === '' || itemClass === classFilterValue;
+                const isMatch = isSearchMatch && isClassMatch;
                 item.style.display = isMatch ? '' : 'none';
                 if (isMatch) visibleCount += 1;
             });
@@ -1440,9 +1486,11 @@ body,
             if (visibleCount === 0) {
                 if (!emptySearch) { emptySearch = document.createElement('div'); emptySearch.className = 'recipient-db-empty recipient-db-empty-search'; emptySearch.textContent = 'Tidak ada recipient sesuai pencarian.'; recipientDbList.appendChild(emptySearch); }
             } else if (emptySearch) emptySearch.remove();
+            updateSelectAllRecipientsBtnLabel();
         }
 
         if (recipientDbSearchInput) recipientDbSearchInput.addEventListener('input', filterRecipientDbList);
+        if (recipientDbClassFilter) recipientDbClassFilter.addEventListener('change', filterRecipientDbList);
 
         function updateStats() {
             const total = activities.length;

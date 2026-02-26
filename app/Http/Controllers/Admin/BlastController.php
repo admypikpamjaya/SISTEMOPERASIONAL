@@ -39,6 +39,13 @@ class BlastController extends Controller
         session()->forget('campaign_id');
 
         $recipients = $this->getRecipientsByChannel('whatsapp');
+        $recipientClasses = $recipients
+            ->pluck('kelas')
+            ->map(fn ($kelas) => trim((string) $kelas))
+            ->filter(fn (string $kelas) => $kelas !== '')
+            ->unique()
+            ->sort()
+            ->values();
 
         $templates = BlastMessageTemplate::where('channel', 'whatsapp')
             ->where('is_active', true)
@@ -56,6 +63,7 @@ class BlastController extends Controller
 
         return view('admin.blast.whatsapp', compact(
             'recipients',
+            'recipientClasses',
             'templates',
             'announcementOptions',
             'activityLogs',
@@ -68,6 +76,13 @@ class BlastController extends Controller
         session()->forget('campaign_id');
 
         $recipients = $this->getRecipientsByChannel('email');
+        $recipientClasses = $recipients
+            ->pluck('kelas')
+            ->map(fn ($kelas) => trim((string) $kelas))
+            ->filter(fn (string $kelas) => $kelas !== '')
+            ->unique()
+            ->sort()
+            ->values();
 
         $templates = BlastMessageTemplate::query()
             ->whereIn('channel', ['EMAIL', 'email'])
@@ -86,7 +101,7 @@ class BlastController extends Controller
 
         return view(
             'admin.blast.email',
-            compact('recipients', 'templates', 'announcementOptions', 'activityLogs', 'activityStats')
+            compact('recipients', 'recipientClasses', 'templates', 'announcementOptions', 'activityLogs', 'activityStats')
         );
     }
 
