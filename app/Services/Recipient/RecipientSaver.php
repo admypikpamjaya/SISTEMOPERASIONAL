@@ -22,6 +22,9 @@ class RecipientSaver
             $exists = BlastRecipient::query()
                 ->where('email_wali', $dto->email)
                 ->orWhere('wa_wali', $dto->phone)
+                ->orWhere('wa_wali_2', $dto->phone)
+                ->orWhere('wa_wali', $dto->phoneSecondary)
+                ->orWhere('wa_wali_2', $dto->phoneSecondary)
                 ->exists();
 
             if ($exists) {
@@ -34,6 +37,7 @@ class RecipientSaver
                 'kelas' => $dto->kelas,
                 'nama_wali' => $dto->namaWali,
                 'wa_wali' => $dto->phone,
+                'wa_wali_2' => $dto->phoneSecondary,
                 'email_wali' => $dto->email,
                 'catatan' => null,
                 'is_valid' => true,

@@ -8,6 +8,7 @@ use App\Services\Recipient\ExcelImportService;
 use App\Services\Recipient\RecipientBulkSaver;
 use App\Services\Recipient\RecipientNormalizer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BlastRecipientController extends Controller
 {
@@ -36,10 +37,11 @@ class BlastRecipientController extends Controller
             'nama_wali' => 'required|string',
             'email_wali' => 'nullable|email',
             'wa_wali' => 'nullable|string',
+            'wa_wali_2' => 'nullable|string',
             'catatan' => 'nullable|string',
         ]);
 
-        if (empty($data['email_wali']) && empty($data['wa_wali'])) {
+        if (empty($data['email_wali']) && empty($data['wa_wali']) && empty($data['wa_wali_2'])) {
             return back()->withErrors([
                 'email_wali' => 'Email atau WhatsApp wajib diisi'
             ])->withInput();
@@ -51,6 +53,7 @@ class BlastRecipientController extends Controller
             'nama_wali' => $data['nama_wali'],
             'email' => $data['email_wali'],
             'wa' => $data['wa_wali'],
+            'wa_2' => $data['wa_wali_2'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -60,6 +63,7 @@ class BlastRecipientController extends Controller
             'nama_wali' => $dto->namaWali,
             'email_wali' => $dto->email,
             'wa_wali' => $dto->phone,
+            'wa_wali_2' => $dto->phoneSecondary,
             'catatan' => $dto->catatan,
             'is_valid' => empty($dto->errors),
             'validation_error' => empty($dto->errors)
@@ -98,10 +102,11 @@ class BlastRecipientController extends Controller
             'nama_wali' => 'required|string',
             'email_wali' => 'nullable|email',
             'wa_wali' => 'nullable|string',
+            'wa_wali_2' => 'nullable|string',
             'catatan' => 'nullable|string',
         ]);
 
-        if (empty($data['email_wali']) && empty($data['wa_wali'])) {
+        if (empty($data['email_wali']) && empty($data['wa_wali']) && empty($data['wa_wali_2'])) {
             return back()->withErrors([
                 'email_wali' => 'Email atau WhatsApp wajib diisi'
             ])->withInput();
@@ -113,6 +118,7 @@ class BlastRecipientController extends Controller
             'nama_wali' => $data['nama_wali'],
             'email' => $data['email_wali'],
             'wa' => $data['wa_wali'],
+            'wa_2' => $data['wa_wali_2'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -122,6 +128,7 @@ class BlastRecipientController extends Controller
             'nama_wali' => $dto->namaWali,
             'email_wali' => $dto->email,
             'wa_wali' => $dto->phone,
+            'wa_wali_2' => $dto->phoneSecondary,
             'catatan' => $dto->catatan,
             'is_valid' => empty($dto->errors),
             'validation_error' => empty($dto->errors)
@@ -146,9 +153,28 @@ class BlastRecipientController extends Controller
             'file' => 'required|file|mimes:xlsx,csv,xls'
         ]);
 
-        $result = $importService->import(
-            $request->file('file')->getRealPath()
-        );
+        $uploadedFile = $request->file('file');
+
+        if ($uploadedFile === null) {
+            return redirect()
+                ->route('admin.blast.recipients.index')
+                ->with('error', 'Import gagal: file tidak ditemukan.');
+        }
+
+        try {
+            $result = $importService->import(
+                $uploadedFile->getPathname()
+            );
+        } catch (\Throwable $e) {
+            Log::error('[RECIPIENT IMPORT FAILED]', [
+                'file' => $uploadedFile->getClientOriginalName(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('admin.blast.recipients.index')
+                ->with('error', 'Import gagal: ' . $e->getMessage());
+        }
 
         if (empty($result->valid) && empty($result->invalid)) {
             return redirect()

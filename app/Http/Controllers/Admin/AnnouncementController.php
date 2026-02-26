@@ -221,12 +221,15 @@ class AnnouncementController extends Controller
             ->count();
 
         $whatsappRecipientCount = BlastRecipient::query()
-            ->whereNotNull('wa_wali')
+            ->where(function ($query) {
+                $query->whereNotNull('wa_wali')
+                    ->orWhereNotNull('wa_wali_2');
+            })
             ->where('is_valid', true)
             ->get()
             ->filter(
                 fn (BlastRecipient $recipient) =>
-                    $this->normalizeWhatsappTarget($recipient->wa_wali) !== null
+                    !empty($this->collectWhatsappTargets($recipient))
             )
             ->count();
 
@@ -369,14 +372,17 @@ class AnnouncementController extends Controller
 
         if (in_array('whatsapp', $channels, true)) {
             $recipients = BlastRecipient::query()
-                ->whereNotNull('wa_wali')
+                ->where(function ($query) {
+                    $query->whereNotNull('wa_wali')
+                        ->orWhereNotNull('wa_wali_2');
+                })
                 ->where('is_valid', true)
                 ->get();
 
             $blastMessage = null;
             foreach ($recipients as $recipient) {
-                $target = $this->normalizeWhatsappTarget($recipient->wa_wali);
-                if ($target === null) {
+                $targets = $this->collectWhatsappTargets($recipient);
+                if (empty($targets)) {
                     continue;
                 }
 
@@ -389,22 +395,24 @@ class AnnouncementController extends Controller
                     );
                 }
 
-                $blastLog = $this->createBlastLogRecord($blastMessage, $target, $messageBody);
-                $announcementLog = $this->createAnnouncementLogRecord($announcement, 'WHATSAPP', $target);
+                foreach ($targets as $target) {
+                    $blastLog = $this->createBlastLogRecord($blastMessage, $target, $messageBody);
+                    $announcementLog = $this->createAnnouncementLogRecord($announcement, 'WHATSAPP', $target);
 
-                $payload = new BlastPayload($messageBody);
-                $payload->setMeta('channel', 'WHATSAPP');
-                $payload->setMeta('sent_by', Auth::id());
-                $payload->setMeta('recipient_id', $recipient->id);
-                $payload->setMeta('blast_log_id', $blastLog->id);
-                $payload->setMeta('blast_message_id', $blastMessage->id);
-                $payload->setMeta('announcement_id', $announcement->id);
-                $payload->setMeta('announcement_log_id', $announcementLog->id);
+                    $payload = new BlastPayload($messageBody);
+                    $payload->setMeta('channel', 'WHATSAPP');
+                    $payload->setMeta('sent_by', Auth::id());
+                    $payload->setMeta('recipient_id', $recipient->id);
+                    $payload->setMeta('blast_log_id', $blastLog->id);
+                    $payload->setMeta('blast_message_id', $blastMessage->id);
+                    $payload->setMeta('announcement_id', $announcement->id);
+                    $payload->setMeta('announcement_log_id', $announcementLog->id);
 
-                dispatch(new SendWhatsappBlastJob($target, $payload));
+                    dispatch(new SendWhatsappBlastJob($target, $payload));
 
-                $result['whatsapp_targets']++;
-                $result['total_targets']++;
+                    $result['whatsapp_targets']++;
+                    $result['total_targets']++;
+                }
             }
         }
 
@@ -486,6 +494,24 @@ class AnnouncementController extends Controller
             'response' => null,
             'sent_at' => null,
         ]);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectWhatsappTargets(BlastRecipient $recipient): array
+    {
+        $targets = [];
+        foreach ([$recipient->wa_wali, $recipient->wa_wali_2] as $candidate) {
+            $normalized = $this->normalizeWhatsappTarget($candidate);
+            if ($normalized === null) {
+                continue;
+            }
+
+            $targets[$normalized] = $normalized;
+        }
+
+        return array_values($targets);
     }
 
     private function normalizeWhatsappTarget(?string $target): ?string

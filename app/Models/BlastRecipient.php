@@ -21,6 +21,7 @@ class BlastRecipient extends Model
         'kelas',
         'nama_wali',
         'wa_wali',
+        'wa_wali_2',
         'email_wali',
         'catatan',
         'source',

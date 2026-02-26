@@ -746,10 +746,10 @@ body,
                         <div class="recipient-db-list">
                             @forelse($recipients as $recipient)
                                 <label class="recipient-db-item" for="recipient_{{ $recipient->id }}">
-                                    <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-phone="{{ $recipient->wa_wali }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}">
+                                    <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-phone="{{ $recipient->wa_wali }}" data-phone-2="{{ $recipient->wa_wali_2 }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}">
                                     <div class="recipient-db-info">
                                         <div class="recipient-db-name">{{ $recipient->nama_siswa }} ({{ $recipient->kelas }})</div>
-                                        <div class="recipient-db-phone">{{ $recipient->nama_wali }} — {{ $recipient->wa_wali }}</div>
+                                        <div class="recipient-db-phone">{{ $recipient->nama_wali }} - {{ trim(implode(' / ', array_filter([$recipient->wa_wali, $recipient->wa_wali_2]))) }}</div>
                                     </div>
                                 </label>
                             @empty
@@ -1610,7 +1610,13 @@ body,
                 if (batchDelayInput) batchDelayInput.value = '0';
                 if (retryAttemptsInput) retryAttemptsInput.value = '1';
                 if (retryBackoffInput) retryBackoffInput.value = '0';
-                const dbPhones = selectedDbRecipients.map(cb => normalizePhone(cb.getAttribute('data-phone') || '')).filter(phone => phone !== null);
+                const dbPhones = [];
+                selectedDbRecipients.forEach(cb => {
+                    [cb.getAttribute('data-phone') || '', cb.getAttribute('data-phone-2') || '']
+                        .map(phone => normalizePhone(phone))
+                        .filter(phone => phone !== null)
+                        .forEach(phone => dbPhones.push(phone));
+                });
                 const allTargetPhones = Array.from(new Set(recipientNumbers.concat(dbPhones)));
                 const confirmation = confirm(`Campaign dikirim sekarang.\nPriority: normal\nPesan akan diproses ke ${allTargetPhones.length} penerima. Lanjutkan?`);
                 if (!confirmation) { e.preventDefault(); return false; }
@@ -1643,3 +1649,4 @@ body,
 </style>
 
 @endsection
+

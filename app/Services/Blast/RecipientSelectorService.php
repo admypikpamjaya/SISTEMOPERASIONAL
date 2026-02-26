@@ -21,7 +21,10 @@ class RecipientSelectorService
         }
 
         if ($channel === 'whatsapp') {
-            $query->whereNotNull('wa_wali');
+            $query->where(function ($builder) {
+                $builder->whereNotNull('wa_wali')
+                    ->orWhereNotNull('wa_wali_2');
+            });
         }
 
         return $query
@@ -33,6 +36,7 @@ class RecipientSelectorService
                 'nama_wali',
                 'email_wali',
                 'wa_wali',
+                'wa_wali_2',
             ]);
     }
 
@@ -51,6 +55,7 @@ class RecipientSelectorService
                 'nama_wali',
                 'email_wali',
                 'wa_wali',
+                'wa_wali_2',
             ]);
     }
 }

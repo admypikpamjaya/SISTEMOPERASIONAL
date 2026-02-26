@@ -10,7 +10,7 @@ class RecipientValidationService
     {
         $errors = [];
 
-        if (!$row->email && !$row->phone) {
+        if (!$row->email && !$row->phone && !$row->phoneSecondary) {
             $errors[] = 'Email dan WhatsApp kosong';
         }
 
@@ -20,6 +20,10 @@ class RecipientValidationService
 
         if ($row->phone && !preg_match('/^(0|62)[0-9]{8,}$/', $row->phone)) {
             $errors[] = 'Format WhatsApp tidak valid';
+        }
+
+        if ($row->phoneSecondary && !preg_match('/^(0|62)[0-9]{8,}$/', $row->phoneSecondary)) {
+            $errors[] = 'Format WhatsApp 2 tidak valid';
         }
 
         $row->isValid = empty($errors);

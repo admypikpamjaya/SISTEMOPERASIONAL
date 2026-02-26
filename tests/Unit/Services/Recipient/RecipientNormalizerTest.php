@@ -67,6 +67,24 @@ class RecipientNormalizerTest extends TestCase
         $this->assertContains('format WhatsApp tidak valid', $dto->errors);
     }
 
+    public function test_normalize_accepts_secondary_whatsapp_when_primary_empty(): void
+    {
+        $service = new RecipientNormalizer();
+
+        $dto = $service->normalize([
+            'nama_siswa' => 'Siti',
+            'kelas' => '6B',
+            'nama_wali' => 'Bapak Ali',
+            'email' => '',
+            'wa' => '',
+            'wa_2' => '0813-8888-7777',
+        ]);
+
+        $this->assertTrue($dto->isValid);
+        $this->assertNull($dto->phone);
+        $this->assertSame('6281388887777', $dto->phoneSecondary);
+    }
+
     public function test_normalize_accepts_valid_email_without_whatsapp(): void
     {
         $service = new RecipientNormalizer();

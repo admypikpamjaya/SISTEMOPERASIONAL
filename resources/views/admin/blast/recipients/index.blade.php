@@ -744,7 +744,7 @@
                             <th style="width:130px;">Nama Siswa</th>
                             <th style="width:75px;">Kelas</th>
                             <th style="width:120px;">Nama Wali</th>
-                            <th style="width:110px;">Nomor WA</th>
+                            <th style="width:170px;">Nomor WA 1 / 2</th>
                             <th style="width:145px;">Email Wali</th>
                             <th style="width:110px;">Catatan</th>
                             <th style="width:120px;">Aksi</th>
@@ -753,7 +753,8 @@
                     <tbody>
                         @forelse($recipients as $r)
                             @php
-                                $isComplete = $r->nama_siswa && $r->nama_wali && $r->wa_wali && $r->email_wali;
+                                $isComplete = $r->nama_siswa && $r->nama_wali && ($r->wa_wali || $r->wa_wali_2) && $r->email_wali;
+                                $waDisplay = trim(implode(' / ', array_filter([$r->wa_wali, $r->wa_wali_2])));
                             @endphp
                             <tr>
                                 <td>
@@ -790,7 +791,7 @@
                                     <div class="cell-text" title="{{ $r->nama_wali }}">{{ $r->nama_wali }}</div>
                                 </td>
                                 <td>
-                                    <div class="cell-mono" title="{{ $r->wa_wali }}">{{ $r->wa_wali }}</div>
+                                    <div class="cell-mono" title="{{ $waDisplay !== '' ? $waDisplay : '-' }}">{{ $waDisplay !== '' ? $waDisplay : '-' }}</div>
                                 </td>
                                 <td>
                                     <div class="cell-text" title="{{ $r->email_wali }}">{{ $r->email_wali }}</div>

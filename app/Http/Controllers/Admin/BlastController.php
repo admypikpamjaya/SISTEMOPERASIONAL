@@ -378,13 +378,16 @@ class BlastController extends Controller
                 'id',
                 $validated['recipient_ids']
             )
-                ->whereNotNull('wa_wali')
+                ->where(function ($query) {
+                    $query->whereNotNull('wa_wali')
+                        ->orWhereNotNull('wa_wali_2');
+                })
                 ->where('is_valid', true)
                 ->get();
 
             foreach ($recipients as $recipient) {
-                $target = $this->normalizeWhatsappTarget($recipient->wa_wali);
-                if ($target === null) {
+                $targets = $this->collectWhatsappTargets($recipient);
+                if (empty($targets)) {
                     continue;
                 }
 
@@ -407,35 +410,37 @@ class BlastController extends Controller
                     );
                 }
 
-                $blastLog = $this->createBlastLogRecord(
-                    blastMessage: $blastMessage,
-                    target: $target,
-                    messageSnapshot: $message
-                );
+                foreach ($targets as $target) {
+                    $blastLog = $this->createBlastLogRecord(
+                        blastMessage: $blastMessage,
+                        target: $target,
+                        messageSnapshot: $message
+                    );
 
-                $payload = new BlastPayload($message);
-                $payload->setMeta('channel', 'WHATSAPP');
-                $payload->setMeta('sent_by', Auth::id());
-                $payload->setMeta('recipient_id', $recipient->id);
-                $payload->setMeta('blast_log_id', $blastLog->id);
-                $payload->setMeta('blast_message_id', $blastMessage->id);
-                $payload->setMeta('queue_name', $campaignOptions['queue_name']);
-                $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
-                $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
-                $this->attachFilesToPayload($payload, $attachments);
-                $this->attachFilesToPayload(
-                    $payload,
-                    $recipientAttachmentOverrides['db:' . $recipient->id] ?? []
-                );
+                    $payload = new BlastPayload($message);
+                    $payload->setMeta('channel', 'WHATSAPP');
+                    $payload->setMeta('sent_by', Auth::id());
+                    $payload->setMeta('recipient_id', $recipient->id);
+                    $payload->setMeta('blast_log_id', $blastLog->id);
+                    $payload->setMeta('blast_message_id', $blastMessage->id);
+                    $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                    $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                    $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                    $this->attachFilesToPayload($payload, $attachments);
+                    $this->attachFilesToPayload(
+                        $payload,
+                        $recipientAttachmentOverrides['db:' . $recipient->id] ?? []
+                    );
 
-                $this->dispatchQueuedBlastDelivery(
-                    channel: 'WHATSAPP',
-                    target: $target,
-                    subject: null,
-                    payload: $payload,
-                    campaignOptions: $campaignOptions,
-                    dispatchIndex: $dispatchIndex
-                );
+                    $this->dispatchQueuedBlastDelivery(
+                        channel: 'WHATSAPP',
+                        target: $target,
+                        subject: null,
+                        payload: $payload,
+                        campaignOptions: $campaignOptions,
+                        dispatchIndex: $dispatchIndex
+                    );
+                }
             }
         }
 
@@ -947,15 +952,19 @@ class BlastController extends Controller
                 continue;
             }
 
-            $recipientKey = $normalizedChannel === 'EMAIL'
-                ? strtolower(trim((string) $recipient->email_wali))
-                : $this->normalizeWhatsappTarget($recipient->wa_wali);
+            if ($normalizedChannel === 'EMAIL') {
+                $recipientKey = strtolower(trim((string) $recipient->email_wali));
+                if ($recipientKey === '') {
+                    continue;
+                }
 
-            if (empty($recipientKey)) {
+                $recipientMap[$recipientKey] = $recipient;
                 continue;
             }
 
-            $recipientMap[$recipientKey] = $recipient;
+            foreach ($this->collectWhatsappTargets($recipient) as $recipientKey) {
+                $recipientMap[$recipientKey] = $recipient;
+            }
         }
 
         $mappedLogs = $logs->map(function (BlastLog $log) use (
@@ -1050,7 +1059,10 @@ class BlastController extends Controller
         }
 
         return BlastRecipient::query()
-            ->whereNotNull('wa_wali')
+            ->where(function ($query) {
+                $query->whereNotNull('wa_wali')
+                    ->orWhereNotNull('wa_wali_2');
+            })
             ->where('is_valid', true)
             ->orderBy('nama_siswa')
             ->get();
@@ -1574,6 +1586,24 @@ class BlastController extends Controller
         }
 
         return $globalMessage;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectWhatsappTargets(BlastRecipient $recipient): array
+    {
+        $targets = [];
+        foreach ([$recipient->wa_wali, $recipient->wa_wali_2] as $candidate) {
+            $normalized = $this->normalizeWhatsappTarget($candidate);
+            if ($normalized === null) {
+                continue;
+            }
+
+            $targets[$normalized] = $normalized;
+        }
+
+        return array_values($targets);
     }
 
     private function renderManualWhatsappTemplate(

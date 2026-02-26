@@ -4,6 +4,7 @@ namespace App\Services\Recipient;
 
 use App\DataTransferObjects\Recipient\RecipientImportResultDTO;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use RuntimeException;
 
 class ExcelImportService
 {
@@ -17,9 +18,23 @@ class ExcelImportService
             throw new \Exception("File tidak ditemukan: {$path}");
         }
 
-        $spreadsheet = IOFactory::load($path);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, true, false);
+        $rows = [];
+        if (class_exists(IOFactory::class)) {
+            $spreadsheet = IOFactory::load($path);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray(null, true, true, false);
+        } elseif ($this->isCsvFile($path)) {
+            // Fallback import CSV saat library Excel belum terpasang.
+            $rows = $this->readCsvRows($path);
+        } else {
+            throw new RuntimeException(
+                'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.'
+            );
+        }
+
+        if (empty($rows)) {
+            return new RecipientImportResultDTO();
+        }
 
         $result = new RecipientImportResultDTO();
         $headerMap = [];
@@ -45,6 +60,7 @@ class ExcelImportService
                 'kelas' => $this->resolveCell($row, $headerMap, 'kelas', 1, $usePositionalFallback),
                 'nama_wali' => $this->resolveCell($row, $headerMap, 'nama_wali', 2, $usePositionalFallback),
                 'wa' => $this->resolveCell($row, $headerMap, 'wa', 3, $usePositionalFallback),
+                'wa_2' => $this->resolveCell($row, $headerMap, 'wa_2', null, false),
                 'email' => $this->resolveCell($row, $headerMap, 'email', 4, $usePositionalFallback),
                 'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 5, $usePositionalFallback),
             ];
@@ -73,6 +89,13 @@ class ExcelImportService
         foreach ($headerRow as $index => $header) {
             $canonicalHeader = $this->canonicalHeader((string) $header);
             if ($canonicalHeader === null) {
+                continue;
+            }
+
+            if ($canonicalHeader === 'wa' && array_key_exists('wa', $map)) {
+                if (!array_key_exists('wa_2', $map)) {
+                    $map['wa_2'] = $index;
+                }
                 continue;
             }
 
@@ -145,12 +168,12 @@ class ExcelImportService
         array $row,
         array $headerMap,
         string $field,
-        int $fallbackIndex,
+        ?int $fallbackIndex,
         bool $useFallback
     ): ?string {
         if (array_key_exists($field, $headerMap)) {
             $index = $headerMap[$field];
-        } elseif ($useFallback) {
+        } elseif ($useFallback && $fallbackIndex !== null) {
             $index = $fallbackIndex;
         } else {
             return null;
@@ -182,5 +205,53 @@ class ExcelImportService
         }
 
         return true;
+    }
+
+    private function isCsvFile(string $path): bool
+    {
+        return strtolower((string) pathinfo($path, PATHINFO_EXTENSION)) === 'csv';
+    }
+
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function readCsvRows(string $path): array
+    {
+        if (!is_readable($path)) {
+            throw new RuntimeException('File CSV tidak dapat dibaca.');
+        }
+
+        $rows = $this->parseCsvWithDelimiter($path, ',');
+        if (!empty($rows) && count($rows[0]) === 1 && str_contains((string) $rows[0][0], ';')) {
+            $rows = $this->parseCsvWithDelimiter($path, ';');
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function parseCsvWithDelimiter(string $path, string $delimiter): array
+    {
+        $rows = [];
+        $handle = fopen($path, 'r');
+
+        if ($handle === false) {
+            throw new RuntimeException('Gagal membuka file CSV.');
+        }
+
+        try {
+            while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+                if (isset($row[0]) && is_string($row[0])) {
+                    $row[0] = preg_replace('/^\xEF\xBB\xBF/', '', $row[0]) ?? $row[0];
+                }
+                $rows[] = $row;
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        return $rows;
     }
 }

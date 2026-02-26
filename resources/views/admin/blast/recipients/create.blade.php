@@ -165,7 +165,8 @@
 
     .form-group label[for="catatan"]::after,
     .form-group label[for="email_wali"]::after,
-    .form-group label[for="wa_wali"]::after {
+    .form-group label[for="wa_wali"]::after,
+    .form-group label[for="wa_wali_2"]::after {
         content: "";
         display: none;
     }
@@ -651,6 +652,32 @@
                             </div>
                         </div>
 
+                        {{-- WhatsApp Wali 2 (Opsional) --}}
+                        <div class="form-group {{ $errors->has('wa_wali_2') ? 'has-error' : '' }}">
+                            <label for="wa_wali_2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                                </svg>
+                                WhatsApp Wali 2 (Opsional)
+                            </label>
+                            <input type="text"
+                                   name="wa_wali_2"
+                                   id="wa_wali_2"
+                                   placeholder="+62 812 3456 789"
+                                   value="{{ old('wa_wali_2') }}">
+                            @if($errors->has('wa_wali_2'))
+                                <div class="error-message">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                    </svg>
+                                    {{ $errors->first('wa_wali_2') }}
+                                </div>
+                            @endif
+                            <div class="form-hint">
+                                Isi bila ada nomor WhatsApp cadangan
+                            </div>
+                        </div>
+
                         {{-- Email Wali --}}
                         <div class="form-group {{ $errors->has('email_wali') ? 'has-error' : '' }}">
                             <label for="email_wali">
@@ -810,7 +837,19 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 5: Email Wali
+                            Kolom 5: WhatsApp Wali 2 (opsional)
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            Kolom 6: Email Wali
+                        </li>
+                        <li>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            Kolom 7: Catatan (opsional)
                         </li>
                     </ul>
                 </div>
@@ -975,96 +1014,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 4000);
     }
 
-    // Format phone number input dengan +62 (maksimal 13 digit setelah kode negara)
-    const phoneInput = document.getElementById('wa_wali');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            // Hapus semua karakter non-digit
-            let value = e.target.value.replace(/\D/g, '');
-            
-            // Jika diawali dengan 0, ubah menjadi 62
-            if (value.startsWith('0')) {
-                value = '62' + value.substring(1);
-            }
-            
-            // Jika belum ada kode negara, tambahkan 62
-            if (!value.startsWith('62') && value.length > 0) {
-                value = '62' + value;
-            }
-            
-            // Batasi panjang maksimal: 2 (kode negara) + 13 = 15 digit total
-            const maxLength = 15; // 62 + 13 digit
-            if (value.length > maxLength) {
-                value = value.substring(0, maxLength);
-            }
-            
-            // Format: +62 xxx xxx xxxx
-            let formattedValue = '';
-            if (value.length > 0) {
-                formattedValue = '+' + value.substring(0, 2); // +62
-                
-                if (value.length > 2) {
-                    // Ambil maksimal 13 digit setelah +62
-                    const digits = value.substring(2, Math.min(value.length, 15));
-                    
-                    // Format dengan spasi setiap 3-4 digit
-                    if (digits.length <= 3) {
-                        formattedValue += ' ' + digits;
-                    } else if (digits.length <= 6) {
-                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3);
-                    } else if (digits.length <= 9) {
-                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6);
-                    } else if (digits.length <= 13) {
-                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6, 9) + ' ' + digits.substring(9, 13);
-                    }
-                }
-            }
-            
-            e.target.value = formattedValue;
-        });
-        
-        // Juga format saat halaman dimuat jika ada value lama
-        if (phoneInput.value) {
-            let value = phoneInput.value.replace(/\D/g, '');
-            
-            if (value.startsWith('0')) {
-                value = '62' + value.substring(1);
-            }
-            
-            if (!value.startsWith('62') && value.length > 0) {
-                value = '62' + value;
-            }
-            
-            // Batasi panjang maksimal: 2 (kode negara) + 13 = 15 digit total
-            const maxLength = 15;
-            if (value.length > maxLength) {
-                value = value.substring(0, maxLength);
-            }
-            
-            let formattedValue = '';
-            if (value.length > 0) {
-                formattedValue = '+' + value.substring(0, 2);
-                
-                if (value.length > 2) {
-                    // Ambil maksimal 13 digit setelah +62
-                    const digits = value.substring(2, Math.min(value.length, 15));
-                    
-                    // Format dengan spasi setiap 3-4 digit
-                    if (digits.length <= 3) {
-                        formattedValue += ' ' + digits;
-                    } else if (digits.length <= 6) {
-                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3);
-                    } else if (digits.length <= 9) {
-                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6);
-                    } else if (digits.length <= 13) {
-                        formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6, 9) + ' ' + digits.substring(9, 13);
-                    }
-                }
-            }
-            
-            phoneInput.value = formattedValue;
+    // Format input WhatsApp (+62) untuk WA 1 & WA 2.
+    function formatPhoneValue(rawValue) {
+        let value = String(rawValue || '').replace(/\D/g, '');
+
+        if (value.startsWith('0')) {
+            value = '62' + value.substring(1);
         }
+
+        if (!value.startsWith('62') && value.length > 0) {
+            value = '62' + value;
+        }
+
+        const maxLength = 15;
+        if (value.length > maxLength) {
+            value = value.substring(0, maxLength);
+        }
+
+        let formattedValue = '';
+        if (value.length > 0) {
+            formattedValue = '+' + value.substring(0, 2);
+
+            if (value.length > 2) {
+                const digits = value.substring(2, Math.min(value.length, 15));
+                if (digits.length <= 3) {
+                    formattedValue += ' ' + digits;
+                } else if (digits.length <= 6) {
+                    formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3);
+                } else if (digits.length <= 9) {
+                    formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6);
+                } else {
+                    formattedValue += ' ' + digits.substring(0, 3) + ' ' + digits.substring(3, 6) + ' ' + digits.substring(6, 9) + ' ' + digits.substring(9, 13);
+                }
+            }
+        }
+
+        return formattedValue;
     }
+
+    ['wa_wali', 'wa_wali_2'].forEach(inputId => {
+        const phoneInput = document.getElementById(inputId);
+        if (!phoneInput) {
+            return;
+        }
+
+        phoneInput.addEventListener('input', function(e) {
+            e.target.value = formatPhoneValue(e.target.value);
+        });
+
+        if (phoneInput.value) {
+            phoneInput.value = formatPhoneValue(phoneInput.value);
+        }
+    });
 
     // Show validation errors from server
     @if($errors->any())

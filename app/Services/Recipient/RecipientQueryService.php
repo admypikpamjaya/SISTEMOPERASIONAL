@@ -13,7 +13,10 @@ class RecipientQueryService
     public function forWhatsapp(): Collection
     {
         return BlastRecipient::query()
-            ->whereNotNull('wa_wali')
+            ->where(function ($query) {
+                $query->whereNotNull('wa_wali')
+                    ->orWhereNotNull('wa_wali_2');
+            })
             ->where('is_valid', true)
             ->whereNotNull('nama_siswa')
             ->get();

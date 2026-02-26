@@ -10,12 +10,13 @@ class RecipientNormalizer
     {
         $errors = [];
 
-        $namaSiswa = trim($row['nama_siswa'] ?? '');
-        $kelas     = trim($row['kelas'] ?? '');
-        $namaWali  = trim($row['nama_wali'] ?? '');
-        $emailRaw  = trim($row['email'] ?? '');
-        $waRaw     = trim($row['wa'] ?? '');
-        $catatan   = trim($row['catatan'] ?? '');
+        $namaSiswa = trim((string) ($row['nama_siswa'] ?? ''));
+        $kelas     = trim((string) ($row['kelas'] ?? ''));
+        $namaWali  = trim((string) ($row['nama_wali'] ?? ''));
+        $emailRaw  = trim((string) ($row['email'] ?? ''));
+        $waRaw     = trim((string) ($row['wa'] ?? ''));
+        $waRaw2    = trim((string) ($row['wa_2'] ?? $row['wa2'] ?? ''));
+        $catatan   = trim((string) ($row['catatan'] ?? ''));
 
         // ===== REQUIRED =====
         if ($namaSiswa === '') $errors[] = 'nama_siswa wajib diisi';
@@ -23,7 +24,7 @@ class RecipientNormalizer
         if ($namaWali === '')  $errors[] = 'nama_wali wajib diisi';
 
         // ===== MINIMAL CONTACT =====
-        if ($emailRaw === '' && $waRaw === '') {
+        if ($emailRaw === '' && $waRaw === '' && $waRaw2 === '') {
             $errors[] = 'email atau WhatsApp wajib diisi';
         }
 
@@ -46,9 +47,23 @@ class RecipientNormalizer
             }
         }
 
+        $wa2 = null;
+        if ($waRaw2 !== '') {
+            $wa2 = $this->normalizeWa($waRaw2);
+            if (!$wa2) {
+                $errors[] = 'format WhatsApp 2 tidak valid';
+            }
+        }
+
+        if ($wa !== null && $wa2 !== null && $wa === $wa2) {
+            // Hindari menyimpan nomor sama di kolom WA utama & kedua.
+            $wa2 = null;
+        }
+
         return new RecipientRowDTO(
             email: $email,
             phone: $wa,
+            phoneSecondary: $wa2,
             namaWali: $namaWali ?: null,
             namaSiswa: $namaSiswa ?: null,
             kelas: $kelas ?: null,

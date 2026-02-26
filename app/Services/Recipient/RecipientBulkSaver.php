@@ -15,6 +15,10 @@ class RecipientBulkSaver
         foreach ($dtos as $dto) {
             $isValid = true;
             $error = null;
+            $phones = array_values(array_filter([
+                $dto->phone ?? null,
+                $dto->phoneSecondary ?? null,
+            ]));
 
             // =========================
             // WAJIB: nama_siswa
@@ -25,7 +29,7 @@ class RecipientBulkSaver
             }
 
             // MINIMAL EMAIL / WA
-            if (!$dto->email && !$dto->phone) {
+            if (!$dto->email && empty($phones)) {
                 $isValid = false;
                 $error = 'Email dan WhatsApp kosong';
             }
@@ -41,16 +45,27 @@ class RecipientBulkSaver
                 $isValid = false;
                 $error = 'Format WhatsApp tidak valid';
             }
+            if ($dto->phoneSecondary && strlen($dto->phoneSecondary) < 10) {
+                $isValid = false;
+                $error = 'Format WhatsApp 2 tidak valid';
+            }
 
             // DUPLICATE CHECK
-            $exists = BlastRecipient::query()
-                ->when($dto->email, fn ($q) =>
-                    $q->where('email_wali', $dto->email)
-                )
-                ->when($dto->phone, fn ($q) =>
-                    $q->orWhere('wa_wali', $dto->phone)
-                )
-                ->exists();
+            $exists = false;
+            if ($dto->email || !empty($phones)) {
+                $exists = BlastRecipient::query()
+                    ->where(function ($query) use ($dto, $phones) {
+                        if ($dto->email) {
+                            $query->orWhere('email_wali', $dto->email);
+                        }
+
+                        foreach ($phones as $phone) {
+                            $query->orWhere('wa_wali', $phone)
+                                ->orWhere('wa_wali_2', $phone);
+                        }
+                    })
+                    ->exists();
+            }
 
             if ($exists) {
                 $duplicates++;
@@ -62,6 +77,7 @@ class RecipientBulkSaver
                 'kelas' => $dto->kelas,
                 'nama_wali' => $dto->namaWali,
                 'wa_wali' => $dto->phone,
+                'wa_wali_2' => $dto->phoneSecondary,
                 'email_wali' => $dto->email,
                 'catatan' => $dto->catatan,
                 'is_valid' => $isValid,

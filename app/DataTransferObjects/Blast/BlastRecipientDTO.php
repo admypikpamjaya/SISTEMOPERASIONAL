@@ -9,6 +9,7 @@ class BlastRecipientDTO
         public string $kelas,
         public string $nama_wali,
         public ?string $wa_wali,
+        public ?string $wa_wali_2,
         public ?string $email_wali,
         public ?string $catatan = null,
     ) {}
@@ -20,6 +21,7 @@ class BlastRecipientDTO
             'kelas'       => $this->kelas,
             'nama_wali'   => $this->nama_wali,
             'wa_wali'     => $this->wa_wali,
+            'wa_wali_2'   => $this->wa_wali_2,
             'email_wali'  => $this->email_wali,
             'catatan'     => $this->catatan,
         ];

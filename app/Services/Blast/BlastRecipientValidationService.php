@@ -15,13 +15,16 @@ class BlastRecipientValidationService
         $errors = [];
 
         // WA & EMAIL minimal salah satu harus ada
-        if (empty($dto->wa_wali) && empty($dto->email_wali)) {
+        if (empty($dto->wa_wali) && empty($dto->wa_wali_2) && empty($dto->email_wali)) {
             $errors[] = 'Nomor WhatsApp dan Email kosong';
         }
 
         // Validasi WA
         if ($dto->wa_wali && ! $this->isValidWhatsapp($dto->wa_wali)) {
             $errors[] = 'Format nomor WhatsApp tidak valid';
+        }
+        if ($dto->wa_wali_2 && ! $this->isValidWhatsapp($dto->wa_wali_2)) {
+            $errors[] = 'Format nomor WhatsApp 2 tidak valid';
         }
 
         // Validasi Email
@@ -32,6 +35,9 @@ class BlastRecipientValidationService
         // Duplikasi WA
         if ($dto->wa_wali && $this->isDuplicateWa($dto->wa_wali)) {
             $errors[] = 'Nomor WhatsApp sudah terdaftar';
+        }
+        if ($dto->wa_wali_2 && $this->isDuplicateWa($dto->wa_wali_2)) {
+            $errors[] = 'Nomor WhatsApp 2 sudah terdaftar';
         }
 
         // Duplikasi Email
@@ -75,7 +81,10 @@ class BlastRecipientValidationService
     {
         $wa = $this->normalizeWhatsapp($wa);
 
-        return BlastRecipient::where('wa_wali', $wa)->exists();
+        return BlastRecipient::query()
+            ->where('wa_wali', $wa)
+            ->orWhere('wa_wali_2', $wa)
+            ->exists();
     }
 
     protected function isDuplicateEmail(string $email): bool
