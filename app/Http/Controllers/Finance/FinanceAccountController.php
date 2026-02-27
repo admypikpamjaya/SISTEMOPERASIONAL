@@ -24,9 +24,43 @@ class FinanceAccountController extends Controller
         $validated = $request->validate([
             'group' => 'nullable|integer|between:1,255',
             'edit' => 'nullable|uuid',
+            'detail' => 'nullable|uuid',
         ]);
 
         $selectedGroup = isset($validated['group']) ? (int) $validated['group'] : null;
+
+        $editAccount = null;
+        if (!empty($validated['edit'])) {
+            $editAccount = FinanceAccount::query()->find($validated['edit']);
+        }
+
+        $detailAccount = null;
+        if (!empty($validated['detail'])) {
+            $detailRelations = [
+                'creator:id,name',
+                'updater:id,name',
+            ];
+
+            if (Schema::hasTable('finance_account_logs')) {
+                $detailRelations['logs'] = static function ($query): void {
+                    $query->with('actor:id,name')
+                        ->latest('id')
+                        ->limit(10);
+                };
+            }
+
+            $detailAccount = FinanceAccount::query()
+                ->with($detailRelations)
+                ->find($validated['detail']);
+        }
+
+        if ($selectedGroup === null) {
+            if ($editAccount !== null) {
+                $selectedGroup = (int) $editAccount->class_no;
+            } elseif ($detailAccount !== null) {
+                $selectedGroup = (int) $detailAccount->class_no;
+            }
+        }
 
         $query = FinanceAccount::query()
             ->orderBy('class_no')
@@ -87,14 +121,6 @@ class FinanceAccountController extends Controller
             ->values()
             ->all();
 
-        $editAccount = null;
-        if (!empty($validated['edit'])) {
-            $editAccount = FinanceAccount::query()->find($validated['edit']);
-            if ($editAccount !== null && $selectedGroup === null) {
-                $selectedGroup = (int) $editAccount->class_no;
-            }
-        }
-
         $accountLogs = collect();
         if (Schema::hasTable('finance_account_logs')) {
             $accountLogs = FinanceAccountLog::query()
@@ -119,6 +145,7 @@ class FinanceAccountController extends Controller
             'typeSuggestions' => $typeSuggestions,
             'accountCounts' => $accountCounts,
             'editAccount' => $editAccount,
+            'detailAccount' => $detailAccount,
             'accountLogs' => $accountLogs,
         ]);
     }

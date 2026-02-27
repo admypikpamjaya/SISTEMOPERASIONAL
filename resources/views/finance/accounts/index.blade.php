@@ -271,6 +271,25 @@
     }
     .coa-status.active { color: #065f46; }
     .coa-status.inactive { color: #991b1b; }
+    .coa-actions {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        flex-wrap: wrap;
+    }
+    .coa-link {
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--fa-blue);
+        text-decoration: none;
+    }
+    .coa-link:hover {
+        color: var(--fa-blue-dark);
+        text-decoration: underline;
+    }
+    .coa-row-selected td {
+        background: rgba(37,99,235,.08);
+    }
 
     .coa-empty {
         text-align: center;
@@ -361,6 +380,70 @@
         color: var(--fa-muted);
         font-size: .8rem;
     }
+
+    .coa-detail-body {
+        padding: .95rem 1rem 1rem;
+    }
+    .coa-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .7rem .95rem;
+    }
+    @media (max-width: 1100px) {
+        .coa-detail-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 640px) {
+        .coa-detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .coa-detail-item label {
+        display: block;
+        margin-bottom: .2rem;
+        font-size: .66rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--fa-muted);
+    }
+    .coa-detail-value {
+        font-size: .8rem;
+        color: #0f172a;
+        font-weight: 600;
+        line-height: 1.35;
+    }
+    .coa-detail-actions {
+        display: flex;
+        gap: .6rem;
+        margin-top: .95rem;
+        flex-wrap: wrap;
+    }
+    .coa-detail-subtitle {
+        margin-top: 1rem;
+        margin-bottom: .45rem;
+        font-size: .76rem;
+        font-weight: 800;
+        color: #1e3a8a;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+    .coa-detail-log-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: .42rem;
+    }
+    .coa-detail-log-item {
+        border: 1px solid var(--fa-border);
+        border-radius: 10px;
+        padding: .52rem .6rem;
+        font-size: .76rem;
+        color: #334155;
+        background: #f8fbff;
+    }
 </style>
 
 @php
@@ -374,6 +457,11 @@
     $typeClassMap = $typeClassMap ?? [];
     $accountCounts = $accountCounts ?? collect();
     $accountLogs = $accountLogs ?? collect();
+    $detailAccount = $detailAccount ?? null;
+    $isDetailActive = $detailAccount !== null;
+    $detailAccountLogs = ($isDetailActive && $detailAccount->relationLoaded('logs'))
+        ? collect($detailAccount->logs)->take(10)
+        : collect();
     $isEditing = isset($editAccount) && $editAccount;
 
     $currentType = old('type', $isEditing ? $editAccount->type : '');
@@ -386,6 +474,10 @@
     $formAction = $isEditing
         ? route('finance.accounts.update', $editAccount->id)
         : route('finance.accounts.store');
+    $cancelEditParams = array_filter([
+        'group' => $selectedGroup ?: ($isEditing ? $editAccount->class_no : null),
+        'detail' => $isDetailActive ? $detailAccount->id : null,
+    ]);
 @endphp
 
 <div class="coa-header">
@@ -539,7 +631,7 @@
                         </button>
 
                         @if($isEditing)
-                            <a href="{{ route('finance.accounts.index', ['group' => $selectedGroup ?: $editAccount->class_no]) }}" class="coa-btn coa-btn-muted">
+                            <a href="{{ route('finance.accounts.index', $cancelEditParams) }}" class="coa-btn coa-btn-muted">
                                 Batal Ubah
                             </a>
                         @endif
@@ -547,6 +639,98 @@
                 </form>
             </div>
         </div>
+
+        @if($isDetailActive)
+            <div class="coa-card">
+                <div class="coa-card-head">
+                    <h3>Detail Bagan Akun</h3>
+                </div>
+                <div class="coa-detail-body">
+                    <div class="coa-detail-grid">
+                        <div class="coa-detail-item">
+                            <label>Kode Akun</label>
+                            <div class="coa-detail-value">{{ $detailAccount->code }}</div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Nama Akun</label>
+                            <div class="coa-detail-value">{{ $detailAccount->name }}</div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Jenis Akun</label>
+                            <div class="coa-detail-value">
+                                <span class="coa-type-badge">{{ $detailAccount->type_label }}</span>
+                            </div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Klasifikasi Kiri</label>
+                            <div class="coa-detail-value">
+                                {{ $detailAccount->class_no }} - {{ $groupLabels[$detailAccount->class_no] ?? ('Klasifikasi ' . $detailAccount->class_no) }}
+                            </div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Status</label>
+                            <div class="coa-detail-value">
+                                <span class="coa-status {{ $detailAccount->is_active ? 'active' : 'inactive' }}">
+                                    <i class="fas fa-circle" style="font-size:.5rem;"></i>
+                                    {{ $detailAccount->is_active ? 'Aktif' : 'Nonaktif' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Dibuat Oleh</label>
+                            <div class="coa-detail-value">{{ $detailAccount->creator?->name ?? '-' }}</div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Tanggal Dibuat</label>
+                            <div class="coa-detail-value">
+                                {{ $detailAccount->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }} WIB
+                            </div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Diubah Oleh</label>
+                            <div class="coa-detail-value">{{ $detailAccount->updater?->name ?? '-' }}</div>
+                        </div>
+                        <div class="coa-detail-item">
+                            <label>Terakhir Diubah</label>
+                            <div class="coa-detail-value">
+                                {{ $detailAccount->updated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }} WIB
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="coa-detail-actions">
+                        <a
+                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no, 'edit' => $detailAccount->id, 'detail' => $detailAccount->id])) }}"
+                            class="coa-btn coa-btn-primary">
+                            Ubah Akun Ini
+                        </a>
+                        <a
+                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no])) }}"
+                            class="coa-btn coa-btn-muted">
+                            Tutup Detail
+                        </a>
+                    </div>
+
+                    @if($detailAccountLogs->isNotEmpty())
+                        <div class="coa-detail-subtitle">Riwayat Akun Ini</div>
+                        <ul class="coa-detail-log-list">
+                            @foreach($detailAccountLogs as $detailLog)
+                                @php
+                                    $detailActionName = strtoupper((string) $detailLog->action);
+                                @endphp
+                                <li class="coa-detail-log-item">
+                                    <strong>{{ in_array($detailActionName, ['CREATED', 'UPDATED', 'DELETED'], true) ? $detailActionName : 'UPDATED' }}</strong>
+                                    <span style="color:#64748b;">
+                                        oleh {{ $detailLog->actor?->name ?? '-' }}
+                                        pada {{ $detailLog->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }} WIB
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         <div class="coa-card">
             <div class="coa-card-head">
@@ -568,12 +752,15 @@
                             <th style="width:200px;">Jenis</th>
                             <th style="width:92px;">Urutan</th>
                             <th style="width:110px;">Status</th>
-                            <th style="width:96px;">Aksi</th>
+                            <th style="width:150px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($accounts as $account)
-                            <tr>
+                            @php
+                                $isDetailRow = $isDetailActive && (string) $detailAccount->id === (string) $account->id;
+                            @endphp
+                            <tr class="{{ $isDetailRow ? 'coa-row-selected' : '' }}">
                                 <td>{{ $accounts->firstItem() + $loop->index }}</td>
                                 <td style="font-weight:700;color:#1e3a8a;">{{ $account->code }}</td>
                                 <td>{{ $account->name }}</td>
@@ -588,11 +775,18 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a
-                                        href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'edit' => $account->id])) }}"
-                                        style="font-size:.75rem;font-weight:700;color:var(--fa-blue);">
-                                        Ubah
-                                    </a>
+                                    <div class="coa-actions">
+                                        <a
+                                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'detail' => $account->id])) }}"
+                                            class="coa-link">
+                                            Detail
+                                        </a>
+                                        <a
+                                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'edit' => $account->id, 'detail' => $account->id])) }}"
+                                            class="coa-link">
+                                            Ubah
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
