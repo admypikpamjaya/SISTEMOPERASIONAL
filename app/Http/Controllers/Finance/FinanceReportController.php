@@ -183,6 +183,30 @@ class FinanceReportController extends Controller
         }
     }
 
+    public function destroy(string $id)
+    {
+        try {
+            $this->reportService->deleteProfitLossReport(
+                $id,
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('success', 'Snapshot laporan laba-rugi berhasil dihapus.');
+        } catch (RuntimeException $exception) {
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', $exception->getMessage());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('finance.report.snapshots')
+                ->with('error', 'Gagal menghapus snapshot laba-rugi. Silakan coba lagi.');
+        }
+    }
+
     public function show(string $id)
     {
         try {

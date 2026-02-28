@@ -244,6 +244,31 @@
         text-decoration: none; transition: all 0.2s; white-space: nowrap;
     }
     .btn-preview:hover { background: var(--blue-primary); color: white; text-decoration: none; }
+    .sfr-actions {
+        display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+    }
+    .btn-action {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        border: 1px solid transparent; border-radius: 8px;
+        font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.75rem;
+        text-decoration: none; transition: all 0.2s; white-space: nowrap;
+        background: white;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-edit {
+        color: var(--accent-amber);
+        border-color: rgba(245,158,11,0.28);
+        background: rgba(245,158,11,0.08);
+    }
+    .btn-edit:hover { background: var(--accent-amber); color: white; text-decoration: none; }
+    .btn-delete {
+        color: var(--accent-red);
+        border-color: rgba(239,68,68,0.28);
+        background: rgba(239,68,68,0.08);
+        cursor: pointer;
+    }
+    .btn-delete:hover { background: var(--accent-red); color: white; }
+    .sfr-actions form { margin: 0; }
 
     /* ── Comparison Cell ──────────────────────── */
     .comp-label { font-size: 0.72rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.15rem; }
@@ -496,9 +521,23 @@
                     @endphp
                     <tr>
                         <td>
-                            <a href="{{ route('finance.report.show', $report->id) }}" class="btn-preview">
-                                <i class="fas fa-eye" style="font-size:.65rem;"></i> Preview
-                            </a>
+                            <div class="sfr-actions">
+                                <a href="{{ route('finance.report.show', $report->id) }}" class="btn-preview">
+                                    <i class="fas fa-eye" style="font-size:.65rem;"></i> Preview
+                                </a>
+                                @permission('finance_report.generate')
+                                    <a href="{{ route('finance.report.edit', $report->id) }}" class="btn-action btn-edit">
+                                        <i class="fas fa-pen" style="font-size:.62rem;"></i> Edit
+                                    </a>
+                                    <form method="POST" action="{{ route('finance.report.destroy', $report->id) }}" onsubmit="return confirm('Hapus snapshot ini? Tindakan ini tidak bisa dibatalkan.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-action btn-delete">
+                                            <i class="fas fa-trash" style="font-size:.62rem;"></i> Delete
+                                        </button>
+                                    </form>
+                                @endpermission
+                            </div>
                         </td>
                         <td>
                             <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--text-primary);">

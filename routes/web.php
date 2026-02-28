@@ -220,6 +220,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.generate')
             ->name('report.update');
 
+        Route::delete('/report/{id}', [FinanceReportController::class, 'destroy'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.destroy');
+
         Route::get('/report/snapshots', [FinanceReportController::class, 'snapshots'])
             ->middleware('check_access:finance_report.read')
             ->name('report.snapshots');

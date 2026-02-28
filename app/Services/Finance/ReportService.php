@@ -477,6 +477,48 @@ class ReportService
         });
     }
 
+    public function deleteProfitLossReport(string $reportId, ?string $deletedBy = null): void
+    {
+        DB::transaction(function () use ($reportId, $deletedBy) {
+            $report = FinanceReport::query()
+                ->with('reconciliationSnapshot')
+                ->lockForUpdate()
+                ->find($reportId);
+
+            if ($report === null) {
+                throw new RuntimeException('Snapshot laporan finance tidak ditemukan.');
+            }
+
+            $periodId = (string) $report->period_id;
+            $reportType = (string) $report->report_type;
+            $versionNo = (int) $report->version_no;
+            $reconciliationSnapshot = $report->reconciliationSnapshot;
+            $reconciliationSnapshotId = $reconciliationSnapshot?->id;
+
+            $report->delete();
+
+            if ($reconciliationSnapshot !== null && $reconciliationSnapshotId !== null) {
+                $isReconciliationStillUsed = FinanceReport::query()
+                    ->where('reconciliation_snapshot_id', $reconciliationSnapshotId)
+                    ->exists();
+
+                if (!$isReconciliationStillUsed) {
+                    $reconciliationSnapshot->delete();
+                }
+            }
+
+            if (!empty($deletedBy)) {
+                $this->writeDeleteReportAuditLog(
+                    $reportId,
+                    $periodId,
+                    $reportType,
+                    $versionNo,
+                    $deletedBy
+                );
+            }
+        });
+    }
+
     public function getProfitLossReportDetail(string $reportId): ProfitLossReportDetailDTO
     {
         $report = $this->financeReportRepository->getByIdWithItems($reportId);
@@ -810,6 +852,31 @@ class ReportService
                     'day' => $dto->day,
                     'opening_balance' => $dto->openingBalance,
                     'entries_count' => count($dto->entries),
+                ],
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    private function writeDeleteReportAuditLog(
+        string $reportSnapshotId,
+        string $periodId,
+        string $reportType,
+        int $versionNo,
+        string $deletedBy
+    ): void {
+        try {
+            $this->auditLogRepository->create([
+                'user_id' => $deletedBy,
+                'action' => 'finance_report.delete',
+                'entity' => 'finance_report_snapshot',
+                'entity_id' => 0,
+                'payload' => [
+                    'report_snapshot_id' => $reportSnapshotId,
+                    'period_id' => $periodId,
+                    'report_type' => $reportType,
+                    'version_no' => $versionNo,
                 ],
             ]);
         } catch (\Throwable $exception) {

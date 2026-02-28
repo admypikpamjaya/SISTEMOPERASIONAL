@@ -83,6 +83,27 @@
     .btn-plr-download .dropdown-menu .dropdown-item .fa-file-word  { color: #2563eb; }
     .btn-plr-download .dropdown-menu .dropdown-item .fa-file-excel { color: #16a34a; }
     .btn-plr-download .dropdown-menu .dropdown-item .fa-file-pdf   { color: #dc2626; }
+    .btn-plr-edit {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: rgba(245,158,11,0.12);
+        color: #b45309; font-size: 0.82rem; font-weight: 700;
+        padding: 0.55rem 1rem; border-radius: var(--radius-sm);
+        border: 1px solid rgba(245,158,11,0.28);
+        text-decoration: none; transition: all 0.2s;
+    }
+    .btn-plr-edit:hover { background: #f59e0b; color: white; text-decoration: none; }
+    .btn-plr-delete {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: rgba(239,68,68,0.12);
+        color: #b91c1c; font-size: 0.82rem; font-weight: 700;
+        padding: 0.55rem 1rem; border-radius: var(--radius-sm);
+        border: 1px solid rgba(239,68,68,0.28);
+        transition: all 0.2s;
+        cursor: pointer;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-plr-delete:hover { background: #dc2626; color: white; }
+    .plr-actions form { margin: 0; }
 
     /* ── Alert Banners ───────────────────────────── */
     .plr-alert {
@@ -255,6 +276,18 @@
         <a href="{{ route('finance.report.snapshots', ['year' => $report->year]) }}" class="btn-plr-back">
             <i class="fas fa-arrow-left"></i> Kembali
         </a>
+        @permission('finance_report.generate')
+            <a href="{{ route('finance.report.edit', $report->reportId) }}" class="btn-plr-edit">
+                <i class="fas fa-pen"></i> Edit Snapshot
+            </a>
+            <form method="POST" action="{{ route('finance.report.destroy', $report->reportId) }}" onsubmit="return confirm('Hapus snapshot ini? Tindakan ini tidak bisa dibatalkan.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn-plr-delete">
+                    <i class="fas fa-trash"></i> Delete Snapshot
+                </button>
+            </form>
+        @endpermission
         <div class="btn-group">
             <button type="button" class="btn-plr-download dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-download"></i> Download Laporan
