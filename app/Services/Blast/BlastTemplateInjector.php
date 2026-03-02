@@ -27,19 +27,50 @@ class BlastTemplateInjector
         ];
 
         // MERGE CONTEXT (tagihan, jatuh tempo, dll)
-        $data = array_merge($data, $context);
+        $data = array_merge($data, $this->normalizeContext($context));
 
         $message = $template->content;
 
-        // REPLACE {placeholder}
+        // REPLACE {placeholder} dan {{placeholder}}
         foreach ($data as $key => $value) {
             $message = str_replace(
                 '{' . $key . '}',
                 (string) $value,
                 $message
             );
+
+            $message = str_replace(
+                '{{' . $key . '}}',
+                (string) $value,
+                $message
+            );
         }
 
         return new BlastPayload($message);
+    }
+
+    private function normalizeContext(array $context): array
+    {
+        $normalized = [];
+
+        foreach ($context as $key => $value) {
+            $token = trim((string) $key);
+            if ($token === '') {
+                continue;
+            }
+
+            $normalized[$token] = $value;
+
+            if (!str_ends_with($token, '_rupiah') && is_numeric($value)) {
+                $normalized[$token . '_rupiah'] = $this->formatRupiah((float) $value);
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function formatRupiah(float $amount): string
+    {
+        return 'Rp ' . number_format(round($amount), 0, ',', '.');
     }
 }

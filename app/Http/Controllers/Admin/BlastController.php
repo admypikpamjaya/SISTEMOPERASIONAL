@@ -15,6 +15,7 @@ use App\Models\BlastLog;
 use App\Models\Announcement;
 use App\Services\Blast\TemplateRenderer;
 use App\Services\Blast\RecipientSelectorService;
+use App\Services\Blast\TunggakanMessageContextService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Carbon\Carbon;
@@ -318,7 +319,8 @@ class BlastController extends Controller
 
     public function sendWhatsapp(
         Request $request,
-        TemplateRenderer $renderer
+        TemplateRenderer $renderer,
+        TunggakanMessageContextService $tunggakanContextService
     ) {
         $validated = $request->validate([
             'recipient_ids' => 'nullable|array',
@@ -419,7 +421,8 @@ class BlastController extends Controller
                     template: $template,
                     globalMessage: $validated['message'] ?? '',
                     useGlobalDefault: $useGlobalDefault,
-                    messageOverrides: $messageOverrides
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
                 );
 
                 if ($blastMessage === null) {
@@ -484,7 +487,8 @@ class BlastController extends Controller
                     template: $template,
                     globalMessage: $validated['message'] ?? '',
                     useGlobalDefault: $useGlobalDefault,
-                    messageOverrides: $messageOverrides
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
                 );
 
                 if ($blastMessage === null) {
@@ -607,7 +611,8 @@ class BlastController extends Controller
 
     public function sendEmail(
         Request $request,
-        TemplateRenderer $renderer
+        TemplateRenderer $renderer,
+        TunggakanMessageContextService $tunggakanContextService
     ) {
         $validated = $request->validate([
             'recipient_ids' => 'nullable|array',
@@ -688,7 +693,8 @@ class BlastController extends Controller
                     template: $template,
                     globalMessage: $validated['message'] ?? '',
                     useGlobalDefault: $useGlobalDefault,
-                    messageOverrides: $messageOverrides
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
                 );
 
                 if ($blastMessage === null) {
@@ -751,7 +757,8 @@ class BlastController extends Controller
                     template: $template,
                     globalMessage: $validated['message'] ?? '',
                     useGlobalDefault: $useGlobalDefault,
-                    messageOverrides: $messageOverrides
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
                 );
 
                 if ($blastMessage === null) {
@@ -1620,25 +1627,40 @@ class BlastController extends Controller
         return is_array($decoded) ? $decoded : [];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveTunggakanContextForRecipient(
+        BlastRecipient $recipient,
+        TunggakanMessageContextService $tunggakanContextService
+    ): array {
+        return $tunggakanContextService->resolveForRecipient($recipient);
+    }
+
     private function resolveDbRecipientEmailMessage(
         BlastRecipient $recipient,
         TemplateRenderer $renderer,
         ?BlastMessageTemplate $template,
         string $globalMessage,
         bool $useGlobalDefault,
-        array $messageOverrides
+        array $messageOverrides,
+        TunggakanMessageContextService $tunggakanContextService
     ): string {
         $overrideKey = 'db:' . $recipient->id;
         $override = $messageOverrides[$overrideKey] ?? null;
         $mode = strtolower((string) ($override['mode'] ?? ''));
         $customMessage = trim((string) ($override['message'] ?? ''));
+        $tunggakanContext = $this->resolveTunggakanContextForRecipient(
+            $recipient,
+            $tunggakanContextService
+        );
 
         if ($mode === 'manual' && $customMessage !== '') {
             return $customMessage;
         }
 
         if ($mode === 'template' && $template) {
-            return $renderer->render($template->content, $recipient);
+            return $renderer->render($template->content, $recipient, $tunggakanContext);
         }
 
         if ($mode === 'global') {
@@ -1650,7 +1672,7 @@ class BlastController extends Controller
         }
 
         if ($template) {
-            return $renderer->render($template->content, $recipient);
+            return $renderer->render($template->content, $recipient, $tunggakanContext);
         }
 
         return $globalMessage;
@@ -1706,19 +1728,24 @@ class BlastController extends Controller
         ?BlastMessageTemplate $template,
         string $globalMessage,
         bool $useGlobalDefault,
-        array $messageOverrides
+        array $messageOverrides,
+        TunggakanMessageContextService $tunggakanContextService
     ): string {
         $overrideKey = 'db:' . $recipient->id;
         $override = $messageOverrides[$overrideKey] ?? null;
         $mode = strtolower((string) ($override['mode'] ?? ''));
         $customMessage = trim((string) ($override['message'] ?? ''));
+        $tunggakanContext = $this->resolveTunggakanContextForRecipient(
+            $recipient,
+            $tunggakanContextService
+        );
 
         if ($mode === 'manual' && $customMessage !== '') {
             return $customMessage;
         }
 
         if ($mode === 'template' && $template) {
-            return $renderer->render($template->content, $recipient);
+            return $renderer->render($template->content, $recipient, $tunggakanContext);
         }
 
         if ($mode === 'global') {
@@ -1730,7 +1757,7 @@ class BlastController extends Controller
         }
 
         if ($template) {
-            return $renderer->render($template->content, $recipient);
+            return $renderer->render($template->content, $recipient, $tunggakanContext);
         }
 
         return $globalMessage;
