@@ -30,6 +30,10 @@ class BlastMessageTemplate extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $model): void {
+            $model->channel = strtolower(trim((string) $model->channel));
+        });
+
         static::creating(function ($model) {
             if (!$model->id) {
                 $model->id = (string) Str::uuid();

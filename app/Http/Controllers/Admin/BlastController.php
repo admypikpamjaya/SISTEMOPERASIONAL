@@ -47,7 +47,7 @@ class BlastController extends Controller
             ->sort()
             ->values();
 
-        $templates = BlastMessageTemplate::where('channel', 'whatsapp')
+        $templates = BlastMessageTemplate::whereIn('channel', ['whatsapp', 'WHATSAPP'])
             ->where('is_active', true)
             ->orderBy('name')
             ->get();

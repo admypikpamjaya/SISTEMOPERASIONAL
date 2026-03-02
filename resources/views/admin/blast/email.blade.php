@@ -521,6 +521,28 @@ body, .content-wrapper {
     white-space: pre-wrap;
     font-style: italic;
 }
+.template-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.template-action-link {
+    border: 1px solid var(--border-blue);
+    border-radius: var(--radius-xs);
+    background: var(--white);
+    color: var(--blue-primary);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    transition: .15s;
+}
+.template-action-link:hover {
+    border-color: var(--blue-mid);
+    box-shadow: 0 3px 10px rgba(37,99,235,.12);
+    color: var(--accent);
+}
 
 /* Recipient message override */
 .recipient-message-note { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
@@ -970,6 +992,20 @@ body, .content-wrapper {
                                 <option value="{{ $template->id }}" data-content="{{ e($template->content) }}">{{ $template->name }}</option>
                             @endforeach
                         </select>
+                        <div class="template-actions">
+                            <a
+                                href="{{ route('admin.blast.templates.create', ['channel' => 'email', 'return_to' => url()->full()]) }}"
+                                class="template-action-link"
+                            >
+                                + Buat Template
+                            </a>
+                            <a
+                                href="{{ route('admin.blast.templates.index', ['channel' => 'email']) }}"
+                                class="template-action-link"
+                            >
+                                Kelola Template
+                            </a>
+                        </div>
                     </div>
 
                     <div class="eb-form-group">
@@ -1365,6 +1401,23 @@ body, .content-wrapper {
         }
 
         if (dbTemplateSelect) { dbTemplateSelect.addEventListener('change', updateDbTemplatePreview); updateDbTemplatePreview(); }
+
+        (function applyCreatedTemplateFromQuery() {
+            if (!dbTemplateSelect) return;
+            const params = new URLSearchParams(window.location.search);
+            const createdTemplateId = (params.get('template_created') || '').trim();
+            if (!createdTemplateId) return;
+
+            const hasOption = Array.from(dbTemplateSelect.options).some(option => option.value === createdTemplateId);
+            if (!hasOption) return;
+
+            dbTemplateSelect.value = createdTemplateId;
+            updateDbTemplatePreview();
+
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('template_created');
+            window.history.replaceState({}, '', cleanUrl.toString());
+        })();
 
         if (recipientMessageMatrix) {
             recipientMessageMatrix.addEventListener('click', function(event) {

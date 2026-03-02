@@ -70,6 +70,12 @@ return [
                 'module_name' => 'admin_blast',
             ],
             [
+                'label' => 'Template Blast',
+                'icon'  => 'fas fa-layer-group',
+                'route' => 'admin.blast.templates.index',
+                'module_name' => 'blast_template',
+            ],
+            [
                 'label' => 'Announcement',
                 'icon'  => 'fas fa-bullhorn',
                 'route' => 'admin.announcements.index',

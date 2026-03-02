@@ -376,6 +376,28 @@ body,
 .template-section { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .template-label   { font-size: 12px; font-weight: 700; color: var(--text-mid); min-width: 72px; flex-shrink: 0; }
 .template-select  { flex: 1; }
+.template-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.template-action-link {
+    border: 1px solid var(--blue-border);
+    border-radius: var(--radius-xs);
+    background: var(--white);
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    transition: .15s;
+}
+.template-action-link:hover {
+    border-color: var(--blue-mid);
+    box-shadow: 0 3px 10px rgba(37,99,235,.12);
+    color: var(--blue-primary);
+}
 
 .template-preview-box {
     min-height: 100px; border: 1px solid var(--blue-border);
@@ -832,6 +854,20 @@ body,
                                 <option value="{{ $template->id }}" data-content="{{ e($template->content) }}">{{ $template->name }}</option>
                             @endforeach
                         </select>
+                        <div class="template-actions">
+                            <a
+                                href="{{ route('admin.blast.templates.create', ['channel' => 'whatsapp', 'return_to' => url()->full()]) }}"
+                                class="template-action-link"
+                            >
+                                + Buat Template
+                            </a>
+                            <a
+                                href="{{ route('admin.blast.templates.index', ['channel' => 'whatsapp']) }}"
+                                class="template-action-link"
+                            >
+                                Kelola Template
+                            </a>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1675,6 +1711,23 @@ body,
         }
 
         if (attachFile) attachFile.addEventListener('click', function() { attachmentContainer.style.display = 'block'; });
+
+        (function applyCreatedTemplateFromQuery() {
+            if (!dbTemplateSelect) return;
+            const params = new URLSearchParams(window.location.search);
+            const createdTemplateId = (params.get('template_created') || '').trim();
+            if (!createdTemplateId) return;
+
+            const hasOption = Array.from(dbTemplateSelect.options).some(option => option.value === createdTemplateId);
+            if (!hasOption) return;
+
+            dbTemplateSelect.value = createdTemplateId;
+            updateDbTemplatePreview();
+
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('template_created');
+            window.history.replaceState({}, '', cleanUrl.toString());
+        })();
 
         updateCharCount();
         updateStats();
