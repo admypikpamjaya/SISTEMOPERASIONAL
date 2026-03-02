@@ -9,62 +9,66 @@ use RuntimeException;
 class ExcelImportService
 {
     public function __construct(
-        protected RecipientNormalizer $normalizer
+        protected RecipientNormalizer $normalizer,
+        protected EmployeeRecipientNormalizer $employeeNormalizer
     ) {}
 
     public function import(string $path): RecipientImportResultDTO
     {
         if (!file_exists($path)) {
-            throw new \Exception("File tidak ditemukan: {$path}");
+            throw new RuntimeException("File tidak ditemukan: {$path}");
         }
 
         $result = new RecipientImportResultDTO();
+        $allSheetRows = $this->loadSheetRows($path);
 
-        if (class_exists(IOFactory::class)) {
-            $spreadsheet = IOFactory::load($path);
-
-            foreach ($spreadsheet->getAllSheets() as $sheet) {
-                $rows = $sheet->toArray(null, true, true, false);
-                if (empty($rows)) {
-                    continue;
-                }
-
-                $this->appendRowsToResult($rows, $result);
-            }
-
-            return $result;
-        } elseif ($this->isCsvFile($path)) {
-            // Fallback import CSV saat library Excel belum terpasang.
-            $rows = $this->readCsvRows($path);
+        foreach ($allSheetRows as $rows) {
             if (empty($rows)) {
-                return $result;
+                continue;
             }
 
-            $this->appendRowsToResult($rows, $result);
-            return $result;
-        } else {
-            throw new RuntimeException(
-                'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.'
-            );
+            $this->appendStudentRowsToResult($rows, $result);
         }
+
+        return $result;
+    }
+
+    public function importEmployees(string $path): RecipientImportResultDTO
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException("File tidak ditemukan: {$path}");
+        }
+
+        $result = new RecipientImportResultDTO();
+        $allSheetRows = $this->loadSheetRows($path);
+
+        foreach ($allSheetRows as $rows) {
+            if (empty($rows)) {
+                continue;
+            }
+
+            $this->appendEmployeeRowsToResult($rows, $result);
+        }
+
+        return $result;
     }
 
     /**
      * @param array<int, array<int, mixed>> $rows
      */
-    private function appendRowsToResult(array $rows, RecipientImportResultDTO $result): void
+    private function appendStudentRowsToResult(array $rows, RecipientImportResultDTO $result): void
     {
-        $headerMap = [];
-
-        if (!empty($rows[0]) && is_array($rows[0])) {
-            $headerMap = $this->buildHeaderMap($rows[0]);
-        }
+        [$headerMap, $headerIndex] = $this->resolveHeaderMap(
+            $rows,
+            fn (string $header): ?string => $this->canonicalStudentHeader($header),
+            true
+        );
 
         // Fallback posisi kolom hanya dipakai jika file benar-benar tidak punya header yang dikenali.
         $usePositionalFallback = empty($headerMap);
 
         foreach ($rows as $index => $row) {
-            if ($index === 0) {
+            if ($index === $headerIndex) {
                 continue;
             }
 
@@ -94,20 +98,67 @@ class ExcelImportService
     }
 
     /**
+     * @param array<int, array<int, mixed>> $rows
+     */
+    private function appendEmployeeRowsToResult(array $rows, RecipientImportResultDTO $result): void
+    {
+        [$headerMap, $headerIndex] = $this->resolveHeaderMap(
+            $rows,
+            fn (string $header): ?string => $this->canonicalEmployeeHeader($header),
+            false
+        );
+
+        // Fallback berdasarkan format file "recipent data koperasi tirta jatik utama".
+        // Di file contoh, 2 kolom awal kosong lalu data mulai dari index 2.
+        $usePositionalFallback = empty($headerMap);
+
+        foreach ($rows as $index => $row) {
+            if ($index === $headerIndex) {
+                continue;
+            }
+
+            if (!is_array($row) || $this->isRowEmpty($row)) {
+                continue;
+            }
+
+            $raw = [
+                'nama_karyawan' => $this->resolveCell($row, $headerMap, 'nama_karyawan', 2, $usePositionalFallback),
+                'instansi' => $this->resolveCell($row, $headerMap, 'instansi', 3, $usePositionalFallback),
+                'nama_wali' => $this->resolveCell($row, $headerMap, 'nama_wali', 4, $usePositionalFallback),
+                'wa' => $this->resolveCell($row, $headerMap, 'wa', 5, $usePositionalFallback),
+                'email' => $this->resolveCell($row, $headerMap, 'email', 6, $usePositionalFallback),
+                'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 7, $usePositionalFallback),
+            ];
+
+            $dto = $this->employeeNormalizer->normalize($raw);
+
+            if ($dto->isValid) {
+                $result->valid[] = $dto;
+                continue;
+            }
+
+            $result->invalid[] = $dto;
+        }
+    }
+
+    /**
      * @param array<int, mixed> $headerRow
      * @return array<string, int>
      */
-    private function buildHeaderMap(array $headerRow): array
-    {
+    private function buildHeaderMap(
+        array $headerRow,
+        callable $canonicalResolver,
+        bool $allowSecondaryWa
+    ): array {
         $map = [];
 
         foreach ($headerRow as $index => $header) {
-            $canonicalHeader = $this->canonicalHeader((string) $header);
+            $canonicalHeader = $canonicalResolver((string) $header);
             if ($canonicalHeader === null) {
                 continue;
             }
 
-            if ($canonicalHeader === 'wa' && array_key_exists('wa', $map)) {
+            if ($allowSecondaryWa && $canonicalHeader === 'wa' && array_key_exists('wa', $map)) {
                 if (!array_key_exists('wa_2', $map)) {
                     $map['wa_2'] = $index;
                 }
@@ -122,10 +173,37 @@ class ExcelImportService
         return $map;
     }
 
-    private function canonicalHeader(string $header): ?string
+    /**
+     * @param array<int, array<int, mixed>> $rows
+     * @return array{0: array<string, int>, 1: int}
+     */
+    private function resolveHeaderMap(
+        array $rows,
+        callable $canonicalResolver,
+        bool $allowSecondaryWa
+    ): array {
+        foreach ($rows as $index => $row) {
+            if (!is_array($row) || $this->isRowEmpty($row)) {
+                continue;
+            }
+
+            $headerMap = $this->buildHeaderMap(
+                $row,
+                $canonicalResolver,
+                $allowSecondaryWa
+            );
+
+            if (!empty($headerMap)) {
+                return [$headerMap, $index];
+            }
+        }
+
+        return [[], 0];
+    }
+
+    private function canonicalStudentHeader(string $header): ?string
     {
-        $normalized = strtolower(trim($header));
-        $normalized = preg_replace('/[^a-z0-9]+/', '', $normalized);
+        $normalized = $this->normalizeHeaderToken($header);
 
         if ($normalized === '') {
             return null;
@@ -173,6 +251,73 @@ class ExcelImportService
         }
 
         return null;
+    }
+
+    private function canonicalEmployeeHeader(string $header): ?string
+    {
+        $normalized = $this->normalizeHeaderToken($header);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (
+            in_array($normalized, ['namakaryawan', 'karyawan', 'namapegawai', 'pegawai'], true) ||
+            str_contains($normalized, 'karyawan') ||
+            str_contains($normalized, 'pegawai')
+        ) {
+            return 'nama_karyawan';
+        }
+
+        if (
+            in_array($normalized, ['instansi', 'perusahaan', 'lembaga', 'unit', 'divisi'], true) ||
+            str_contains($normalized, 'instansi') ||
+            str_contains($normalized, 'perusahaan') ||
+            str_contains($normalized, 'divisi')
+        ) {
+            return 'instansi';
+        }
+
+        if (
+            in_array($normalized, ['namawali', 'wali', 'namaorangtua', 'orangtua', 'ortu'], true) ||
+            str_starts_with($normalized, 'namawali') ||
+            str_contains($normalized, 'orangtua')
+        ) {
+            return 'nama_wali';
+        }
+
+        if (
+            in_array($normalized, ['whatsapp', 'whasapp', 'wa', 'nomorwa', 'nomorwhatsapp', 'nomorhp', 'nohp', 'nowa'], true) ||
+            str_contains($normalized, 'whatsapp') ||
+            str_contains($normalized, 'whasapp') ||
+            str_ends_with($normalized, 'wa')
+        ) {
+            return 'wa';
+        }
+
+        if (
+            in_array($normalized, ['email', 'emailkaryawan', 'emailpegawai'], true) ||
+            str_contains($normalized, 'email')
+        ) {
+            return 'email';
+        }
+
+        if (
+            in_array($normalized, ['catatan', 'keterangan', 'notes', 'note', 'catatanoptional'], true) ||
+            str_starts_with($normalized, 'catatan') ||
+            str_starts_with($normalized, 'keterangan') ||
+            str_starts_with($normalized, 'note')
+        ) {
+            return 'catatan';
+        }
+
+        return null;
+    }
+
+    private function normalizeHeaderToken(string $header): string
+    {
+        $normalized = strtolower(trim($header));
+        return preg_replace('/[^a-z0-9]+/', '', $normalized) ?? '';
     }
 
     /**
@@ -225,6 +370,31 @@ class ExcelImportService
     private function isCsvFile(string $path): bool
     {
         return strtolower((string) pathinfo($path, PATHINFO_EXTENSION)) === 'csv';
+    }
+
+    /**
+     * @return array<int, array<int, array<int, mixed>>>
+     */
+    private function loadSheetRows(string $path): array
+    {
+        if (class_exists(IOFactory::class)) {
+            $spreadsheet = IOFactory::load($path);
+            $allRows = [];
+
+            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                $allRows[] = $sheet->toArray(null, true, true, false);
+            }
+
+            return $allRows;
+        }
+
+        if ($this->isCsvFile($path)) {
+            return [$this->readCsvRows($path)];
+        }
+
+        throw new RuntimeException(
+            'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.'
+        );
     }
 
     /**

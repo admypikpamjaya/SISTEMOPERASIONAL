@@ -70,6 +70,12 @@ return [
                 'module_name' => 'admin_blast',
             ],
             [
+                'label' => 'Recipient Koperasi Tirta',
+                'icon'  => 'fas fa-id-badge',
+                'route' => 'admin.blast.recipients.employees.index',
+                'module_name' => 'admin_blast',
+            ],
+            [
                 'label' => 'Template Blast',
                 'icon'  => 'fas fa-layer-group',
                 'route' => 'admin.blast.templates.index',

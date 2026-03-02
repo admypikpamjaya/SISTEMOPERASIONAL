@@ -2,6 +2,7 @@
 
 namespace App\Services\Blast;
 
+use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastRecipient;
 use Illuminate\Support\Collection;
 
@@ -13,21 +14,21 @@ class RecipientSelectorService
      */
     public function getSelectable(string $channel): Collection
     {
-        $query = BlastRecipient::query()
+        $studentQuery = BlastRecipient::query()
             ->where('is_valid', true);
 
         if ($channel === 'email') {
-            $query->whereNotNull('email_wali');
+            $studentQuery->whereNotNull('email_wali');
         }
 
         if ($channel === 'whatsapp') {
-            $query->where(function ($builder) {
+            $studentQuery->where(function ($builder) {
                 $builder->whereNotNull('wa_wali')
                     ->orWhereNotNull('wa_wali_2');
             });
         }
 
-        return $query
+        $students = $studentQuery
             ->orderBy('nama_siswa')
             ->get([
                 'id',
@@ -37,7 +38,38 @@ class RecipientSelectorService
                 'email_wali',
                 'wa_wali',
                 'wa_wali_2',
-            ]);
+            ])
+            ->map(fn (BlastRecipient $recipient) => $recipient->toArray());
+
+        $employeeQuery = BlastEmployeeRecipient::query()
+            ->where('is_valid', true);
+
+        if ($channel === 'email') {
+            $employeeQuery->whereNotNull('email_karyawan');
+        }
+
+        if ($channel === 'whatsapp') {
+            $employeeQuery->whereNotNull('wa_karyawan');
+        }
+
+        $employees = $employeeQuery
+            ->orderBy('nama_karyawan')
+            ->get()
+            ->map(function (BlastEmployeeRecipient $employee) {
+                return [
+                    'id' => $employee->id,
+                    'nama_siswa' => $employee->nama_karyawan,
+                    'kelas' => $employee->instansi ?: 'Karyawan',
+                    'nama_wali' => $employee->nama_wali ?: $employee->nama_karyawan,
+                    'email_wali' => $employee->email_karyawan,
+                    'wa_wali' => $employee->wa_karyawan,
+                    'wa_wali_2' => null,
+                ];
+            });
+
+        return $students
+            ->merge($employees)
+            ->values();
     }
 
     /**
@@ -45,7 +77,7 @@ class RecipientSelectorService
      */
     public function getByIds(array $ids): Collection
     {
-        return BlastRecipient::query()
+        $students = BlastRecipient::query()
             ->whereIn('id', $ids)
             ->where('is_valid', true)
             ->get([
@@ -56,6 +88,28 @@ class RecipientSelectorService
                 'email_wali',
                 'wa_wali',
                 'wa_wali_2',
-            ]);
+            ])
+            ->map(fn (BlastRecipient $recipient) => $recipient->toArray());
+
+        $employees = BlastEmployeeRecipient::query()
+            ->whereIn('id', $ids)
+            ->where('is_valid', true)
+            ->get()
+            ->map(function (BlastEmployeeRecipient $employee) {
+                return [
+                    'id' => $employee->id,
+                    'nama_siswa' => $employee->nama_karyawan,
+                    'kelas' => $employee->instansi ?: 'Karyawan',
+                    'nama_wali' => $employee->nama_wali ?: $employee->nama_karyawan,
+                    'email_wali' => $employee->email_karyawan,
+                    'wa_wali' => $employee->wa_karyawan,
+                    'wa_wali_2' => null,
+                ];
+            });
+
+        return $students
+            ->merge($employees)
+            ->values();
     }
 }
+

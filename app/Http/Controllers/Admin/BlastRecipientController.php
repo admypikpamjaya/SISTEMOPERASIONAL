@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastRecipient;
+use App\Services\Recipient\EmployeeRecipientBulkSaver;
 use App\Services\Recipient\ExcelImportService;
 use App\Services\Recipient\RecipientBulkSaver;
 use App\Services\Recipient\RecipientNormalizer;
@@ -87,6 +89,75 @@ class BlastRecipientController extends Controller
             'completeCount',
             'incompleteCount',
             'validCount'
+        ));
+    }
+
+    public function employeeIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'instansi' => 'nullable|string|max:255',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        $search = trim((string) ($validated['q'] ?? ''));
+        $selectedInstansi = trim((string) ($validated['instansi'] ?? ''));
+        $allowedPerPage = [20, 50, 100, 200];
+        $perPage = (int) ($validated['per_page'] ?? 50);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        $query = BlastEmployeeRecipient::query();
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('nama_karyawan', 'like', '%' . $search . '%')
+                    ->orWhere('instansi', 'like', '%' . $search . '%')
+                    ->orWhere('nama_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_karyawan', 'like', '%' . $search . '%')
+                    ->orWhere('email_karyawan', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($selectedInstansi !== '') {
+            $query->where('instansi', $selectedInstansi);
+        }
+
+        $employees = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $instansiOptions = BlastEmployeeRecipient::query()
+            ->select('instansi')
+            ->whereNotNull('instansi')
+            ->where('instansi', '!=', '')
+            ->distinct()
+            ->orderBy('instansi')
+            ->pluck('instansi');
+
+        $baseStatsQuery = BlastEmployeeRecipient::query();
+        $totalEmployees = (clone $baseStatsQuery)->count();
+        $validCount = (clone $baseStatsQuery)->where('is_valid', true)->count();
+        $incompleteCount = (clone $baseStatsQuery)
+            ->where(function ($query) {
+                $query->whereNull('wa_karyawan')->orWhere('wa_karyawan', '');
+            })
+            ->where(function ($query) {
+                $query->whereNull('email_karyawan')->orWhere('email_karyawan', '');
+            })
+            ->count();
+
+        return view('admin.blast.recipients.employees', compact(
+            'employees',
+            'instansiOptions',
+            'search',
+            'selectedInstansi',
+            'allowedPerPage',
+            'perPage',
+            'totalEmployees',
+            'validCount',
+            'incompleteCount'
         ));
     }
 
@@ -218,53 +289,82 @@ class BlastRecipientController extends Controller
     public function import(
         Request $request,
         ExcelImportService $importService,
-        RecipientBulkSaver $bulkSaver
+        RecipientBulkSaver $bulkSaver,
+        EmployeeRecipientBulkSaver $employeeBulkSaver
     ) {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,csv,xls'
+            'file' => 'required|file|mimes:xlsx,csv,xls',
+            'import_type' => 'nullable|in:siswa,karyawan',
         ]);
 
         $uploadedFile = $request->file('file');
+        $importType = (string) $request->input('import_type', 'siswa');
 
         if ($uploadedFile === null) {
             return redirect()
-                ->route('admin.blast.recipients.index')
+                ->route(
+                    $importType === 'karyawan'
+                        ? 'admin.blast.recipients.employees.index'
+                        : 'admin.blast.recipients.index'
+                )
                 ->with('error', 'Import gagal: file tidak ditemukan.');
         }
 
         try {
-            $result = $importService->import(
-                $uploadedFile->getPathname()
-            );
+            $result = $importType === 'karyawan'
+                ? $importService->importEmployees($uploadedFile->getPathname())
+                : $importService->import($uploadedFile->getPathname());
         } catch (\Throwable $e) {
             Log::error('[RECIPIENT IMPORT FAILED]', [
                 'file' => $uploadedFile->getClientOriginalName(),
+                'import_type' => $importType,
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()
-                ->route('admin.blast.recipients.index')
+                ->route(
+                    $importType === 'karyawan'
+                        ? 'admin.blast.recipients.employees.index'
+                        : 'admin.blast.recipients.index'
+                )
                 ->with('error', 'Import gagal: ' . $e->getMessage());
         }
 
         if (empty($result->valid) && empty($result->invalid)) {
             return redirect()
-                ->route('admin.blast.recipients.index')
+                ->route(
+                    $importType === 'karyawan'
+                        ? 'admin.blast.recipients.employees.index'
+                        : 'admin.blast.recipients.index'
+                )
                 ->with('error', 'Import gagal: file tidak berisi data yang dapat diproses.');
         }
 
-        $summary = $bulkSaver->save(collect($result->valid));
+        $summary = $importType === 'karyawan'
+            ? $employeeBulkSaver->save(collect($result->valid))
+            : $bulkSaver->save(collect($result->valid));
         $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
-        $message = "Import selesai. Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
+        $messagePrefix = $importType === 'karyawan'
+            ? 'Import data karyawan selesai.'
+            : 'Import data siswa selesai.';
+        $message = "{$messagePrefix} Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
 
         if ((int) $summary['inserted'] === 0) {
             return redirect()
-                ->route('admin.blast.recipients.index')
+                ->route(
+                    $importType === 'karyawan'
+                        ? 'admin.blast.recipients.employees.index'
+                        : 'admin.blast.recipients.index'
+                )
                 ->with('error', $message . ' Tidak ada data baru yang disimpan.');
         }
 
         return redirect()
-            ->route('admin.blast.recipients.index')
+            ->route(
+                $importType === 'karyawan'
+                    ? 'admin.blast.recipients.employees.index'
+                    : 'admin.blast.recipients.index'
+            )
             ->with('success', $message);
     }
 
@@ -273,5 +373,12 @@ class BlastRecipientController extends Controller
         BlastRecipient::findOrFail($id)->delete();
 
         return back()->with('success', 'Penerima dihapus');
+    }
+
+    public function destroyEmployee(string $id)
+    {
+        BlastEmployeeRecipient::findOrFail($id)->delete();
+
+        return back()->with('success', 'Data karyawan dihapus');
     }
 }

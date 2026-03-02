@@ -424,6 +424,8 @@ Route::prefix('admin')
                     ->middleware('check_access:blast_recipient.read')
                     ->group(function () {
                     Route::get('/', [BlastRecipientController::class, 'index'])->name('index');
+                    Route::get('/employees', [BlastRecipientController::class, 'employeeIndex'])
+                        ->name('employees.index');
                     Route::get('/create', [BlastRecipientController::class, 'create'])
                         ->middleware('check_access:blast_recipient.create')
                         ->name('create');
@@ -439,6 +441,9 @@ Route::prefix('admin')
                     Route::post('/import', [BlastRecipientController::class, 'import'])
                         ->middleware('check_access:blast_recipient.import')
                         ->name('import');
+                    Route::delete('/employees/{id}', [BlastRecipientController::class, 'destroyEmployee'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('employees.destroy');
                     Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('destroy');

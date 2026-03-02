@@ -9,6 +9,8 @@ class PlaceholderResolver
     public function resolve(string $text, BlastRecipient $recipient): string
     {
         $primaryWhatsapp = $recipient->wa_wali ?: $recipient->wa_wali_2;
+        $instansi = $recipient->kelas;
+        $namaKaryawan = $recipient->nama_siswa;
 
         $map = [
             '{{nama_siswa}}' => $recipient->nama_siswa,
@@ -18,6 +20,8 @@ class PlaceholderResolver
             '{{wa}}'         => $primaryWhatsapp,
             '{{wa_2}}'       => $recipient->wa_wali_2,
             '{{catatan}}'    => $recipient->catatan,
+            '{{nama_karyawan}}' => $namaKaryawan,
+            '{{instansi}}' => $instansi,
         ];
 
         return str_replace(

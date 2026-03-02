@@ -12,6 +12,8 @@ class TemplateRenderer
     public function render(string $template, BlastRecipient $recipient): string
     {
         $primaryWhatsapp = $recipient->wa_wali ?: $recipient->wa_wali_2;
+        $instansi = $recipient->kelas;
+        $namaKaryawan = $recipient->nama_siswa;
 
         $replacements = [
             '{nama_siswa}' => $recipient->nama_siswa,
@@ -20,6 +22,8 @@ class TemplateRenderer
             '{email}'      => $recipient->email_wali,
             '{wa}'         => $primaryWhatsapp,
             '{wa_2}'       => $recipient->wa_wali_2,
+            '{nama_karyawan}' => $namaKaryawan,
+            '{instansi}' => $instansi,
         ];
 
         return str_replace(
