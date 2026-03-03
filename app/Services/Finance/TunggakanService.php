@@ -1222,7 +1222,17 @@ class TunggakanService
 
     private function looksLikeCurrencyLabel(string $value): bool
     {
-        $normalized = strtolower(trim($value));
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        // Hanya dianggap label mata uang jika sel memang label saja (contoh: "Rp"), bukan "Rp 1,550,000".
+        if (preg_match('/\d/', $trimmed) === 1) {
+            return false;
+        }
+
+        $normalized = strtolower($trimmed);
         $normalized = preg_replace('/[^a-z]/', '', $normalized) ?? '';
 
         return in_array($normalized, ['rp', 'idr', 'rupiah'], true);
@@ -1235,7 +1245,8 @@ class TunggakanService
             return false;
         }
 
-        if (preg_match('/[a-z]/i', $raw) === 1) {
+        $withoutCurrencyLabel = preg_replace('/\b(rp|idr|rupiah)\b\.?/i', '', $raw) ?? $raw;
+        if (preg_match('/[a-z]/i', $withoutCurrencyLabel) === 1) {
             return false;
         }
 
