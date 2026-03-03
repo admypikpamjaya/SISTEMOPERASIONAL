@@ -810,7 +810,7 @@
                 </form>
 
                 <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter" style="text-decoration:none;">
-                    Data Karyawan
+                    Data Koperasi
                 </a>
 
                 <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">

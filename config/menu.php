@@ -133,6 +133,11 @@ return [
                 'icon'  => 'fas fa-file-invoice-dollar',
                 'route' => 'finance.invoice.index',
             ],
+            [
+                'label' => 'Tunggakan',
+                'icon'  => 'fas fa-money-bill-wave',
+                'route' => 'finance.tunggakan.index',
+            ],
         ],
     ],
 

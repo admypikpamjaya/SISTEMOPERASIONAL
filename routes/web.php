@@ -18,6 +18,7 @@ use App\Http\Controllers\Finance\FinanceAccountController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
+use App\Http\Controllers\Finance\FinanceTunggakanController;
 
 // ADMIN
 use App\Http\Controllers\Admin\AnnouncementController;
@@ -302,6 +303,48 @@ Route::prefix('finance')
                 Route::post('/{invoice}/notes', [FinanceInvoiceController::class, 'storeNote'])
                     ->middleware('check_access:finance_invoice.note')
                     ->name('notes.store');
+            });
+
+        Route::prefix('tunggakan')
+            ->name('tunggakan.')
+            ->group(function () {
+                Route::get('/', [FinanceTunggakanController::class, 'index'])
+                    ->middleware('check_access:finance_report.read')
+                    ->name('index');
+
+                Route::post('/manual', [FinanceTunggakanController::class, 'storeManual'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('manual.store');
+
+                Route::post('/import', [FinanceTunggakanController::class, 'importExcel'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('import');
+
+                Route::post('/sync-db', [FinanceTunggakanController::class, 'syncDatabase'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('sync-db');
+
+                Route::post('/template-default', [FinanceTunggakanController::class, 'createDefaultTemplate'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('template-default');
+
+                Route::post('/blast-whatsapp', [FinanceTunggakanController::class, 'blastWhatsapp'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('blast-whatsapp');
+
+                Route::delete('/delete-all', [FinanceTunggakanController::class, 'destroyAll'])
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('destroy-all');
+
+                Route::put('/{record}', [FinanceTunggakanController::class, 'update'])
+                    ->whereUuid('record')
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('update');
+
+                Route::delete('/{record}', [FinanceTunggakanController::class, 'destroy'])
+                    ->whereUuid('record')
+                    ->middleware('check_access:finance_report.generate')
+                    ->name('destroy');
             });
     });
 

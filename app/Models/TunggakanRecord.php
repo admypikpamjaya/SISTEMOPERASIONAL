@@ -22,6 +22,7 @@ class TunggakanRecord extends Model
         'no_urut',
         'kelas',
         'nama_murid',
+        'no_telepon',
         'bulan',
         'nilai',
         'recipient_source',
