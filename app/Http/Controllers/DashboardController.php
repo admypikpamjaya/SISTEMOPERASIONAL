@@ -6,13 +6,19 @@ use App\Enums\Portal\PortalPermission;
 use App\Models\BlastLog;
 use App\Models\FinanceReport;
 use App\Services\AccessControl\PermissionService;
+use App\Services\Asset\AssetService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     private const WIB_TIMEZONE = 'Asia/Jakarta';
+
+    public function __construct(
+        private AssetService $assetService
+    ) {}
 
     public function index(): View
     {
@@ -49,6 +55,8 @@ class DashboardController extends Controller
         $saldo = null;
         $saldoUpdatedAt = null;
 
+        $assetStatisticsByUnit = $this->assetService->getAssetStatisticByUnit();
+
         if ($showBlastingWidgets) {
             $blastSeries = $this->buildBlastSeries();
         }
@@ -82,6 +90,8 @@ class DashboardController extends Controller
                 : null;
         }
 
+        Log::info($assetStatisticsByUnit);
+
         return [
             'showFinanceWidgets' => $showFinanceWidgets,
             'showBlastingWidgets' => $showBlastingWidgets,
@@ -108,6 +118,7 @@ class DashboardController extends Controller
                 'values' => $blastSeries['email'],
                 'url' => route('admin.blast.email'),
             ] : null,
+            'assetStatisticsByUnit' => $assetStatisticsByUnit,
         ];
     }
 

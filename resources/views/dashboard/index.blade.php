@@ -441,6 +441,54 @@
         </div>
 </div>
 
+<div class="section-label">
+    <i class="fas fa-box" style="color:var(--blue-primary);font-size:.7rem;"></i>
+    Statistik Aset Berdasarkan Unit
+</div>
+
+<div class="row">
+    @foreach($assetStatisticsByUnit as $stat)
+        @php
+            $unitValue = $stat->unit;
+            $unitLabel = $unitValue ?? 'Belum Di-assign';
+        @endphp
+
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+            <div class="saldo-card h-100">
+                <div>
+                    <div class="saldo-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+
+                    <div class="saldo-label">
+                        {{ $unitLabel }}
+                    </div>
+
+                    <div class="saldo-value">
+                        {{ $stat->total_assets }}
+                    </div>
+
+                    <div class="saldo-meta">
+                        Total Aset
+                    </div>
+                </div>
+
+                <div class="saldo-footer">
+                    @if($unitValue)
+                        <a href="{{ route('asset-management.index', ['unit' => $unitValue]) }}">
+                            Lihat Aset <i class="fas fa-arrow-right"></i>
+                        </a>
+                    @else
+                        <a href="{{ route('asset-management.index') }}">
+                            Lihat Aset <i class="fas fa-arrow-right"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+
 @if($showFinanceWidgets)
     <div class="section-label"><i class="fas fa-chart-line" style="color:var(--blue-primary);font-size:.7rem;"></i> Grafik Keuangan</div>
     <div class="row">

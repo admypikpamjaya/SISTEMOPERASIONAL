@@ -136,6 +136,8 @@ Route::prefix('maintenance-report')
         Route::middleware(['auth', 'check_access:maintenance_report.read'])->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/{id}', 'show')->name('detail');
+            Route::get('/export/excel', 'exportExcel')
+                ->name('export-excel');
             Route::put('/', 'update')
                 ->middleware('check_access:maintenance_report.update')
                 ->name('update');
