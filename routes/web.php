@@ -312,6 +312,10 @@ Route::prefix('finance')
                     ->middleware('check_access:finance_report.read')
                     ->name('index');
 
+                Route::get('/version', [FinanceTunggakanController::class, 'version'])
+                    ->middleware('check_access:finance_report.read')
+                    ->name('version');
+
                 Route::post('/manual', [FinanceTunggakanController::class, 'storeManual'])
                     ->middleware('check_access:finance_report.generate')
                     ->name('manual.store');
@@ -487,6 +491,9 @@ Route::prefix('admin')
                     Route::delete('/employees/{id}', [BlastRecipientController::class, 'destroyEmployee'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('employees.destroy');
+                    Route::delete('/delete-all', [BlastRecipientController::class, 'destroyAllStudents'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('destroy-all');
                     Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('destroy');

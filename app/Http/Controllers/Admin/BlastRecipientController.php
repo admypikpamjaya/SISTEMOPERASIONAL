@@ -375,6 +375,14 @@ class BlastRecipientController extends Controller
         return back()->with('success', 'Penerima dihapus');
     }
 
+    public function destroyAllStudents()
+    {
+        $total = BlastRecipient::query()->count();
+        BlastRecipient::query()->delete();
+
+        return back()->with('success', "Semua data recipient siswa berhasil dihapus ({$total} data).");
+    }
+
     public function destroyEmployee(string $id)
     {
         BlastEmployeeRecipient::findOrFail($id)->delete();

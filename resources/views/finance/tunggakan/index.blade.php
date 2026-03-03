@@ -438,6 +438,14 @@
 </style>
 
 <div class="tg-shell">
+    <div
+        id="tunggakanAutoSync"
+        data-version="{{ $recordsVersion ?? '0' }}"
+        data-url="{{ route('finance.tunggakan.version') }}"
+        data-editing="{{ $editRecord ? '1' : '0' }}"
+        style="display:none;"
+    ></div>
+
     <section class="tg-hero">
         <h1>Finance Tunggakan</h1>
         <p>Kelola data tunggakan siswa untuk kebutuhan blasting. Data bisa masuk dari import Excel, input manual, atau sinkronisasi dari database recipient siswa.</p>
@@ -491,7 +499,7 @@
                             <input type="file" name="file" accept=".xlsx,.xls,.csv" onchange="if(this.files.length){ this.form.submit(); }" required>
                         </label>
                     </form>
-                    <div class="tg-hint">Gunakan format: <strong>no | kelas | nama murid | bulan | nilai | no telepon (opsional)</strong>.</div>
+                    <div class="tg-hint">Gunakan format: <strong>no | kelas | nama murid | bulan | nilai | no telepon (opsional)</strong>. Kolom nilai bisa langsung angka rupiah (contoh: <strong>3.100.000</strong>) atau format terpisah <strong>Rp | 3.100.000</strong>.</div>
                 </div>
 
                 <div class="tg-action-card">
@@ -729,4 +737,59 @@
         </div>
     </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const syncNode = document.getElementById('tunggakanAutoSync');
+    if (!syncNode) {
+        return;
+    }
+
+    if (syncNode.dataset.editing === '1') {
+        return;
+    }
+
+    const endpoint = syncNode.dataset.url;
+    let currentVersion = String(syncNode.dataset.version || '0');
+    let requestInFlight = false;
+
+    const poll = async () => {
+        if (requestInFlight || !endpoint) {
+            return;
+        }
+
+        requestInFlight = true;
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                cache: 'no-store',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+            const nextVersion = String(payload.version || '0');
+            if (nextVersion !== currentVersion) {
+                window.location.reload();
+                return;
+            }
+
+            currentVersion = nextVersion;
+        } catch (error) {
+            // silent fail, retry di interval berikutnya
+        } finally {
+            requestInFlight = false;
+        }
+    };
+
+    setInterval(poll, 10000);
+});
+</script>
 @endsection

@@ -161,6 +161,125 @@ class TunggakanService
     }
 
     /**
+     * Re-match ulang data tunggakan yang belum matched.
+     *
+     * @return array{
+     *   checked:int,
+     *   updated:int,
+     *   matched:int,
+     *   unmatched:int,
+     *   multiple:int
+     * }
+     */
+    public function refreshUnmatchedMatches(?int $limit = null): array
+    {
+        $query = TunggakanRecord::query()
+            ->whereIn('match_status', ['unmatched', 'multiple'])
+            ->orderBy('updated_at');
+
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        }
+
+        $records = $query->get([
+            'id',
+            'batch_id',
+            'kelas',
+            'nama_murid',
+            'no_telepon',
+            'recipient_source',
+            'recipient_id',
+            'match_status',
+            'match_notes',
+        ]);
+
+        if ($records->isEmpty()) {
+            return [
+                'checked' => 0,
+                'updated' => 0,
+                'matched' => 0,
+                'unmatched' => 0,
+                'multiple' => 0,
+            ];
+        }
+
+        $this->resetRecipientIndexes();
+
+        $checked = 0;
+        $updated = 0;
+        $matched = 0;
+        $unmatched = 0;
+        $multiple = 0;
+        $affectedBatchIds = [];
+
+        foreach ($records as $record) {
+            $checked++;
+
+            $kelas = trim((string) $record->kelas);
+            $match = $this->matchRecipient(
+                (string) $record->nama_murid,
+                $kelas !== '' ? $kelas : null
+            );
+            $match = $this->enhanceMatchNotesWithPhone(
+                $match,
+                $this->normalizeStoredPhone((string) $record->no_telepon)
+            );
+
+            if ($match['match_status'] === 'matched') {
+                $matched++;
+            } elseif ($match['match_status'] === 'multiple') {
+                $multiple++;
+            } else {
+                $unmatched++;
+            }
+
+            $currentRecipientSource = $record->recipient_source !== null
+                ? (string) $record->recipient_source
+                : null;
+            $currentRecipientId = $record->recipient_id !== null
+                ? (string) $record->recipient_id
+                : null;
+            $currentMatchNotes = $record->match_notes !== null
+                ? (string) $record->match_notes
+                : null;
+
+            $hasChanged = $record->match_status !== $match['match_status']
+                || $currentRecipientSource !== $match['recipient_source']
+                || $currentRecipientId !== $match['recipient_id']
+                || $currentMatchNotes !== $match['match_notes'];
+
+            if (!$hasChanged) {
+                continue;
+            }
+
+            $record->update([
+                'recipient_source' => $match['recipient_source'],
+                'recipient_id' => $match['recipient_id'],
+                'match_status' => $match['match_status'],
+                'match_notes' => $match['match_notes'],
+            ]);
+
+            $updated++;
+            $batchId = trim((string) $record->batch_id);
+            if ($batchId !== '') {
+                $affectedBatchIds[$batchId] = true;
+            }
+        }
+
+        foreach (array_keys($affectedBatchIds) as $batchId) {
+            $this->refreshBatchStatsById($batchId);
+        }
+
+        return [
+            'checked' => $checked,
+            'updated' => $updated,
+            'matched' => $matched,
+            'unmatched' => $unmatched,
+            'multiple' => $multiple,
+        ];
+    }
+
+    /**
      * @return array{
      *   candidate_records:int,
      *   candidate_recipients:int,
@@ -880,6 +999,12 @@ class TunggakanService
         }
     }
 
+    private function resetRecipientIndexes(): void
+    {
+        $this->recipientIndexByName = [];
+        $this->recipientIndexByFull = [];
+    }
+
     private function refreshBatchStatsById(?string $batchId): void
     {
         $batchId = trim((string) $batchId);
@@ -981,8 +1106,26 @@ class TunggakanService
         $kelas = $this->resolveCell($row, $headerMap, 'kelas', 1);
         $namaMurid = $this->resolveCell($row, $headerMap, 'nama_murid', 2);
         $bulan = $this->resolveCell($row, $headerMap, 'bulan', 3);
-        $nilaiRaw = $this->resolveCell($row, $headerMap, 'nilai', 4);
-        $noTelepon = $this->resolveCell($row, $headerMap, 'no_telepon', 5);
+        $nilaiColumnIndex = $headerMap['nilai'] ?? 4;
+        $nilaiRaw = $this->resolveExcelNominalRaw($row, $nilaiColumnIndex);
+        $phoneColumnIndex = $headerMap['no_telepon'] ?? 5;
+        $noTelepon = $this->resolveCellByIndex($row, $phoneColumnIndex);
+
+        // Dukungan format nilai Excel "Rp | 3.100.000" (mata uang di kolom terpisah).
+        $nilaiCellRaw = $this->resolveCellByIndex($row, $nilaiColumnIndex);
+        if ($this->looksLikeCurrencyLabel((string) $nilaiCellRaw)) {
+            $nextColumnValue = $this->resolveCellByIndex($row, $nilaiColumnIndex + 1);
+            if ($nextColumnValue !== null && $this->parseNominal($nextColumnValue) > 0) {
+                $nilaiRaw = $nextColumnValue;
+
+                if (
+                    !array_key_exists('no_telepon', $headerMap)
+                    && $phoneColumnIndex === ($nilaiColumnIndex + 1)
+                ) {
+                    $noTelepon = $this->resolveCellByIndex($row, $nilaiColumnIndex + 2);
+                }
+            }
+        }
 
         $namaMurid = trim((string) $namaMurid);
         $bulan = trim((string) $bulan);
@@ -1019,6 +1162,14 @@ class TunggakanService
         int $fallbackIndex
     ): ?string {
         $index = $headerMap[$field] ?? $fallbackIndex;
+        return $this->resolveCellByIndex($row, $index);
+    }
+
+    /**
+     * @param array<int, mixed> $row
+     */
+    private function resolveCellByIndex(array $row, int $index): ?string
+    {
         $value = $row[$index] ?? null;
         if ($value === null) {
             return null;
@@ -1026,6 +1177,78 @@ class TunggakanService
 
         $value = trim((string) $value);
         return $value === '' ? null : $value;
+    }
+
+    /**
+     * Cari nilai nominal dari kolom nilai + kolom sekitar untuk antisipasi header merge.
+     *
+     * @param array<int, mixed> $row
+     */
+    private function resolveExcelNominalRaw(array $row, int $nilaiColumnIndex): ?string
+    {
+        $candidateIndexes = [
+            $nilaiColumnIndex,
+            $nilaiColumnIndex + 1,
+            $nilaiColumnIndex - 1,
+        ];
+
+        $checked = [];
+        foreach ($candidateIndexes as $index) {
+            if ($index < 0 || isset($checked[$index])) {
+                continue;
+            }
+            $checked[$index] = true;
+
+            $currentValue = $this->resolveCellByIndex($row, $index);
+            if ($currentValue === null) {
+                continue;
+            }
+
+            if ($this->looksLikeCurrencyLabel($currentValue)) {
+                $nextValue = $this->resolveCellByIndex($row, $index + 1);
+                if ($nextValue !== null && $this->isLikelyNominalCellValue($nextValue)) {
+                    return $nextValue;
+                }
+                continue;
+            }
+
+            if ($this->isLikelyNominalCellValue($currentValue)) {
+                return $currentValue;
+            }
+        }
+
+        return $this->resolveCellByIndex($row, $nilaiColumnIndex);
+    }
+
+    private function looksLikeCurrencyLabel(string $value): bool
+    {
+        $normalized = strtolower(trim($value));
+        $normalized = preg_replace('/[^a-z]/', '', $normalized) ?? '';
+
+        return in_array($normalized, ['rp', 'idr', 'rupiah'], true);
+    }
+
+    private function isLikelyNominalCellValue(string $value): bool
+    {
+        $raw = trim($value);
+        if ($raw === '') {
+            return false;
+        }
+
+        if (preg_match('/[a-z]/i', $raw) === 1) {
+            return false;
+        }
+
+        $nominal = $this->parseNominal($raw);
+        if ($nominal <= 0) {
+            return false;
+        }
+
+        if ($nominal >= 1000) {
+            return true;
+        }
+
+        return preg_match('/[.,]/', $raw) === 1;
     }
 
     private function canonicalHeader(string $header): ?string
@@ -1149,7 +1372,7 @@ class TunggakanService
             return 0.0;
         }
 
-        if (is_numeric($value)) {
+        if (is_int($value) || is_float($value)) {
             return (float) $value;
         }
 
@@ -1169,19 +1392,45 @@ class TunggakanService
             return 0.0;
         }
 
-        if (str_contains($cleaned, ',') && str_contains($cleaned, '.')) {
-            $cleaned = str_replace('.', '', $cleaned);
-            $cleaned = str_replace(',', '.', $cleaned);
-        } elseif (str_contains($cleaned, ',')) {
-            $cleaned = str_replace('.', '', $cleaned);
-            $cleaned = str_replace(',', '.', $cleaned);
-        } else {
-            $dotCount = substr_count($cleaned, '.');
+        $commaCount = substr_count($cleaned, ',');
+        $dotCount = substr_count($cleaned, '.');
+
+        if ($commaCount > 0 && $dotCount > 0) {
+            $lastComma = strrpos($cleaned, ',');
+            $lastDot = strrpos($cleaned, '.');
+
+            if ($lastComma === false || $lastDot === false) {
+                return 0.0;
+            }
+
+            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
+            $thousandSeparator = $decimalSeparator === ',' ? '.' : ',';
+
+            $cleaned = str_replace($thousandSeparator, '', $cleaned);
+            if ($decimalSeparator === ',') {
+                $cleaned = str_replace(',', '.', $cleaned);
+            }
+        } elseif ($commaCount > 0) {
+            if ($commaCount > 1) {
+                // Contoh: 3,100,000 -> semua koma adalah pemisah ribuan.
+                $cleaned = str_replace(',', '', $cleaned);
+            } else {
+                $commaPos = strrpos($cleaned, ',');
+                $decimals = $commaPos !== false ? strlen($cleaned) - $commaPos - 1 : 0;
+
+                if ($commaPos !== false && ($decimals === 0 || $decimals === 3)) {
+                    $cleaned = str_replace(',', '', $cleaned);
+                } else {
+                    $cleaned = str_replace(',', '.', $cleaned);
+                }
+            }
+        } elseif ($dotCount > 0) {
             if ($dotCount > 1) {
                 $cleaned = str_replace('.', '', $cleaned);
-            } elseif ($dotCount === 1) {
-                $parts = explode('.', $cleaned);
-                if (isset($parts[1]) && strlen($parts[1]) === 3) {
+            } else {
+                $dotPos = strrpos($cleaned, '.');
+                $decimals = $dotPos !== false ? strlen($cleaned) - $dotPos - 1 : 0;
+                if ($dotPos !== false && ($decimals === 0 || $decimals === 3)) {
                     $cleaned = str_replace('.', '', $cleaned);
                 }
             }

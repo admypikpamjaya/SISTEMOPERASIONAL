@@ -330,6 +330,29 @@
         box-shadow: var(--shadow-blue);
     }
 
+    .btn-delete-all {
+        padding: 9px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        white-space: nowrap;
+        border: 1.5px solid #fecaca;
+        background: #fef2f2;
+        color: var(--red);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .btn-delete-all:hover {
+        background: var(--red);
+        border-color: var(--red);
+        color: white;
+    }
+
     /* ── TABLE ── */
     .table-scroll { overflow-x: auto; }
 
@@ -812,6 +835,17 @@
                 <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter" style="text-decoration:none;">
                     Data Koperasi
                 </a>
+
+                <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" onsubmit="return confirm('Hapus SEMUA recipient siswa? Tindakan ini tidak bisa dibatalkan.')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn-delete-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                        Delete All
+                    </button>
+                </form>
 
                 <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px;height:14px;">

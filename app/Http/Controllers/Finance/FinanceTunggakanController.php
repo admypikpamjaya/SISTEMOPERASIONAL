@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlastMessageTemplate;
 use App\Models\TunggakanRecord;
 use App\Services\Finance\TunggakanService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -17,6 +18,12 @@ class FinanceTunggakanController extends Controller
 
     public function index(Request $request)
     {
+        try {
+            $this->tunggakanService->refreshUnmatchedMatches();
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
         $filters = $request->validate([
             'q' => 'nullable|string|max:255',
             'source_type' => 'nullable|in:all,excel,manual,database',
@@ -111,7 +118,29 @@ class FinanceTunggakanController extends Controller
                 'blast_sent_records' => $blastSentRecords,
             ],
             'defaultSyncMonth' => now('Asia/Jakarta')->locale('id')->translatedFormat('F Y'),
+            'recordsVersion' => $this->buildRecordsVersion(),
         ]);
+    }
+
+    public function version(): JsonResponse
+    {
+        try {
+            $summary = $this->tunggakanService->refreshUnmatchedMatches(limit: 300);
+
+            return response()->json([
+                'ok' => true,
+                'version' => $this->buildRecordsVersion(),
+                'updated' => (int) ($summary['updated'] ?? 0),
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'ok' => false,
+                'version' => $this->buildRecordsVersion(),
+                'updated' => 0,
+            ], 500);
+        }
     }
 
     public function blastWhatsapp(Request $request)
@@ -392,5 +421,16 @@ class FinanceTunggakanController extends Controller
                 ->route('finance.tunggakan.index')
                 ->with('error', 'Gagal menyiapkan template blasting tunggakan.');
         }
+    }
+
+    private function buildRecordsVersion(): string
+    {
+        $maxUpdatedAt = TunggakanRecord::query()->max('updated_at');
+        if (empty($maxUpdatedAt)) {
+            return '0';
+        }
+
+        $timestamp = strtotime((string) $maxUpdatedAt);
+        return $timestamp !== false ? (string) $timestamp : md5((string) $maxUpdatedAt);
     }
 }
