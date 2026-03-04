@@ -11,6 +11,8 @@ use App\Models\Log\MaintenanceDocumentation;
 use App\Models\Log\MaintenanceLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MaintenanceReportService
 {
@@ -117,5 +119,54 @@ class MaintenanceReportService
             throw new \Exception('Laporan tidak ditemukan.', 404);
 
         $log->delete();
+    }
+
+    public function exportLogToExcel(array $ids)
+    {
+        $logs = MaintenanceLog::with('asset', 'maintenanceDocumentations')
+            ->whereIn('id', $ids)
+            ->get();
+
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setCellValue('A1', 'Kode Akun');
+        $sheet->setCellValue('B1', 'Nama Pekerja');
+        $sheet->setCellValue('C1', 'Tanggal Pengerjaan');
+        $sheet->setCellValue('D1', 'Deskripsi Masalah');
+        $sheet->setCellValue('E1', 'Deskripsi Pekerjaan');
+        $sheet->setCellValue('F1', 'PIC (Penanggung Jawab)');
+        $sheet->setCellValue('G1', 'Status');
+        $sheet->setCellValue('H1', 'Biaya');
+        $sheet->setCellValue('I1', 'Kategori');
+        $sheet->setCellValue('J1', 'Dokumentasi Pemeliharaan');
+
+        $row = 2; 
+        foreach ($logs as $log) {
+            $documentationPath = $log->maintenanceDocumentations->isNotEmpty() 
+                ? $log->maintenanceDocumentations[0]->document_path
+                : null;
+                
+            $documentationUrl = $documentationPath 
+                ? env('APP_URL') . '/storage/' . $documentationPath 
+                : 'No Documentation';
+
+            $sheet->setCellValue('A' . $row, $log->asset->account_code);
+            $sheet->setCellValue('B' . $row, $log->worker_name);
+            $sheet->setCellValue('C' . $row, \Carbon\Carbon::parse($log->date)->format('Y-m-d H:i:s')); 
+            $sheet->setCellValue('D' . $row, $log->issue_description);
+            $sheet->setCellValue('E' . $row, $log->working_description);
+            $sheet->setCellValue('F' . $row, $log->pic);
+            $sheet->setCellValue('G' . $row, $log->status->value);
+            $sheet->setCellValue('H' . $row, $log->cost_formatted);
+            $sheet->setCellValue('I' . $row, $log->asset->category->value);
+            $sheet->setCellValue('J' . $row, $documentationUrl);
+
+            $row++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        return $writer;
     }
 }

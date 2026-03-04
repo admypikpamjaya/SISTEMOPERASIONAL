@@ -13,6 +13,7 @@ use App\Http\Requests\Report\UpdateMaintenanceReportStatusRequest;
 use App\Services\Report\MaintenanceReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MaintenanceReportController extends Controller
 {
@@ -111,6 +112,31 @@ class MaintenanceReportController extends Controller
             return response()->json([
                 'message' => $e->getMessage()
             ], $e->getCode() ? $e->getCode() : 500);
+        }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        try 
+        {
+            $ids = $request->input('ids', []);
+            if(count($ids) === 0)
+                return redirect()->route('maintenance-report.index')->with('error', 'Tidak ada data yang dipilih');
+
+            $file = $this->service->exportLogToExcel($ids);
+
+            $response = new StreamedResponse(function() use ($file) {
+                $file->save('php://output');
+            });
+                        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response->headers->set('Content-Disposition', 'attachment;filename="maintenance_logs.xlsx"');
+            $response->headers->set('Cache-Control', 'max-age=0');
+
+            return $response;
+        }
+        catch(\Throwable $e)
+        {
+            return redirect()->route('maintenance-report.index')->with('error', $e->getMessage());
         }
     }
 }

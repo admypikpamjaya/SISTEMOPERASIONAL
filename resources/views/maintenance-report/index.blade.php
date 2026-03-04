@@ -24,7 +24,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
             </div>
             <div class="col-md-6">
                 <div class="row align-items-center">
-                    <div class="col">
+                    <div class="col-3">
                         <div class="input-group input-group-sm">
                             <select name="status" id="filter-status-select" class="form-control">
                                 <option value="">Semua Status</option>
@@ -51,6 +51,14 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                             </div>
                         </div>
                     </div>
+                    <div class="col-1">
+                        <div class="d-flex justify-content-around">
+                            <a id="download-bulk-report-anchor" href="#" class="d-none"></a>
+                            <button id="download-bulk-report-button" type="button" class="btn btn-sm btn-primary" title="Download Laporan Pemeliharaan">
+                                <i class="fas fa-file-excel"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div> 
@@ -59,6 +67,9 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
         <table class="table table-hover">
             <thead>
                 <tr>
+                    <th scope="col">
+                        <input id="root-checkbox" type="checkbox">
+                    </th>
                     <th scope="col">#</th>
                     <th scope="col">KODE ASET</th>
                     <th scope="col">PIC</th>
@@ -68,6 +79,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
             <tbody>
                 @forelse($reports as $report)
                     <tr>
+                        <td><input class="child-checkbox" type="checkbox" value="{{ $report->id }}"></td>
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td class="text-left">
                             <a href="{{ route('assets.detail', $report->asset->id) }}" target="_blank">{{ $report->asset->account_code }}</a>
@@ -86,6 +98,9 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                             <button id="toggle-maintenance-report-detail-button" type="button" class="btn btn-sm btn-outline-info" data-url="{{ route('maintenance-report.detail', $report->id) }}">
                                 <div class="fas fa-eye"></div>
                             </button>
+                            <a href="{{ route('maintenance-report.export-excel', ['ids' => [$report->id]]) }}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-file-excel"></i>
+                            </a>
                         </td>
                     </tr>
                 @empty
@@ -105,6 +120,12 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
 @section('js')
 <script>
     const isUserCanUpdate = "{{ $isUserCanUpdate }}";
+
+    function resetState()
+    {
+        $('#root-checkbox').prop('checked', false);
+        $('.child-checkbox').prop('checked', false);
+    }
 
     function constructMaintenanceReportForm(data) 
     {
@@ -181,8 +202,37 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
     }
 
     $(function() {
+        resetState();
+
         $('#filter-status-select').on('change', function() {
             $(this).closest('form').submit(); 
+        });
+
+        $('#root-checkbox').on('click', function() {
+            const checkboxes = $('.child-checkbox');
+            checkboxes.prop('checked', this.checked);
+        });
+
+        $(document).on('click', '#download-bulk-report-button', async function() {
+            const ids = $('.child-checkbox:checked')
+                .map((_, el) => el.value)
+                .toArray();
+
+            if(ids.length === 0)
+                return Notification.error('Anda belum memilih laporan');
+
+            const baseUrl = "{{ route('maintenance-report.export-excel') }}";
+            const params = new URLSearchParams();
+
+            ids.forEach(id => params.append('ids[]', id));
+
+            const url = params.toString()
+                ? `${baseUrl}?${params.toString()}`
+                : baseUrl;
+
+            $('#download-bulk-report-anchor')
+                .attr('href', url)[0]
+                .click();
         });
 
         $(document).on('click', '#toggle-maintenance-report-detail-button', async function() {

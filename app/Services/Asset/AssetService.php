@@ -104,6 +104,15 @@ class AssetService
             ]));
     }
 
+    public function getAssetStatisticByUnit()
+    {
+        $statistics = Asset::select('unit', DB::raw('count(*) as total_assets'))
+            ->groupBy('unit')
+            ->get();
+
+        return $statistics;
+    }
+
     public function getAsset(string $id)
     {
         $asset = Asset::find($id);
