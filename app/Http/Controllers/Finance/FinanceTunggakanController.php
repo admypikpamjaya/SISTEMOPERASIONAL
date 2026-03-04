@@ -26,6 +26,7 @@ class FinanceTunggakanController extends Controller
 
         $filters = $request->validate([
             'q' => 'nullable|string|max:255',
+            'kelas' => 'nullable|string|max:100',
             'source_type' => 'nullable|in:all,excel,manual,database',
             'match_status' => 'nullable|in:all,matched,unmatched,multiple,manual',
             'blast_status' => 'nullable|in:all,draft,queued,sent,failed',
@@ -34,6 +35,7 @@ class FinanceTunggakanController extends Controller
         ]);
 
         $search = trim((string) ($filters['q'] ?? ''));
+        $selectedClass = trim((string) ($filters['kelas'] ?? ''));
         $sourceType = strtolower((string) ($filters['source_type'] ?? 'all'));
         $matchStatus = strtolower((string) ($filters['match_status'] ?? 'all'));
         $blastStatus = strtolower((string) ($filters['blast_status'] ?? 'all'));
@@ -54,6 +56,10 @@ class FinanceTunggakanController extends Controller
                     ->orWhere('bulan', 'like', '%' . $search . '%')
                     ->orWhere('match_notes', 'like', '%' . $search . '%');
             });
+        }
+
+        if ($selectedClass !== '') {
+            $query->where('kelas', $selectedClass);
         }
 
         if ($sourceType !== 'all') {
@@ -99,12 +105,22 @@ class FinanceTunggakanController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $kelasOptions = TunggakanRecord::query()
+            ->select('kelas')
+            ->whereNotNull('kelas')
+            ->where('kelas', '!=', '')
+            ->distinct()
+            ->orderBy('kelas')
+            ->pluck('kelas');
+
         return view('finance.tunggakan.index', [
             'records' => $records,
             'editRecord' => $editRecord,
             'whatsappTemplates' => $whatsappTemplates,
+            'kelasOptions' => $kelasOptions,
             'filters' => [
                 'q' => $search,
+                'kelas' => $selectedClass,
                 'source_type' => $sourceType,
                 'match_status' => $matchStatus,
                 'blast_status' => $blastStatus,

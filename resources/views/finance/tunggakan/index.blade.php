@@ -8,6 +8,7 @@
     $stats = $stats ?? [];
     $editRecord = $editRecord ?? null;
     $whatsappTemplates = $whatsappTemplates ?? collect();
+    $kelasOptions = $kelasOptions ?? collect();
     $defaultSyncMonth = $defaultSyncMonth ?? now()->format('F Y');
     $formatRupiah = static fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
 
@@ -615,6 +616,15 @@
                 <div class="tg-field">
                     <label class="tg-label">Cari</label>
                     <input class="tg-input" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Nama murid / kelas / bulan">
+                </div>
+                <div class="tg-field">
+                    <label class="tg-label">Kelas</label>
+                    <select class="tg-select" name="kelas">
+                        <option value="">Semua Kelas</option>
+                        @foreach($kelasOptions as $kelasOption)
+                            <option value="{{ $kelasOption }}" @selected(($filters['kelas'] ?? '') === $kelasOption)>{{ $kelasOption }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="tg-field">
                     <label class="tg-label">Sumber</label>

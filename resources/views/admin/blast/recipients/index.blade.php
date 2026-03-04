@@ -836,6 +836,10 @@
                     Data Koperasi
                 </a>
 
+                <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter" style="text-decoration:none;">
+                    Data Karyawan YPIK
+                </a>
+
                 <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" onsubmit="return confirm('Hapus SEMUA recipient siswa? Tindakan ini tidak bisa dibatalkan.')">
                     @csrf
                     @method('DELETE')

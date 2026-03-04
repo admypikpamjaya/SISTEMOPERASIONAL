@@ -3,6 +3,7 @@
 namespace App\Services\Blast;
 
 use App\Models\BlastEmployeeRecipient;
+use App\Models\BlastEmployeeYpikRecipient;
 use App\Models\BlastRecipient;
 use Illuminate\Support\Collection;
 
@@ -67,8 +68,35 @@ class RecipientSelectorService
                 ];
             });
 
+        $employeeYpikQuery = BlastEmployeeYpikRecipient::query()
+            ->where('is_valid', true);
+
+        if ($channel === 'email') {
+            $employeeYpikQuery->whereNotNull('email_karyawan');
+        }
+
+        if ($channel === 'whatsapp') {
+            $employeeYpikQuery->whereNotNull('wa_karyawan');
+        }
+
+        $employeesYpik = $employeeYpikQuery
+            ->orderBy('nama_karyawan')
+            ->get()
+            ->map(function (BlastEmployeeYpikRecipient $employee) {
+                return [
+                    'id' => $employee->id,
+                    'nama_siswa' => $employee->nama_karyawan,
+                    'kelas' => $employee->instansi ?: 'Karyawan YPIK',
+                    'nama_wali' => $employee->nama_wali ?: $employee->nama_karyawan,
+                    'email_wali' => $employee->email_karyawan,
+                    'wa_wali' => $employee->wa_karyawan,
+                    'wa_wali_2' => null,
+                ];
+            });
+
         return $students
             ->merge($employees)
+            ->merge($employeesYpik)
             ->values();
     }
 
@@ -107,9 +135,25 @@ class RecipientSelectorService
                 ];
             });
 
+        $employeesYpik = BlastEmployeeYpikRecipient::query()
+            ->whereIn('id', $ids)
+            ->where('is_valid', true)
+            ->get()
+            ->map(function (BlastEmployeeYpikRecipient $employee) {
+                return [
+                    'id' => $employee->id,
+                    'nama_siswa' => $employee->nama_karyawan,
+                    'kelas' => $employee->instansi ?: 'Karyawan YPIK',
+                    'nama_wali' => $employee->nama_wali ?: $employee->nama_karyawan,
+                    'email_wali' => $employee->email_karyawan,
+                    'wa_wali' => $employee->wa_karyawan,
+                    'wa_wali_2' => null,
+                ];
+            });
+
         return $students
             ->merge($employees)
+            ->merge($employeesYpik)
             ->values();
     }
 }
-

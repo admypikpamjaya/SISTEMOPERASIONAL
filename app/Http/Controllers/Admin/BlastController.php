@@ -7,6 +7,7 @@ use App\DataTransferObjects\BlastPayload;
 use App\DataTransferObjects\BlastAttachment;
 use App\Jobs\Blast\QueueBlastDeliveryJob;
 use App\Models\BlastEmployeeRecipient;
+use App\Models\BlastEmployeeYpikRecipient;
 use App\Models\BlastRecipient;
 use App\Models\BlastMessageTemplate;
 use App\Models\BlastMessage;
@@ -534,6 +535,73 @@ class BlastController extends Controller
                     );
                 }
             }
+
+            $employeeYpikRecipients = BlastEmployeeYpikRecipient::query()
+                ->whereIn('id', $recipientIds)
+                ->whereNotNull('wa_karyawan')
+                ->where('is_valid', true)
+                ->get();
+
+            foreach ($employeeYpikRecipients as $employeeYpik) {
+                $recipient = $this->toPseudoRecipientFromEmployeeYpik($employeeYpik);
+                $targets = $this->collectWhatsappTargets($recipient);
+                if (empty($targets)) {
+                    continue;
+                }
+
+                $message = $this->resolveDbRecipientWhatsappMessage(
+                    recipient: $recipient,
+                    renderer: $renderer,
+                    template: $template,
+                    globalMessage: $validated['message'] ?? '',
+                    useGlobalDefault: $useGlobalDefault,
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
+                );
+
+                if ($blastMessage === null) {
+                    $blastMessage = $this->createBlastMessageRecord(
+                        channel: 'WHATSAPP',
+                        subject: null,
+                        fallbackMessage: $validated['message'] ?? '',
+                        template: $template,
+                        campaignOptions: $campaignOptions
+                    );
+                }
+
+                foreach ($targets as $target) {
+                    $blastLog = $this->createBlastLogRecord(
+                        blastMessage: $blastMessage,
+                        target: $target,
+                        messageSnapshot: $message
+                    );
+
+                    $payload = new BlastPayload($message);
+                    $payload->setMeta('channel', 'WHATSAPP');
+                    $payload->setMeta('sent_by', Auth::id());
+                    $payload->setMeta('recipient_id', $employeeYpik->id);
+                    $payload->setMeta('recipient_source', 'karyawan_ypik');
+                    $payload->setMeta('blast_log_id', $blastLog->id);
+                    $payload->setMeta('blast_message_id', $blastMessage->id);
+                    $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                    $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                    $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                    $this->attachFilesToPayload($payload, $attachments);
+                    $this->attachFilesToPayload(
+                        $payload,
+                        $recipientAttachmentOverrides['db:' . $employeeYpik->id] ?? []
+                    );
+
+                    $this->dispatchQueuedBlastDelivery(
+                        channel: 'WHATSAPP',
+                        target: $target,
+                        subject: null,
+                        payload: $payload,
+                        campaignOptions: $campaignOptions,
+                        dispatchIndex: $dispatchIndex
+                    );
+                }
+            }
         }
 
         $rawTargets = array_filter(
@@ -796,6 +864,71 @@ class BlastController extends Controller
                 $this->dispatchQueuedBlastDelivery(
                     channel: 'EMAIL',
                     target: (string) $employee->email_karyawan,
+                    subject: $validated['subject'],
+                    payload: $payload,
+                    campaignOptions: $campaignOptions,
+                    dispatchIndex: $dispatchIndex
+                );
+            }
+
+            $employeeYpikRecipients = BlastEmployeeYpikRecipient::query()
+                ->whereIn('id', $recipientIds)
+                ->whereNotNull('email_karyawan')
+                ->where('is_valid', true)
+                ->get()
+                ->filter(
+                    fn (BlastEmployeeYpikRecipient $employeeYpik) =>
+                        filter_var($employeeYpik->email_karyawan, FILTER_VALIDATE_EMAIL)
+                )
+                ->values();
+
+            foreach ($employeeYpikRecipients as $employeeYpik) {
+                $recipient = $this->toPseudoRecipientFromEmployeeYpik($employeeYpik);
+                $message = $this->resolveDbRecipientEmailMessage(
+                    recipient: $recipient,
+                    renderer: $renderer,
+                    template: $template,
+                    globalMessage: $validated['message'] ?? '',
+                    useGlobalDefault: $useGlobalDefault,
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
+                );
+
+                if ($blastMessage === null) {
+                    $blastMessage = $this->createBlastMessageRecord(
+                        channel: 'EMAIL',
+                        subject: $validated['subject'],
+                        fallbackMessage: $validated['message'] ?? '',
+                        template: $template,
+                        campaignOptions: $campaignOptions
+                    );
+                }
+
+                $blastLog = $this->createBlastLogRecord(
+                    blastMessage: $blastMessage,
+                    target: (string) $employeeYpik->email_karyawan,
+                    messageSnapshot: $message
+                );
+
+                $payload = new BlastPayload($message);
+                $payload->setMeta('channel', 'EMAIL');
+                $payload->setMeta('sent_by', Auth::id());
+                $payload->setMeta('recipient_id', $employeeYpik->id);
+                $payload->setMeta('recipient_source', 'karyawan_ypik');
+                $payload->setMeta('blast_log_id', $blastLog->id);
+                $payload->setMeta('blast_message_id', $blastMessage->id);
+                $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                $this->attachFilesToPayload($payload, $attachments);
+                $this->attachFilesToPayload(
+                    $payload,
+                    $recipientAttachmentOverrides['db:' . $employeeYpik->id] ?? []
+                );
+
+                $this->dispatchQueuedBlastDelivery(
+                    channel: 'EMAIL',
+                    target: (string) $employeeYpik->email_karyawan,
                     subject: $validated['subject'],
                     payload: $payload,
                     campaignOptions: $campaignOptions,
@@ -1236,8 +1369,24 @@ class BlastController extends Controller
                 )
                 ->values();
 
+            $employeeYpikRecipients = BlastEmployeeYpikRecipient::query()
+                ->whereNotNull('email_karyawan')
+                ->where('is_valid', true)
+                ->orderBy('nama_karyawan')
+                ->get()
+                ->filter(
+                    fn (BlastEmployeeYpikRecipient $employeeYpik) =>
+                        filter_var($employeeYpik->email_karyawan, FILTER_VALIDATE_EMAIL)
+                )
+                ->map(
+                    fn (BlastEmployeeYpikRecipient $employeeYpik) =>
+                        $this->toPseudoRecipientFromEmployeeYpik($employeeYpik)
+                )
+                ->values();
+
             return $studentRecipients
                 ->merge($employeeRecipients)
+                ->merge($employeeYpikRecipients)
                 ->values();
         }
 
@@ -1260,8 +1409,19 @@ class BlastController extends Controller
                     $this->toPseudoRecipientFromEmployee($employee)
             );
 
+        $employeeYpikRecipients = BlastEmployeeYpikRecipient::query()
+            ->whereNotNull('wa_karyawan')
+            ->where('is_valid', true)
+            ->orderBy('nama_karyawan')
+            ->get()
+            ->map(
+                fn (BlastEmployeeYpikRecipient $employeeYpik) =>
+                    $this->toPseudoRecipientFromEmployeeYpik($employeeYpik)
+            );
+
         return $studentRecipients
             ->merge($employeeRecipients)
+            ->merge($employeeYpikRecipients)
             ->values();
     }
 
@@ -1841,6 +2001,27 @@ class BlastController extends Controller
             'catatan' => $employee->catatan,
             'is_valid' => (bool) $employee->is_valid,
             'source' => 'karyawan',
+        ]);
+    }
+
+    private function toPseudoRecipientFromEmployeeYpik(
+        BlastEmployeeYpikRecipient $employeeYpik
+    ): BlastRecipient {
+        return new BlastRecipient([
+            'id' => $employeeYpik->id,
+            'nama_siswa' => (string) $employeeYpik->nama_karyawan,
+            'kelas' => trim((string) ($employeeYpik->instansi ?? '')) !== ''
+                ? (string) $employeeYpik->instansi
+                : 'Karyawan YPIK',
+            'nama_wali' => trim((string) ($employeeYpik->nama_wali ?? '')) !== ''
+                ? (string) $employeeYpik->nama_wali
+                : (string) $employeeYpik->nama_karyawan,
+            'wa_wali' => $employeeYpik->wa_karyawan,
+            'wa_wali_2' => null,
+            'email_wali' => $employeeYpik->email_karyawan,
+            'catatan' => $employeeYpik->catatan,
+            'is_valid' => (bool) $employeeYpik->is_valid,
+            'source' => 'karyawan_ypik',
         ]);
     }
 

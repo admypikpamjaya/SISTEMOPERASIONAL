@@ -76,6 +76,12 @@ return [
                 'module_name' => 'admin_blast',
             ],
             [
+                'label' => 'Recipient Karyawan YPIK',
+                'icon'  => 'fas fa-address-card',
+                'route' => 'admin.blast.recipients.employees-ypik.index',
+                'module_name' => 'admin_blast',
+            ],
+            [
                 'label' => 'Template Blast',
                 'icon'  => 'fas fa-layer-group',
                 'route' => 'admin.blast.templates.index',

@@ -473,6 +473,11 @@ Route::prefix('admin')
                     Route::get('/', [BlastRecipientController::class, 'index'])->name('index');
                     Route::get('/employees', [BlastRecipientController::class, 'employeeIndex'])
                         ->name('employees.index');
+                    Route::get('/employees-ypik', [BlastRecipientController::class, 'employeeYpikIndex'])
+                        ->name('employees-ypik.index');
+                    Route::post('/employees-ypik/import', [BlastRecipientController::class, 'importEmployeeYpik'])
+                        ->middleware('check_access:blast_recipient.import')
+                        ->name('employees-ypik.import');
                     Route::get('/create', [BlastRecipientController::class, 'create'])
                         ->middleware('check_access:blast_recipient.create')
                         ->name('create');
@@ -491,6 +496,9 @@ Route::prefix('admin')
                     Route::delete('/employees/{id}', [BlastRecipientController::class, 'destroyEmployee'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('employees.destroy');
+                    Route::delete('/employees-ypik/{id}', [BlastRecipientController::class, 'destroyEmployeeYpik'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('employees-ypik.destroy');
                     Route::delete('/delete-all', [BlastRecipientController::class, 'destroyAllStudents'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('destroy-all');

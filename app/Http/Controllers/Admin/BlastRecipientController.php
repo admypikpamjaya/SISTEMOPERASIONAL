@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BlastEmployeeRecipient;
+use App\Models\BlastEmployeeYpikRecipient;
 use App\Models\BlastRecipient;
 use App\Services\Recipient\EmployeeRecipientBulkSaver;
+use App\Services\Recipient\EmployeeYpikRecipientBulkSaver;
 use App\Services\Recipient\ExcelImportService;
 use App\Services\Recipient\RecipientBulkSaver;
 use App\Services\Recipient\RecipientNormalizer;
@@ -153,6 +155,85 @@ class BlastRecipientController extends Controller
             'instansiOptions',
             'search',
             'selectedInstansi',
+            'allowedPerPage',
+            'perPage',
+            'totalEmployees',
+            'validCount',
+            'incompleteCount'
+        ));
+    }
+
+    public function employeeYpikIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'instansi' => 'nullable|string|max:255',
+            'status' => 'nullable|in:all,valid,invalid',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        $search = trim((string) ($validated['q'] ?? ''));
+        $selectedInstansi = trim((string) ($validated['instansi'] ?? ''));
+        $selectedStatus = strtolower((string) ($validated['status'] ?? 'all'));
+        $allowedPerPage = [20, 50, 100, 200];
+        $perPage = (int) ($validated['per_page'] ?? 50);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        $query = BlastEmployeeYpikRecipient::query();
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('nama_karyawan', 'like', '%' . $search . '%')
+                    ->orWhere('instansi', 'like', '%' . $search . '%')
+                    ->orWhere('nama_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_karyawan', 'like', '%' . $search . '%')
+                    ->orWhere('email_karyawan', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($selectedInstansi !== '') {
+            $query->where('instansi', $selectedInstansi);
+        }
+
+        if ($selectedStatus === 'valid') {
+            $query->where('is_valid', true);
+        } elseif ($selectedStatus === 'invalid') {
+            $query->where('is_valid', false);
+        }
+
+        $employees = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $instansiOptions = BlastEmployeeYpikRecipient::query()
+            ->select('instansi')
+            ->whereNotNull('instansi')
+            ->where('instansi', '!=', '')
+            ->distinct()
+            ->orderBy('instansi')
+            ->pluck('instansi');
+
+        $baseStatsQuery = BlastEmployeeYpikRecipient::query();
+        $totalEmployees = (clone $baseStatsQuery)->count();
+        $validCount = (clone $baseStatsQuery)->where('is_valid', true)->count();
+        $incompleteCount = (clone $baseStatsQuery)
+            ->where(function ($query) {
+                $query->whereNull('wa_karyawan')->orWhere('wa_karyawan', '');
+            })
+            ->where(function ($query) {
+                $query->whereNull('email_karyawan')->orWhere('email_karyawan', '');
+            })
+            ->count();
+
+        return view('admin.blast.recipients.employees-ypik', compact(
+            'employees',
+            'instansiOptions',
+            'search',
+            'selectedInstansi',
+            'selectedStatus',
             'allowedPerPage',
             'perPage',
             'totalEmployees',
@@ -368,6 +449,58 @@ class BlastRecipientController extends Controller
             ->with('success', $message);
     }
 
+    public function importEmployeeYpik(
+        Request $request,
+        ExcelImportService $importService,
+        EmployeeYpikRecipientBulkSaver $bulkSaver
+    ) {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,xls',
+        ]);
+
+        $uploadedFile = $request->file('file');
+
+        if ($uploadedFile === null) {
+            return redirect()
+                ->route('admin.blast.recipients.employees-ypik.index')
+                ->with('error', 'Import gagal: file tidak ditemukan.');
+        }
+
+        try {
+            $result = $importService->importEmployees($uploadedFile->getPathname());
+        } catch (\Throwable $e) {
+            Log::error('[RECIPIENT YPIK IMPORT FAILED]', [
+                'file' => $uploadedFile->getClientOriginalName(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('admin.blast.recipients.employees-ypik.index')
+                ->with('error', 'Import gagal: ' . $e->getMessage());
+        }
+
+        if (empty($result->valid) && empty($result->invalid)) {
+            return redirect()
+                ->route('admin.blast.recipients.employees-ypik.index')
+                ->with('error', 'Import gagal: file tidak berisi data yang dapat diproses.');
+        }
+
+        $summary = $bulkSaver->save(collect($result->valid));
+        $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
+        $message = 'Import data karyawan YPIK selesai. '
+            . "Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
+
+        if ((int) $summary['inserted'] === 0) {
+            return redirect()
+                ->route('admin.blast.recipients.employees-ypik.index')
+                ->with('error', $message . ' Tidak ada data baru yang disimpan.');
+        }
+
+        return redirect()
+            ->route('admin.blast.recipients.employees-ypik.index')
+            ->with('success', $message);
+    }
+
     public function destroy(string $id)
     {
         BlastRecipient::findOrFail($id)->delete();
@@ -388,5 +521,12 @@ class BlastRecipientController extends Controller
         BlastEmployeeRecipient::findOrFail($id)->delete();
 
         return back()->with('success', 'Data karyawan dihapus');
+    }
+
+    public function destroyEmployeeYpik(string $id)
+    {
+        BlastEmployeeYpikRecipient::findOrFail($id)->delete();
+
+        return back()->with('success', 'Data karyawan YPIK dihapus');
     }
 }
