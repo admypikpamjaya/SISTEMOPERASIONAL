@@ -475,8 +475,32 @@ Route::prefix('admin')
                     Route::get('/', [BlastRecipientController::class, 'index'])->name('index');
                     Route::get('/employees', [BlastRecipientController::class, 'employeeIndex'])
                         ->name('employees.index');
+                    Route::get('/employees/create', [BlastRecipientController::class, 'employeeCreate'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('employees.create');
+                    Route::post('/employees', [BlastRecipientController::class, 'employeeStore'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('employees.store');
+                    Route::get('/employees/{id}/edit', [BlastRecipientController::class, 'employeeEdit'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('employees.edit');
+                    Route::put('/employees/{id}', [BlastRecipientController::class, 'employeeUpdate'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('employees.update');
                     Route::get('/employees-ypik', [BlastRecipientController::class, 'employeeYpikIndex'])
                         ->name('employees-ypik.index');
+                    Route::get('/employees-ypik/create', [BlastRecipientController::class, 'employeeYpikCreate'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('employees-ypik.create');
+                    Route::post('/employees-ypik', [BlastRecipientController::class, 'employeeYpikStore'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('employees-ypik.store');
+                    Route::get('/employees-ypik/{id}/edit', [BlastRecipientController::class, 'employeeYpikEdit'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('employees-ypik.edit');
+                    Route::put('/employees-ypik/{id}', [BlastRecipientController::class, 'employeeYpikUpdate'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('employees-ypik.update');
                     Route::post('/employees-ypik/import', [BlastRecipientController::class, 'importEmployeeYpik'])
                         ->middleware('check_access:blast_recipient.import')
                         ->name('employees-ypik.import');

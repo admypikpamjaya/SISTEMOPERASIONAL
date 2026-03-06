@@ -7,6 +7,7 @@ use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastEmployeeYpikRecipient;
 use App\Models\BlastRecipient;
 use App\Services\Recipient\EmployeeRecipientBulkSaver;
+use App\Services\Recipient\EmployeeRecipientNormalizer;
 use App\Services\Recipient\EmployeeYpikRecipientBulkSaver;
 use App\Services\Recipient\ExcelImportService;
 use App\Services\Recipient\RecipientBulkSaver;
@@ -240,6 +241,322 @@ class BlastRecipientController extends Controller
             'validCount',
             'incompleteCount'
         ));
+    }
+
+    public function employeeCreate()
+    {
+        return view('admin.blast.recipients.employee-manual-form', [
+            'variant' => 'koperasi',
+            'isEdit' => false,
+            'employee' => null,
+        ]);
+    }
+
+    public function employeeStore(
+        Request $request,
+        EmployeeRecipientNormalizer $normalizer
+    ) {
+        $data = $request->validate([
+            'nama_karyawan' => 'required|string',
+            'instansi' => 'nullable|string',
+            'nama_wali' => 'nullable|string',
+            'email_karyawan' => 'nullable|email',
+            'wa_karyawan' => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if (empty($data['email_karyawan']) && empty($data['wa_karyawan'])) {
+            return back()->withErrors([
+                'email_karyawan' => 'Email atau WhatsApp wajib diisi',
+            ])->withInput();
+        }
+
+        $dto = $normalizer->normalize([
+            'nama_karyawan' => $data['nama_karyawan'],
+            'instansi' => $data['instansi'] ?? null,
+            'nama_wali' => $data['nama_wali'] ?? null,
+            'email' => $data['email_karyawan'] ?? null,
+            'wa' => $data['wa_karyawan'] ?? null,
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        if ($dto->email !== null || $dto->phone !== null) {
+            $exists = BlastEmployeeRecipient::query()
+                ->where(function ($query) use ($dto) {
+                    if ($dto->email !== null) {
+                        $query->orWhere('email_karyawan', $dto->email);
+                    }
+
+                    if ($dto->phone !== null) {
+                        $query->orWhere('wa_karyawan', $dto->phone);
+                    }
+                })
+                ->exists();
+
+            if ($exists) {
+                return back()->withErrors([
+                    'email_karyawan' => 'Data dengan email/WhatsApp tersebut sudah ada.',
+                ])->withInput();
+            }
+        }
+
+        BlastEmployeeRecipient::query()->create([
+            'nama_karyawan' => $dto->namaKaryawan,
+            'instansi' => $dto->instansi,
+            'nama_wali' => $dto->namaWali,
+            'wa_karyawan' => $dto->phone,
+            'email_karyawan' => $dto->email,
+            'catatan' => $dto->catatan,
+            'source' => 'manual:admin',
+            'is_valid' => empty($dto->errors),
+            'validation_error' => empty($dto->errors)
+                ? null
+                : implode(', ', $dto->errors),
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.employees.index')
+            ->with('success', 'Data karyawan koperasi berhasil ditambahkan.');
+    }
+
+    public function employeeEdit(string $id)
+    {
+        $employee = BlastEmployeeRecipient::findOrFail($id);
+
+        return view('admin.blast.recipients.employee-manual-form', [
+            'variant' => 'koperasi',
+            'isEdit' => true,
+            'employee' => $employee,
+        ]);
+    }
+
+    public function employeeUpdate(
+        Request $request,
+        string $id,
+        EmployeeRecipientNormalizer $normalizer
+    ) {
+        $employee = BlastEmployeeRecipient::findOrFail($id);
+
+        $data = $request->validate([
+            'nama_karyawan' => 'required|string',
+            'instansi' => 'nullable|string',
+            'nama_wali' => 'nullable|string',
+            'email_karyawan' => 'nullable|email',
+            'wa_karyawan' => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if (empty($data['email_karyawan']) && empty($data['wa_karyawan'])) {
+            return back()->withErrors([
+                'email_karyawan' => 'Email atau WhatsApp wajib diisi',
+            ])->withInput();
+        }
+
+        $dto = $normalizer->normalize([
+            'nama_karyawan' => $data['nama_karyawan'],
+            'instansi' => $data['instansi'] ?? null,
+            'nama_wali' => $data['nama_wali'] ?? null,
+            'email' => $data['email_karyawan'] ?? null,
+            'wa' => $data['wa_karyawan'] ?? null,
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        if ($dto->email !== null || $dto->phone !== null) {
+            $exists = BlastEmployeeRecipient::query()
+                ->where('id', '!=', $employee->id)
+                ->where(function ($query) use ($dto) {
+                    if ($dto->email !== null) {
+                        $query->orWhere('email_karyawan', $dto->email);
+                    }
+
+                    if ($dto->phone !== null) {
+                        $query->orWhere('wa_karyawan', $dto->phone);
+                    }
+                })
+                ->exists();
+
+            if ($exists) {
+                return back()->withErrors([
+                    'email_karyawan' => 'Data dengan email/WhatsApp tersebut sudah ada.',
+                ])->withInput();
+            }
+        }
+
+        $employee->update([
+            'nama_karyawan' => $dto->namaKaryawan,
+            'instansi' => $dto->instansi,
+            'nama_wali' => $dto->namaWali,
+            'wa_karyawan' => $dto->phone,
+            'email_karyawan' => $dto->email,
+            'catatan' => $dto->catatan,
+            'source' => $employee->source ?: 'manual:admin',
+            'is_valid' => empty($dto->errors),
+            'validation_error' => empty($dto->errors)
+                ? null
+                : implode(', ', $dto->errors),
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.employees.index')
+            ->with('success', 'Data karyawan koperasi berhasil diperbarui.');
+    }
+
+    public function employeeYpikCreate()
+    {
+        return view('admin.blast.recipients.employee-manual-form', [
+            'variant' => 'ypik',
+            'isEdit' => false,
+            'employee' => null,
+        ]);
+    }
+
+    public function employeeYpikStore(
+        Request $request,
+        EmployeeRecipientNormalizer $normalizer
+    ) {
+        $data = $request->validate([
+            'nama_karyawan' => 'required|string',
+            'instansi' => 'nullable|string',
+            'nama_wali' => 'nullable|string',
+            'email_karyawan' => 'nullable|email',
+            'wa_karyawan' => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if (empty($data['email_karyawan']) && empty($data['wa_karyawan'])) {
+            return back()->withErrors([
+                'email_karyawan' => 'Email atau WhatsApp wajib diisi',
+            ])->withInput();
+        }
+
+        $dto = $normalizer->normalize([
+            'nama_karyawan' => $data['nama_karyawan'],
+            'instansi' => $data['instansi'] ?? null,
+            'nama_wali' => $data['nama_wali'] ?? null,
+            'email' => $data['email_karyawan'] ?? null,
+            'wa' => $data['wa_karyawan'] ?? null,
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        if ($dto->email !== null || $dto->phone !== null) {
+            $exists = BlastEmployeeYpikRecipient::query()
+                ->where(function ($query) use ($dto) {
+                    if ($dto->email !== null) {
+                        $query->orWhere('email_karyawan', $dto->email);
+                    }
+
+                    if ($dto->phone !== null) {
+                        $query->orWhere('wa_karyawan', $dto->phone);
+                    }
+                })
+                ->exists();
+
+            if ($exists) {
+                return back()->withErrors([
+                    'email_karyawan' => 'Data dengan email/WhatsApp tersebut sudah ada.',
+                ])->withInput();
+            }
+        }
+
+        BlastEmployeeYpikRecipient::query()->create([
+            'nama_karyawan' => $dto->namaKaryawan,
+            'instansi' => $dto->instansi,
+            'nama_wali' => $dto->namaWali,
+            'wa_karyawan' => $dto->phone,
+            'email_karyawan' => $dto->email,
+            'catatan' => $dto->catatan,
+            'source' => 'manual:admin_ypik',
+            'is_valid' => empty($dto->errors),
+            'validation_error' => empty($dto->errors)
+                ? null
+                : implode(', ', $dto->errors),
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.employees-ypik.index')
+            ->with('success', 'Data karyawan YPIK berhasil ditambahkan.');
+    }
+
+    public function employeeYpikEdit(string $id)
+    {
+        $employee = BlastEmployeeYpikRecipient::findOrFail($id);
+
+        return view('admin.blast.recipients.employee-manual-form', [
+            'variant' => 'ypik',
+            'isEdit' => true,
+            'employee' => $employee,
+        ]);
+    }
+
+    public function employeeYpikUpdate(
+        Request $request,
+        string $id,
+        EmployeeRecipientNormalizer $normalizer
+    ) {
+        $employee = BlastEmployeeYpikRecipient::findOrFail($id);
+
+        $data = $request->validate([
+            'nama_karyawan' => 'required|string',
+            'instansi' => 'nullable|string',
+            'nama_wali' => 'nullable|string',
+            'email_karyawan' => 'nullable|email',
+            'wa_karyawan' => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if (empty($data['email_karyawan']) && empty($data['wa_karyawan'])) {
+            return back()->withErrors([
+                'email_karyawan' => 'Email atau WhatsApp wajib diisi',
+            ])->withInput();
+        }
+
+        $dto = $normalizer->normalize([
+            'nama_karyawan' => $data['nama_karyawan'],
+            'instansi' => $data['instansi'] ?? null,
+            'nama_wali' => $data['nama_wali'] ?? null,
+            'email' => $data['email_karyawan'] ?? null,
+            'wa' => $data['wa_karyawan'] ?? null,
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        if ($dto->email !== null || $dto->phone !== null) {
+            $exists = BlastEmployeeYpikRecipient::query()
+                ->where('id', '!=', $employee->id)
+                ->where(function ($query) use ($dto) {
+                    if ($dto->email !== null) {
+                        $query->orWhere('email_karyawan', $dto->email);
+                    }
+
+                    if ($dto->phone !== null) {
+                        $query->orWhere('wa_karyawan', $dto->phone);
+                    }
+                })
+                ->exists();
+
+            if ($exists) {
+                return back()->withErrors([
+                    'email_karyawan' => 'Data dengan email/WhatsApp tersebut sudah ada.',
+                ])->withInput();
+            }
+        }
+
+        $employee->update([
+            'nama_karyawan' => $dto->namaKaryawan,
+            'instansi' => $dto->instansi,
+            'nama_wali' => $dto->namaWali,
+            'wa_karyawan' => $dto->phone,
+            'email_karyawan' => $dto->email,
+            'catatan' => $dto->catatan,
+            'source' => $employee->source ?: 'manual:admin_ypik',
+            'is_valid' => empty($dto->errors),
+            'validation_error' => empty($dto->errors)
+                ? null
+                : implode(', ', $dto->errors),
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.employees-ypik.index')
+            ->with('success', 'Data karyawan YPIK berhasil diperbarui.');
     }
 
     public function create()

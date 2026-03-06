@@ -377,6 +377,9 @@
                 </form>
 
                 <div class="ypk-import-wrap">
+                    <a href="{{ route('admin.blast.recipients.employees-ypik.create') }}" class="ypk-btn" style="background:#ccfbf1;border-color:#99f6e4;color:#0f766e;">
+                        <i class="fas fa-plus"></i> Input Manual
+                    </a>
                     <form action="{{ route('admin.blast.recipients.employees-ypik.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <label class="ypk-btn ypk-file-btn" style="background:#fff;border-color:#99f6e4;color:#0f766e;">
@@ -406,7 +409,7 @@
                             <th>Email</th>
                             <th>Catatan</th>
                             <th style="width:150px;">Status</th>
-                            <th style="width:80px;">Aksi</th>
+                            <th style="width:140px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -430,13 +433,18 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data karyawan YPIK ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="ypk-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <div style="display:flex;gap:6px;">
+                                        <a href="{{ route('admin.blast.recipients.employees-ypik.edit', $employee->id) }}" class="ypk-btn" style="padding:6px 9px;background:#f0fdfa;border-color:#99f6e4;color:#0f766e;">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data karyawan YPIK ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="ypk-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -457,4 +465,3 @@
     </div>
 </div>
 @endsection
-

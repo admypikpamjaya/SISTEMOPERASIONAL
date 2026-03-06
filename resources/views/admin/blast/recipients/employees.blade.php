@@ -369,6 +369,9 @@
                 </form>
 
                 <div class="emp-import-wrap">
+                    <a href="{{ route('admin.blast.recipients.employees.create') }}" class="emp-btn" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">
+                        <i class="fas fa-plus"></i> Input Manual
+                    </a>
                     <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="import_type" value="karyawan">
@@ -399,7 +402,7 @@
                             <th>Email</th>
                             <th>Catatan</th>
                             <th style="width:150px;">Status</th>
-                            <th style="width:80px;">Aksi</th>
+                            <th style="width:140px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -423,13 +426,18 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data karyawan ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="emp-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <div style="display:flex;gap:6px;">
+                                        <a href="{{ route('admin.blast.recipients.employees.edit', $employee->id) }}" class="emp-btn" style="padding:6px 9px;background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data karyawan ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="emp-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
