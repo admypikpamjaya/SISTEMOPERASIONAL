@@ -65,17 +65,57 @@
                     role="menu"
                     data-accordion="false">
 
+                    @php
+                        $blastingOnly = Auth::check()
+                            && auth()->user()->role === \App\Enums\User\UserRole::BLASTING->value;
+                        $blastAllowedRoutePrefixes = ['admin.blast.'];
+                        $blastAllowedRoutes = ['logout'];
+
+                        $isBlastAllowedRoute = function (?string $route) use ($blastAllowedRoutePrefixes, $blastAllowedRoutes): bool {
+                            if (empty($route)) {
+                                return false;
+                            }
+
+                            if (in_array($route, $blastAllowedRoutes, true)) {
+                                return true;
+                            }
+
+                            foreach ($blastAllowedRoutePrefixes as $prefix) {
+                                if (str_starts_with($route, $prefix)) {
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        };
+                    @endphp
+
                     @foreach(config('menu') as $menu)
 
                         @php
-                            $hasChildren = isset($menu['children']);
+                            $menuChildren = collect($menu['children'] ?? []);
+                            if ($blastingOnly) {
+                                $menuChildren = $menuChildren
+                                    ->filter(fn($child) => $isBlastAllowedRoute($child['route'] ?? null))
+                                    ->values();
+                            }
+
+                            $hasChildren = $menuChildren->isNotEmpty();
                             $isActiveParent = false;
                             $isHiddenOnCurrentRoute = false;
+                            $isAllowedForBlasting = true;
 
                             if ($hasChildren) {
-                                $isActiveParent = collect($menu['children'])
-                                    ->pluck('route')
+                                $isActiveParent = $menuChildren->pluck('route')
                                     ->contains(fn($r) => request()->routeIs($r));
+                            }
+
+                            if ($blastingOnly) {
+                                $isAllowedForBlasting = $isBlastAllowedRoute($menu['route'] ?? null);
+
+                                if (!$isAllowedForBlasting && $hasChildren) {
+                                    $isAllowedForBlasting = $menuChildren->isNotEmpty();
+                                }
                             }
 
                             if (!empty($menu['hide_on_routes'])) {
@@ -89,6 +129,7 @@
                         @endphp
 
                         @if(
+                            $isAllowedForBlasting &&
                             !$isHiddenOnCurrentRoute &&
                             (
                                 empty($menu['module_name']) ||
@@ -117,7 +158,7 @@
                                 {{-- CHILDREN --}}
                                 @if($hasChildren)
                                     <ul class="nav nav-treeview">
-                                        @foreach($menu['children'] as $child)
+                                        @foreach($menuChildren as $child)
                                             @php
                                                 $canAccessChild = empty($child['module_name']) || app(\App\Services\AccessControl\PermissionService::class)
                                                     ->checkAccess(

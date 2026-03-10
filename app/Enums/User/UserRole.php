@@ -11,5 +11,6 @@ enum UserRole: string
     case ASSET_MANAGER = 'Asset Manager';
     case FINANCE = 'Finance';
     case PEMBINA = 'Pembina';
+    case BLASTING = 'Blasting';
     case QC = 'QC';
 }

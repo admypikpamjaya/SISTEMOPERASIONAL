@@ -19,6 +19,7 @@ use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\Finance\FinanceTunggakanController;
+use App\Enums\User\UserRole;
 
 // ADMIN
 use App\Http\Controllers\Admin\AnnouncementController;
@@ -33,9 +34,15 @@ use App\Http\Controllers\Admin\BlastMessageTemplateController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return Auth::check()
-        ? redirect()->route('dashboard.index')
-        : redirect()->route('login');
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    if (Auth::user()->role === UserRole::BLASTING->value) {
+        return redirect()->route('admin.blast.index');
+    }
+
+    return redirect()->route('dashboard.index');
 });
 
 /*
@@ -522,12 +529,27 @@ Route::prefix('admin')
                     Route::delete('/employees/{id}', [BlastRecipientController::class, 'destroyEmployee'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('employees.destroy');
+                    Route::delete('/employees/delete-all', [BlastRecipientController::class, 'destroyAllEmployees'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('employees.destroy-all');
+                    Route::delete('/employees/bulk-delete', [BlastRecipientController::class, 'destroySelectedEmployees'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('employees.bulk-delete');
                     Route::delete('/employees-ypik/{id}', [BlastRecipientController::class, 'destroyEmployeeYpik'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('employees-ypik.destroy');
+                    Route::delete('/employees-ypik/delete-all', [BlastRecipientController::class, 'destroyAllEmployeesYpik'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('employees-ypik.destroy-all');
+                    Route::delete('/employees-ypik/bulk-delete', [BlastRecipientController::class, 'destroySelectedEmployeesYpik'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('employees-ypik.bulk-delete');
                     Route::delete('/delete-all', [BlastRecipientController::class, 'destroyAllStudents'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('destroy-all');
+                    Route::delete('/bulk-delete', [BlastRecipientController::class, 'destroySelectedStudents'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('bulk-delete');
                     Route::delete('/{id}', [BlastRecipientController::class, 'destroy'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('destroy');

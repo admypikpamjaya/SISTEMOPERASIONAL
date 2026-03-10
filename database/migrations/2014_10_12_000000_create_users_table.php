@@ -22,6 +22,7 @@ return new class extends Migration
                 'Asset Manager',
                 'Finance',
                 'Pembina',
+                'Blasting',
                 'Qc',
             ])->default('User');
 

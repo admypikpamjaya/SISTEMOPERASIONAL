@@ -353,6 +353,40 @@
         color: white;
     }
 
+    .btn-delete-selected {
+        padding: 9px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        white-space: nowrap;
+        border: 1.5px solid #fecaca;
+        background: #ffffff;
+        color: var(--red);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .btn-delete-selected:hover {
+        background: #fee2e2;
+    }
+
+    .btn-delete-selected:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .bulk-checkbox {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--blue-primary);
+        cursor: pointer;
+    }
+
     /* ── TABLE ── */
     .table-scroll { overflow-x: auto; }
 
@@ -840,6 +874,14 @@
                     Data Karyawan YPIK
                 </a>
 
+                <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                </form>
+                <button type="submit" class="btn-delete-selected" id="bulkDeleteBtn" form="bulk-delete-form" disabled>
+                    Delete Selected
+                </button>
+
                 <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" onsubmit="return confirm('Hapus SEMUA recipient siswa? Tindakan ini tidak bisa dibatalkan.')">
                     @csrf
                     @method('DELETE')
@@ -864,6 +906,9 @@
                 <table>
                     <thead>
                         <tr>
+                            <th style="width:48px;">
+                                <input type="checkbox" class="bulk-checkbox" id="selectAllStudents">
+                            </th>
                             <th style="width:90px;">Status</th>
                             <th style="width:130px;">Nama Siswa</th>
                             <th style="width:75px;">Kelas</th>
@@ -881,6 +926,15 @@
                                 $waDisplay = trim(implode(' / ', array_filter([$r->wa_wali, $r->wa_wali_2])));
                             @endphp
                             <tr>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        class="bulk-checkbox student-checkbox"
+                                        name="selected_ids[]"
+                                        value="{{ $r->id }}"
+                                        form="bulk-delete-form"
+                                    >
+                                </td>
                                 <td>
                                     <div class="status-wrap">
                                         <span class="badge {{ $isComplete ? 'badge-lengkap' : 'badge-kurang' }}">
@@ -942,7 +996,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="empty-state">
                                         <div class="empty-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -1005,6 +1059,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    initBulkSelection();
+
     // Toast notifications
     @if(session('success'))
         showToast('{{ session('success') }}', 'success');
@@ -1030,6 +1086,62 @@ function showToast(message, type = 'success') {
     document.body.appendChild(toast);
 
     setTimeout(() => { if (toast.parentElement) toast.remove(); }, 4000);
+}
+
+function initBulkSelection() {
+    const form = document.getElementById('bulk-delete-form');
+    const selectAll = document.getElementById('selectAllStudents');
+    const checkboxes = Array.from(document.querySelectorAll('.student-checkbox'));
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+
+    if (!form || !deleteBtn || checkboxes.length === 0) {
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+        }
+        return;
+    }
+
+    function updateState() {
+        const selected = checkboxes.filter(cb => cb.checked);
+        const selectedCount = selected.length;
+        const totalCount = checkboxes.length;
+
+        deleteBtn.disabled = selectedCount === 0;
+        deleteBtn.textContent = selectedCount > 0
+            ? `Delete Selected (${selectedCount})`
+            : 'Delete Selected';
+
+        if (selectAll) {
+            selectAll.checked = selectedCount > 0 && selectedCount === totalCount;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            const checked = selectAll.checked;
+            checkboxes.forEach(cb => { cb.checked = checked; });
+            updateState();
+        });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+
+    form.addEventListener('submit', (event) => {
+        const selected = checkboxes.filter(cb => cb.checked);
+        if (selected.length === 0) {
+            event.preventDefault();
+            alert('Pilih minimal satu recipient untuk dihapus.');
+            return;
+        }
+
+        const confirmText = `Hapus ${selected.length} recipient siswa terpilih?`;
+        if (!confirm(confirmText)) {
+            event.preventDefault();
+        }
+    });
+
+    updateState();
 }
 </script>
 

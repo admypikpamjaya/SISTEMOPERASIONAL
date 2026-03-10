@@ -6,7 +6,8 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ env('APP_NAME') }}</title>
 
-  <!-- Google Font: Source Sans Pro -->
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/fontawesome-free/css/all.min.css') }}">
@@ -16,28 +17,272 @@
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
-</head>
-<body class="hold-transition login-page">
-<div class="login-box">
-    <div class="login-logo">
-        <img src="{{ asset('images/logo_ypik.webp') }}" alt="logo_ypik" height="100" />
-    </div>
-    <!-- /.login-logo -->
+  <style>
+      :root {
+          --ypk-blue: #1a56db;
+          --ypk-blue-dark: #1e3a8a;
+          --ypk-blue-soft: #dbeafe;
+          --ypk-text: #0f172a;
+          --ypk-muted: #64748b;
+          --ypk-border: #e2e8f0;
+          --ypk-bg: #f1f5f9;
+          --ypk-card: #ffffff;
+          --ypk-shadow: 0 22px 60px rgba(15, 23, 42, 0.18);
+      }
 
-    <div class="card">
-        <div class="card-header text-center">
-            <span class="font-weight-bolder">{{ env('APP_NAME') }}</span>
+      body.ypk-login {
+          font-family: 'Plus Jakarta Sans', 'Source Sans Pro', sans-serif;
+          background: radial-gradient(circle at 10% 10%, #e0f2fe, transparent 50%),
+                      radial-gradient(circle at 90% 15%, #e9d5ff, transparent 45%),
+                      radial-gradient(circle at 50% 100%, #dbeafe, transparent 55%),
+                      var(--ypk-bg);
+          color: var(--ypk-text);
+      }
+
+      .ypk-login-wrapper {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 36px 20px;
+      }
+
+      .ypk-login-card {
+          width: 100%;
+          max-width: 980px;
+          background: var(--ypk-card);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: var(--ypk-shadow);
+          border: 1px solid var(--ypk-border);
+          display: grid;
+          grid-template-columns: 1.15fr 1fr;
+      }
+
+      .ypk-login-visual {
+          padding: 40px 38px;
+          background: linear-gradient(135deg, var(--ypk-blue-dark) 0%, var(--ypk-blue) 55%, #2563eb 100%);
+          color: #fff;
+          position: relative;
+          overflow: hidden;
+      }
+
+      .ypk-login-visual::after {
+          content: '';
+          position: absolute;
+          width: 240px;
+          height: 240px;
+          border-radius: 40px;
+          background: rgba(255, 255, 255, 0.08);
+          top: -40px;
+          right: -60px;
+          transform: rotate(18deg);
+      }
+
+      .ypk-login-visual::before {
+          content: '';
+          position: absolute;
+          width: 180px;
+          height: 180px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.12);
+          bottom: -60px;
+          left: -40px;
+      }
+
+      .ypk-brand {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 26px;
+          position: relative;
+          z-index: 1;
+      }
+
+      .ypk-brand img {
+          width: 58px;
+          height: 58px;
+          border-radius: 16px;
+          padding: 6px;
+          background: rgba(255, 255, 255, 0.18);
+          box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+      }
+
+      .ypk-brand h1 {
+          font-size: 20px;
+          font-weight: 800;
+          margin: 0;
+          letter-spacing: -0.2px;
+      }
+
+      .ypk-brand p {
+          margin: 4px 0 0;
+          font-size: 13px;
+          opacity: 0.85;
+      }
+
+      .ypk-visual-title {
+          font-size: 26px;
+          font-weight: 700;
+          margin-bottom: 10px;
+          position: relative;
+          z-index: 1;
+      }
+
+      .ypk-visual-subtitle {
+          font-size: 14px;
+          opacity: 0.9;
+          margin-bottom: 24px;
+          position: relative;
+          z-index: 1;
+      }
+
+      .ypk-visual-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: grid;
+          gap: 12px;
+          position: relative;
+          z-index: 1;
+      }
+
+      .ypk-visual-list li {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 14px;
+          background: rgba(255, 255, 255, 0.12);
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+
+      .ypk-visual-list i {
+          font-size: 16px;
+      }
+
+      .ypk-login-form {
+          padding: 40px 38px;
+      }
+
+      .ypk-login-form h2 {
+          font-size: 22px;
+          font-weight: 700;
+          margin-bottom: 6px;
+      }
+
+      .ypk-login-form p {
+          color: var(--ypk-muted);
+          margin-bottom: 22px;
+          font-size: 14px;
+      }
+
+      .ypk-login-form label {
+          font-weight: 600;
+          font-size: 13px;
+          color: var(--ypk-text);
+      }
+
+      .ypk-login-form .form-control {
+          border-radius: 12px;
+          border: 1px solid var(--ypk-border);
+          background: #f8fafc;
+          font-size: 14px;
+          padding: 12px 14px;
+      }
+
+      .ypk-login-form .form-control:focus {
+          border-color: var(--ypk-blue);
+          box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.18);
+          background: #ffffff;
+      }
+
+      .ypk-login-form .btn-primary {
+          background: linear-gradient(135deg, var(--ypk-blue-dark), var(--ypk-blue));
+          border: none;
+          font-weight: 600;
+          padding: 12px 18px;
+          border-radius: 12px;
+          box-shadow: 0 12px 20px rgba(26, 86, 219, 0.2);
+      }
+
+      .ypk-login-form .btn-primary:hover {
+          background: linear-gradient(135deg, #1e40af, #1d4ed8);
+      }
+
+      .ypk-login-form .icheck-primary > label {
+          font-size: 13px;
+          color: var(--ypk-muted);
+      }
+
+      .ypk-login-form .invalid-feedback {
+          font-size: 12px;
+      }
+
+      .ypk-login-footer {
+          margin-top: 22px;
+          font-size: 12px;
+          color: var(--ypk-muted);
+      }
+
+      .ypk-login-footer strong {
+          color: var(--ypk-text);
+      }
+
+      @media (max-width: 991px) {
+          .ypk-login-card {
+              grid-template-columns: 1fr;
+          }
+
+          .ypk-login-visual {
+              order: 2;
+              border-top: 1px solid rgba(255, 255, 255, 0.2);
+          }
+      }
+
+      @media (max-width: 576px) {
+          .ypk-login-visual,
+          .ypk-login-form {
+              padding: 28px 24px;
+          }
+      }
+  </style>
+</head>
+<body class="hold-transition login-page ypk-login">
+<div class="ypk-login-wrapper">
+    <div class="ypk-login-card">
+        <div class="ypk-login-visual">
+            <div class="ypk-brand">
+                <img src="{{ asset('images/logo_ypik.webp') }}" alt="logo_ypik">
+                <div>
+                    <h1>{{ env('APP_NAME') }}</h1>
+                    <p>SOY YPIK PAM JAYA</p>
+                </div>
+            </div>
+            <div class="ypk-visual-title">Portal Operasional Terpadu</div>
+            <div class="ypk-visual-subtitle">
+                Kelola kegiatan harian, data, dan layanan yayasan dengan lebih rapi dan terarah.
+            </div>
+            <ul class="ypk-visual-list">
+                <li><i class="fas fa-shield-alt"></i> Akses aman untuk seluruh unit kerja</li>
+                <li><i class="fas fa-chart-line"></i> Ringkasan laporan yang mudah dibaca</li>
+                <li><i class="fas fa-bell"></i> Notifikasi tugas dan pengingat penting</li>
+            </ul>
         </div>
-        <div class="card-body login-card-body">
+
+        <div class="ypk-login-form">
+            <h2>Masuk ke Akun</h2>
+            <p>Gunakan email terdaftar dan password Anda untuk melanjutkan.</p>
 
             <form id="login-form" action="{{ url()->current() }}" method="post">
                 @csrf
                 <div class="form-group">
                     <label for="email">
-                        <i class="fas fa-user"></i>    
+                        <i class="fas fa-user mr-1"></i>
                         Email
                     </label>
-                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email">
+                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email" autocomplete="username">
                     @error('email')
                         <div class="invalid-feedback">
                             {{ $message }}
@@ -46,17 +291,18 @@
                 </div>
                 <div class="form-group">
                     <label for="password">
-                        <i class="fas fa-key"></i>
+                        <i class="fas fa-key mr-1"></i>
                         Password
                     </label>
-                    <input 
-                        type="password" 
-                        class="form-control 
+                    <input
+                        type="password"
+                        class="form-control
                             @error('password') is-invalid @enderror
-                            @if(session('auth_failed')) is-invalid @endif" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Masukkan password">
+                            @if(session('auth_failed')) is-invalid @endif"
+                        id="password"
+                        name="password"
+                        placeholder="Masukkan password"
+                        autocomplete="current-password">
                     @error('password')
                         <div class="invalid-feedback">
                             {{ $message }}
@@ -68,30 +314,27 @@
                         </div>
                     @endif
                 </div>
-                <div class="row d-flex align-items-center">
-                    <div class="col-8">
-                        <div class="icheck-primary">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">
-                                Remember Me
-                            </label>
-                        </div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="icheck-primary">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">
+                            Remember Me
+                        </label>
                     </div>
-                    <!-- /.col -->
-                    <div class="col-4">
-                        <button id="submit-form-button" type="submit" class="btn btn-sm btn-primary btn-block">
-                            <i class="fas fa-sign-in-alt"></i>    
-                            Sign In
-                        </button>
-                    </div>
+                    <small class="text-muted">Perlu bantuan? Hubungi admin.</small>
                 </div>
+                <button id="submit-form-button" type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt mr-1"></i>
+                    Sign In
+                </button>
             </form>
 
+            <div class="ypk-login-footer">
+                <strong>{{ env('APP_NAME') }}</strong> siap membantu operasional harian yayasan.
+            </div>
         </div>
-        <!-- /.login-card-body -->
     </div>
 </div>
-<!-- /.login-box -->
 
 <!-- jQuery -->
 <script src="{{ asset('vendor/adminlte/plugins/jquery/jquery.min.js') }}"></script>

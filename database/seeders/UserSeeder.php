@@ -78,6 +78,7 @@ class UserSeeder extends Seeder
                 'Asset Manager',
                 'Finance',
                 'Pembina',
+                'Blasting',
                 'QC'
             ) NOT NULL DEFAULT 'User'
         ");

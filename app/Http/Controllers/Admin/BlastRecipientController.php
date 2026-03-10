@@ -825,6 +825,20 @@ class BlastRecipientController extends Controller
         return back()->with('success', 'Penerima dihapus');
     }
 
+    public function destroySelectedStudents(Request $request)
+    {
+        $data = $request->validate([
+            'selected_ids' => ['required', 'array', 'min:1'],
+            'selected_ids.*' => ['uuid'],
+        ]);
+
+        $deleted = BlastRecipient::query()
+            ->whereIn('id', $data['selected_ids'])
+            ->delete();
+
+        return back()->with('success', "Recipient siswa terpilih berhasil dihapus ({$deleted} data).");
+    }
+
     public function destroyAllStudents()
     {
         $total = BlastRecipient::query()->count();
@@ -840,10 +854,54 @@ class BlastRecipientController extends Controller
         return back()->with('success', 'Data karyawan dihapus');
     }
 
+    public function destroySelectedEmployees(Request $request)
+    {
+        $data = $request->validate([
+            'selected_ids' => ['required', 'array', 'min:1'],
+            'selected_ids.*' => ['uuid'],
+        ]);
+
+        $deleted = BlastEmployeeRecipient::query()
+            ->whereIn('id', $data['selected_ids'])
+            ->delete();
+
+        return back()->with('success', "Recipient karyawan koperasi terpilih berhasil dihapus ({$deleted} data).");
+    }
+
+    public function destroyAllEmployees()
+    {
+        $total = BlastEmployeeRecipient::query()->count();
+        BlastEmployeeRecipient::query()->delete();
+
+        return back()->with('success', "Semua data recipient karyawan koperasi berhasil dihapus ({$total} data).");
+    }
+
     public function destroyEmployeeYpik(string $id)
     {
         BlastEmployeeYpikRecipient::findOrFail($id)->delete();
 
         return back()->with('success', 'Data karyawan YPIK dihapus');
+    }
+
+    public function destroySelectedEmployeesYpik(Request $request)
+    {
+        $data = $request->validate([
+            'selected_ids' => ['required', 'array', 'min:1'],
+            'selected_ids.*' => ['uuid'],
+        ]);
+
+        $deleted = BlastEmployeeYpikRecipient::query()
+            ->whereIn('id', $data['selected_ids'])
+            ->delete();
+
+        return back()->with('success', "Recipient karyawan YPIK terpilih berhasil dihapus ({$deleted} data).");
+    }
+
+    public function destroyAllEmployeesYpik()
+    {
+        $total = BlastEmployeeYpikRecipient::query()->count();
+        BlastEmployeeYpikRecipient::query()->delete();
+
+        return back()->with('success', "Semua data recipient karyawan YPIK berhasil dihapus ({$total} data).");
     }
 }

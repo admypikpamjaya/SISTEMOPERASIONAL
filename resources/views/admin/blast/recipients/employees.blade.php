@@ -244,6 +244,41 @@
     background: #f8fbff;
 }
 
+.emp-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--emp-blue-800);
+    cursor: pointer;
+}
+
+.emp-btn.outline-danger {
+    background: #ffffff;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.emp-btn.outline-danger:hover {
+    background: #fee2e2;
+}
+
+.emp-btn.danger {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.emp-btn.danger:hover {
+    background: #b91c1c;
+    color: #ffffff;
+    border-color: #b91c1c;
+}
+
+.emp-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .emp-name {
     font-weight: 700;
     color: var(--emp-text-900);
@@ -368,6 +403,11 @@
                     </a>
                 </form>
 
+                <form id="bulk-delete-employees-form" method="POST" action="{{ route('admin.blast.recipients.employees.bulk-delete') }}">
+                    @csrf
+                    @method('DELETE')
+                </form>
+
                 <div class="emp-import-wrap">
                     <a href="{{ route('admin.blast.recipients.employees.create') }}" class="emp-btn" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">
                         <i class="fas fa-plus"></i> Input Manual
@@ -387,6 +427,16 @@
                             >
                         </label>
                     </form>
+                    <button type="submit" class="emp-btn outline-danger" id="bulkDeleteEmployeesBtn" form="bulk-delete-employees-form" disabled>
+                        <i class="fas fa-trash-alt"></i> Delete Selected
+                    </button>
+                    <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy-all') }}" onsubmit="return confirm('Hapus SEMUA recipient karyawan koperasi? Tindakan ini tidak bisa dibatalkan.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="emp-btn danger">
+                            <i class="fas fa-trash"></i> Delete All
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -394,6 +444,9 @@
                 <table class="emp-table">
                     <thead>
                         <tr>
+                            <th style="width:44px;">
+                                <input type="checkbox" class="emp-checkbox" id="selectAllEmployees">
+                            </th>
                             <th style="width:56px;">No</th>
                             <th>Nama Karyawan</th>
                             <th>Instansi</th>
@@ -408,6 +461,15 @@
                     <tbody>
                         @forelse($employees as $employee)
                             <tr>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        class="emp-checkbox employee-checkbox"
+                                        name="selected_ids[]"
+                                        value="{{ $employee->id }}"
+                                        form="bulk-delete-employees-form"
+                                    >
+                                </td>
                                 <td>{{ ($employees->currentPage() - 1) * $employees->perPage() + $loop->iteration }}</td>
                                 <td><div class="emp-name">{{ $employee->nama_karyawan }}</div></td>
                                 <td>{{ $employee->instansi ?? '-' }}</td>
@@ -442,7 +504,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="emp-empty">
+                                <td colspan="10" class="emp-empty">
                                     Belum ada data karyawan. Silakan import file <b>recipent data koperasi tirta jatik utama</b>.
                                 </td>
                             </tr>
@@ -457,4 +519,62 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('bulk-delete-employees-form');
+    const selectAll = document.getElementById('selectAllEmployees');
+    const checkboxes = Array.from(document.querySelectorAll('.employee-checkbox'));
+    const deleteBtn = document.getElementById('bulkDeleteEmployeesBtn');
+
+    if (!form || !deleteBtn || checkboxes.length === 0) {
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+        }
+        return;
+    }
+
+    function updateState() {
+        const selected = checkboxes.filter(cb => cb.checked);
+        const selectedCount = selected.length;
+        const totalCount = checkboxes.length;
+
+        deleteBtn.disabled = selectedCount === 0;
+        deleteBtn.textContent = selectedCount > 0
+            ? `Delete Selected (${selectedCount})`
+            : 'Delete Selected';
+
+        if (selectAll) {
+            selectAll.checked = selectedCount > 0 && selectedCount === totalCount;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            const checked = selectAll.checked;
+            checkboxes.forEach(cb => { cb.checked = checked; });
+            updateState();
+        });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+
+    form.addEventListener('submit', (event) => {
+        const selected = checkboxes.filter(cb => cb.checked);
+        if (selected.length === 0) {
+            event.preventDefault();
+            alert('Pilih minimal satu recipient untuk dihapus.');
+            return;
+        }
+
+        const confirmText = `Hapus ${selected.length} recipient karyawan koperasi terpilih?`;
+        if (!confirm(confirmText)) {
+            event.preventDefault();
+        }
+    });
+
+    updateState();
+});
+</script>
 @endsection

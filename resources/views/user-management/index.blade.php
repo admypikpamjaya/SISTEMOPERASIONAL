@@ -146,6 +146,10 @@
         Pembina
     </option>
 
+    <option value="Blasting" {{ old('role', $user->role ?? '') === 'Blasting' ? 'selected' : '' }}>
+        Blasting
+    </option>
+
     <option value="QC" {{ old('role', $user->role ?? '') === 'QC' ? 'selected' : '' }}>
         QC
     </option>

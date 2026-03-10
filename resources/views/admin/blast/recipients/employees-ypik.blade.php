@@ -244,6 +244,41 @@
     background: #f8fbff;
 }
 
+.ypk-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--ypk-blue-700);
+    cursor: pointer;
+}
+
+.ypk-btn.outline-danger {
+    background: #ffffff;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.ypk-btn.outline-danger:hover {
+    background: #fee2e2;
+}
+
+.ypk-btn.danger {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.ypk-btn.danger:hover {
+    background: #b91c1c;
+    color: #ffffff;
+    border-color: #b91c1c;
+}
+
+.ypk-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .ypk-name {
     font-weight: 700;
     color: var(--ypk-text-900);
@@ -376,6 +411,11 @@
                     </a>
                 </form>
 
+                <form id="bulk-delete-ypik-form" method="POST" action="{{ route('admin.blast.recipients.employees-ypik.bulk-delete') }}">
+                    @csrf
+                    @method('DELETE')
+                </form>
+
                 <div class="ypk-import-wrap">
                     <a href="{{ route('admin.blast.recipients.employees-ypik.create') }}" class="ypk-btn" style="background:#ccfbf1;border-color:#99f6e4;color:#0f766e;">
                         <i class="fas fa-plus"></i> Input Manual
@@ -394,6 +434,16 @@
                             >
                         </label>
                     </form>
+                    <button type="submit" class="ypk-btn outline-danger" id="bulkDeleteYpikBtn" form="bulk-delete-ypik-form" disabled>
+                        <i class="fas fa-trash-alt"></i> Delete Selected
+                    </button>
+                    <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik.destroy-all') }}" onsubmit="return confirm('Hapus SEMUA recipient karyawan YPIK? Tindakan ini tidak bisa dibatalkan.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="ypk-btn danger">
+                            <i class="fas fa-trash"></i> Delete All
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -401,6 +451,9 @@
                 <table class="ypk-table">
                     <thead>
                         <tr>
+                            <th style="width:44px;">
+                                <input type="checkbox" class="ypk-checkbox" id="selectAllYpik">
+                            </th>
                             <th style="width:56px;">No</th>
                             <th>Nama Karyawan</th>
                             <th>Instansi</th>
@@ -415,6 +468,15 @@
                     <tbody>
                         @forelse($employees as $employee)
                             <tr>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        class="ypk-checkbox ypk-employee-checkbox"
+                                        name="selected_ids[]"
+                                        value="{{ $employee->id }}"
+                                        form="bulk-delete-ypik-form"
+                                    >
+                                </td>
                                 <td>{{ ($employees->currentPage() - 1) * $employees->perPage() + $loop->iteration }}</td>
                                 <td><div class="ypk-name">{{ $employee->nama_karyawan }}</div></td>
                                 <td>{{ $employee->instansi ?? '-' }}</td>
@@ -449,7 +511,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="ypk-empty">
+                                <td colspan="10" class="ypk-empty">
                                     Belum ada data karyawan YPIK. Silakan import file <b>DATAKARYAWANYPIK.xlsx</b>.
                                 </td>
                             </tr>
@@ -464,4 +526,62 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('bulk-delete-ypik-form');
+    const selectAll = document.getElementById('selectAllYpik');
+    const checkboxes = Array.from(document.querySelectorAll('.ypk-employee-checkbox'));
+    const deleteBtn = document.getElementById('bulkDeleteYpikBtn');
+
+    if (!form || !deleteBtn || checkboxes.length === 0) {
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+        }
+        return;
+    }
+
+    function updateState() {
+        const selected = checkboxes.filter(cb => cb.checked);
+        const selectedCount = selected.length;
+        const totalCount = checkboxes.length;
+
+        deleteBtn.disabled = selectedCount === 0;
+        deleteBtn.textContent = selectedCount > 0
+            ? `Delete Selected (${selectedCount})`
+            : 'Delete Selected';
+
+        if (selectAll) {
+            selectAll.checked = selectedCount > 0 && selectedCount === totalCount;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            const checked = selectAll.checked;
+            checkboxes.forEach(cb => { cb.checked = checked; });
+            updateState();
+        });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+
+    form.addEventListener('submit', (event) => {
+        const selected = checkboxes.filter(cb => cb.checked);
+        if (selected.length === 0) {
+            event.preventDefault();
+            alert('Pilih minimal satu recipient untuk dihapus.');
+            return;
+        }
+
+        const confirmText = `Hapus ${selected.length} recipient karyawan YPIK terpilih?`;
+        if (!confirm(confirmText)) {
+            event.preventDefault();
+        }
+    });
+
+    updateState();
+});
+</script>
 @endsection

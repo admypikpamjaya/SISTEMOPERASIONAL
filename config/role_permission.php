@@ -41,6 +41,28 @@ return [
     ],
 
     /* ===============================
+     | BLASTING (BLAST ONLY)
+     =============================== */
+    UserRole::BLASTING->value => [
+        // BLAST
+        PortalPermission::ADMIN_BLAST_READ,
+        PortalPermission::ADMIN_BLAST_SEND,
+
+        // BLAST RECIPIENT
+        PortalPermission::BLAST_RECIPIENT_READ,
+        PortalPermission::BLAST_RECIPIENT_CREATE,
+        PortalPermission::BLAST_RECIPIENT_UPDATE,
+        PortalPermission::BLAST_RECIPIENT_IMPORT,
+        PortalPermission::BLAST_RECIPIENT_DELETE,
+
+        // BLAST TEMPLATE
+        PortalPermission::BLAST_TEMPLATE_READ,
+        PortalPermission::BLAST_TEMPLATE_CREATE,
+        PortalPermission::BLAST_TEMPLATE_UPDATE,
+        PortalPermission::BLAST_TEMPLATE_DELETE,
+    ],
+
+    /* ===============================
      | ASSET MANAGER
      =============================== */
     UserRole::ASSET_MANAGER->value => [
