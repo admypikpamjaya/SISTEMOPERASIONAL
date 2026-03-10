@@ -221,16 +221,24 @@
         padding: 14px 20px;
         border-bottom: 1px solid var(--border);
         display: flex;
-        gap: 10px;
-        align-items: center;
+        flex-direction: column;
+        gap: 12px;
         background: #f8fafc;
+    }
+
+    .toolbar-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
     }
 
     .recipient-filter-form {
         display: flex;
         gap: 10px;
         align-items: center;
-        flex: 1;
+        flex: 1 1 520px;
+        flex-wrap: wrap;
     }
 
     .filter-select {
@@ -242,6 +250,7 @@
         color: var(--text-dark);
         background: white;
         min-width: 115px;
+        height: 38px;
     }
 
     .filter-select:focus {
@@ -262,6 +271,10 @@
         text-decoration: none;
         white-space: nowrap;
         transition: all 0.2s;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-filter {
@@ -298,6 +311,7 @@
         color: var(--text-mid);
         position: relative;
         font-family: 'Plus Jakarta Sans', sans-serif;
+        height: 38px;
     }
 
     .btn-import:hover { background: #f1f5f9; border-color: var(--blue-primary); color: var(--blue-primary); }
@@ -322,6 +336,7 @@
         text-decoration: none;
         font-family: 'Plus Jakarta Sans', sans-serif;
         box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+        height: 38px;
     }
 
     .btn-add:hover {
@@ -345,6 +360,7 @@
         background: #fef2f2;
         color: var(--red);
         font-family: 'Plus Jakarta Sans', sans-serif;
+        height: 38px;
     }
 
     .btn-delete-all:hover {
@@ -368,6 +384,7 @@
         background: #ffffff;
         color: var(--red);
         font-family: 'Plus Jakarta Sans', sans-serif;
+        height: 38px;
     }
 
     .btn-delete-selected:hover {
@@ -378,6 +395,24 @@
         opacity: 0.6;
         cursor: not-allowed;
         transform: none;
+    }
+
+    .toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+        flex: 1 1 360px;
+    }
+
+    .search-box-wrap {
+        min-width: 220px;
+        flex: 1 1 220px;
+    }
+
+    .search-box {
+        height: 38px;
     }
 
     .bulk-checkbox {
@@ -746,6 +781,9 @@
         .recipient-filter-form .search-box-wrap {
             min-width: 100%;
         }
+        .toolbar-actions {
+            justify-content: flex-start;
+        }
     }
 </style>
 
@@ -830,75 +868,79 @@
 
             {{-- Toolbar --}}
             <div class="toolbar-area">
-                <form method="GET" action="{{ route('admin.blast.recipients.index') }}" class="recipient-filter-form">
-                    <div class="search-box-wrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
-                        <input type="text" class="search-box" placeholder="Cari nama siswa, kelas, atau wali..." id="searchInput" name="q" value="{{ $search ?? '' }}">
+                <div class="toolbar-row">
+                    <form method="GET" action="{{ route('admin.blast.recipients.index') }}" class="recipient-filter-form">
+                        <div class="search-box-wrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            <input type="text" class="search-box" placeholder="Cari nama siswa, kelas, atau wali..." id="searchInput" name="q" value="{{ $search ?? '' }}">
+                        </div>
+                        <select name="kelas" class="filter-select" aria-label="Filter kelas">
+                            <option value="">Semua Kelas</option>
+                            @foreach(($kelasOptions ?? collect()) as $kelasOption)
+                                <option value="{{ $kelasOption }}" @selected(($selectedClass ?? '') === $kelasOption)>{{ $kelasOption }}</option>
+                            @endforeach
+                        </select>
+                        <select name="per_page" class="filter-select" aria-label="Jumlah data">
+                            @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
+                                <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ $size }}/halaman</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn-filter">Terapkan</button>
+                        @if(!empty($search) || !empty($selectedClass))
+                            <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">Reset</a>
+                        @endif
+                    </form>
+
+                    <div class="toolbar-actions">
+                        <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
+                            @csrf
+                            <input type="hidden" name="import_type" value="siswa">
+                            <button type="button" class="btn-import" id="importExcelBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                Impor Excel
+                                <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
+                            </button>
+                        </form>
+
+                        <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter" style="text-decoration:none;">
+                            Data Koperasi
+                        </a>
+
+                        <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter" style="text-decoration:none;">
+                            Data Karyawan YPIK
+                        </a>
+
+                        <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                        <button type="submit" class="btn-delete-selected" id="bulkDeleteBtn" form="bulk-delete-form" disabled>
+                            Delete Selected
+                        </button>
+
+                        <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" onsubmit="return confirm('Hapus SEMUA recipient siswa? Tindakan ini tidak bisa dibatalkan.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-delete-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                                Delete All
+                            </button>
+                        </form>
+
+                        <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px;height:14px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Tambah Data
+                        </a>
                     </div>
-                    <select name="kelas" class="filter-select" aria-label="Filter kelas">
-                        <option value="">Semua Kelas</option>
-                        @foreach(($kelasOptions ?? collect()) as $kelasOption)
-                            <option value="{{ $kelasOption }}" @selected(($selectedClass ?? '') === $kelasOption)>{{ $kelasOption }}</option>
-                        @endforeach
-                    </select>
-                    <select name="per_page" class="filter-select" aria-label="Jumlah data">
-                        @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
-                            <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ $size }}/halaman</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="btn-filter">Terapkan</button>
-                    @if(!empty($search) || !empty($selectedClass))
-                        <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">Reset</a>
-                    @endif
-                </form>
-
-                <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
-                    @csrf
-                    <input type="hidden" name="import_type" value="siswa">
-                    <button type="button" class="btn-import" id="importExcelBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        Impor Excel
-                        <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
-                    </button>
-                </form>
-
-                <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter" style="text-decoration:none;">
-                    Data Koperasi
-                </a>
-
-                <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter" style="text-decoration:none;">
-                    Data Karyawan YPIK
-                </a>
-
-                <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                </form>
-                <button type="submit" class="btn-delete-selected" id="bulkDeleteBtn" form="bulk-delete-form" disabled>
-                    Delete Selected
-                </button>
-
-                <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" onsubmit="return confirm('Hapus SEMUA recipient siswa? Tindakan ini tidak bisa dibatalkan.')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-delete-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                        Delete All
-                    </button>
-                </form>
-
-                <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px;height:14px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Tambah Data
-                </a>
+                </div>
             </div>
 
             {{-- Table --}}
