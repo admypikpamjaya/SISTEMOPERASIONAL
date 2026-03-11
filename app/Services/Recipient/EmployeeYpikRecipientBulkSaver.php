@@ -6,7 +6,7 @@ use App\Models\BlastEmployeeYpikRecipient;
 
 class EmployeeYpikRecipientBulkSaver
 {
-    public function save($dtos): array
+    public function save($dtos, string $dataset = 'ypik'): array
     {
         $inserted = 0;
         $duplicates = 0;
@@ -21,6 +21,7 @@ class EmployeeYpikRecipientBulkSaver
             $exists = false;
             if (!empty($dto->email) || !empty($dto->phone)) {
                 $exists = BlastEmployeeYpikRecipient::query()
+                    ->where('dataset', $dataset)
                     ->where(function ($query) use ($dto) {
                         if (!empty($dto->email)) {
                             $query->orWhere('email_karyawan', $dto->email);
@@ -46,6 +47,7 @@ class EmployeeYpikRecipientBulkSaver
                 'email_karyawan' => $dto->email,
                 'catatan' => $dto->catatan,
                 'source' => 'excel:datakaryawanypik',
+                'dataset' => $dataset,
                 'is_valid' => $isValid,
                 'validation_error' => $error,
             ]);
@@ -60,4 +62,3 @@ class EmployeeYpikRecipientBulkSaver
         ];
     }
 }
-

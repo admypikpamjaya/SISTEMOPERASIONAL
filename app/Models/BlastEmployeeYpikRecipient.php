@@ -24,6 +24,7 @@ class BlastEmployeeYpikRecipient extends Model
         'email_karyawan',
         'catatan',
         'source',
+        'dataset',
         'is_valid',
         'validation_error',
     ];
@@ -41,4 +42,3 @@ class BlastEmployeeYpikRecipient extends Model
         });
     }
 }
-

@@ -82,6 +82,12 @@ return [
                 'module_name' => 'admin_blast',
             ],
             [
+                'label' => 'Recipient YPIK Pam Jaya',
+                'icon'  => 'fas fa-id-card',
+                'route' => 'admin.blast.recipients.employees-ypik-pamjaya.index',
+                'module_name' => 'admin_blast',
+            ],
+            [
                 'label' => 'Template Blast',
                 'icon'  => 'fas fa-layer-group',
                 'route' => 'admin.blast.templates.index',

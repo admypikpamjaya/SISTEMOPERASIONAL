@@ -913,6 +913,9 @@
                         <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter" style="text-decoration:none;">
                             Data Karyawan YPIK
                         </a>
+                        <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="btn-filter" style="text-decoration:none;">
+                            YPIK Pam Jaya
+                        </a>
 
                         <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
                             @csrf

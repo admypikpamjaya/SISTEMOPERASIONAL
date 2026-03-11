@@ -3,16 +3,21 @@
 @php
     $isYpik = ($variant ?? 'koperasi') === 'ypik';
     $isEditMode = (bool) ($isEdit ?? false);
+    $dataset = $dataset ?? ($employee?->dataset ?? 'ypik');
 
     $title = $isYpik
-        ? 'Recipient Karyawan YPIK'
+        ? ($dataset === 'pam_jaya' ? 'Recipient Karyawan YPIK Pam Jaya' : 'Recipient Karyawan YPIK')
         : 'Recipient Karyawan Koperasi Tirta Jatik Utama';
     $subtitle = $isYpik
-        ? 'Input dan update data recipient karyawan YPIK secara manual.'
+        ? ($dataset === 'pam_jaya'
+            ? 'Input dan update data recipient YPIK Pam Jaya secara manual.'
+            : 'Input dan update data recipient karyawan YPIK secara manual.')
         : 'Input dan update data recipient karyawan koperasi secara manual.';
 
     $indexRouteName = $isYpik
-        ? 'admin.blast.recipients.employees-ypik.index'
+        ? ($dataset === 'pam_jaya'
+            ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+            : 'admin.blast.recipients.employees-ypik.index')
         : 'admin.blast.recipients.employees.index';
     $storeRouteName = $isYpik
         ? 'admin.blast.recipients.employees-ypik.store'
@@ -184,6 +189,9 @@
                 @csrf
                 @if($isEditMode)
                     @method('PUT')
+                @endif
+                @if($isYpik)
+                    <input type="hidden" name="dataset" value="{{ $dataset }}">
                 @endif
 
                 <div class="emp-manual-grid">

@@ -163,25 +163,50 @@ class FinanceTunggakanController extends Controller
     {
         $validated = $request->validate([
             'template_id' => 'nullable|string|max:50',
+            'blast_mode' => 'nullable|in:all,selected',
+            'selected_ids' => 'nullable|array',
+            'selected_ids.*' => 'uuid',
         ]);
 
         try {
+            $blastMode = (string) ($validated['blast_mode'] ?? 'all');
+            $selectedIds = $blastMode === 'selected'
+                ? array_values(array_filter($validated['selected_ids'] ?? []))
+                : [];
+
+            if ($blastMode === 'selected' && empty($selectedIds)) {
+                return redirect()
+                    ->route('finance.tunggakan.index')
+                    ->with('error', 'Pilih minimal satu data tunggakan untuk di-blast.');
+            }
+
             $summary = $this->tunggakanService->blastWhatsappFromTunggakan(
                 templateId: $validated['template_id'] ?? null,
-                actorId: auth()->id() ? (string) auth()->id() : null
+                actorId: auth()->id() ? (string) auth()->id() : null,
+                recordIds: $selectedIds !== [] ? $selectedIds : null
             );
 
             if ((int) ($summary['candidate_records'] ?? 0) === 0) {
                 return redirect()
                     ->route('finance.tunggakan.index')
-                    ->with('success', 'Tidak ada data tunggakan draft/failed yang siap di-blast.');
+                    ->with(
+                        'success',
+                        $blastMode === 'selected'
+                            ? 'Tidak ada data tunggakan terpilih yang siap di-blast.'
+                            : 'Tidak ada data tunggakan draft/failed yang siap di-blast.'
+                    );
             }
+
+            $selectedMessage = $blastMode === 'selected'
+                ? 'Data terpilih: ' . count($selectedIds) . '. '
+                : '';
 
             return redirect()
                 ->route('finance.tunggakan.index')
                 ->with(
                     'success',
                     'Blast WA tunggakan selesai. '
+                    . $selectedMessage
                     . 'Recipient diproses: ' . $summary['processed_recipients']
                     . ', Recipient terkirim: ' . $summary['sent_recipients']
                     . ', Recipient gagal: ' . $summary['failed_recipients']

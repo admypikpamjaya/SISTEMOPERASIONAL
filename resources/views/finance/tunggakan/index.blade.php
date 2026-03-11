@@ -347,6 +347,18 @@
     white-space: nowrap;
 }
 
+.tg-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #1d4ed8;
+    cursor: pointer;
+}
+
+.tg-checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .tg-table td {
     font-size: 12.5px;
     padding: 11px 12px;
@@ -517,7 +529,7 @@
 
                 <div class="tg-action-card">
                     <div class="tg-action-label">Blast WhatsApp Tunggakan</div>
-                    <form action="{{ route('finance.tunggakan.blast-whatsapp') }}" method="POST" onsubmit="return confirm('Blast WA dari data tunggakan draft/failed sekarang?');">
+                    <form id="tunggakan-blast-form" action="{{ route('finance.tunggakan.blast-whatsapp') }}" method="POST">
                         @csrf
                         <div class="tg-field" style="margin-bottom:10px;">
                             <select class="tg-select" name="template_id">
@@ -527,9 +539,12 @@
                                 @endforeach
                             </select>
                         </div>
-                        <button type="submit" class="tg-btn primary">Blast WA Sekarang</button>
+                        <div class="tg-actions">
+                            <button type="submit" class="tg-btn primary" name="blast_mode" value="all">Blast Semua Draft/Failed</button>
+                            <button type="submit" class="tg-btn ghost" name="blast_mode" value="selected" id="blastSelectedBtn" disabled>Blast Selected</button>
+                        </div>
                     </form>
-                    <div class="tg-hint">Diproses: data <strong>matched siswa</strong> atau data dengan <strong>no telepon valid</strong> (status blast draft/failed).</div>
+                    <div class="tg-hint">Diproses: data <strong>matched siswa</strong> atau data dengan <strong>no telepon valid</strong> (status blast draft/failed). Gunakan checkbox di tabel untuk blast manual.</div>
                 </div>
 
                 <div class="tg-action-card">
@@ -676,6 +691,9 @@
                 <table class="tg-table">
                     <thead>
                         <tr>
+                            <th style="width:46px;">
+                                <input type="checkbox" class="tg-checkbox" id="selectAllTunggakan">
+                            </th>
                             <th style="width:52px;">No</th>
                             <th>Nama Murid</th>
                             <th>Kelas</th>
@@ -695,8 +713,30 @@
                                 $source = strtolower((string) optional($record->batch)->source_type);
                                 $match = strtolower((string) $record->match_status);
                                 $blast = strtolower((string) $record->blast_status);
+                                $hasPhone = trim((string) $record->no_telepon) !== '';
+                                $canMatch = $record->match_status === 'matched'
+                                    && $record->recipient_source === 'siswa'
+                                    && !empty($record->recipient_id);
+                                $isSelectable = in_array($blast, ['draft', 'failed'], true) && ($canMatch || $hasPhone);
+                                $selectHint = '';
+                                if (!$isSelectable) {
+                                    $selectHint = in_array($blast, ['draft', 'failed'], true)
+                                        ? 'Belum matched dan no telepon kosong.'
+                                        : 'Status blast bukan draft/failed.';
+                                }
                             @endphp
                             <tr>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        class="tg-checkbox tunggakan-checkbox"
+                                        name="selected_ids[]"
+                                        value="{{ $record->id }}"
+                                        form="tunggakan-blast-form"
+                                        @disabled(!$isSelectable)
+                                        @if(!$isSelectable) title="{{ $selectHint }}" @endif
+                                    >
+                                </td>
                                 <td>{{ ($records->currentPage() - 1) * $records->perPage() + $loop->iteration }}</td>
                                 <td>
                                     <div class="tg-name">{{ $record->nama_murid }}</div>
@@ -732,7 +772,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="tg-empty">Belum ada data tunggakan. Silakan input manual, import Excel, atau sync dari DB siswa.</td>
+                                <td colspan="12" class="tg-empty">Belum ada data tunggakan. Silakan input manual, import Excel, atau sync dari DB siswa.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -800,6 +840,76 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     setInterval(poll, 10000);
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const blastForm = document.getElementById('tunggakan-blast-form');
+    const blastSelectedBtn = document.getElementById('blastSelectedBtn');
+    const selectAll = document.getElementById('selectAllTunggakan');
+    const checkboxes = Array.from(document.querySelectorAll('.tunggakan-checkbox'));
+    const eligibleCheckboxes = checkboxes.filter(cb => !cb.disabled);
+
+    if (!blastForm || !blastSelectedBtn) {
+        return;
+    }
+
+    const getSelectedCount = () => eligibleCheckboxes.filter(cb => cb.checked).length;
+
+    const updateSelectionState = () => {
+        const selectedCount = getSelectedCount();
+        blastSelectedBtn.disabled = selectedCount === 0;
+        blastSelectedBtn.textContent = selectedCount > 0
+            ? `Blast Selected (${selectedCount})`
+            : 'Blast Selected';
+
+        if (selectAll) {
+            if (eligibleCheckboxes.length === 0) {
+                selectAll.checked = false;
+                selectAll.indeterminate = false;
+                return;
+            }
+
+            const totalEligible = eligibleCheckboxes.length;
+            selectAll.checked = selectedCount > 0 && selectedCount === totalEligible;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < totalEligible;
+        }
+    };
+
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            const isChecked = selectAll.checked;
+            eligibleCheckboxes.forEach(cb => { cb.checked = isChecked; });
+            updateSelectionState();
+        });
+    }
+
+    eligibleCheckboxes.forEach(cb => cb.addEventListener('change', updateSelectionState));
+
+    blastForm.addEventListener('submit', (event) => {
+        const submitter = event.submitter;
+        const mode = submitter ? submitter.value : 'all';
+        const selectedCount = getSelectedCount();
+
+        if (mode === 'selected') {
+            if (selectedCount === 0) {
+                event.preventDefault();
+                alert('Pilih minimal satu data tunggakan untuk di-blast.');
+                return;
+            }
+
+            if (!confirm(`Blast WA untuk ${selectedCount} data tunggakan terpilih sekarang?`)) {
+                event.preventDefault();
+            }
+            return;
+        }
+
+        if (!confirm('Blast WA dari data tunggakan draft/failed sekarang?')) {
+            event.preventDefault();
+        }
+    });
+
+    updateSelectionState();
 });
 </script>
 @endsection

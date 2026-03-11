@@ -304,6 +304,11 @@
     color: #991b1b;
 }
 
+.ypk-badge.dataset {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
 .ypk-error-detail {
     margin-top: 3px;
     font-size: 11px;
@@ -329,16 +334,19 @@
 
 <div class="ypk-page">
     <div class="ypk-head">
-        <div>
-            <div class="ypk-head-title">Recipient Karyawan YPIK</div>
-            <div class="ypk-head-sub">Fitur baru terpisah dari data koperasi. Mendukung import semua sheet dari file Excel karyawan YPIK.</div>
-        </div>
+            <div>
+                <div class="ypk-head-title">Recipient Karyawan YPIK</div>
+                <div class="ypk-head-sub">Fitur baru terpisah dari data koperasi. Data karyawan YPIK terbaru dipisahkan dari data legacy YPIK Pam Jaya.</div>
+            </div>
         <div class="ypk-head-actions">
             <a href="{{ route('admin.blast.recipients.index') }}" class="ypk-btn ghost">
                 <i class="fas fa-user-graduate"></i> Data Siswa
             </a>
             <a href="{{ route('admin.blast.recipients.employees.index') }}" class="ypk-btn ghost">
                 <i class="fas fa-building"></i> Data Koperasi
+            </a>
+            <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="ypk-btn ghost">
+                <i class="fas fa-id-card"></i> YPIK Pam Jaya
             </a>
         </div>
     </div>
@@ -422,6 +430,7 @@
                     </a>
                     <form action="{{ route('admin.blast.recipients.employees-ypik.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
+                        <input type="hidden" name="dataset" value="ypik">
                         <label class="ypk-btn ypk-file-btn" style="background:#fff;border-color:#99f6e4;color:#0f766e;">
                             <i class="fas fa-file-import"></i> Import Excel Karyawan YPIK
                             <input
@@ -478,7 +487,12 @@
                                     >
                                 </td>
                                 <td>{{ ($employees->currentPage() - 1) * $employees->perPage() + $loop->iteration }}</td>
-                                <td><div class="ypk-name">{{ $employee->nama_karyawan }}</div></td>
+                                <td>
+                                    <div class="ypk-name">{{ $employee->nama_karyawan }}</div>
+                                    @if(($employee->dataset ?? 'pam_jaya') === 'pam_jaya')
+                                        <span class="ypk-badge dataset">Pam Jaya</span>
+                                    @endif
+                                </td>
                                 <td>{{ $employee->instansi ?? '-' }}</td>
                                 <td>{{ $employee->nama_wali ?? '-' }}</td>
                                 <td>{{ $employee->wa_karyawan ?? '-' }}</td>
@@ -512,7 +526,7 @@
                         @empty
                             <tr>
                                 <td colspan="10" class="ypk-empty">
-                                    Belum ada data karyawan YPIK. Silakan import file <b>DATAKARYAWANYPIK.xlsx</b>.
+                                    Belum ada data karyawan YPIK. Silakan import file <b>karyawanypik aja.xlsx</b>.
                                 </td>
                             </tr>
                         @endforelse

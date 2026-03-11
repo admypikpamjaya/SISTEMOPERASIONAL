@@ -176,13 +176,15 @@ class BlastRecipientController extends Controller
         $search = trim((string) ($validated['q'] ?? ''));
         $selectedInstansi = trim((string) ($validated['instansi'] ?? ''));
         $selectedStatus = strtolower((string) ($validated['status'] ?? 'all'));
+        $selectedDataset = 'ypik';
         $allowedPerPage = [20, 50, 100, 200];
         $perPage = (int) ($validated['per_page'] ?? 50);
         if (!in_array($perPage, $allowedPerPage, true)) {
             $perPage = 50;
         }
 
-        $query = BlastEmployeeYpikRecipient::query();
+        $query = BlastEmployeeYpikRecipient::query()
+            ->where('dataset', $selectedDataset);
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
@@ -213,11 +215,13 @@ class BlastRecipientController extends Controller
             ->select('instansi')
             ->whereNotNull('instansi')
             ->where('instansi', '!=', '')
+            ->where('dataset', $selectedDataset)
             ->distinct()
             ->orderBy('instansi')
             ->pluck('instansi');
 
-        $baseStatsQuery = BlastEmployeeYpikRecipient::query();
+        $baseStatsQuery = BlastEmployeeYpikRecipient::query()
+            ->where('dataset', $selectedDataset);
         $totalEmployees = (clone $baseStatsQuery)->count();
         $validCount = (clone $baseStatsQuery)->where('is_valid', true)->count();
         $incompleteCount = (clone $baseStatsQuery)
@@ -235,6 +239,91 @@ class BlastRecipientController extends Controller
             'search',
             'selectedInstansi',
             'selectedStatus',
+            'selectedDataset',
+            'allowedPerPage',
+            'perPage',
+            'totalEmployees',
+            'validCount',
+            'incompleteCount'
+        ));
+    }
+
+    public function employeeYpikPamJayaIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'instansi' => 'nullable|string|max:255',
+            'status' => 'nullable|in:all,valid,invalid',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        $search = trim((string) ($validated['q'] ?? ''));
+        $selectedInstansi = trim((string) ($validated['instansi'] ?? ''));
+        $selectedStatus = strtolower((string) ($validated['status'] ?? 'all'));
+        $selectedDataset = 'pam_jaya';
+        $allowedPerPage = [20, 50, 100, 200];
+        $perPage = (int) ($validated['per_page'] ?? 50);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        $query = BlastEmployeeYpikRecipient::query()
+            ->where('dataset', $selectedDataset);
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('nama_karyawan', 'like', '%' . $search . '%')
+                    ->orWhere('instansi', 'like', '%' . $search . '%')
+                    ->orWhere('nama_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_karyawan', 'like', '%' . $search . '%')
+                    ->orWhere('email_karyawan', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($selectedInstansi !== '') {
+            $query->where('instansi', $selectedInstansi);
+        }
+
+        if ($selectedStatus === 'valid') {
+            $query->where('is_valid', true);
+        } elseif ($selectedStatus === 'invalid') {
+            $query->where('is_valid', false);
+        }
+
+        $employees = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $instansiOptions = BlastEmployeeYpikRecipient::query()
+            ->select('instansi')
+            ->whereNotNull('instansi')
+            ->where('instansi', '!=', '')
+            ->where('dataset', $selectedDataset)
+            ->distinct()
+            ->orderBy('instansi')
+            ->pluck('instansi');
+
+        $baseStatsQuery = BlastEmployeeYpikRecipient::query()
+            ->where('dataset', $selectedDataset);
+        $totalEmployees = (clone $baseStatsQuery)->count();
+        $validCount = (clone $baseStatsQuery)->where('is_valid', true)->count();
+        $incompleteCount = (clone $baseStatsQuery)
+            ->where(function ($query) {
+                $query->whereNull('wa_karyawan')->orWhere('wa_karyawan', '');
+            })
+            ->where(function ($query) {
+                $query->whereNull('email_karyawan')->orWhere('email_karyawan', '');
+            })
+            ->count();
+
+        return view('admin.blast.recipients.employees-ypik-pamjaya', compact(
+            'employees',
+            'instansiOptions',
+            'search',
+            'selectedInstansi',
+            'selectedStatus',
+            'selectedDataset',
             'allowedPerPage',
             'perPage',
             'totalEmployees',
@@ -401,10 +490,11 @@ class BlastRecipientController extends Controller
             ->with('success', 'Data karyawan koperasi berhasil diperbarui.');
     }
 
-    public function employeeYpikCreate()
+    public function employeeYpikCreate(Request $request)
     {
         return view('admin.blast.recipients.employee-manual-form', [
             'variant' => 'ypik',
+            'dataset' => $request->input('dataset', 'ypik'),
             'isEdit' => false,
             'employee' => null,
         ]);
@@ -421,6 +511,7 @@ class BlastRecipientController extends Controller
             'email_karyawan' => 'nullable|email',
             'wa_karyawan' => 'nullable|string',
             'catatan' => 'nullable|string',
+            'dataset' => 'nullable|in:ypik,pam_jaya',
         ]);
 
         if (empty($data['email_karyawan']) && empty($data['wa_karyawan'])) {
@@ -429,6 +520,7 @@ class BlastRecipientController extends Controller
             ])->withInput();
         }
 
+        $dataset = $data['dataset'] ?? 'ypik';
         $dto = $normalizer->normalize([
             'nama_karyawan' => $data['nama_karyawan'],
             'instansi' => $data['instansi'] ?? null,
@@ -440,6 +532,7 @@ class BlastRecipientController extends Controller
 
         if ($dto->email !== null || $dto->phone !== null) {
             $exists = BlastEmployeeYpikRecipient::query()
+                ->where('dataset', $dataset)
                 ->where(function ($query) use ($dto) {
                     if ($dto->email !== null) {
                         $query->orWhere('email_karyawan', $dto->email);
@@ -466,6 +559,7 @@ class BlastRecipientController extends Controller
             'email_karyawan' => $dto->email,
             'catatan' => $dto->catatan,
             'source' => 'manual:admin_ypik',
+            'dataset' => $dataset,
             'is_valid' => empty($dto->errors),
             'validation_error' => empty($dto->errors)
                 ? null
@@ -473,7 +567,11 @@ class BlastRecipientController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.blast.recipients.employees-ypik.index')
+            ->route(
+                $dataset === 'pam_jaya'
+                    ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                    : 'admin.blast.recipients.employees-ypik.index'
+            )
             ->with('success', 'Data karyawan YPIK berhasil ditambahkan.');
     }
 
@@ -483,6 +581,7 @@ class BlastRecipientController extends Controller
 
         return view('admin.blast.recipients.employee-manual-form', [
             'variant' => 'ypik',
+            'dataset' => $employee->dataset ?: 'ypik',
             'isEdit' => true,
             'employee' => $employee,
         ]);
@@ -510,6 +609,7 @@ class BlastRecipientController extends Controller
             ])->withInput();
         }
 
+        $dataset = $employee->dataset ?: 'ypik';
         $dto = $normalizer->normalize([
             'nama_karyawan' => $data['nama_karyawan'],
             'instansi' => $data['instansi'] ?? null,
@@ -522,6 +622,7 @@ class BlastRecipientController extends Controller
         if ($dto->email !== null || $dto->phone !== null) {
             $exists = BlastEmployeeYpikRecipient::query()
                 ->where('id', '!=', $employee->id)
+                ->where('dataset', $dataset)
                 ->where(function ($query) use ($dto) {
                     if ($dto->email !== null) {
                         $query->orWhere('email_karyawan', $dto->email);
@@ -548,6 +649,7 @@ class BlastRecipientController extends Controller
             'email_karyawan' => $dto->email,
             'catatan' => $dto->catatan,
             'source' => $employee->source ?: 'manual:admin_ypik',
+            'dataset' => $dataset,
             'is_valid' => empty($dto->errors),
             'validation_error' => empty($dto->errors)
                 ? null
@@ -555,7 +657,11 @@ class BlastRecipientController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.blast.recipients.employees-ypik.index')
+            ->route(
+                $dataset === 'pam_jaya'
+                    ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                    : 'admin.blast.recipients.employees-ypik.index'
+            )
             ->with('success', 'Data karyawan YPIK berhasil diperbarui.');
     }
 
@@ -773,13 +879,19 @@ class BlastRecipientController extends Controller
     ) {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,csv,xls',
+            'dataset' => 'nullable|in:ypik,pam_jaya',
         ]);
 
         $uploadedFile = $request->file('file');
+        $dataset = (string) $request->input('dataset', 'ypik');
 
         if ($uploadedFile === null) {
             return redirect()
-                ->route('admin.blast.recipients.employees-ypik.index')
+                ->route(
+                    $dataset === 'pam_jaya'
+                        ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                        : 'admin.blast.recipients.employees-ypik.index'
+                )
                 ->with('error', 'Import gagal: file tidak ditemukan.');
         }
 
@@ -788,33 +900,51 @@ class BlastRecipientController extends Controller
         } catch (\Throwable $e) {
             Log::error('[RECIPIENT YPIK IMPORT FAILED]', [
                 'file' => $uploadedFile->getClientOriginalName(),
+                'dataset' => $dataset,
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()
-                ->route('admin.blast.recipients.employees-ypik.index')
+                ->route(
+                    $dataset === 'pam_jaya'
+                        ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                        : 'admin.blast.recipients.employees-ypik.index'
+                )
                 ->with('error', 'Import gagal: ' . $e->getMessage());
         }
 
         if (empty($result->valid) && empty($result->invalid)) {
             return redirect()
-                ->route('admin.blast.recipients.employees-ypik.index')
+                ->route(
+                    $dataset === 'pam_jaya'
+                        ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                        : 'admin.blast.recipients.employees-ypik.index'
+                )
                 ->with('error', 'Import gagal: file tidak berisi data yang dapat diproses.');
         }
 
-        $summary = $bulkSaver->save(collect($result->valid));
+        $summary = $bulkSaver->save(collect($result->valid), $dataset);
         $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
-        $message = 'Import data karyawan YPIK selesai. '
+        $datasetLabel = $dataset === 'pam_jaya' ? 'YPIK Pam Jaya' : 'YPIK';
+        $message = 'Import data karyawan ' . $datasetLabel . ' selesai. '
             . "Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
 
         if ((int) $summary['inserted'] === 0) {
             return redirect()
-                ->route('admin.blast.recipients.employees-ypik.index')
+                ->route(
+                    $dataset === 'pam_jaya'
+                        ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                        : 'admin.blast.recipients.employees-ypik.index'
+                )
                 ->with('error', $message . ' Tidak ada data baru yang disimpan.');
         }
 
         return redirect()
-            ->route('admin.blast.recipients.employees-ypik.index')
+            ->route(
+                $dataset === 'pam_jaya'
+                    ? 'admin.blast.recipients.employees-ypik-pamjaya.index'
+                    : 'admin.blast.recipients.employees-ypik.index'
+            )
             ->with('success', $message);
     }
 
@@ -899,9 +1029,26 @@ class BlastRecipientController extends Controller
 
     public function destroyAllEmployeesYpik()
     {
-        $total = BlastEmployeeYpikRecipient::query()->count();
-        BlastEmployeeYpikRecipient::query()->delete();
+        $total = BlastEmployeeYpikRecipient::query()
+            ->where('dataset', 'ypik')
+            ->count();
+        BlastEmployeeYpikRecipient::query()
+            ->where('dataset', 'ypik')
+            ->delete();
 
         return back()->with('success', "Semua data recipient karyawan YPIK berhasil dihapus ({$total} data).");
+    }
+
+    public function destroyAllEmployeesYpikPamJaya()
+    {
+        $total = BlastEmployeeYpikRecipient::query()
+            ->where('dataset', 'pam_jaya')
+            ->count();
+
+        BlastEmployeeYpikRecipient::query()
+            ->where('dataset', 'pam_jaya')
+            ->delete();
+
+        return back()->with('success', "Semua data recipient YPIK Pam Jaya berhasil dihapus ({$total} data).");
     }
 }

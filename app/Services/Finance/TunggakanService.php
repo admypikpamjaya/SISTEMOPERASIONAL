@@ -28,14 +28,19 @@ class TunggakanService
     ) {}
 
     /**
-     * @var array<string, array<int, array{source:string,id:string}>>
+     * @var array<string, array<int, array{source:string,id:string,is_valid:bool}>>
      */
     private array $recipientIndexByFull = [];
 
     /**
-     * @var array<string, array<int, array{source:string,id:string}>>
+     * @var array<string, array<int, array{source:string,id:string,is_valid:bool}>>
      */
     private array $recipientIndexByName = [];
+
+    /**
+     * @var array<string, array<int, array{source:string,id:string,is_valid:bool}>>
+     */
+    private array $recipientIndexByPhone = [];
 
     /**
      * @param array{
@@ -108,7 +113,7 @@ class TunggakanService
         $nilai = $this->parseNominal($payload['nilai'] ?? $record->nilai);
         $noUrut = $payload['no_urut'] ?? $record->no_urut;
 
-        $match = $this->matchRecipient($namaMurid, $kelas !== '' ? $kelas : null);
+        $match = $this->matchRecipient($namaMurid, $kelas !== '' ? $kelas : null, $noTelepon);
         $match = $this->enhanceMatchNotesWithPhone(
             $match,
             $noTelepon
@@ -218,7 +223,8 @@ class TunggakanService
             $kelas = trim((string) $record->kelas);
             $match = $this->matchRecipient(
                 (string) $record->nama_murid,
-                $kelas !== '' ? $kelas : null
+                $kelas !== '' ? $kelas : null,
+                $this->normalizeStoredPhone((string) $record->no_telepon)
             );
             $match = $this->enhanceMatchNotesWithPhone(
                 $match,
@@ -282,6 +288,7 @@ class TunggakanService
     /**
      * @return array{
      *   candidate_records:int,
+     *   requested_records:int|null,
      *   candidate_recipients:int,
      *   processed_recipients:int,
      *   sent_recipients:int,
@@ -296,7 +303,8 @@ class TunggakanService
      */
     public function blastWhatsappFromTunggakan(
         ?string $templateId,
-        ?string $actorId
+        ?string $actorId,
+        ?array $recordIds = null
     ): array {
         $actorId = trim((string) $actorId);
         if ($actorId === '') {
@@ -305,7 +313,9 @@ class TunggakanService
 
         $templateContent = $this->resolveWhatsappTemplateContent($templateId);
 
-        $candidateRecords = TunggakanRecord::query()
+        $recordIds = $recordIds !== null ? array_values(array_unique(array_filter($recordIds))) : null;
+
+        $candidateQuery = TunggakanRecord::query()
             ->whereIn('blast_status', ['draft', 'failed'])
             ->where(function ($query): void {
                 $query->where(function ($matchQuery): void {
@@ -314,12 +324,18 @@ class TunggakanService
                         ->whereNotNull('recipient_id');
                 })->orWhereNotNull('no_telepon');
             })
-            ->orderBy('updated_at')
-            ->get();
+            ->orderBy('updated_at');
+
+        if (!empty($recordIds)) {
+            $candidateQuery->whereIn('id', $recordIds);
+        }
+
+        $candidateRecords = $candidateQuery->get();
 
         if ($candidateRecords->isEmpty()) {
             return [
                 'candidate_records' => 0,
+                'requested_records' => $recordIds !== null ? count($recordIds) : null,
                 'candidate_recipients' => 0,
                 'processed_recipients' => 0,
                 'sent_recipients' => 0,
@@ -387,6 +403,7 @@ class TunggakanService
 
         $summary = [
             'candidate_records' => (int) $candidateRecords->count(),
+            'requested_records' => $recordIds !== null ? count($recordIds) : null,
             'candidate_recipients' => count($groups),
             'processed_recipients' => 0,
             'sent_recipients' => 0,
@@ -653,6 +670,7 @@ class TunggakanService
             $unmatched = 0;
             $multiple = 0;
             $notFoundInStudentDb = 0;
+            $purgedKeys = [];
 
             $allSheetRows = $this->loadSheetRows($path);
             foreach ($allSheetRows as $rows) {
@@ -676,6 +694,13 @@ class TunggakanService
                         $skipped++;
                         continue;
                     }
+
+                    $this->purgeExistingRecordsForStudent(
+                        $parsed['nama_murid'],
+                        $parsed['kelas'] ?? null,
+                        (string) $batch->id,
+                        $purgedKeys
+                    );
 
                     $record = $this->createRecord(
                         batchId: (string) $batch->id,
@@ -838,6 +863,40 @@ class TunggakanService
     }
 
     /**
+     * @param array<string,bool> $purgedKeys
+     */
+    private function purgeExistingRecordsForStudent(
+        string $namaMurid,
+        ?string $kelas,
+        string $batchId,
+        array &$purgedKeys
+    ): void {
+        $nameKey = strtolower(trim($namaMurid));
+        if ($nameKey === '') {
+            return;
+        }
+
+        $classKey = strtolower(trim((string) $kelas));
+        $purgeKey = $classKey !== '' ? $nameKey . '|' . $classKey : $nameKey;
+
+        if (isset($purgedKeys[$purgeKey])) {
+            return;
+        }
+
+        $query = TunggakanRecord::query()
+            ->whereRaw('LOWER(TRIM(nama_murid)) = ?', [$nameKey])
+            ->where('batch_id', '!=', $batchId);
+
+        if ($classKey !== '') {
+            $query->whereRaw('LOWER(TRIM(kelas)) = ?', [$classKey]);
+        }
+
+        $query->delete();
+
+        $purgedKeys[$purgeKey] = true;
+    }
+
+    /**
      * @param array{
      *   no_urut:int|null,
      *   kelas:string|null,
@@ -867,7 +926,7 @@ class TunggakanService
         $bulan = trim((string) ($row['bulan'] ?? ''));
         $nilai = $this->parseNominal($row['nilai'] ?? 0);
 
-        $match = $forcedMatch ?? $this->matchRecipient($namaMurid, $kelas);
+        $match = $forcedMatch ?? $this->matchRecipient($namaMurid, $kelas, $noTelepon);
         $match = $this->enhanceMatchNotesWithPhone(
             $match,
             $noTelepon
@@ -900,7 +959,7 @@ class TunggakanService
      *   match_notes:string|null
      * }
      */
-    private function matchRecipient(string $namaMurid, ?string $kelas): array
+    private function matchRecipient(string $namaMurid, ?string $kelas, ?string $noTelepon = null): array
     {
         $this->buildRecipientIndexesIfNeeded();
 
@@ -916,45 +975,72 @@ class TunggakanService
             ];
         }
 
+        $multipleNote = null;
+
         if ($classKey !== '') {
             $fullKey = $nameKey . '|' . $classKey;
             $fullCandidates = $this->recipientIndexByFull[$fullKey] ?? [];
+            $resolved = $this->resolveCandidate($fullCandidates);
 
-            if (count($fullCandidates) === 1) {
+            if ($resolved['status'] === 'matched') {
                 return [
-                    'recipient_source' => $fullCandidates[0]['source'],
-                    'recipient_id' => $fullCandidates[0]['id'],
+                    'recipient_source' => $resolved['entry']['source'],
+                    'recipient_id' => $resolved['entry']['id'],
                     'match_status' => 'matched',
                     'match_notes' => 'Matched by nama murid + kelas.',
                 ];
             }
 
-            if (count($fullCandidates) > 1) {
-                return [
-                    'recipient_source' => null,
-                    'recipient_id' => null,
-                    'match_status' => 'multiple',
-                    'match_notes' => 'Ditemukan lebih dari satu recipient dengan nama + kelas yang sama.',
-                ];
+            if ($resolved['status'] === 'multiple') {
+                $multipleNote = 'Ditemukan lebih dari satu recipient dengan nama + kelas yang sama.';
             }
         }
 
         $nameCandidates = $this->recipientIndexByName[$nameKey] ?? [];
-        if (count($nameCandidates) === 1) {
+        $resolved = $this->resolveCandidate($nameCandidates);
+        if ($resolved['status'] === 'matched') {
             return [
-                'recipient_source' => $nameCandidates[0]['source'],
-                'recipient_id' => $nameCandidates[0]['id'],
+                'recipient_source' => $resolved['entry']['source'],
+                'recipient_id' => $resolved['entry']['id'],
                 'match_status' => 'matched',
                 'match_notes' => 'Matched by nama murid.',
             ];
         }
 
-        if (count($nameCandidates) > 1) {
+        if ($resolved['status'] === 'multiple') {
+            $multipleNote ??= 'Nama murid cocok ke lebih dari satu recipient. Perlu review manual.';
+        }
+
+        $normalizedPhone = $this->normalizeWhatsappTarget($noTelepon);
+        if ($normalizedPhone !== null) {
+            $phoneCandidates = $this->recipientIndexByPhone[$normalizedPhone] ?? [];
+            $resolved = $this->resolveCandidate($phoneCandidates);
+
+            if ($resolved['status'] === 'matched') {
+                return [
+                    'recipient_source' => $resolved['entry']['source'],
+                    'recipient_id' => $resolved['entry']['id'],
+                    'match_status' => 'matched',
+                    'match_notes' => 'Matched by no telepon.',
+                ];
+            }
+
+            if ($resolved['status'] === 'multiple') {
+                return [
+                    'recipient_source' => null,
+                    'recipient_id' => null,
+                    'match_status' => 'multiple',
+                    'match_notes' => 'No telepon cocok ke lebih dari satu recipient. Perlu review manual.',
+                ];
+            }
+        }
+
+        if ($multipleNote !== null) {
             return [
                 'recipient_source' => null,
                 'recipient_id' => null,
                 'match_status' => 'multiple',
-                'match_notes' => 'Nama murid cocok ke lebih dari satu recipient. Perlu review manual.',
+                'match_notes' => $multipleNote,
             ];
         }
 
@@ -966,6 +1052,39 @@ class TunggakanService
         ];
     }
 
+    /**
+     * @param array<int, array{source:string,id:string,is_valid:bool}> $candidates
+     * @return array{status:string,entry?:array{source:string,id:string,is_valid:bool}}
+     */
+    private function resolveCandidate(array $candidates): array
+    {
+        $count = count($candidates);
+        if ($count === 1) {
+            return [
+                'status' => 'matched',
+                'entry' => $candidates[0],
+            ];
+        }
+
+        if ($count > 1) {
+            $validCandidates = array_values(array_filter(
+                $candidates,
+                fn (array $candidate): bool => (bool) ($candidate['is_valid'] ?? false)
+            ));
+
+            if (count($validCandidates) === 1) {
+                return [
+                    'status' => 'matched',
+                    'entry' => $validCandidates[0],
+                ];
+            }
+
+            return ['status' => 'multiple'];
+        }
+
+        return ['status' => 'none'];
+    }
+
     private function buildRecipientIndexesIfNeeded(): void
     {
         if (!empty($this->recipientIndexByName)) {
@@ -973,8 +1092,7 @@ class TunggakanService
         }
 
         $students = BlastRecipient::query()
-            ->where('is_valid', true)
-            ->get(['id', 'nama_siswa', 'kelas']);
+            ->get(['id', 'nama_siswa', 'kelas', 'wa_wali', 'wa_wali_2', 'is_valid']);
 
         foreach ($students as $student) {
             $nameKey = $this->normalizeText((string) $student->nama_siswa);
@@ -986,6 +1104,7 @@ class TunggakanService
             $entry = [
                 'source' => 'siswa',
                 'id' => (string) $student->id,
+                'is_valid' => (bool) $student->is_valid,
             ];
 
             $this->recipientIndexByName[$nameKey] ??= [];
@@ -996,6 +1115,16 @@ class TunggakanService
                 $this->recipientIndexByFull[$fullKey] ??= [];
                 $this->recipientIndexByFull[$fullKey][] = $entry;
             }
+
+            foreach ([$student->wa_wali, $student->wa_wali_2] as $phone) {
+                $normalizedPhone = $this->normalizeWhatsappTarget($phone);
+                if ($normalizedPhone === null) {
+                    continue;
+                }
+
+                $this->recipientIndexByPhone[$normalizedPhone] ??= [];
+                $this->recipientIndexByPhone[$normalizedPhone][] = $entry;
+            }
         }
     }
 
@@ -1003,6 +1132,7 @@ class TunggakanService
     {
         $this->recipientIndexByName = [];
         $this->recipientIndexByFull = [];
+        $this->recipientIndexByPhone = [];
     }
 
     private function refreshBatchStatsById(?string $batchId): void
@@ -1453,9 +1583,10 @@ class TunggakanService
     private function normalizeText(string $value): string
     {
         $normalized = strtolower(trim($value));
-        $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
+        $normalized = preg_replace('/[^a-z0-9]+/i', ' ', $normalized) ?? '';
+        $normalized = preg_replace('/\s+/', ' ', $normalized) ?? '';
 
-        return $normalized;
+        return trim($normalized);
     }
 
     private function resolveWhatsappTemplateContent(?string $templateId): string
