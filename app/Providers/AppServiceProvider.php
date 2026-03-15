@@ -6,7 +6,9 @@ use App\Contracts\Messaging\EmailProviderInterface;
 use App\Contracts\Messaging\WhatsappProviderInterface;
 use App\Providers\Messaging\SmtpEmailProvider;
 use App\Providers\Messaging\FonnteWhatsappProvider;
+use App\Providers\Messaging\GatewayWhatsappProvider;
 use App\Providers\Messaging\WablasWhatsappProvider;
+use App\Services\Blast\WhatsAppProviderSelector;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
@@ -34,14 +36,16 @@ class AppServiceProvider extends ServiceProvider
         // WHATSAPP PROVIDER
         // ======================
         $whatsappProvider = strtolower(
-            (string) config('services.whatsapp.provider', 'wablas')
+            (string) (new WhatsAppProviderSelector())->getProvider()
         );
 
         $this->app->bind(
             WhatsappProviderInterface::class,
-            $whatsappProvider === 'fonnte'
-                ? FonnteWhatsappProvider::class
-                : WablasWhatsappProvider::class
+            match ($whatsappProvider) {
+                'fonnte' => FonnteWhatsappProvider::class,
+                'gateway', 'baileys', 'node' => GatewayWhatsappProvider::class,
+                default => WablasWhatsappProvider::class,
+            }
         );
 
         // ======================

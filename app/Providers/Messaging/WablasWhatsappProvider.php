@@ -4,121 +4,74 @@ namespace App\Providers\Messaging;
 
 use App\Contracts\Messaging\WhatsappProviderInterface;
 use App\DataTransferObjects\BlastPayload;
+use App\DataTransferObjects\BlastAttachment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Silvanix\Wablas\Message as WablasMessage;
 
 class WablasWhatsappProvider implements WhatsappProviderInterface
 {
-    private const DEFAULT_FALLBACK_BASE_URLS = [
-        'https://tegal.wablas.com',
-        'https://solo.wablas.com',
-        'https://jogja.wablas.com',
-        'https://kudus.wablas.com',
-        'https://pati.wablas.com',
-        'https://sby.wablas.com',
-        'https://bdg.wablas.com',
-        'https://deu.wablas.com',
-        'https://texas.wablas.com',
-    ];
-
-    private static ?string $resolvedBaseUrl = null;
-
     public function send(string $to, BlastPayload $payload): bool
     {
         try {
-            $token = trim((string) config('services.wablas.token'));
-            $secretKey = trim((string) config('services.wablas.secret_key'));
-            $configuredBaseUrl = rtrim(
-                (string) config('services.wablas.base_url', 'https://wablas.com'),
-                '/'
-            );
+            $client = new WablasMessage();
 
-            if ($token === '' || $secretKey === '') {
-                Log::error('[WABLAS CONFIG MISSING]', [
-                    'token_present' => $token !== '',
-                    'secret_key_present' => $secretKey !== '',
-                ]);
-                return false;
-            }
-
-            $endpoint = '/api/send-message';
-            $requestPayload = [
-                'phone' => $to,
-                'message' => $payload->message,
-            ];
-
+            $response = null;
             if (!empty($payload->attachments)) {
                 $attachment = $payload->attachments[0];
-                $attachmentUrl = $this->resolveAttachmentUrl($attachment->path);
-
-                if ($attachmentUrl === null) {
-                    Log::error('[WABLAS ATTACHMENT URL FAILED]', [
-                        'to' => $to,
-                        'path' => $attachment->path,
-                    ]);
-                    return false;
-                }
-
-                [$endpoint, $requestPayload] = $this->buildAttachmentPayload(
+                $response = $this->dispatchAttachmentFromLocal(
+                    client: $client,
                     to: $to,
                     message: $payload->message,
-                    attachmentUrl: $attachmentUrl,
-                    mime: $attachment->mime
-                );
-            }
-
-            $attempts = [];
-            foreach ($this->resolveBaseUrls($configuredBaseUrl) as $baseUrl) {
-                $response = Http::timeout(20)
-                    ->withHeaders([
-                        'Authorization' => $token . '.' . $secretKey,
-                    ])
-                    ->post($baseUrl . $endpoint, $requestPayload);
-
-                $decoded = $response->json();
-                $message = $this->extractResponseMessage(
-                    $decoded,
-                    (string) $response->body()
+                    attachment: $attachment
                 );
 
-                if (
-                    $response->successful()
-                    && (
-                        !is_array($decoded)
-                        || !array_key_exists('status', $decoded)
-                        || (bool) $decoded['status'] === true
-                    )
-                ) {
-                    $deliveryStatus = $this->extractDeliveryStatus($decoded);
-                    if ($message !== '') {
-                        $payload->setMeta('provider_message', $message);
-                    }
-                    if ($deliveryStatus !== '') {
-                        $payload->setMeta('provider_delivery_status', $deliveryStatus);
+                if (!$this->isSuccessResponse($response)) {
+                    $attachmentUrl = $this->resolveAttachmentUrl($attachment->path);
+                    if ($attachmentUrl === null) {
+                        Log::error('[WABLAS ATTACHMENT URL FAILED]', [
+                            'to' => $to,
+                            'path' => $attachment->path,
+                        ]);
+                        $payload->setMeta(
+                            'provider_error',
+                            'Attachment URL invalid and local upload failed.'
+                        );
+                        return false;
                     }
 
-                    self::$resolvedBaseUrl = $baseUrl;
-                    return true;
+                    $response = $this->dispatchAttachment(
+                        client: $client,
+                        to: $to,
+                        message: $payload->message,
+                        attachmentUrl: $attachmentUrl,
+                        mime: $attachment->mime
+                    );
                 }
-
-                $attempts[] = [
-                    'base_url' => $baseUrl,
-                    'status_code' => $response->status(),
-                    'message' => $message,
-                ];
-
-                if (!$this->shouldTryNextBaseUrl($message)) {
-                    break;
-                }
+            } else {
+                $response = $client->single_text($to, $payload->message);
             }
 
-            $providerError = $this->buildProviderErrorMessage($attempts);
-            $payload->setMeta('provider_error', $providerError);
+            if ($this->isSuccessResponse($response)) {
+                $message = $this->extractResponseMessage($response);
+                if ($message !== '') {
+                    $payload->setMeta('provider_message', $message);
+                }
+
+                $deliveryStatus = $this->extractDeliveryStatus($response);
+                if ($deliveryStatus !== '') {
+                    $payload->setMeta('provider_delivery_status', $deliveryStatus);
+                }
+
+                return true;
+            }
+
+            $providerError = $this->extractResponseMessage($response);
+            $payload->setMeta('provider_error', $providerError !== '' ? $providerError : 'Wablas request failed.');
 
             Log::error('[WABLAS FAILED]', [
                 'to' => $to,
-                'endpoint' => $endpoint,
-                'attempts' => $attempts,
+                'response' => $response,
             ]);
             return false;
         } catch (\Throwable $exception) {
@@ -131,110 +84,84 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
         }
     }
 
-    /**
-     * @return array{0:string,1:array<string,string>}
-     */
-    private function buildAttachmentPayload(
+    private function dispatchAttachment(
+        WablasMessage $client,
         string $to,
         string $message,
         string $attachmentUrl,
         string $mime
-    ): array {
+    ): mixed {
         $normalizedMime = strtolower(trim($mime));
 
         if (str_starts_with($normalizedMime, 'image/')) {
-            return [
-                '/api/send-image',
-                [
-                    'phone' => $to,
-                    'caption' => $message,
-                    'image' => $attachmentUrl,
-                ],
-            ];
+            return $client->single_image($to, $attachmentUrl, $message ?: null);
         }
 
         if (str_starts_with($normalizedMime, 'video/')) {
-            return [
-                '/api/send-video',
-                [
-                    'phone' => $to,
-                    'caption' => $message,
-                    'video' => $attachmentUrl,
-                ],
-            ];
+            return $client->single_video($to, $attachmentUrl, $message ?: null);
         }
 
         if (str_starts_with($normalizedMime, 'audio/')) {
-            return [
-                '/api/send-audio',
-                [
-                    'phone' => $to,
-                    'audio' => $attachmentUrl,
-                ],
-            ];
+            return $client->single_audio($to, $attachmentUrl);
         }
 
-        return [
-            '/api/send-document',
-            [
-                'phone' => $to,
-                'caption' => $message,
-                'document' => $attachmentUrl,
-            ],
-        ];
+        return $client->single_document($to, $attachmentUrl, $message ?: null);
     }
 
-    /**
-     * @return string[]
-     */
-    private function resolveBaseUrls(string $configuredBaseUrl): array
-    {
-        $candidates = [];
-
-        if (self::$resolvedBaseUrl !== null) {
-            $candidates[] = self::$resolvedBaseUrl;
-        }
-
-        $candidates[] = $configuredBaseUrl;
-
-        $rawFallback = trim((string) config('services.wablas.fallback_base_urls', ''));
-        $fallbackBaseUrls = $rawFallback === ''
-            ? self::DEFAULT_FALLBACK_BASE_URLS
-            : explode(',', $rawFallback);
-
-        foreach ($fallbackBaseUrls as $candidate) {
-            $normalized = $this->normalizeBaseUrl((string) $candidate);
-            if ($normalized !== null) {
-                $candidates[] = $normalized;
-            }
-        }
-
-        $normalizedCandidates = [];
-        foreach ($candidates as $candidate) {
-            $normalized = $this->normalizeBaseUrl((string) $candidate);
-            if ($normalized !== null) {
-                $normalizedCandidates[] = $normalized;
-            }
-        }
-
-        return array_values(array_unique($normalizedCandidates));
-    }
-
-    private function normalizeBaseUrl(string $baseUrl): ?string
-    {
-        $trimmed = trim($baseUrl);
-        if ($trimmed === '') {
+    private function dispatchAttachmentFromLocal(
+        WablasMessage $client,
+        string $to,
+        string $message,
+        BlastAttachment $attachment
+    ): mixed {
+        $path = $attachment->path;
+        if (!is_file($path) || !is_readable($path)) {
             return null;
         }
 
-        if (!preg_match('/^https?:\\/\\//i', $trimmed)) {
-            $trimmed = 'https://' . $trimmed;
+        $type = $this->resolveAttachmentType($attachment->mime);
+        if ($type === null) {
+            return null;
         }
 
-        return rtrim($trimmed, '/');
+        $payload = [
+            'phone' => $to,
+            'caption' => $message !== '' ? $message : null,
+            'file' => base64_encode((string) file_get_contents($path)),
+            'data' => json_encode(['name' => $attachment->filename]),
+        ];
+
+        $url = $client->api() . "send-{$type}-from-local";
+        return Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => $client->token(),
+        ])->post($url, $payload)->json();
     }
 
-    private function extractResponseMessage(mixed $decoded, string $rawBody): string
+    private function resolveAttachmentType(string $mime): ?string
+    {
+        $normalizedMime = strtolower(trim($mime));
+
+        if (str_starts_with($normalizedMime, 'image/')) {
+            return 'image';
+        }
+
+        if (str_starts_with($normalizedMime, 'video/')) {
+            return 'video';
+        }
+
+        if (str_starts_with($normalizedMime, 'audio/')) {
+            return 'audio';
+        }
+
+        if ($normalizedMime !== '') {
+            return 'document';
+        }
+
+        return null;
+    }
+
+    private function extractResponseMessage(mixed $decoded): string
     {
         if (is_array($decoded)) {
             $message = trim((string) ($decoded['message'] ?? ''));
@@ -248,7 +175,31 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
             }
         }
 
-        return trim($rawBody);
+        if (is_string($decoded)) {
+            return trim($decoded);
+        }
+
+        return '';
+    }
+
+    private function isSuccessResponse(mixed $decoded): bool
+    {
+        if (is_array($decoded)) {
+            if (array_key_exists('status', $decoded)) {
+                return (bool) $decoded['status'] === true;
+            }
+
+            if (array_key_exists('success', $decoded)) {
+                return (bool) $decoded['success'] === true;
+            }
+
+            $message = strtolower(trim((string) ($decoded['message'] ?? '')));
+            if ($message !== '' && str_contains($message, 'success')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function extractDeliveryStatus(mixed $decoded): string
@@ -273,36 +224,6 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
         }
 
         return strtolower(trim((string) ($firstMessage['status'] ?? '')));
-    }
-
-    private function shouldTryNextBaseUrl(string $message): bool
-    {
-        $normalized = strtolower($message);
-
-        return str_contains($normalized, 'api access is not allowed on this server')
-            || str_contains($normalized, 'token invalid')
-            || str_contains($normalized, 'device expired')
-            || str_contains($normalized, 'not connected');
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $attempts
-     */
-    private function buildProviderErrorMessage(array $attempts): string
-    {
-        if ($attempts === []) {
-            return 'Wablas request failed without response.';
-        }
-
-        $last = end($attempts);
-        $lastMessage = trim((string) ($last['message'] ?? ''));
-        $lastBaseUrl = trim((string) ($last['base_url'] ?? ''));
-
-        if ($lastMessage === '') {
-            return 'Wablas request failed on ' . $lastBaseUrl . '.';
-        }
-
-        return 'Wablas failed on ' . $lastBaseUrl . ': ' . $lastMessage;
     }
 
     private function resolveAttachmentUrl(string $path): ?string

@@ -26,6 +26,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Silvanix\\Wablas\\": "plugin-wablas/src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

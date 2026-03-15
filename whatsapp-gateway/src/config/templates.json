@@ -1,0 +1,5 @@
+﻿{
+  "promo": "Hi {{name}}, diskon {{discount}} khusus hari ini. Jangan lewatkan!",
+  "reminder": "Halo {{name}}, ini pengingat untuk {{event}} pada {{date}}.",
+  "greeting": "Selamat datang {{name}} di layanan kami."
+}

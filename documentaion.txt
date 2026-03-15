@@ -214,9 +214,195 @@ app/
 
 ---
 
+## Dokumentasi WhatsApp Gateway (Baileys)
+
+Layanan WhatsApp Gateway berada di folder `whatsapp-gateway/` dan menggunakan Node.js + Baileys + BullMQ + Redis.
+
+### Instalasi Gateway
+1. Masuk ke folder `whatsapp-gateway/`.
+2. Install dependency:
+   ```bash
+   npm install
+   ```
+3. Salin env contoh:
+   ```bash
+   cp .env.example .env
+   ```
+4. Sesuaikan `.env`:
+   `PORT` dan `REDIS_URL`.
+   `API_KEY` (opsional, jika diisi maka semua endpoint selain `/health` wajib header `X-API-KEY`).
+   `RUN_WORKER=true` untuk mode satu proses.
+   `WA_DEFAULT_DEVICE=default` untuk device aktif default.
+5. Pastikan Redis berjalan.
+
+### Setup Redis dengan Docker (Direkomendasikan)
+
+#### 1) Pastikan Docker aktif
+- Windows: jalankan **Docker Desktop** hingga status `Running`.
+- Linux VPS: pastikan service Docker aktif:
+  ```bash
+  sudo systemctl status docker
+  ```
+
+#### 2) Jalankan Redis via Docker
+```bash
+docker run --name redis -p 6379:6379 -d redis:7-alpine
+```
+
+Jika muncul error **name already in use**, berarti container sudah ada. Jalankan:
+```bash
+docker start redis
+```
+
+#### 3) Cek Redis berjalan
+```bash
+docker ps
+docker exec -it redis redis-cli ping
+```
+Output yang benar: `PONG`
+
+#### 4) Stop / Restart Redis
+```bash
+docker stop redis
+docker start redis
+```
+
+#### 5) (Opsional) Hapus container Redis
+```bash
+docker rm -f redis
+```
+
+#### 6) Pastikan `.env` gateway mengarah ke Redis
+```env
+REDIS_URL=redis://127.0.0.1:6379
+```
+
+### Menjalankan Gateway
+Mode satu proses (API + worker + WA):
+```bash
+npm run start
+```
+
+Mode terpisah:
+```bash
+# Terminal 1 (API saja)
+RUN_WORKER=false npm run start
+
+# Terminal 2 (worker saja)
+npm run worker
+```
+
+### Scan QR WhatsApp
+- QR akan muncul di terminal jika `WA_PRINT_QR=true`.
+- Alternatif: akses `GET /status` untuk mendapatkan `qrDataUrl`.
+
+### Endpoint Utama
+- `POST /send-message` body: `{ "phone": "628123456789", "message": "Hello user" }`
+- `POST /send-file` form-data: `phone`, `file`, `caption`
+- `POST /blast` body: `{ "numbers": ["62812xxx"], "message": "Promo" }`
+- `POST /blast-custom` body: `[{"phone":"6281","message":"Hi"}]`
+- `POST /blast-file` form-data: `numbers[]`, `file`, `caption`
+- `POST /send-template` body: `{ "phone":"6281", "template":"promo", "variables":{...} }`
+- `GET /status`
+- `GET /health`
+
+### Integrasi Laravel (Pengganti Wablas)
+1. Atur `.env` Laravel:
+   ```env
+   WHATSAPP_PROVIDER=gateway
+   WHATSAPP_GATEWAY_BASE_URL=http://localhost:3000
+   WHATSAPP_GATEWAY_API_KEY=
+   WHATSAPP_GATEWAY_API_KEY_HEADER=X-API-KEY
+   WHATSAPP_GATEWAY_TIMEOUT=20
+   ```
+2. Bersihkan cache config:
+   ```bash
+   php artisan config:clear
+   php artisan cache:clear
+   ```
+3. UI WA Blast tetap sama, hanya provider backend yang berubah.
+
+### Testing (Gateway + Laravel)
+Unit test provider gateway di Laravel:
+```bash
+php artisan test --filter=GatewayWhatsappProviderTest
+```
+
+Full test Laravel:
+```bash
+php artisan test
+```
+
+Manual test gateway (contoh):
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: <key-jika-ada>" \
+  -d "{\"phone\":\"628123456789\",\"message\":\"Halo\"}"
+```
+
+Periksa log gateway di:
+`whatsapp-gateway/logs/combined.log`
+
 ## 📄 Lisensi
 
 Proyek ini bersifat **internal** dan hanya digunakan dalam lingkungan Yayasan YPIK Al-Azhar PAM Jaya.
 
 ---
+
+
+---
+
+## WhatsApp Gateway dengan PM2
+
+### Instal PM2
+```bash
+npm install -g pm2
+```
+
+### Jalankan Gateway (PM2)
+Masuk ke folder `whatsapp-gateway/`, lalu:
+```bash
+pm2 start ecosystem.config.cjs
+pm2 logs wa-gateway
+```
+
+Simpan konfigurasi agar auto-start setelah reboot:
+```bash
+pm2 save
+```
+
+### Hentikan / Restart
+```bash
+pm2 stop wa-gateway
+pm2 restart wa-gateway
+pm2 delete wa-gateway
+```
+
+### Catatan Agar QR Muncul di Frontend
+- Pastikan Redis berjalan (port 6379).
+- Pastikan gateway aktif di port yang sama dengan `WHATSAPP_GATEWAY_BASE_URL` di `.env` Laravel.
+- Pastikan `WA_PRINT_QR=true` dan `QR_TTL_MS=35000` di `.env` gateway.
+- Setelah gateway running, buka halaman **Manage Phone** untuk scan QR.
+
+### Multi Device (Manage Phone)
+- Anda dapat membuat **lebih dari 1 device** pada halaman **Manage Phone**.
+- Gunakan **Tambah Device** untuk membuat sesi baru lalu scan QR.
+- Pilih **Aktifkan Device** untuk mengatur default device (jika tidak memilih device saat blasting).
+- Jika ingin hapus sesi device, gunakan **Hapus Device**.
+- Gunakan **Rename** untuk memberi nama device (misal: `WA Siswa`, `WA Karyawan`).
+- Label disimpan di `storage/app/whatsapp_device_labels.json`.
+
+### Pilih Device Saat Blasting
+- Di halaman **WhatsApp Blast**, tersedia pilihan:
+  - **Device Siswa/Ortu**
+  - **Device Karyawan**
+  - **Device Manual**
+- Ini memungkinkan pemisahan nomor blasting siswa dan karyawan.
+
+### Toggle Provider (Gateway vs Wablas)
+- Tombol **Aktifkan Wablas / Aktifkan Gateway** ada di halaman **Manage Phone**.
+- Saat Wablas aktif, blasting WhatsApp menggunakan server Wablas.
+- Saat Gateway aktif, blasting WhatsApp menggunakan gateway Baileys.
+- Status provider disimpan di `storage/app/whatsapp_provider.json`.
 

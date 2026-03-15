@@ -96,6 +96,15 @@ body,
 }
 .wa-header-title  { font-size: 23px; font-weight: 800; color: #fff; letter-spacing: -.4px; line-height: 1.15; }
 .wa-header-sub    { font-size: 13px; color: rgba(255,255,255,.55); font-weight: 500; margin-top: 2px; }
+.wa-header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.wa-header-btn {
+    border: none; border-radius: 999px; padding: 8px 14px;
+    font-size: 12px; font-weight: 800; letter-spacing: .02em;
+    color: var(--navy); background: #ffffff; text-decoration: none;
+    box-shadow: 0 6px 16px rgba(15,23,42,.18);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.wa-header-btn:hover { opacity: .9; }
 
 /* ─── ALERTS ────────────────────────────────── */
 .wa-alert {
@@ -227,6 +236,61 @@ body,
 .stat-icon-box.c-yellow { background: #fef3c7; color: #d97706; }
 
 /* ─── MAIN GRID ─────────────────────────────── */
+.wa-device-card { padding: 18px 22px; margin-bottom: 18px; }
+.wa-device-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; align-items: stretch; }
+.wa-device-status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.wa-device-status-badge {
+    padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .02em;
+    border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px;
+}
+.wa-device-status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.wa-device-status-badge.connected { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+.wa-device-status-badge.qr { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow-border); }
+.wa-device-status-badge.disconnected { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+.wa-device-status-badge.init { background: var(--blue-lighter); color: var(--blue-primary); border-color: var(--blue-border); }
+.wa-device-sub { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.wa-device-meta { display: grid; gap: 6px; margin: 12px 0 14px; }
+.wa-device-meta-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
+.wa-device-meta-row .meta-label { color: var(--text-muted); font-weight: 600; }
+.wa-device-meta-row .meta-value { color: var(--text-dark); font-weight: 700; text-align: right; word-break: break-all; }
+.wa-device-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.wa-device-hint { font-size: 11.5px; color: var(--text-muted); }
+
+.wa-provider-info { padding: 16px 20px; margin-bottom: 16px; }
+.wa-provider-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; align-items: center; }
+.wa-provider-title { font-size: 13px; font-weight: 800; color: var(--navy); }
+.wa-provider-note { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+.wa-provider-badge {
+    padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .02em;
+    border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px;
+}
+.wa-provider-badge.gateway { background: var(--blue-lighter); color: var(--blue-primary); border-color: var(--blue-border); }
+.wa-provider-badge.wablas { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow-border); }
+.wa-provider-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.wa-active-device {
+    display: flex; flex-direction: column; gap: 6px;
+    border: 1px dashed var(--blue-border); border-radius: var(--radius-sm);
+    padding: 12px 14px; background: var(--blue-lighter);
+}
+.wa-active-device .label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.wa-active-device .value { font-size: 12.5px; font-weight: 800; color: var(--text-dark); }
+
+.wa-device-select-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px; margin-top: 8px;
+}
+.wa-device-select-item { display: flex; flex-direction: column; gap: 6px; }
+.wa-device-select-item label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.wa-qr-box {
+    border: 1px dashed var(--blue-border); border-radius: var(--radius-sm);
+    padding: 14px; height: 100%; background: var(--blue-lighter);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.wa-qr-title { font-size: 12.5px; font-weight: 800; color: var(--navy); }
+.wa-qr-img { max-width: 240px; width: 100%; border-radius: 10px; background: #fff; padding: 8px; border: 1px solid var(--blue-border); display: none; }
+.wa-qr-placeholder { font-size: 12px; color: var(--text-muted); text-align: center; }
+
 .wa-main-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px; }
 
 .wa-top-row {
@@ -513,6 +577,16 @@ body,
 }
 .wa-send-btn:hover    { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,99,235,.4); }
 .wa-send-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.wa-gateway-note {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--yellow);
+    background: var(--yellow-bg);
+    border: 1px solid var(--yellow-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+}
 
 /* ─── ACTIVITY LOG ──────────────────────────── */
 .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
@@ -532,7 +606,7 @@ body,
 .activity-table { font-size: 12px; }
 .activity-table-header {
     display: grid;
-    grid-template-columns: 105px 1fr 100px 1fr 140px 110px 150px;
+    grid-template-columns: 105px 1fr 100px 1fr 140px 110px 1.2fr 150px;
     gap: 10px; padding: 11px 16px;
     background: linear-gradient(90deg, var(--navy) 0%, var(--navy-light) 100%);
     border-radius: var(--radius-sm); font-weight: 700; color: #ffffff;
@@ -544,7 +618,7 @@ body,
 .activity-empty { text-align: center; color: var(--text-muted); padding: 56px 20px; font-size: 13px; font-weight: 500; }
 .activity-row {
     display: grid;
-    grid-template-columns: 105px 1fr 100px 1fr 140px 110px 150px;
+    grid-template-columns: 105px 1fr 100px 1fr 140px 110px 1.2fr 150px;
     gap: 10px; padding: 11px 16px;
     border-bottom: 1px solid var(--blue-border);
     align-items: center; font-size: 12px; transition: background .12s;
@@ -554,6 +628,7 @@ body,
 .waktu-time { font-size: 10px; color: var(--text-light); }
 .siswa-name { font-size: 12px; color: var(--text-dark); font-weight: 600; line-height: 1.3; }
 .wali-name, .col-kelas, .col-wa { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; word-break: break-word; }
+.col-error { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; word-break: break-word; }
 .col-action { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .activity-action-btn {
     border: 1px solid transparent; border-radius: 999px;
@@ -598,8 +673,11 @@ body,
     .wa-top-row             { grid-template-columns: 1fr; }
     .wa-stats-grid          { grid-template-columns: repeat(2,1fr); }
     .campaign-control-actions { grid-template-columns: 1fr; }
+    .wa-device-grid,
+    .wa-provider-grid       { grid-template-columns: 1fr; }
+    .wa-device-select-grid  { grid-template-columns: 1fr; }
     .activity-table-header,
-    .activity-row           { grid-template-columns: 90px 1fr 90px 1fr 120px 90px 130px; font-size: 11px; }
+    .activity-row           { grid-template-columns: 90px 1fr 90px 1fr 120px 90px 1.2fr 130px; font-size: 11px; }
 }
 @media (max-width: 768px) {
     .wa-page                { padding: 12px; }
@@ -615,6 +693,10 @@ body,
 </style>
 
 <div class="wa-page">
+    @php
+        $isSuperAdmin = auth()->check()
+            && auth()->user()->role === \App\Enums\User\UserRole::IT_SUPPORT->value;
+    @endphp
 
     {{-- ── PAGE HEADER ── --}}
     <div class="wa-page-header">
@@ -626,6 +708,36 @@ body,
         <div>
             <div class="wa-header-title">WhatsApp Blast</div>
             <div class="wa-header-sub">Kirim pesan massal ke WhatsApp secara efisien</div>
+        </div>
+        @if($isSuperAdmin)
+            <div class="wa-header-actions">
+                <a href="{{ route('admin.blast.whatsapp.manage') }}" class="wa-header-btn">
+                    <i class="fas fa-mobile-alt"></i> Manage Phone
+                </a>
+            </div>
+        @endif
+    </div>
+
+    {{-- === PROVIDER & DEVICE STATUS === --}}
+    <div class="wa-card wa-provider-info" id="waDeviceCard">
+        <div class="wa-provider-grid">
+            <div>
+                <div class="wa-provider-title">Provider WhatsApp</div>
+                <div class="wa-provider-row" style="margin-top:6px;">
+                    <span class="wa-provider-badge gateway" id="waProviderBadge">Gateway</span>
+                    <span class="wa-device-status-badge init" id="waStatusBadge">Memuat...</span>
+                </div>
+                <div class="wa-provider-note" id="waProviderNote">Menentukan jalur blasting WhatsApp yang aktif.</div>
+                <div class="wa-device-sub" id="waStatusSub">Menunggu data gateway.</div>
+            </div>
+            <div class="wa-active-device">
+                <div class="label">Active Device</div>
+                <div class="value" id="waActiveDevice">-</div>
+                <div class="label">Nomor Terhubung</div>
+                <div class="value" id="waDevicePhone">-</div>
+                <div class="label">Terhubung Sejak</div>
+                <div class="value" id="waDeviceSince">-</div>
+            </div>
         </div>
     </div>
 
@@ -758,7 +870,7 @@ body,
                     </div>
 
                     <div class="wa-excel-info" id="excelImportInfo" style="display:none;">
-                        Format Excel harus memiliki kolom: <strong>Nomor WhatsApp</strong> (opsional: Nama, Kelas)
+                        Format Excel harus memiliki kolom: <strong>Nomor WhatsApp</strong> (opsional: Pesan, Nama, Kelas)
                     </div>
 
                     <div class="recipient-list" id="recipientList">
@@ -895,6 +1007,31 @@ body,
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label">Device Pengiriman</label>
+                        <div class="recipient-message-note" style="margin-bottom:0;">Pilih device berbeda untuk siswa & karyawan. Manual akan gunakan device manual jika diisi.</div>
+                        <div class="wa-device-select-grid">
+                            <div class="wa-device-select-item">
+                                <label for="deviceStudentSelect">Device Siswa/Ortu</label>
+                                <select id="deviceStudentSelect" name="device_student" class="form-input">
+                                    <option value="">Default</option>
+                                </select>
+                            </div>
+                            <div class="wa-device-select-item">
+                                <label for="deviceEmployeeSelect">Device Karyawan</label>
+                                <select id="deviceEmployeeSelect" name="device_employee" class="form-input">
+                                    <option value="">Default</option>
+                                </select>
+                            </div>
+                            <div class="wa-device-select-item">
+                                <label for="deviceManualSelect">Device Manual</label>
+                                <select id="deviceManualSelect" name="device_manual" class="form-input">
+                                    <option value="">Ikuti Siswa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label">Pengaturan Pengiriman Lanjutan</label>
                         <div class="recipient-message-note" style="margin-bottom:0;">Pengiriman WhatsApp diproses langsung. Fitur jadwal & delay dinonaktifkan.</div>
                         <input type="hidden" name="scheduled_at"          id="scheduledAtInput"    value="">
@@ -929,6 +1066,7 @@ body,
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Kirim Pesan WhatsApp
                     </button>
+                    <div class="wa-gateway-note" id="waGatewayStatusNote" style="display:none;"></div>
                 </div>
             </div>
         </form>
@@ -966,6 +1104,7 @@ body,
                     <div>Nama Wali</div>
                     <div>Nomor WhatsApp</div>
                     <div>Status</div>
+                    <div>Error</div>
                     <div>Aksi</div>
                 </div>
                 <div class="activity-table-body" id="activityLog">
@@ -1042,6 +1181,7 @@ body,
         const activityRetryApiUrl = @json(route('admin.blast.activity.retry'));
         const campaignApiUrl = @json(route('admin.blast.campaigns'));
         const activityChannel = 'whatsapp';
+        const providerState = @json($providerState ?? null);
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
             || document.querySelector('input[name="_token"]')?.value
             || '';
@@ -1076,6 +1216,23 @@ body,
         const statSent = document.getElementById('statSent');
         const statFailed = document.getElementById('statFailed');
         const statPending = document.getElementById('statPending');
+        const gatewayStatusUrl = @json(route('admin.blast.whatsapp.gateway-status'));
+        const gatewayDevicesUrl = @json(route('admin.blast.whatsapp.gateway-devices'));
+        const waGatewayStatusNote = document.getElementById('waGatewayStatusNote');
+        const waDeviceCard = document.getElementById('waDeviceCard');
+        const waProviderBadge = document.getElementById('waProviderBadge');
+        const waProviderNote = document.getElementById('waProviderNote');
+        const waRefreshStatusBtn = document.getElementById('waRefreshStatusBtn');
+        const waStatusBadge = document.getElementById('waStatusBadge');
+        const waStatusSub = document.getElementById('waStatusSub');
+        const waDevicePhone = document.getElementById('waDevicePhone');
+        const waDeviceSince = document.getElementById('waDeviceSince');
+        const waActiveDevice = document.getElementById('waActiveDevice');
+        const waQrImage = document.getElementById('waQrImage');
+        const waQrPlaceholder = document.getElementById('waQrPlaceholder');
+        const deviceStudentSelect = document.getElementById('deviceStudentSelect');
+        const deviceEmployeeSelect = document.getElementById('deviceEmployeeSelect');
+        const deviceManualSelect = document.getElementById('deviceManualSelect');
 
         let selectedTemplates = [];
         let activities = @json($activityLogs ?? []);
@@ -1108,6 +1265,193 @@ body,
         function keyToToken(key) {
             const base64 = btoa(unescape(encodeURIComponent(key)));
             return base64.replace(/=+$/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+        }
+
+        function formatGatewayTime(value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+
+        function normalizeGatewayPhone(user) {
+            if (!user || !user.id) return '-';
+            const raw = String(user.id);
+            return raw.includes('@') ? raw.split('@')[0] : raw;
+        }
+
+        let currentProviderMode = 'gateway';
+
+        function updateProviderBadge(provider) {
+            if (!waProviderBadge) return;
+            const value = String(provider || '').toLowerCase();
+            const isWablas = value === 'wablas';
+            currentProviderMode = isWablas ? 'wablas' : 'gateway';
+            waProviderBadge.classList.toggle('gateway', !isWablas);
+            waProviderBadge.classList.toggle('wablas', isWablas);
+            waProviderBadge.textContent = isWablas ? 'Wablas' : 'Gateway';
+            if (waProviderNote) {
+                waProviderNote.textContent = isWablas
+                    ? 'Blasting WhatsApp saat ini memakai server Wablas.'
+                    : 'Blasting WhatsApp saat ini memakai gateway internal.';
+            }
+        }
+
+        function populateDeviceSelect(selectEl, devices, placeholderLabel) {
+            if (!selectEl) return;
+            const current = selectEl.value;
+            selectEl.innerHTML = '';
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = placeholderLabel;
+            selectEl.appendChild(placeholder);
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label
+                    ? `${device.label} (${device.deviceId})`
+                    : device.deviceId;
+                selectEl.appendChild(option);
+            });
+            if (current) {
+                selectEl.value = current;
+            }
+        }
+
+        async function refreshDeviceSelects() {
+            if (!gatewayDevicesUrl) return;
+            try {
+                const response = await fetch(gatewayDevicesUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (payload?.success === false) return;
+                const data = payload?.data || {};
+                const devices = Array.isArray(data.devices) ? data.devices : [];
+                populateDeviceSelect(deviceStudentSelect, devices, 'Default');
+                populateDeviceSelect(deviceEmployeeSelect, devices, 'Default');
+                populateDeviceSelect(deviceManualSelect, devices, 'Ikuti Siswa');
+            } catch (error) {
+                // ignore
+            }
+        }
+
+        function updateGatewaySendState(status) {
+            if (!sendButton) return;
+            if (currentProviderMode === 'wablas') {
+                sendButton.disabled = false;
+                if (waGatewayStatusNote) {
+                    waGatewayStatusNote.style.display = 'block';
+                    waGatewayStatusNote.textContent = 'Provider Wablas aktif. Status gateway tidak mempengaruhi pengiriman.';
+                }
+                return;
+            }
+            const normalized = String(status || '').toLowerCase();
+            const connected = normalized === 'connected';
+            sendButton.disabled = !connected;
+            if (waGatewayStatusNote) {
+                if (connected) {
+                    waGatewayStatusNote.style.display = 'none';
+                } else {
+                    waGatewayStatusNote.style.display = 'block';
+                    waGatewayStatusNote.textContent = 'Gateway belum Connected. Silakan hubungkan WhatsApp terlebih dahulu.';
+                }
+            }
+        }
+
+        async function refreshGatewayStatusForSend() {
+            if (!gatewayStatusUrl) return;
+            try {
+                const response = await fetch(gatewayStatusUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) {
+                    updateGatewaySendState('disconnected');
+                    return;
+                }
+                const payload = await response.json();
+                const data = payload?.data || payload;
+                updateGatewaySendState(data?.status || 'disconnected');
+            } catch (error) {
+                updateGatewaySendState('disconnected');
+            }
+        }
+
+        function updateGatewayUi(data) {
+            if (!waDeviceCard) return;
+            const status = String(data?.status || 'disconnected').toLowerCase();
+            const labelMap = {
+                connected: 'Connected',
+                qr: 'Scan QR',
+                disconnected: 'Disconnected',
+                init: 'Inisialisasi'
+            };
+            const subMap = {
+                connected: 'WhatsApp siap digunakan.',
+                qr: 'Silakan scan QR menggunakan WhatsApp.',
+                disconnected: 'Tidak terhubung. Pastikan gateway berjalan.',
+                init: 'Menunggu koneksi gateway.'
+            };
+
+            if (waStatusBadge) {
+                waStatusBadge.classList.remove('connected', 'qr', 'disconnected', 'init');
+                waStatusBadge.classList.add(labelMap[status] ? status : 'disconnected');
+                waStatusBadge.textContent = labelMap[status] || 'Disconnected';
+            }
+
+            if (waStatusSub) {
+                waStatusSub.textContent = subMap[status] || 'Status tidak diketahui.';
+            }
+
+            if (waDevicePhone) {
+                waDevicePhone.textContent = normalizeGatewayPhone(data?.user);
+            }
+
+            if (waDeviceSince) {
+                waDeviceSince.textContent = formatGatewayTime(data?.connectedAt);
+            }
+
+            if (waActiveDevice) {
+                waActiveDevice.textContent = data?.activeDeviceId || '-';
+            }
+
+            const qrData = data?.qrDataUrl || '';
+            if (waQrImage && waQrPlaceholder) {
+                if (status === 'qr' && qrData) {
+                    waQrImage.src = qrData;
+                    waQrImage.style.display = 'block';
+                    waQrPlaceholder.style.display = 'none';
+                } else {
+                    waQrImage.style.display = 'none';
+                    waQrPlaceholder.style.display = 'block';
+                    waQrPlaceholder.textContent = status === 'connected'
+                        ? 'Sudah terhubung. QR tidak diperlukan.'
+                        : 'QR akan muncul di sini jika belum terhubung.';
+                }
+            }
+        }
+
+        async function fetchGatewayStatus() {
+            if (!waDeviceCard || !gatewayStatusUrl) return;
+            try {
+                const response = await fetch(gatewayStatusUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) {
+                    throw new Error('Gateway tidak dapat dihubungi.');
+                }
+                const payload = await response.json();
+                if (payload?.success === false) {
+                    updateGatewayUi({ status: 'disconnected' });
+                    if (waStatusSub && payload?.message) waStatusSub.textContent = payload.message;
+                    return;
+                }
+                updateGatewayUi(payload?.data || {});
+            } catch (error) {
+                updateGatewayUi({ status: 'disconnected' });
+                if (waStatusSub) waStatusSub.textContent = 'Gateway tidak dapat dihubungi.';
+            }
         }
 
         function ensureAttachmentBuffer(key) {
@@ -1312,15 +1656,27 @@ body,
                     if (jsonData.length === 0) { alert('File Excel kosong!'); resetExcelImport(); return; }
                     const headers = jsonData[0].map(h => h ? h.toString().toLowerCase() : '');
                     const whatsappIndex = headers.findIndex(h => h.includes('whatsapp') || h.includes('wa') || h.includes('nomor') || h.includes('no') || h.includes('phone') || h.includes('telepon'));
+                    const messageIndex = headers.findIndex(h => h.includes('message') || h.includes('pesan') || h.includes('msg') || h.includes('text') || h.includes('isi'));
                     if (whatsappIndex === -1) { alert('Tidak ditemukan kolom "Nomor WhatsApp"!'); resetExcelImport(); return; }
-                    let importedCount = 0, duplicateCount = 0, invalidCount = 0;
+                    let importedCount = 0, duplicateCount = 0, invalidCount = 0, messageApplied = 0;
                     for (let i = 1; i < jsonData.length; i++) {
                         const row = jsonData[i];
                         if (!row[whatsappIndex]) continue;
                         const phone = normalizePhone(row[whatsappIndex].toString().trim());
                         if (!phone) { invalidCount++; continue; }
-                        if (recipientNumbers.includes(phone)) { duplicateCount++; continue; }
-                        if (addRecipient(phone, false)) importedCount++;
+                        if (recipientNumbers.includes(phone)) {
+                            duplicateCount++;
+                        } else {
+                            if (addRecipient(phone, false)) importedCount++;
+                        }
+                        const messageCell = messageIndex !== -1 ? row[messageIndex] : '';
+                        const customMessage = messageCell !== undefined && messageCell !== null
+                            ? String(messageCell).trim()
+                            : '';
+                        if (customMessage !== '') {
+                            overrideState['manual:' + phone] = { mode: 'manual', message: customMessage };
+                            messageApplied++;
+                        }
                     }
                     updateTargetsField();
                     renderRecipientMessageMatrix();
@@ -1328,8 +1684,9 @@ body,
                     let resultMessage = `Berhasil mengimpor ${importedCount} nomor WhatsApp.`;
                     if (duplicateCount > 0) resultMessage += `\n${duplicateCount} nomor duplikat dilewati.`;
                     if (invalidCount > 0) resultMessage += `\n${invalidCount} nomor tidak valid dilewati.`;
+                    if (messageApplied > 0) resultMessage += `\n${messageApplied} pesan khusus terbaca.`;
                     alert(resultMessage);
-                    excelImportInfo.innerHTML = `<strong>Hasil Import:</strong> ${importedCount} nomor berhasil ditambahkan`;
+                    excelImportInfo.innerHTML = `<strong>Hasil Import:</strong> ${importedCount} nomor berhasil ditambahkan${messageApplied > 0 ? `, ${messageApplied} pesan khusus terisi` : ''}`;
                     excelImportInfo.style.display = 'block';
                 } catch (error) {
                     alert('Terjadi kesalahan saat membaca file Excel.');
@@ -1550,10 +1907,13 @@ body,
                 const statusText = activity.status === 'success' ? 'Terkirim' : activity.status === 'failed' ? 'Gagal' : 'Pending';
                 const logId = Number(activity.logId || 0);
                 const canRetry = Boolean(activity.canRetry) && activity.status === 'failed' && logId > 0;
+                const errorText = activity.status === 'failed'
+                    ? (activity.errorMessage || activity.responseMessage || 'Gagal mengirim pesan.')
+                    : '-';
                 const actionButtons = [];
                 if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">Retry</button>`);
                 if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">Hapus</button>`);
-                row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa"><div class="siswa-name">${activity.studentName}</div></div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali"><div class="wali-name">${activity.parentName}</div></div><div class="col-wa">${activity.phone}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
+                row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa"><div class="siswa-name">${activity.studentName}</div></div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali"><div class="wali-name">${activity.parentName}</div></div><div class="col-wa">${activity.phone}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-error">${errorText}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
                 activityLog.appendChild(row);
             });
         }
@@ -1740,6 +2100,34 @@ body,
         searchCampaignsByUuid();
         syncCampaignClearButtons();
         refreshActivityLogs();
+
+        if (providerState && providerState.current) {
+            updateProviderBadge(providerState.current);
+        } else {
+            updateProviderBadge('gateway');
+        }
+
+        updateGatewaySendState('init');
+        refreshGatewayStatusForSend();
+        refreshDeviceSelects();
+        setInterval(() => {
+            if (document.visibilityState !== 'hidden') refreshGatewayStatusForSend();
+        }, 5000);
+        setInterval(() => {
+            if (document.visibilityState !== 'hidden') refreshDeviceSelects();
+        }, 12000);
+
+        if (waDeviceCard) {
+            fetchGatewayStatus();
+            if (waRefreshStatusBtn) {
+                waRefreshStatusBtn.addEventListener('click', function() {
+                    fetchGatewayStatus();
+                });
+            }
+            setInterval(() => {
+                if (document.visibilityState !== 'hidden') fetchGatewayStatus();
+            }, 5000);
+        }
 
         setInterval(() => { if (document.visibilityState !== 'hidden') refreshActivityLogs(); }, 5000);
     });

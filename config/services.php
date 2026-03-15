@@ -39,6 +39,7 @@ return [
         'token' => env('WABLAS_TOKEN'),
         'secret_key' => env('WABLAS_SECRET_KEY'),
         'base_url' => env('WABLAS_BASE_URL', 'https://wablas.com'),
+        'server' => env('WABLAS_SERVER'),
         'fallback_base_urls' => env(
             'WABLAS_FALLBACK_BASE_URLS',
             implode(',', [
@@ -58,6 +59,13 @@ return [
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),
         'base_url' => env('FONNTE_BASE_URL', 'https://api.fonnte.com'),
+    ],
+
+    'whatsapp_gateway' => [
+        'base_url' => env('WHATSAPP_GATEWAY_BASE_URL', 'http://localhost:3000'),
+        'api_key' => env('WHATSAPP_GATEWAY_API_KEY'),
+        'api_key_header' => env('WHATSAPP_GATEWAY_API_KEY_HEADER', 'X-API-KEY'),
+        'timeout' => (int) env('WHATSAPP_GATEWAY_TIMEOUT', 20),
     ],
 
 

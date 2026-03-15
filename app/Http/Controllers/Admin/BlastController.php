@@ -17,11 +17,15 @@ use App\Models\Announcement;
 use App\Services\Blast\TemplateRenderer;
 use App\Services\Blast\RecipientSelectorService;
 use App\Services\Blast\TunggakanMessageContextService;
+use App\Services\Blast\WhatsAppProviderSelector;
+use App\Services\Blast\WhatsAppDeviceLabelStore;
+use App\Enums\User\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class BlastController extends Controller
@@ -37,7 +41,7 @@ class BlastController extends Controller
         return view('admin.blast.index');
     }
 
-    public function whatsapp()
+    public function whatsapp(WhatsAppProviderSelector $providerSelector)
     {
         session()->forget('campaign_id');
 
@@ -63,6 +67,18 @@ class BlastController extends Controller
         $activityData = $this->buildChannelActivityData('WHATSAPP', $recipients);
         $activityLogs = $activityData['logs'];
         $activityStats = $activityData['stats'];
+        $rawApiKey = (string) config('services.whatsapp_gateway.api_key', '');
+        $gatewayConfig = [
+            'base_url' => (string) config('services.whatsapp_gateway.base_url', ''),
+            'api_key_header' => (string) config('services.whatsapp_gateway.api_key_header', 'X-API-KEY'),
+            'api_key_display' => trim($rawApiKey) !== '' ? $rawApiKey : '-',
+            'api_key_masked' => $this->maskGatewayApiKey($rawApiKey),
+        ];
+
+        $providerState = [
+            'current' => $providerSelector->getProvider(),
+            'allowed' => ['gateway', 'wablas'],
+        ];
 
         return view('admin.blast.whatsapp', compact(
             'recipients',
@@ -70,8 +86,607 @@ class BlastController extends Controller
             'templates',
             'announcementOptions',
             'activityLogs',
-            'activityStats'
+            'activityStats',
+            'gatewayConfig',
+            'providerState'
         ));
+    }
+
+    public function whatsappManagePhone(WhatsAppProviderSelector $providerSelector)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            abort(403);
+        }
+
+        $rawApiKey = (string) config('services.whatsapp_gateway.api_key', '');
+        $gatewayConfig = [
+            'base_url' => (string) config('services.whatsapp_gateway.base_url', ''),
+            'api_key_header' => (string) config('services.whatsapp_gateway.api_key_header', 'X-API-KEY'),
+            'api_key_display' => trim($rawApiKey) !== '' ? $rawApiKey : '-',
+            'api_key_masked' => $this->maskGatewayApiKey($rawApiKey),
+        ];
+
+        $providerState = [
+            'current' => $providerSelector->getProvider(),
+            'allowed' => ['gateway', 'wablas'],
+        ];
+
+        return view('admin.blast.whatsapp-manage', compact('gatewayConfig', 'providerState'));
+    }
+
+    public function whatsappProviderStatus(WhatsAppProviderSelector $providerSelector)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OK',
+            'data' => [
+                'provider' => $providerSelector->getProvider(),
+            ],
+        ]);
+    }
+
+    public function whatsappProviderUpdate(
+        Request $request,
+        WhatsAppProviderSelector $providerSelector
+    ) {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $provider = strtolower(trim((string) $request->input('provider', '')));
+        $allowed = ['gateway', 'wablas'];
+        if (!in_array($provider, $allowed, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Provider tidak valid.',
+                'data' => [
+                    'allowed' => $allowed,
+                ],
+            ], 422);
+        }
+
+        $providerSelector->setProvider($provider);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Provider diperbarui.',
+            'data' => [
+                'provider' => $provider,
+            ],
+        ]);
+    }
+
+    public function whatsappGatewayStatus()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $isSuperAdmin = $user->role === UserRole::IT_SUPPORT->value;
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->get($baseUrl . '/status');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        $data = $payload['data'] ?? $payload;
+        if (!$isSuperAdmin) {
+            $data = [
+                'status' => $data['status'] ?? 'disconnected',
+                'activeDeviceId' => $data['activeDeviceId'] ?? null,
+            ];
+        }
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $data,
+        ]);
+    }
+
+    public function whatsappGatewayReconnect()
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/reconnect');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'Reconnect requested'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDevices(WhatsAppDeviceLabelStore $labelStore)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $isSuperAdmin = $user->role === UserRole::IT_SUPPORT->value;
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->get($baseUrl . '/devices');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+        $data = $payload['data'] ?? $payload;
+        $devices = $data['devices'] ?? [];
+        $labels = $labelStore->getLabels();
+
+        if (is_array($devices)) {
+            $devices = array_map(function ($device) use ($labels, $isSuperAdmin) {
+                if (!is_array($device)) {
+                    return $device;
+                }
+
+                $deviceId = (string) ($device['deviceId'] ?? '');
+                $device['label'] = $labels[$deviceId] ?? $deviceId;
+
+                if (!$isSuperAdmin) {
+                    unset($device['qr'], $device['qrDataUrl'], $device['user']);
+                }
+
+                return $device;
+            }, $devices);
+        }
+
+        $data['devices'] = $devices;
+        $data['labels'] = $labels;
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $data,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceCreate(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($request->input('device_id'));
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/devices', [
+                'deviceId' => $deviceId,
+            ]);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceConnect(string $deviceId)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($deviceId);
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/devices/' . $deviceId . '/connect');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceActivate(string $deviceId)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($deviceId);
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/devices/' . $deviceId . '/activate');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceReconnect(string $deviceId)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($deviceId);
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/devices/' . $deviceId . '/reconnect');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceDisconnect(string $deviceId)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($deviceId);
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/devices/' . $deviceId . '/disconnect');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceDelete(
+        string $deviceId,
+        WhatsAppDeviceLabelStore $labelStore
+    )
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($deviceId);
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->delete($baseUrl . '/devices/' . $deviceId);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+
+        $labelStore->removeLabel($deviceId);
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
+    public function whatsappGatewayDeviceRename(
+        string $deviceId,
+        Request $request,
+        WhatsAppDeviceLabelStore $labelStore
+    ) {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $deviceId = $this->sanitizeDeviceId($deviceId);
+        if ($deviceId === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device ID tidak valid.',
+                'data' => [],
+            ], 422);
+        }
+
+        $label = trim((string) $request->input('label', ''));
+        if ($label === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Label tidak boleh kosong.',
+                'data' => [],
+            ], 422);
+        }
+
+        $labelStore->setLabel($deviceId, $label);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Label device diperbarui.',
+            'data' => [
+                'deviceId' => $deviceId,
+                'label' => $label,
+            ],
+        ]);
     }
 
     public function email()
@@ -350,7 +965,18 @@ class BlastController extends Controller
 
             'attachments' => 'nullable|array',
             'attachments.*' => 'nullable|file|max:5120',
+
+            'device_student' => 'nullable|string',
+            'device_employee' => 'nullable|string',
+            'device_manual' => 'nullable|string',
         ]);
+
+        $deviceStudent = $this->sanitizeDeviceId($validated['device_student'] ?? null);
+        $deviceEmployee = $this->sanitizeDeviceId($validated['device_employee'] ?? null);
+        $deviceManual = $this->sanitizeDeviceId($validated['device_manual'] ?? null);
+        if ($deviceManual === null) {
+            $deviceManual = $deviceStudent;
+        }
 
         $attachments = $this->storeEmailAttachments($request);
         $recipientAttachmentOverrides = $this->storeRecipientAttachmentOverrides(
@@ -452,9 +1078,10 @@ class BlastController extends Controller
                     $payload->setMeta('queue_name', $campaignOptions['queue_name']);
                     $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
                     $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
-                    $this->attachFilesToPayload($payload, $attachments);
-                    $this->attachFilesToPayload(
+                    $this->applyDeviceToPayload($payload, $deviceStudent);
+                    $this->attachWhatsappFilesToPayload(
                         $payload,
+                        $attachments,
                         $recipientAttachmentOverrides['db:' . $recipient->id] ?? []
                     );
 
@@ -519,9 +1146,10 @@ class BlastController extends Controller
                     $payload->setMeta('queue_name', $campaignOptions['queue_name']);
                     $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
                     $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
-                    $this->attachFilesToPayload($payload, $attachments);
-                    $this->attachFilesToPayload(
+                    $this->applyDeviceToPayload($payload, $deviceEmployee);
+                    $this->attachWhatsappFilesToPayload(
                         $payload,
+                        $attachments,
                         $recipientAttachmentOverrides['db:' . $employee->id] ?? []
                     );
 
@@ -586,9 +1214,10 @@ class BlastController extends Controller
                     $payload->setMeta('queue_name', $campaignOptions['queue_name']);
                     $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
                     $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
-                    $this->attachFilesToPayload($payload, $attachments);
-                    $this->attachFilesToPayload(
+                    $this->applyDeviceToPayload($payload, $deviceEmployee);
+                    $this->attachWhatsappFilesToPayload(
                         $payload,
+                        $attachments,
                         $recipientAttachmentOverrides['db:' . $employeeYpik->id] ?? []
                     );
 
@@ -648,9 +1277,10 @@ class BlastController extends Controller
             $payload->setMeta('queue_name', $campaignOptions['queue_name']);
             $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
             $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
-            $this->attachFilesToPayload($payload, $attachments);
-            $this->attachFilesToPayload(
+            $this->applyDeviceToPayload($payload, $deviceManual);
+            $this->attachWhatsappFilesToPayload(
                 $payload,
+                $attachments,
                 $recipientAttachmentOverrides['manual:' . $target] ?? []
             );
 
@@ -1772,6 +2402,42 @@ class BlastController extends Controller
         }
     }
 
+    /**
+     * WhatsApp hanya mendukung satu file per pesan.
+     * Jika ada file khusus penerima, gunakan itu sebagai prioritas.
+     *
+     * @param BlastAttachment[] $globalAttachments
+     * @param BlastAttachment[] $overrideAttachments
+     */
+    private function attachWhatsappFilesToPayload(
+        BlastPayload $payload,
+        array $globalAttachments,
+        array $overrideAttachments
+    ): void {
+        $effective = !empty($overrideAttachments)
+            ? $overrideAttachments
+            : $globalAttachments;
+
+        $this->attachFilesToPayload($payload, $effective);
+
+        if (!empty($overrideAttachments)) {
+            $payload->setMeta('attachment_scope', 'override');
+        } elseif (!empty($globalAttachments)) {
+            $payload->setMeta('attachment_scope', 'global');
+        }
+    }
+
+    private function applyDeviceToPayload(
+        BlastPayload $payload,
+        ?string $deviceId
+    ): void {
+        if ($deviceId === null || $deviceId === '') {
+            return;
+        }
+
+        $payload->setMeta('device_id', $deviceId);
+    }
+
     private function parseMessageOverrides(?string $rawOverrides): array
     {
         if (empty($rawOverrides)) {
@@ -2063,5 +2729,62 @@ class BlastController extends Controller
         }
 
         return $normalized;
+    }
+
+    private function maskGatewayApiKey(string $apiKey): string
+    {
+        $value = trim($apiKey);
+        if ($value === '') {
+            return '-';
+        }
+
+        $visible = 4;
+        $length = strlen($value);
+        if ($length <= $visible) {
+            return str_repeat('*', $length);
+        }
+
+        return str_repeat('*', $length - $visible) . substr($value, -$visible);
+    }
+
+    /**
+     * @return array{0:string,1:\Illuminate\Http\Client\PendingRequest}
+     */
+    private function buildGatewayClient(): array
+    {
+        $baseUrl = rtrim(
+            (string) config('services.whatsapp_gateway.base_url', ''),
+            '/'
+        );
+
+        if ($baseUrl === '') {
+            throw new \RuntimeException('Gateway base URL belum disetel.');
+        }
+
+        $timeout = (int) config('services.whatsapp_gateway.timeout', 20);
+        $apiKey = trim((string) config('services.whatsapp_gateway.api_key', ''));
+        $apiKeyHeader = trim((string) config('services.whatsapp_gateway.api_key_header', 'X-API-KEY'));
+
+        $headers = [];
+        if ($apiKey !== '') {
+            $headers[$apiKeyHeader] = $apiKey;
+        }
+
+        $client = Http::timeout($timeout)->withHeaders($headers);
+
+        return [$baseUrl, $client];
+    }
+
+    private function sanitizeDeviceId(?string $raw): ?string
+    {
+        $value = trim((string) $raw);
+        if ($value === '') {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^a-zA-Z0-9_-]/', '', $value) ?? '';
+        $normalized = strtolower($normalized);
+
+        return $normalized !== '' ? $normalized : null;
     }
 }

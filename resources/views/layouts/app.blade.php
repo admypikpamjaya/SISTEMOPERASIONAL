@@ -70,6 +70,7 @@
                             && auth()->user()->role === \App\Enums\User\UserRole::BLASTING->value;
                         $blastAllowedRoutePrefixes = ['admin.blast.'];
                         $blastAllowedRoutes = ['logout'];
+                        $activeRole = Auth::check() ? auth()->user()->role : null;
 
                         $isBlastAllowedRoute = function (?string $route) use ($blastAllowedRoutePrefixes, $blastAllowedRoutes): bool {
                             if (empty($route)) {
@@ -88,6 +89,18 @@
 
                             return false;
                         };
+
+                        $hasRoleAccess = function (array $item) use ($activeRole): bool {
+                            if (empty($item['roles'])) {
+                                return true;
+                            }
+
+                            if ($activeRole === null) {
+                                return false;
+                            }
+
+                            return in_array($activeRole, (array) $item['roles'], true);
+                        };
                     @endphp
 
                     @foreach(config('menu') as $menu)
@@ -99,6 +112,10 @@
                                     ->filter(fn($child) => $isBlastAllowedRoute($child['route'] ?? null))
                                     ->values();
                             }
+
+                            $menuChildren = $menuChildren
+                                ->filter(fn($child) => $hasRoleAccess($child))
+                                ->values();
 
                             $hasChildren = $menuChildren->isNotEmpty();
                             $isActiveParent = false;
@@ -131,6 +148,7 @@
                         @if(
                             $isAllowedForBlasting &&
                             !$isHiddenOnCurrentRoute &&
+                            $hasRoleAccess($menu) &&
                             (
                                 empty($menu['module_name']) ||
                                 app(\App\Services\AccessControl\PermissionService::class)

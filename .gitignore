@@ -1,5 +1,11 @@
 /.phpunit.cache
+/plugin-wablas/
 /node_modules
+node_modules/
+/whatsapp-gateway/node_modules/
+/whatsapp-gateway/logs/
+/whatsapp-gateway/sessions/
+/whatsapp-gateway/uploads/
 /public/build
 /public/hot
 /public/storage

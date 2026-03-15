@@ -2,8 +2,6 @@
 
 namespace App\Providers\Messaging;
 
-namespace App\Providers\Messaging;
-
 use App\Contracts\Messaging\WhatsappProviderInterface;
 use App\DataTransferObjects\BlastPayload;
 use Illuminate\Support\Facades\Log;

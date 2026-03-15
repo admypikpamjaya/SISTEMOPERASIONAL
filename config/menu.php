@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\User\UserRole;
+
 return [
     [
         'label' => 'Dashboard',
@@ -57,6 +59,13 @@ return [
                 'label' => 'WhatsApp Blast',
                 'icon'  => 'fab fa-whatsapp',
                 'route' => 'admin.blast.whatsapp',
+            ],
+            [
+                'label' => 'Manage Phone',
+                'icon'  => 'fas fa-mobile-alt',
+                'route' => 'admin.blast.whatsapp.manage',
+                'module_name' => 'admin_blast',
+                'roles' => [UserRole::IT_SUPPORT->value],
             ],
             [
                 'label' => 'Email Blast',

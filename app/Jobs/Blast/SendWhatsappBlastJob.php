@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendWhatsappBlastJob implements ShouldQueue
 {
@@ -82,9 +83,11 @@ class SendWhatsappBlastJob implements ShouldQueue
             }
 
             $this->markSuccess($blastLog, $announcementLog);
+            $this->logSuccess($blastLog);
             $this->refreshCampaignCompletion($blastLog);
         } catch (\Throwable $exception) {
             $this->markFailure($blastLog, $announcementLog, $exception);
+            $this->logFailure($blastLog, $exception);
             $this->refreshCampaignCompletion($blastLog);
 
             throw $exception;
@@ -156,11 +159,16 @@ class SendWhatsappBlastJob implements ShouldQueue
         ?AnnouncementLog $announcementLog,
         \Throwable $exception
     ): void {
+        $errorMessage = trim($exception->getMessage());
+        if ($errorMessage === '') {
+            $errorMessage = 'WhatsApp send failed.';
+        }
+
         if ($blastLog) {
             $blastLog->update([
                 'status' => 'FAILED',
-                'error_message' => $exception->getMessage(),
-                'response' => 'WhatsApp send failed.',
+                'error_message' => $errorMessage,
+                'response' => $errorMessage,
                 'sent_at' => now(),
                 'attempt' => $this->attempts(),
             ]);
@@ -169,7 +177,7 @@ class SendWhatsappBlastJob implements ShouldQueue
         if ($announcementLog) {
             $announcementLog->update([
                 'status' => 'FAILED',
-                'response' => $exception->getMessage(),
+                'response' => $errorMessage,
                 'sent_at' => now(),
             ]);
         }
@@ -239,5 +247,41 @@ class SendWhatsappBlastJob implements ShouldQueue
                 'campaign_status' => 'COMPLETED',
                 'completed_at' => now(),
             ]);
+    }
+
+    private function logSuccess(?BlastLog $blastLog): void
+    {
+        $providerMessage = trim(
+            (string) ($this->payload->meta['provider_message'] ?? '')
+        );
+        $deliveryStatus = trim(
+            (string) ($this->payload->meta['provider_delivery_status'] ?? '')
+        );
+
+        Log::info('[WA BLAST SUCCESS]', [
+            'phone' => $this->phone,
+            'blast_log_id' => $blastLog?->id,
+            'blast_message_id' => $blastLog?->blast_message_id,
+            'provider_message' => $providerMessage !== '' ? $providerMessage : 'WhatsApp sent successfully.',
+            'provider_delivery_status' => $deliveryStatus !== '' ? $deliveryStatus : null,
+            'attachments' => count($this->payload->attachments ?? []),
+        ]);
+    }
+
+    private function logFailure(?BlastLog $blastLog, \Throwable $exception): void
+    {
+        $providerError = trim(
+            (string) ($this->payload->meta['provider_error'] ?? '')
+        );
+        $errorMessage = trim($exception->getMessage());
+
+        Log::error('[WA BLAST FAILED]', [
+            'phone' => $this->phone,
+            'blast_log_id' => $blastLog?->id,
+            'blast_message_id' => $blastLog?->blast_message_id,
+            'error' => $errorMessage !== '' ? $errorMessage : 'WhatsApp send failed.',
+            'provider_error' => $providerError !== '' ? $providerError : null,
+            'attachments' => count($this->payload->attachments ?? []),
+        ]);
     }
 }

@@ -444,9 +444,35 @@ Route::prefix('admin')
 
                 // WhatsApp
                 Route::get('/whatsapp', [BlastController::class, 'whatsapp'])->name('whatsapp');
+                Route::get('/whatsapp/manage-phone', [BlastController::class, 'whatsappManagePhone'])
+                    ->name('whatsapp.manage');
                 Route::post('/whatsapp/send', [BlastController::class, 'sendWhatsapp'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('whatsapp.send');
+                Route::get('/whatsapp/gateway-status', [BlastController::class, 'whatsappGatewayStatus'])
+                    ->name('whatsapp.gateway-status');
+                Route::post('/whatsapp/gateway-reconnect', [BlastController::class, 'whatsappGatewayReconnect'])
+                    ->name('whatsapp.gateway-reconnect');
+                Route::get('/whatsapp/gateway-devices', [BlastController::class, 'whatsappGatewayDevices'])
+                    ->name('whatsapp.gateway-devices');
+                Route::post('/whatsapp/gateway-devices', [BlastController::class, 'whatsappGatewayDeviceCreate'])
+                    ->name('whatsapp.gateway-devices.create');
+                Route::post('/whatsapp/gateway-devices/{deviceId}/connect', [BlastController::class, 'whatsappGatewayDeviceConnect'])
+                    ->name('whatsapp.gateway-devices.connect');
+                Route::post('/whatsapp/gateway-devices/{deviceId}/activate', [BlastController::class, 'whatsappGatewayDeviceActivate'])
+                    ->name('whatsapp.gateway-devices.activate');
+                Route::post('/whatsapp/gateway-devices/{deviceId}/reconnect', [BlastController::class, 'whatsappGatewayDeviceReconnect'])
+                    ->name('whatsapp.gateway-devices.reconnect');
+                Route::post('/whatsapp/gateway-devices/{deviceId}/disconnect', [BlastController::class, 'whatsappGatewayDeviceDisconnect'])
+                    ->name('whatsapp.gateway-devices.disconnect');
+                Route::post('/whatsapp/gateway-devices/{deviceId}/rename', [BlastController::class, 'whatsappGatewayDeviceRename'])
+                    ->name('whatsapp.gateway-devices.rename');
+                Route::delete('/whatsapp/gateway-devices/{deviceId}', [BlastController::class, 'whatsappGatewayDeviceDelete'])
+                    ->name('whatsapp.gateway-devices.delete');
+                Route::get('/whatsapp/provider-status', [BlastController::class, 'whatsappProviderStatus'])
+                    ->name('whatsapp.provider-status');
+                Route::post('/whatsapp/provider-update', [BlastController::class, 'whatsappProviderUpdate'])
+                    ->name('whatsapp.provider-update');
 
                 // Email
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
