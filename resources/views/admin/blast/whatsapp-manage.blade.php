@@ -234,6 +234,7 @@ body,
                     <button type="button" class="wa-btn danger" id="waForceReconnectBtn">Force Reconnect</button>
                     <button type="button" class="wa-btn danger" id="waDisconnectDeviceBtn">Putuskan Device</button>
                     <button type="button" class="wa-btn danger" id="waDeleteDeviceBtn">Hapus Device</button>
+                    <button type="button" class="wa-btn danger" id="waResetDevicesBtn">Reset Semua Device</button>
                     <div class="wa-device-hint">Jika status Connected, blasting langsung aktif.</div>
                 </div>
             </div>
@@ -259,6 +260,7 @@ body,
         const gatewayDeviceDisconnectUrl = @json(route('admin.blast.whatsapp.gateway-devices.disconnect', ['deviceId' => '__DEVICE__']));
         const gatewayDeviceRenameUrl = @json(route('admin.blast.whatsapp.gateway-devices.rename', ['deviceId' => '__DEVICE__']));
         const gatewayDeviceDeleteUrl = @json(route('admin.blast.whatsapp.gateway-devices.delete', ['deviceId' => '__DEVICE__']));
+        const gatewayDevicesResetUrl = @json(route('admin.blast.whatsapp.gateway-devices.reset'));
         const providerStatusUrl = @json(route('admin.blast.whatsapp.provider-status'));
         const providerUpdateUrl = @json(route('admin.blast.whatsapp.provider-update'));
 
@@ -269,6 +271,7 @@ body,
         const waActivateDeviceBtn = document.getElementById('waActivateDeviceBtn');
         const waDeleteDeviceBtn = document.getElementById('waDeleteDeviceBtn');
         const waDisconnectDeviceBtn = document.getElementById('waDisconnectDeviceBtn');
+        const waResetDevicesBtn = document.getElementById('waResetDevicesBtn');
         const waStatusBadge = document.getElementById('waStatusBadge');
         const waStatusSub = document.getElementById('waStatusSub');
         const waDevicePhone = document.getElementById('waDevicePhone');
@@ -659,6 +662,27 @@ body,
             }
         }
 
+        async function resetDevices() {
+            if (!gatewayDevicesResetUrl) return;
+            if (!confirm('Reset semua device? Semua session akan dihapus dan perlu scan QR ulang.')) return;
+            try {
+                const response = await fetch(gatewayDevicesResetUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({})
+                });
+                if (!response.ok) throw new Error('Gagal reset device.');
+                await fetchDevices();
+            } catch (error) {
+                alert('Reset device gagal.');
+            }
+        }
+
         fetchDevices();
         fetchProviderStatus();
 
@@ -685,6 +709,11 @@ body,
         if (waDeleteDeviceBtn) {
             waDeleteDeviceBtn.addEventListener('click', function() {
                 deleteDevice();
+            });
+        }
+        if (waResetDevicesBtn) {
+            waResetDevicesBtn.addEventListener('click', function() {
+                resetDevices();
             });
         }
         if (waDisconnectDeviceBtn) {

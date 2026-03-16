@@ -3,7 +3,7 @@ const { Server } = require('socket.io');
 const env = require('./src/config/env');
 const logger = require('./src/utils/logger');
 const app = require('./src/app');
-const { initWhatsApp } = require('./src/whatsapp/client');
+const { initAllDevices } = require('./src/whatsapp/client');
 const { startWorker } = require('./src/queue/worker');
 
 const server = http.createServer(app);
@@ -20,7 +20,7 @@ if (env.SOCKET_ENABLED) {
 }
 
 if (env.RUN_WORKER) {
-  initWhatsApp({ io }).catch((err) => {
+  initAllDevices({ io }).catch((err) => {
     logger.error(`WhatsApp init failed: ${err.message}`);
   });
 

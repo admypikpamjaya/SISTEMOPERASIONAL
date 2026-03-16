@@ -467,6 +467,8 @@ Route::prefix('admin')
                     ->name('whatsapp.gateway-devices.disconnect');
                 Route::post('/whatsapp/gateway-devices/{deviceId}/rename', [BlastController::class, 'whatsappGatewayDeviceRename'])
                     ->name('whatsapp.gateway-devices.rename');
+                Route::post('/whatsapp/gateway-devices/reset', [BlastController::class, 'whatsappGatewayDevicesReset'])
+                    ->name('whatsapp.gateway-devices.reset');
                 Route::delete('/whatsapp/gateway-devices/{deviceId}', [BlastController::class, 'whatsappGatewayDeviceDelete'])
                     ->name('whatsapp.gateway-devices.delete');
                 Route::get('/whatsapp/provider-status', [BlastController::class, 'whatsappProviderStatus'])

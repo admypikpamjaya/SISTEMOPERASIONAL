@@ -249,6 +249,11 @@ Layanan WhatsApp Gateway berada di folder `whatsapp-gateway/` dan menggunakan No
 docker run --name redis -p 6379:6379 -d redis:7-alpine
 ```
 
+Untuk production, disarankan bind ke localhost agar tidak publik:
+```bash
+docker run --name redis -p 127.0.0.1:6379:6379 -d redis:7-alpine
+```
+
 Jika muncul error **name already in use**, berarti container sudah ada. Jalankan:
 ```bash
 docker start redis
@@ -292,6 +297,9 @@ RUN_WORKER=false npm run start
 npm run worker
 ```
 
+**Untuk production (direkomendasikan): gunakan PM2**  
+Lihat bagian **"WhatsApp Gateway dengan PM2"** di bawah.
+
 ### Scan QR WhatsApp
 - QR akan muncul di terminal jika `WA_PRINT_QR=true`.
 - Alternatif: akses `GET /status` untuk mendapatkan `qrDataUrl`.
@@ -305,6 +313,7 @@ npm run worker
 - `POST /send-template` body: `{ "phone":"6281", "template":"promo", "variables":{...} }`
 - `GET /status`
 - `GET /health`
+- `POST /devices/reset` (reset semua device & session)
 
 ### Integrasi Laravel (Pengganti Wablas)
 1. Atur `.env` Laravel:
@@ -390,6 +399,7 @@ pm2 delete wa-gateway
 - Gunakan **Tambah Device** untuk membuat sesi baru lalu scan QR.
 - Pilih **Aktifkan Device** untuk mengatur default device (jika tidak memilih device saat blasting).
 - Jika ingin hapus sesi device, gunakan **Hapus Device**.
+- Tombol **Reset Semua Device** akan menghapus seluruh sesi & label sehingga wajib scan QR ulang.
 - Gunakan **Rename** untuk memberi nama device (misal: `WA Siswa`, `WA Karyawan`).
 - Label disimpan di `storage/app/whatsapp_device_labels.json`.
 
@@ -399,6 +409,20 @@ pm2 delete wa-gateway
   - **Device Karyawan**
   - **Device Manual**
 - Ini memungkinkan pemisahan nomor blasting siswa dan karyawan.
+- **Activity Log WhatsApp** sekarang menampilkan device yang dipakai per blast.
+
+### Session Persisten Saat Restart
+- Session Baileys disimpan di `whatsapp-gateway/sessions/`.
+- Saat server restart, session yang sudah tersimpan akan otomatis reconnect tanpa perlu scan QR ulang.
+- **Jangan hapus** folder `sessions/` jika ingin device tetap terhubung.
+- Jika gateway dijalankan di Docker, pastikan folder `sessions/` di-mount sebagai volume agar tidak hilang saat container restart.
+
+### Menjadikan API Gateway Public (Agar Bisa Diakses Terus)
+- **Yang dibuat public adalah API gateway (Node.js), bukan Redis.**
+- Redis harus tetap private (`127.0.0.1`) untuk keamanan.
+- Gunakan domain + reverse proxy (Nginx/Apache) ke port `3000`, lalu set `WHATSAPP_GATEWAY_BASE_URL` ke URL public.
+- Pastikan `WHATSAPP_GATEWAY_API_KEY` di Laravel dan `API_KEY` di gateway diisi agar aman.
+- (Opsional) Batasi akses hanya dari IP server Laravel.
 
 ### Toggle Provider (Gateway vs Wablas)
 - Tombol **Aktifkan Wablas / Aktifkan Gateway** ada di halaman **Manage Phone**.

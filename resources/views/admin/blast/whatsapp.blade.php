@@ -677,7 +677,7 @@ body,
     .wa-provider-grid       { grid-template-columns: 1fr; }
     .wa-device-select-grid  { grid-template-columns: 1fr; }
     .activity-table-header,
-    .activity-row           { grid-template-columns: 90px 1fr 90px 1fr 120px 90px 1.2fr 130px; font-size: 11px; }
+    .activity-row           { grid-template-columns: 90px 1fr 90px 1fr 120px 120px 90px 1.2fr 130px; font-size: 11px; }
 }
 @media (max-width: 768px) {
     .wa-page                { padding: 12px; }
@@ -1103,6 +1103,7 @@ body,
                     <div>Kelas</div>
                     <div>Nama Wali</div>
                     <div>Nomor WhatsApp</div>
+                    <div>Device</div>
                     <div>Status</div>
                     <div>Error</div>
                     <div>Aksi</div>
@@ -1913,7 +1914,8 @@ body,
                 const actionButtons = [];
                 if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">Retry</button>`);
                 if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">Hapus</button>`);
-                row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa"><div class="siswa-name">${activity.studentName}</div></div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali"><div class="wali-name">${activity.parentName}</div></div><div class="col-wa">${activity.phone}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-error">${errorText}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
+                const deviceText = activity.deviceLabel || activity.deviceId || '-';
+                row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa"><div class="siswa-name">${activity.studentName}</div></div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali"><div class="wali-name">${activity.parentName}</div></div><div class="col-wa">${activity.phone}</div><div class="col-device">${deviceText}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-error">${errorText}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
                 activityLog.appendChild(row);
             });
         }
@@ -1921,7 +1923,7 @@ body,
         function renderActivitiesWithCurrentFilter() {
             const searchTerm = (searchInput?.value || '').trim().toLowerCase();
             if (searchTerm === '') { renderActivities(); return; }
-            const filtered = activities.filter(activity => String(activity.studentName || '').toLowerCase().includes(searchTerm) || String(activity.parentName || '').toLowerCase().includes(searchTerm) || String(activity.phone || '').toLowerCase().includes(searchTerm) || String(activity.studentClass || '').toLowerCase().includes(searchTerm) || String(activity.campaignId || '').toLowerCase().includes(searchTerm));
+            const filtered = activities.filter(activity => String(activity.studentName || '').toLowerCase().includes(searchTerm) || String(activity.parentName || '').toLowerCase().includes(searchTerm) || String(activity.phone || '').toLowerCase().includes(searchTerm) || String(activity.studentClass || '').toLowerCase().includes(searchTerm) || String(activity.deviceLabel || '').toLowerCase().includes(searchTerm) || String(activity.deviceId || '').toLowerCase().includes(searchTerm) || String(activity.campaignId || '').toLowerCase().includes(searchTerm));
             renderActivities(filtered);
         }
 

@@ -15,6 +15,7 @@ router.post('/devices/:deviceId/activate', controller.activateDevice);
 router.post('/devices/:deviceId/reconnect', controller.reconnectDevice);
 router.post('/devices/:deviceId/disconnect', controller.disconnect);
 router.delete('/devices/:deviceId', controller.deleteDevice);
+router.post('/devices/reset', controller.resetDevices);
 
 router.post('/send-message', controller.sendMessage);
 router.post('/send-file', upload.single('file'), controller.sendFile);

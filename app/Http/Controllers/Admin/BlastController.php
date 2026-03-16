@@ -41,7 +41,10 @@ class BlastController extends Controller
         return view('admin.blast.index');
     }
 
-    public function whatsapp(WhatsAppProviderSelector $providerSelector)
+    public function whatsapp(
+        WhatsAppProviderSelector $providerSelector,
+        WhatsAppDeviceLabelStore $labelStore
+    )
     {
         session()->forget('campaign_id');
 
@@ -64,7 +67,11 @@ class BlastController extends Controller
             ->limit(100)
             ->get(['id', 'title', 'message']);
 
-        $activityData = $this->buildChannelActivityData('WHATSAPP', $recipients);
+        $activityData = $this->buildChannelActivityData(
+            'WHATSAPP',
+            $recipients,
+            $labelStore->getLabels()
+        );
         $activityLogs = $activityData['logs'];
         $activityStats = $activityData['stats'];
         $rawApiKey = (string) config('services.whatsapp_gateway.api_key', '');
@@ -689,6 +696,50 @@ class BlastController extends Controller
         ]);
     }
 
+    public function whatsappGatewayDevicesReset(
+        WhatsAppDeviceLabelStore $labelStore
+    ) {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = $client->post($baseUrl . '/devices/reset');
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        if (!$response->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gateway merespon error.',
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        $payload = $response->json();
+        $labelStore->clearLabels();
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'Devices reset.'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
+    }
+
     public function email()
     {
         session()->forget('campaign_id');
@@ -723,7 +774,10 @@ class BlastController extends Controller
         );
     }
 
-    public function activity(Request $request)
+    public function activity(
+        Request $request,
+        WhatsAppDeviceLabelStore $labelStore
+    )
     {
         $validated = $request->validate([
             'channel' => 'required|in:email,whatsapp',
@@ -731,9 +785,14 @@ class BlastController extends Controller
 
         $channel = strtolower((string) $validated['channel']);
         $recipients = $this->getRecipientsByChannel($channel);
+        $deviceLabels = [];
+        if ($channel === 'whatsapp') {
+            $deviceLabels = $labelStore->getLabels();
+        }
         $activityData = $this->buildChannelActivityData(
             strtoupper($channel),
-            $recipients
+            $recipients,
+            $deviceLabels
         );
 
         return response()->json($activityData);
@@ -1858,7 +1917,8 @@ class BlastController extends Controller
      */
     private function buildChannelActivityData(
         string $channel,
-        iterable $recipients
+        iterable $recipients,
+        array $deviceLabels = []
     ): array {
         $normalizedChannel = strtoupper($channel);
 
@@ -1935,6 +1995,12 @@ class BlastController extends Controller
                 $row['attachments'] = '-';
             } else {
                 $row['phone'] = $target !== '' ? $target : '-';
+                $deviceId = trim((string) ($log->device_id ?? ''));
+                $deviceLabel = $deviceId !== ''
+                    ? (string) ($deviceLabels[$deviceId] ?? $deviceId)
+                    : '-';
+                $row['deviceId'] = $deviceId !== '' ? $deviceId : null;
+                $row['deviceLabel'] = $deviceLabel;
             }
 
             return $row;

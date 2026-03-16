@@ -14,7 +14,8 @@ const {
   setActiveDevice,
   getActiveDeviceId,
   removeDevice,
-  disconnectDevice
+  disconnectDevice,
+  resetAllDevices
 } = require('../whatsapp/client');
 
 function sanitizeDeviceId(raw) {
@@ -300,6 +301,18 @@ async function disconnect(req, res, next) {
   }
 }
 
+async function resetDevices(req, res, next) {
+  try {
+    await resetAllDevices();
+    return ok(res, 'Devices reset', {
+      activeDeviceId: getActiveDeviceId(),
+      devices: listDevices()
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   sendMessage,
   sendFile,
@@ -315,5 +328,6 @@ module.exports = {
   activateDevice,
   reconnectDevice,
   deleteDevice,
-  disconnect
+  disconnect,
+  resetDevices
 };

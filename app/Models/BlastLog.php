@@ -12,6 +12,7 @@ class BlastLog extends Model
     protected $fillable = [
         'blast_message_id',
         'blast_target_id',
+        'device_id',
         'status',
         'message_snapshot',
         'response',

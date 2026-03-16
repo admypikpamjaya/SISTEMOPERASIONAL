@@ -45,6 +45,11 @@ class WhatsAppDeviceLabelStore
         }
     }
 
+    public function clearLabels(): void
+    {
+        $this->writeStore(['labels' => []]);
+    }
+
     /**
      * @return array<string, mixed>
      */

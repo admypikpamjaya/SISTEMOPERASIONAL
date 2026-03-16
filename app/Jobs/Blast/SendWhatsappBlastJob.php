@@ -120,6 +120,7 @@ class SendWhatsappBlastJob implements ShouldQueue
         ?BlastLog $blastLog,
         ?AnnouncementLog $announcementLog
     ): void {
+        $deviceId = $this->resolveDeviceId();
         $providerMessage = trim(
             (string) ($this->payload->meta['provider_message'] ?? '')
         );
@@ -136,13 +137,19 @@ class SendWhatsappBlastJob implements ShouldQueue
         }
 
         if ($blastLog) {
-            $blastLog->update([
+            $updates = [
                 'status' => 'SENT',
                 'error_message' => null,
                 'response' => $responseMessage,
                 'sent_at' => now(),
                 'attempt' => $this->attempts(),
-            ]);
+            ];
+
+            if ($deviceId !== null) {
+                $updates['device_id'] = $deviceId;
+            }
+
+            $blastLog->update($updates);
         }
 
         if ($announcementLog) {
@@ -159,19 +166,26 @@ class SendWhatsappBlastJob implements ShouldQueue
         ?AnnouncementLog $announcementLog,
         \Throwable $exception
     ): void {
+        $deviceId = $this->resolveDeviceId();
         $errorMessage = trim($exception->getMessage());
         if ($errorMessage === '') {
             $errorMessage = 'WhatsApp send failed.';
         }
 
         if ($blastLog) {
-            $blastLog->update([
+            $updates = [
                 'status' => 'FAILED',
                 'error_message' => $errorMessage,
                 'response' => $errorMessage,
                 'sent_at' => now(),
                 'attempt' => $this->attempts(),
-            ]);
+            ];
+
+            if ($deviceId !== null) {
+                $updates['device_id'] = $deviceId;
+            }
+
+            $blastLog->update($updates);
         }
 
         if ($announcementLog) {
@@ -203,14 +217,21 @@ class SendWhatsappBlastJob implements ShouldQueue
         ?BlastLog $blastLog,
         ?AnnouncementLog $announcementLog
     ): void {
+        $deviceId = $this->resolveDeviceId();
         if ($blastLog) {
-            $blastLog->update([
+            $updates = [
                 'status' => 'FAILED',
                 'error_message' => 'Campaign stopped before send.',
                 'response' => 'Campaign stopped before send.',
                 'sent_at' => now(),
                 'attempt' => $this->attempts(),
-            ]);
+            ];
+
+            if ($deviceId !== null) {
+                $updates['device_id'] = $deviceId;
+            }
+
+            $blastLog->update($updates);
         }
 
         if ($announcementLog) {
@@ -262,6 +283,7 @@ class SendWhatsappBlastJob implements ShouldQueue
             'phone' => $this->phone,
             'blast_log_id' => $blastLog?->id,
             'blast_message_id' => $blastLog?->blast_message_id,
+            'device_id' => $this->resolveDeviceId(),
             'provider_message' => $providerMessage !== '' ? $providerMessage : 'WhatsApp sent successfully.',
             'provider_delivery_status' => $deliveryStatus !== '' ? $deliveryStatus : null,
             'attachments' => count($this->payload->attachments ?? []),
@@ -279,9 +301,16 @@ class SendWhatsappBlastJob implements ShouldQueue
             'phone' => $this->phone,
             'blast_log_id' => $blastLog?->id,
             'blast_message_id' => $blastLog?->blast_message_id,
+            'device_id' => $this->resolveDeviceId(),
             'error' => $errorMessage !== '' ? $errorMessage : 'WhatsApp send failed.',
             'provider_error' => $providerError !== '' ? $providerError : null,
             'attachments' => count($this->payload->attachments ?? []),
         ]);
+    }
+
+    private function resolveDeviceId(): ?string
+    {
+        $deviceId = trim((string) ($this->payload->meta['device_id'] ?? ''));
+        return $deviceId !== '' ? $deviceId : null;
     }
 }

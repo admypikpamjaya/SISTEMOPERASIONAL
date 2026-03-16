@@ -132,6 +132,12 @@ function resolveAuthFolder(deviceId) {
   return path.join(baseFolder, deviceId);
 }
 
+function hasAuthSession(deviceId) {
+  const folder = resolveAuthFolder(deviceId);
+  const credsPath = path.join(folder, 'creds.json');
+  return fs.existsSync(credsPath);
+}
+
 function clearAuthFolder(deviceId) {
   const baseFolder = path.resolve(env.WA_AUTH_FOLDER);
   const folder = resolveAuthFolder(deviceId);
@@ -301,6 +307,22 @@ async function initWhatsApp({ io } = {}) {
   return initDevice(activeDeviceId, { io });
 }
 
+async function initAllDevices({ io } = {}) {
+  const ids = discoverDeviceIds();
+  const withSession = ids.filter((id) => hasAuthSession(id));
+  if (withSession.length === 0) {
+    return initDevice(activeDeviceId, { io });
+  }
+
+  for (const id of withSession) {
+    try {
+      await initDevice(id, { io });
+    } catch (err) {
+      logger.error(`[${id}] Auto init failed: ${err.message}`);
+    }
+  }
+}
+
 async function ensureReady(deviceId = activeDeviceId, timeoutMs = 60000) {
   const state = getDeviceState(deviceId);
   if (!state.sock) {
@@ -409,8 +431,20 @@ async function removeDevice(deviceId) {
   return true;
 }
 
+async function resetAllDevices() {
+  const ids = discoverDeviceIds();
+  for (const id of ids) {
+    await removeDevice(id);
+  }
+  devices.clear();
+  activeDeviceId = env.WA_DEFAULT_DEVICE || 'default';
+  writeActiveDevice(activeDeviceId);
+  return true;
+}
+
 module.exports = {
   initWhatsApp,
+  initAllDevices,
   initDevice,
   ensureReady,
   sendText,
@@ -421,5 +455,6 @@ module.exports = {
   setActiveDevice,
   getActiveDeviceId,
   disconnectDevice,
-  removeDevice
+  removeDevice,
+  resetAllDevices
 };
