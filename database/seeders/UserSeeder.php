@@ -20,29 +20,55 @@ class UserSeeder extends Seeder
         $this->command->info('Seeding user data...');
         $this->syncRoleEnumForMySql();
 
+        $defaultPassword = Hash::make('Password-123!');
+
         $users = [
             [
-                'email' => 'ariyapanna@outlook.com',
-                'name' => 'Ariya',
-                'password' => Hash::make('password'),
+                'email' => 'user@ypik.local',
+                'name' => 'User YPIK',
+                'password' => $defaultPassword,
+                'role' => UserRole::USER,
+            ],
+            [
+                'email' => 'admin@ypik.local',
+                'name' => 'Admin YPIK',
+                'password' => $defaultPassword,
+                'role' => UserRole::ADMIN,
+            ],
+            [
+                'email' => 'it.support@ypik.local',
+                'name' => 'IT Support YPIK',
+                'password' => $defaultPassword,
                 'role' => UserRole::IT_SUPPORT,
             ],
             [
-                'email' => 'asset.management@ypik.local',
-                'name' => 'Asset Management',
-                'password' => Hash::make('password'),
+                'email' => 'asset.manager@ypik.local',
+                'name' => 'Asset Manager YPIK',
+                'password' => $defaultPassword,
                 'role' => UserRole::ASSET_MANAGER,
+            ],
+            [
+                'email' => 'finance@ypik.local',
+                'name' => 'Finance YPIK',
+                'password' => $defaultPassword,
+                'role' => UserRole::FINANCE,
             ],
             [
                 'email' => 'pembina@ypik.local',
                 'name' => 'Pembina YPIK',
-                'password' => Hash::make('Pembina123!'),
+                'password' => $defaultPassword,
                 'role' => UserRole::PEMBINA,
+            ],
+            [
+                'email' => 'blasting@ypik.local',
+                'name' => 'Blasting YPIK',
+                'password' => $defaultPassword,
+                'role' => UserRole::BLASTING,
             ],
             [
                 'email' => 'qc@ypik.local',
                 'name' => 'QC YPIK',
-                'password' => Hash::make('Qc12345!'),
+                'password' => $defaultPassword,
                 'role' => UserRole::QC,
             ],
         ];

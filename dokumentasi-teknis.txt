@@ -1,0 +1,235 @@
+DOKUMENTASI TEKNIS
+Sistem Operasional Yayasan YPIK (SOY YPIK)
+
+Lokasi repo: d:\PROJECT BLASTING\sistem-operasional-yayasan-ypik
+Terakhir diperbarui: 2026-03-16
+
+1. Ringkasan
+- Aplikasi utama menggunakan Laravel 10 (PHP 8.2+) untuk UI dan business logic.
+- Layanan WhatsApp Gateway berada di folder whatsapp-gateway/ (Node.js + Baileys + BullMQ + Redis).
+- Laravel berkomunikasi ke gateway melalui HTTP untuk pengiriman pesan WhatsApp.
+
+2. Arsitektur Tingkat Tinggi
+- Web App (Laravel): menangani modul internal (aset, keuangan, user, blasting).
+- Database: MySQL/MariaDB sebagai penyimpanan data aplikasi.
+- WhatsApp Gateway (Node.js): menangani koneksi WhatsApp, queue, dan pengiriman.
+- Redis: dipakai oleh gateway sebagai message queue (BullMQ).
+- Opsional: Redis/queue/cache Laravel mengikuti konfigurasi .env (QUEUE_CONNECTION, CACHE_DRIVER).
+
+3. Struktur Repository (Ringkas)
+- app/                     (controller, service, model, DTO, job)
+- config/                  (konfigurasi aplikasi, termasuk blast)
+- routes/                  (routing web dan api)
+- resources/               (Blade view, asset)
+- storage/                 (runtime files, logs, cache)
+- whatsapp-gateway/        (service Node.js untuk WhatsApp)
+- documentaion.txt         (dokumen lama)
+- README.md
+
+4. Konfigurasi Utama (Laravel .env)
+- WHATSAPP_PROVIDER=wablas|gateway|fonnte
+- WHATSAPP_GATEWAY_BASE_URL=http://localhost:3000
+- WHATSAPP_GATEWAY_API_KEY=
+- WHATSAPP_GATEWAY_API_KEY_HEADER=X-API-KEY
+- WHATSAPP_GATEWAY_TIMEOUT=20
+- WABLAS_TOKEN=...
+- WABLAS_SECRET_KEY=...
+- WABLAS_BASE_URL=https://wablas.com
+- FONNTE_TOKEN=...
+- FONNTE_BASE_URL=https://api.fonnte.com
+- QUEUE_CONNECTION=sync|database|redis (sesuaikan kebutuhan)
+
+5. Konfigurasi Blasting (config/blast.php)
+- BLAST_EMAIL_RATE_PER_MINUTE (default 90)
+- BLAST_WHATSAPP_RATE_PER_MINUTE (default 45)
+- BLAST_BATCH_SIZE (default 50)
+- BLAST_BATCH_DELAY_SECONDS (default 10)
+- BLAST_RETRY_ATTEMPTS (default 3)
+- BLAST_RETRY_BACKOFF_SECONDS (default 30,120,300)
+- BLAST_QUEUE_* (nama queue per channel dan priority)
+
+6. Konfigurasi Gateway (whatsapp-gateway/.env)
+- NODE_ENV=development|production
+- PORT=3000
+- BASE_URL=http://localhost:3000
+- REDIS_URL=redis://127.0.0.1:6379
+- QUEUE_NAME=wa-messages
+- MESSAGE_DELAY_MS=1500
+- QUEUE_ATTEMPTS=3
+- QUEUE_BACKOFF_MS=5000
+- WA_AUTH_FOLDER=./sessions
+- WA_PRINT_QR=true
+- WA_DEFAULT_DEVICE=default
+- SOCKET_ENABLED=false
+- RUN_WORKER=true
+- API_KEY= (jika diisi, semua endpoint selain /health wajib header API_KEY_HEADER)
+- API_KEY_HEADER=x-api-key (dibaca lowercase di server)
+- QR_TTL_MS=35000
+- RECONNECT_DELAY_MS=5000
+- RATE_LIMIT_WINDOW_MS=60000
+- RATE_LIMIT_MAX=120
+- UPLOAD_DIR=./uploads
+- MAX_FILE_SIZE_MB=10
+
+7. Struktur Data (Laravel)
+7.1 BlastPayload (app/DataTransferObjects/BlastPayload.php)
+- Struktur serialisasi:
+{
+  "message": "string",
+  "attachments": [
+    { "path": "string", "filename": "string", "mime": "string" }
+  ],
+  "meta": {
+    "device_id": "optional",
+    "queue_name": "optional",
+    "blast_log_id": "internal",
+    "blast_message_id": "internal",
+    "announcement_log_id": "internal",
+    "retry_backoff_seconds": [30,120,300],
+    "provider_error": "set oleh provider",
+    "provider_message": "set oleh provider",
+    "provider_delivery_status": "optional"
+  }
+}
+
+7.2 BlastAttachment (app/DataTransferObjects/BlastAttachment.php)
+{
+  "path": "full path file",
+  "filename": "nama file",
+  "mime": "mime type"
+}
+
+7.3 Store Provider WhatsApp (storage/app/whatsapp_provider.json)
+{
+  "provider": "gateway|wablas|fonnte",
+  "updated_at": "YYYY-MM-DD HH:MM:SS"
+}
+Catatan: jika file ini tidak ada, provider diambil dari WHATSAPP_PROVIDER (.env).
+
+7.4 Label Device WhatsApp (storage/app/whatsapp_device_labels.json)
+{
+  "labels": {
+    "default": "WA Siswa",
+    "karyawan": "WA Karyawan"
+  },
+  "updated_at": "YYYY-MM-DD HH:MM:SS"
+}
+
+8. Struktur Data (WhatsApp Gateway)
+8.1 Payload Queue (whatsapp-gateway/src/services/messageService.js)
+- Job untuk BullMQ memiliki bentuk umum:
+{
+  "type": "text|file|template",
+  "payload": {
+    "phone": "628123...",
+    "message": "...",
+    "deviceId": "optional",
+    "filePath": "...",
+    "caption": "...",
+    "originalName": "...",
+    "template": "promo",
+    "variables": { "name": "..." }
+  }
+}
+Catatan: field di payload dipakai sesuai tipe job.
+
+8.2 Status Device (GET /status)
+{
+  "deviceId": "default",
+  "status": "init|qr|connected|disconnected",
+  "qr": "string or null",
+  "qrDataUrl": "data:image/png;base64,... or null",
+  "user": { "id": "...", "name": "..." } | null,
+  "connectedAt": "ISO string or null",
+  "isActive": true,
+  "activeDeviceId": "default"
+}
+
+8.3 Template Pesan (whatsapp-gateway/src/config/templates.json)
+- Format placeholder: {{variable}} atau {{object.key}}
+- Contoh:
+{
+  "promo": "Hi {{name}}, diskon {{discount}} khusus hari ini.",
+  "reminder": "Halo {{name}}, ini pengingat untuk {{event}} pada {{date}}."
+}
+
+9. Validasi dan Normalisasi Data (Gateway)
+- Nomor telepon dinormalisasi menjadi angka saja (non-digit dibuang).
+- Validasi nomor: panjang 8-15 digit.
+- deviceId disanitasi: lowercase dan hanya karakter [a-z0-9_-].
+
+10. API Gateway (Ringkasan)
+Semua response memakai format:
+{
+  "success": true|false,
+  "message": "...",
+  "data": { ... }
+}
+
+Endpoint:
+- GET /health (tanpa API key)
+- GET /status?deviceId=...
+- POST /reconnect
+- GET /devices
+- POST /devices { "deviceId": "..." }
+- POST /devices/:deviceId/connect
+- POST /devices/:deviceId/activate
+- POST /devices/:deviceId/reconnect
+- POST /devices/:deviceId/disconnect
+- DELETE /devices/:deviceId
+- POST /devices/reset
+- POST /send-message { "phone": "...", "message": "...", "deviceId": "optional" }
+- POST /send-file (multipart form-data): phone, file, caption (optional), deviceId (optional)
+- POST /blast { "numbers": ["628.."], "message": "...", "deviceId": "optional" }
+- POST /blast-custom [ { "phone": "...", "message": "..." } ]
+- POST /blast-file (multipart): numbers atau numbers[], file, caption (optional), deviceId (optional)
+- POST /send-template { "phone": "...", "template": "promo", "variables": { ... }, "deviceId": "optional" }
+
+Catatan blast-custom:
+- Implementasi membaca deviceId dari req.body.deviceId.
+- Jika payload dikirim sebagai array JSON murni, deviceId tidak terbaca.
+
+11. Alur Pengiriman WhatsApp (Gateway)
+1. API menerima request, memvalidasi payload, lalu menambahkan job ke BullMQ.
+2. Worker membaca queue dan memanggil sendText/sendFile.
+3. Setelah sukses/gagal, log ditulis ke logs/.
+4. MESSAGE_DELAY_MS menambahkan jeda antar job (throttling sederhana).
+
+12. Alur WhatsApp dari Laravel ke Gateway
+1. Laravel membangun BlastPayload (message, attachment, meta).
+2. SendWhatsappBlastJob memanggil WhatsAppBlastService.
+3. Provider dipilih oleh WhatsAppProviderSelector.
+4. GatewayWhatsappProvider melakukan HTTP POST ke /send-message atau /send-file.
+5. Gateway memproses dan mengirim via Baileys.
+
+13. Penyimpanan Runtime Penting
+- whatsapp-gateway/sessions/            (session auth Baileys)
+- whatsapp-gateway/sessions/active_device.json
+- whatsapp-gateway/uploads/             (file upload, tidak ada cleanup otomatis)
+- whatsapp-gateway/logs/error.log
+- whatsapp-gateway/logs/combined.log
+- storage/app/whatsapp_provider.json
+- storage/app/whatsapp_device_labels.json
+
+14. Operasional dan Deployment Gateway
+- Jalankan single process (API + worker):
+  npm run start
+- Jalankan terpisah (API saja):
+  RUN_WORKER=false npm run start
+- Worker saja:
+  npm run worker
+- PM2: gunakan whatsapp-gateway/ecosystem.config.cjs
+  pm2 start ecosystem.config.cjs
+  pm2 logs wa-gateway
+
+15. Catatan Keamanan
+- Aktifkan API_KEY di gateway dan isi WHATSAPP_GATEWAY_API_KEY di Laravel.
+- Jangan expose Redis ke publik, cukup bind 127.0.0.1.
+- Gunakan reverse proxy (Nginx/Apache) jika gateway harus public.
+- Perhatikan RATE_LIMIT_* untuk mencegah abuse.
+
+16. Pengembangan Lanjutan (Panduan Singkat)
+- Menambah endpoint gateway: edit whatsapp-gateway/src/routes/index.js dan controller.
+- Menambah tipe job: update whatsapp-gateway/src/services/messageService.js.
+- Menambah template pesan: update whatsapp-gateway/src/config/templates.json.
+- Menambah provider baru di Laravel: implement WhatsappProviderInterface dan bind di AppServiceProvider.
