@@ -88,6 +88,132 @@ const Loading = {
     hide: () => $('#loading-overlay').css('display', 'none')
 }
 
+const ThemeManager = (function () {
+    const storageKey = 'soy-ypik-theme';
+    let initialized = false;
+
+    function normalizeTheme(value) {
+        return value === 'dark' ? 'dark' : 'light';
+    }
+
+    function getStoredTheme() {
+        try {
+            return normalizeTheme(localStorage.getItem(storageKey));
+        } catch (error) {
+            return normalizeTheme(document.documentElement.dataset.theme);
+        }
+    }
+
+    function getTheme() {
+        if (document.body && document.body.dataset.theme) {
+            return normalizeTheme(document.body.dataset.theme);
+        }
+
+        return normalizeTheme(document.documentElement.dataset.theme || getStoredTheme());
+    }
+
+    function updateControls(theme) {
+        const label = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+        const iconClass = theme === 'dark' ? 'fa-moon' : 'fa-sun';
+
+        document.querySelectorAll('[data-theme-label]').forEach((element) => {
+            element.textContent = label;
+        });
+
+        document.querySelectorAll('[data-theme-icon]').forEach((element) => {
+            element.classList.remove('fa-sun', 'fa-moon');
+            element.classList.add(iconClass);
+        });
+
+        document.querySelectorAll('[data-theme-value]').forEach((element) => {
+            const isActive = element.getAttribute('data-theme-value') === theme;
+            element.classList.toggle('active', isActive);
+            element.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    function applyTheme(theme, options = {}) {
+        const nextTheme = normalizeTheme(theme);
+        const persist = Boolean(options.persist);
+        const dispatchEvent = options.dispatch !== false;
+
+        document.documentElement.dataset.theme = nextTheme;
+        document.documentElement.style.colorScheme = nextTheme;
+
+        if (document.body) {
+            document.body.dataset.theme = nextTheme;
+            document.body.classList.toggle('dark-mode', nextTheme === 'dark');
+        }
+
+        if (persist) {
+            try {
+                localStorage.setItem(storageKey, nextTheme);
+            } catch (error) {
+                // Ignore storage restriction and still apply theme in current tab.
+            }
+        }
+
+        updateControls(nextTheme);
+
+        if (dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('app:theme-change', {
+                detail: {
+                    theme: nextTheme,
+                    isDark: nextTheme === 'dark'
+                }
+            }));
+        }
+
+        return nextTheme;
+    }
+
+    function bindControls() {
+        document.querySelectorAll('[data-theme-value]').forEach((element) => {
+            if (element.dataset.themeBound === '1') {
+                return;
+            }
+
+            element.dataset.themeBound = '1';
+            element.addEventListener('click', function (event) {
+                event.preventDefault();
+                applyTheme(element.getAttribute('data-theme-value'), { persist: true });
+            });
+        });
+    }
+
+    function init() {
+        const theme = getStoredTheme();
+
+        if (!initialized) {
+            initialized = true;
+
+            window.addEventListener('storage', function (event) {
+                if (event.key !== storageKey) {
+                    return;
+                }
+
+                applyTheme(normalizeTheme(event.newValue), { dispatch: true });
+            });
+        }
+
+        bindControls();
+        applyTheme(theme, { dispatch: false });
+
+        return theme;
+    }
+
+    return {
+        applyTheme,
+        getTheme,
+        init,
+        isDark: function () {
+            return getTheme() === 'dark';
+        }
+    };
+})();
+
+window.ThemeManager = ThemeManager;
+
 function getErrorMessage(res) {
     let errorMsg = res.responseJSON ? res.responseJSON.message : res
 

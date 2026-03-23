@@ -41,10 +41,17 @@
     .dash-page-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 1rem;
+        flex-wrap: wrap;
         margin-bottom: 1.75rem;
         padding: 0;
         animation: slideDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .dash-page-header-main {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
     .dash-page-header .header-icon {
         width: 48px;
@@ -72,6 +79,63 @@
         color: var(--text-muted);
         margin: 0;
         font-weight: 500;
+    }
+    .dash-theme-panel {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.75rem 0.9rem;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(10px);
+    }
+    .dash-theme-label {
+        font-size: 0.74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+    }
+    .dash-theme-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem;
+        background: rgba(37, 99, 235, 0.08);
+        border-radius: 999px;
+    }
+    .dash-theme-btn {
+        border: none;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.76rem;
+        font-weight: 700;
+        padding: 0.5rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .dash-theme-btn:hover {
+        color: var(--text-primary);
+    }
+    .dash-theme-btn.active {
+        background: var(--surface-card);
+        color: var(--blue-primary);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+    body.dark-mode .dash-theme-panel {
+        background: rgba(17, 24, 39, 0.72);
+    }
+    body.dark-mode .dash-theme-switch {
+        background: rgba(148, 163, 184, 0.12);
+    }
+    body.dark-mode .dash-theme-btn.active {
+        box-shadow: 0 10px 24px rgba(2, 6, 23, 0.32);
     }
 
     /* ─── Welcome Card ────────────────────────── */
@@ -375,10 +439,25 @@
 
 {{-- Page Header --}}
 <div class="dash-page-header">
-    <div class="header-icon"><i class="fas fa-tachometer-alt"></i></div>
-    <div class="header-text">
-        <h1>Dashboard</h1>
-        <p>Sistem Operasional Yayasan YPIK &mdash; Ringkasan & Monitoring</p>
+    <div class="dash-page-header-main">
+        <div class="header-icon"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="header-text">
+            <h1>Dashboard</h1>
+            <p>Sistem Operasional Yayasan YPIK &mdash; Ringkasan & Monitoring</p>
+        </div>
+    </div>
+    <div class="dash-theme-panel">
+        <span class="dash-theme-label">Tampilan</span>
+        <div class="dash-theme-switch">
+            <button type="button" class="dash-theme-btn" data-theme-value="light" aria-pressed="true">
+                <i class="far fa-sun"></i>
+                Light
+            </button>
+            <button type="button" class="dash-theme-btn" data-theme-value="dark" aria-pressed="false">
+                <i class="far fa-moon"></i>
+                Dark
+            </button>
+        </div>
     </div>
 </div>
 
@@ -592,10 +671,17 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
-
-        const sharedGridLines = {
-            display: true,
-            color: 'rgba(60, 60, 60, 0.06)'
+        const themePalettes = {
+            light: {
+                grid: 'rgba(60, 60, 60, 0.06)',
+                tick: '#94a3b8',
+                legend: '#64748b'
+            },
+            dark: {
+                grid: 'rgba(148, 163, 184, 0.14)',
+                tick: '#94a3b8',
+                legend: '#cbd5e1'
+            }
         };
 
         const saldoValueElement = document.getElementById('dashboard-saldo-value');
@@ -614,6 +700,66 @@
         let expenseChart = null;
         let waChart = null;
         let emailChart = null;
+
+        function isDarkTheme() {
+            if (window.ThemeManager) {
+                return window.ThemeManager.isDark();
+            }
+
+            return document.body.classList.contains('dark-mode');
+        }
+
+        function getActiveThemePalette() {
+            return isDarkTheme() ? themePalettes.dark : themePalettes.light;
+        }
+
+        function createGridLines(color) {
+            return {
+                display: true,
+                color: color
+            };
+        }
+
+        function createScales(options = {}) {
+            const palette = getActiveThemePalette();
+            const useCurrencyAxis = Boolean(options.currency);
+
+            return {
+                xAxes: [{
+                    gridLines: createGridLines(palette.grid),
+                    ticks: {
+                        maxTicksLimit: 4,
+                        fontColor: palette.tick,
+                        fontSize: 10
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        maxTicksLimit: 3,
+                        fontColor: palette.tick,
+                        fontSize: 10,
+                        callback: useCurrencyAxis
+                            ? (value) => 'Rp ' + numberFormatter.format(value)
+                            : undefined
+                    },
+                    gridLines: createGridLines(palette.grid)
+                }]
+            };
+        }
+
+        function createLegend(display) {
+            const palette = getActiveThemePalette();
+
+            return {
+                display: display,
+                labels: {
+                    boxWidth: 9,
+                    fontSize: 10,
+                    fontColor: palette.legend
+                }
+            };
+        }
 
         if (showFinanceWidgets && incomeCanvas) {
             incomeChart = new Chart(incomeCanvas.getContext('2d'), {
@@ -635,17 +781,8 @@
                 options: {
                     maintainAspectRatio: false,
                     responsive: true,
-                    legend: { display: false },
-                    scales: {
-                        xAxes: [{ gridLines: sharedGridLines, ticks: { maxTicksLimit: 4, fontColor: '#94a3b8', fontSize: 10 } }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true, maxTicksLimit: 3, fontColor: '#94a3b8', fontSize: 10,
-                                callback: (value) => 'Rp ' + numberFormatter.format(value)
-                            },
-                            gridLines: sharedGridLines
-                        }]
-                    }
+                    legend: createLegend(false),
+                    scales: createScales({ currency: true })
                 }
             });
         }
@@ -677,17 +814,8 @@
                 options: {
                     maintainAspectRatio: false,
                     responsive: true,
-                    legend: { display: true, labels: { boxWidth: 9, fontSize: 10, fontColor: '#64748b' } },
-                    scales: {
-                        xAxes: [{ gridLines: sharedGridLines, ticks: { maxTicksLimit: 4, fontColor: '#94a3b8', fontSize: 10 } }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true, maxTicksLimit: 3, fontColor: '#94a3b8', fontSize: 10,
-                                callback: (value) => 'Rp ' + numberFormatter.format(value)
-                            },
-                            gridLines: sharedGridLines
-                        }]
-                    }
+                    legend: createLegend(true),
+                    scales: createScales({ currency: true })
                 }
             });
         }
@@ -709,11 +837,8 @@
                 options: {
                     maintainAspectRatio: false,
                     responsive: true,
-                    legend: { display: false },
-                    scales: {
-                        xAxes: [{ gridLines: sharedGridLines, ticks: { maxTicksLimit: 4, fontColor: '#94a3b8', fontSize: 10 } }],
-                        yAxes: [{ ticks: { beginAtZero: true, maxTicksLimit: 3, fontColor: '#94a3b8', fontSize: 10 }, gridLines: sharedGridLines }]
-                    }
+                    legend: createLegend(false),
+                    scales: createScales()
                 }
             });
         }
@@ -735,13 +860,36 @@
                 options: {
                     maintainAspectRatio: false,
                     responsive: true,
-                    legend: { display: false },
-                    scales: {
-                        xAxes: [{ gridLines: sharedGridLines, ticks: { maxTicksLimit: 4, fontColor: '#94a3b8', fontSize: 10 } }],
-                        yAxes: [{ ticks: { beginAtZero: true, maxTicksLimit: 3, fontColor: '#94a3b8', fontSize: 10 }, gridLines: sharedGridLines }]
-                    }
+                    legend: createLegend(false),
+                    scales: createScales()
                 }
             });
+        }
+
+        function refreshChartTheme() {
+            if (incomeChart) {
+                incomeChart.options.legend = createLegend(false);
+                incomeChart.options.scales = createScales({ currency: true });
+                incomeChart.update();
+            }
+
+            if (expenseChart) {
+                expenseChart.options.legend = createLegend(true);
+                expenseChart.options.scales = createScales({ currency: true });
+                expenseChart.update();
+            }
+
+            if (waChart) {
+                waChart.options.legend = createLegend(false);
+                waChart.options.scales = createScales();
+                waChart.update();
+            }
+
+            if (emailChart) {
+                emailChart.options.legend = createLegend(false);
+                emailChart.options.scales = createScales();
+                emailChart.update();
+            }
         }
 
         function applyDashboardData(payload) {
@@ -804,6 +952,8 @@
                 if (targetUrl) window.location.href = targetUrl;
             });
         });
+
+        window.addEventListener('app:theme-change', refreshChartTheme);
 
         setInterval(refreshDashboardData, refreshIntervalMs);
     })();

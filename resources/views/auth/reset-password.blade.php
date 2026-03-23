@@ -4,7 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="color-scheme" content="light dark">
   <title>{{ env('APP_NAME') }}</title>
+
+  <script>
+      (function () {
+          try {
+              const storedTheme = localStorage.getItem('soy-ypik-theme');
+              const theme = storedTheme === 'dark' ? 'dark' : 'light';
+              document.documentElement.dataset.theme = theme;
+              document.documentElement.style.colorScheme = theme;
+          } catch (error) {
+              document.documentElement.dataset.theme = 'light';
+              document.documentElement.style.colorScheme = 'light';
+          }
+      })();
+  </script>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -20,6 +35,13 @@
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body class="hold-transition login-page">
+<script>
+    (function () {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+        document.body.dataset.theme = theme;
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+    })();
+</script>
 <div id="loading-overlay">
     <i class="fas fa-2x fa-spinner fa-spin"></i>
 </div>
@@ -116,6 +138,11 @@
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 <!-- Extra JS -->
 <script src="{{ asset('js/helper.js') }}"></script>
+<script>
+    if (window.ThemeManager) {
+        window.ThemeManager.init();
+    }
+</script>
 @if(session()->has('error'))
 <script>
     Notification.error("{{ session()->get('error') }}");

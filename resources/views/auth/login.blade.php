@@ -4,7 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="color-scheme" content="light dark">
   <title>{{ env('APP_NAME') }}</title>
+
+  <script>
+      (function () {
+          try {
+              const storedTheme = localStorage.getItem('soy-ypik-theme');
+              const theme = storedTheme === 'dark' ? 'dark' : 'light';
+              document.documentElement.dataset.theme = theme;
+              document.documentElement.style.colorScheme = theme;
+          } catch (error) {
+              document.documentElement.dataset.theme = 'light';
+              document.documentElement.style.colorScheme = 'light';
+          }
+      })();
+  </script>
 
   <!-- Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
@@ -17,6 +32,8 @@
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
+  <!-- Extras -->
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
   <style>
       :root {
           --ypk-blue: #1a56db;
@@ -250,6 +267,13 @@
   </style>
 </head>
 <body class="hold-transition login-page ypk-login">
+<script>
+    (function () {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+        document.body.dataset.theme = theme;
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+    })();
+</script>
 <div class="ypk-login-wrapper">
     <div class="ypk-login-card">
         <div class="ypk-login-visual">
@@ -346,6 +370,11 @@
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 <!-- Extra JS -->
 <script src="{{ asset('js/helper.js') }}"></script>
+<script>
+    if (window.ThemeManager) {
+        window.ThemeManager.init();
+    }
+</script>
 @if(session()->has('success'))
 <script>
     Notification.success("{{ session()->get('success') }}");

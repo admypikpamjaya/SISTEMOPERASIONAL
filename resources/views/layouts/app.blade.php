@@ -4,7 +4,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="light dark">
     <title>Sistem Operasional Yayasan YPIK</title>
+
+    <script>
+        (function () {
+            try {
+                const storedTheme = localStorage.getItem('soy-ypik-theme');
+                const theme = storedTheme === 'dark' ? 'dark' : 'light';
+                document.documentElement.dataset.theme = theme;
+                document.documentElement.style.colorScheme = theme;
+            } catch (error) {
+                document.documentElement.dataset.theme = 'light';
+                document.documentElement.style.colorScheme = 'light';
+            }
+        })();
+    </script>
 
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -21,6 +36,13 @@
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
+<script>
+    (function () {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+        document.body.dataset.theme = theme;
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+    })();
+</script>
 <div id="loading-overlay">
     <i class="fas fa-2x fa-spinner fa-spin"></i>
 </div>
@@ -36,8 +58,30 @@
         </ul>
 
         <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown theme-switcher">
+                <a class="nav-link theme-switcher-trigger" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-sun" data-theme-icon></i>
+                    <span class="d-none d-md-inline ml-1" data-theme-label>Light Mode</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right theme-switcher-menu">
+                    <button type="button" class="dropdown-item theme-option" data-theme-value="light" aria-pressed="true">
+                        <span class="theme-option-main">
+                            <span class="theme-option-icon"><i class="far fa-sun"></i></span>
+                            <span>Light Mode</span>
+                        </span>
+                        <i class="fas fa-check theme-option-check"></i>
+                    </button>
+                    <button type="button" class="dropdown-item theme-option" data-theme-value="dark" aria-pressed="false">
+                        <span class="theme-option-main">
+                            <span class="theme-option-icon"><i class="far fa-moon"></i></span>
+                            <span>Dark Mode</span>
+                        </span>
+                        <i class="fas fa-check theme-option-check"></i>
+                    </button>
+                </div>
+            </li>
             <li class="nav-item">
-                <a class="nav-link">
+                <a class="nav-link user-chip-nav">
                     @if(Auth::check())
                         {{ Auth::user()->name }} ({{ Auth::user()->role }})
                     @endif
@@ -233,6 +277,11 @@
 <script src="{{ asset('vendor/adminlte/dist/js/adminlte.min.js') }}"></script>
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 <script src="{{ asset('js/helper.js') }}"></script>
+<script>
+    if (window.ThemeManager) {
+        window.ThemeManager.init();
+    }
+</script>
 
 @php
     $canReadReminder = Auth::check()
