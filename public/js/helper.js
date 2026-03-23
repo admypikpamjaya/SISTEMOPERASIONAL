@@ -214,6 +214,78 @@ const ThemeManager = (function () {
 
 window.ThemeManager = ThemeManager;
 
+const TableSelectionManager = (function () {
+    let initialized = false;
+    const enqueue = typeof window.queueMicrotask === 'function'
+        ? window.queueMicrotask.bind(window)
+        : function (callback) { window.setTimeout(callback, 0); };
+
+    function getCheckboxRows() {
+        return Array.from(document.querySelectorAll('tbody tr input[type="checkbox"]'));
+    }
+
+    function syncRow(checkbox) {
+        const row = checkbox.closest('tr');
+
+        if (!row || !row.closest('tbody')) {
+            return;
+        }
+
+        row.classList.toggle('is-selected', checkbox.checked && !checkbox.disabled);
+    }
+
+    function syncAllRows() {
+        getCheckboxRows().forEach(syncRow);
+    }
+
+    function queueSync() {
+        enqueue(syncAllRows);
+    }
+
+    function handleCheckboxEvent(event) {
+        const target = event.target;
+
+        if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') {
+            return;
+        }
+
+        if (!target.closest('tbody tr')) {
+            return;
+        }
+
+        queueSync();
+    }
+
+    function init() {
+        if (initialized) {
+            syncAllRows();
+            return;
+        }
+
+        initialized = true;
+
+        document.addEventListener('click', handleCheckboxEvent, true);
+        document.addEventListener('change', handleCheckboxEvent, true);
+        window.addEventListener('pageshow', syncAllRows);
+        window.addEventListener('load', syncAllRows);
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', syncAllRows, { once: true });
+            return;
+        }
+
+        syncAllRows();
+    }
+
+    return {
+        init,
+        sync: syncAllRows
+    };
+})();
+
+window.TableSelectionManager = TableSelectionManager;
+TableSelectionManager.init();
+
 function getErrorMessage(res) {
     let errorMsg = res.responseJSON ? res.responseJSON.message : res
 

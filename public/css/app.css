@@ -12,6 +12,9 @@
     --app-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
     --app-sidebar-bg: #1f2937;
     --app-sidebar-strong: #111827;
+    --app-row-hover: rgba(37, 99, 235, 0.05);
+    --app-row-selected: rgba(37, 99, 235, 0.1);
+    --app-row-selected-strong: rgba(37, 99, 235, 0.18);
 }
 
 html[data-theme="dark"] {
@@ -37,6 +40,9 @@ body.dark-mode {
     --app-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
     --app-sidebar-bg: #0f172a;
     --app-sidebar-strong: #020617;
+    --app-row-hover: rgba(96, 165, 250, 0.08);
+    --app-row-selected: rgba(59, 130, 246, 0.16);
+    --app-row-selected-strong: rgba(96, 165, 250, 0.26);
 
     --surface-bg: #0b1220;
     --surface-card: #111827;
@@ -51,15 +57,29 @@ body.dark-mode {
     --surface-alt: #172132;
     --surf-alt: #172132;
     --bg: #0b1220;
+    --bg-main: #0b1220;
     --border: #243244;
     --text: #e2e8f0;
     --muted: #94a3b8;
     --white: #111827;
+    --text-dark: #e2e8f0;
+    --text-mid: #cbd5e1;
+    --text-light: #94a3b8;
     --navy: #0b1220;
     --navy-light: #172132;
+    --dark-nav: #0f172a;
     --blue-light: #1e293b;
     --blue-lighter: #0f172a;
     --blue-border: #334155;
+    --green: #86efac;
+    --green-bg: rgba(34, 197, 94, 0.12);
+    --green-border: rgba(34, 197, 94, 0.22);
+    --yellow: #fcd34d;
+    --yellow-bg: rgba(245, 158, 11, 0.14);
+    --yellow-border: rgba(245, 158, 11, 0.24);
+    --red: #fca5a5;
+    --red-bg: rgba(239, 68, 68, 0.12);
+    --red-border: rgba(239, 68, 68, 0.2);
     --warning-bg: rgba(245, 158, 11, 0.14);
     --warning-border: rgba(245, 158, 11, 0.28);
     --warning-text: #fbbf24;
@@ -94,6 +114,14 @@ body.dark-mode {
     --tg-primary: #60a5fa;
     --tg-primary-soft: #3b82f6;
     --tg-shadow: 0 18px 40px rgba(2, 6, 23, 0.45);
+
+    --tpl-blue-100: #1e293b;
+    --tpl-blue-50: #0f172a;
+    --tpl-text-900: #e2e8f0;
+    --tpl-text-700: #cbd5e1;
+    --tpl-text-500: #94a3b8;
+    --tpl-border: #243244;
+    --tpl-bg: #172132;
 
     --ypk-blue: #60a5fa;
     --ypk-blue-dark: #2563eb;
@@ -375,6 +403,141 @@ body.dark-mode .table thead th {
 body.dark-mode .table-hover tbody tr:hover,
 body.dark-mode .table tbody tr:hover td {
     background: rgba(96, 165, 250, 0.08) !important;
+}
+
+body.dark-mode :is(
+    .table-card table,
+    .table-scroll table,
+    .table-responsive table,
+    .rp-table,
+    .an-table,
+    .tg-table,
+    .tpl-table,
+    .ypk-table,
+    .coa-table
+) {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .table-card table,
+    .table-scroll table,
+    .table-responsive table,
+    .rp-table,
+    .an-table,
+    .tg-table,
+    .tpl-table,
+    .ypk-table,
+    .coa-table
+) thead th {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(
+    .table-card table,
+    .table-scroll table,
+    .table-responsive table,
+    .rp-table,
+    .an-table,
+    .tg-table,
+    .tpl-table,
+    .ypk-table,
+    .coa-table
+) tbody td {
+    background: transparent !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-soft) !important;
+}
+
+body.dark-mode :is(
+    .table-card table tbody tr:hover,
+    .table-scroll table tbody tr:hover,
+    .table-responsive table tbody tr:hover,
+    .table.table-hover tbody tr:hover,
+    .rp-table tbody tr:hover,
+    .an-table tbody tr:hover,
+    .tg-table tbody tr:hover,
+    .tpl-table tbody tr:hover,
+    .ypk-table tbody tr:hover,
+    .coa-table tbody tr:hover
+) {
+    background: var(--app-row-hover) !important;
+}
+
+body.dark-mode :is(
+    .table-card table tbody tr:hover,
+    .table-scroll table tbody tr:hover,
+    .table-responsive table tbody tr:hover,
+    .table.table-hover tbody tr:hover,
+    .rp-table tbody tr:hover,
+    .an-table tbody tr:hover,
+    .tg-table tbody tr:hover,
+    .tpl-table tbody tr:hover,
+    .ypk-table tbody tr:hover,
+    .coa-table tbody tr:hover
+) td {
+    background: var(--app-row-hover) !important;
+}
+
+body.dark-mode :is(
+    .table-card table tbody tr,
+    .table-scroll table tbody tr,
+    .table-responsive table tbody tr,
+    .table tbody tr,
+    .rp-table tbody tr,
+    .an-table tbody tr,
+    .tg-table tbody tr,
+    .tpl-table tbody tr,
+    .ypk-table tbody tr,
+    .coa-table tbody tr
+):is(.is-selected, .table-active, .selected, .selected-row, .row-selected, .coa-row-selected) {
+    background: var(--app-row-selected) !important;
+}
+
+body.dark-mode :is(
+    .table-card table tbody tr,
+    .table-scroll table tbody tr,
+    .table-responsive table tbody tr,
+    .table tbody tr,
+    .rp-table tbody tr,
+    .an-table tbody tr,
+    .tg-table tbody tr,
+    .tpl-table tbody tr,
+    .ypk-table tbody tr,
+    .coa-table tbody tr
+):is(.is-selected, .table-active, .selected, .selected-row, .row-selected, .coa-row-selected) td {
+    background: var(--app-row-selected) !important;
+    border-color: rgba(96, 165, 250, 0.16) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .table-card table tbody tr,
+    .table-scroll table tbody tr,
+    .table-responsive table tbody tr,
+    .table tbody tr,
+    .rp-table tbody tr,
+    .an-table tbody tr,
+    .tg-table tbody tr,
+    .tpl-table tbody tr,
+    .ypk-table tbody tr,
+    .coa-table tbody tr
+):is(.is-selected, .table-active, .selected, .selected-row, .row-selected, .coa-row-selected):hover,
+body.dark-mode :is(
+    .table-card table tbody tr,
+    .table-scroll table tbody tr,
+    .table-responsive table tbody tr,
+    .table tbody tr,
+    .rp-table tbody tr,
+    .an-table tbody tr,
+    .tg-table tbody tr,
+    .tpl-table tbody tr,
+    .ypk-table tbody tr,
+    .coa-table tbody tr
+):is(.is-selected, .table-active, .selected, .selected-row, .row-selected, .coa-row-selected):hover td {
+    background: var(--app-row-selected) !important;
 }
 
 body.dark-mode .page-link {
@@ -736,4 +899,503 @@ body.dark-mode .ypk-login-form .form-control {
 body.dark-mode .ypk-login-form .form-control:focus {
     background: var(--ypk-card) !important;
     color: var(--ypk-text) !important;
+}
+
+body.dark-mode :is(
+    .tpl-btn,
+    .tplf-btn,
+    .tpl-icon-btn,
+    .wa-header-btn,
+    .wa-btn,
+    .campaign-btn,
+    .rp-btn,
+    .rp-btn-outline,
+    .btn-select-db,
+    .device-item,
+    .eb-send-btn
+):focus,
+body.dark-mode :is(
+    .tpl-btn,
+    .tplf-btn,
+    .tpl-icon-btn,
+    .wa-header-btn,
+    .wa-btn,
+    .campaign-btn,
+    .rp-btn,
+    .rp-btn-outline,
+    .btn-select-db,
+    .device-item,
+    .eb-send-btn
+):active {
+    box-shadow: 0 0 0 0.18rem rgba(96, 165, 250, 0.16) !important;
+}
+
+body.dark-mode :is(.tpl-page, .tplf-page, .wa-page, .wa-manage-page, .eb-wrap, .rp, .page-wrapper) {
+    color: var(--app-text);
+}
+
+body.dark-mode .ypk-page {
+    color: var(--ypk-text) !important;
+}
+
+body.dark-mode :is(.page-wrapper, .main-layout) {
+    background: transparent !important;
+}
+
+body.dark-mode :is(.stat-card, .table-card, .toolbar-area) {
+    border-color: var(--app-border) !important;
+}
+
+body.dark-mode :is(.ypk-stat, .ypk-toolbar, .ypk-table-wrap) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode :is(.stat-card, .table-card) {
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .toolbar-area {
+    background: var(--app-surface-soft) !important;
+}
+
+body.dark-mode :is(.page-header-text h1, .stat-number) {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.page-header-text p, .stat-label, .search-box-wrap svg) {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(.ypk-label, .ypk-stat-label, .ypk-error-detail, .ypk-empty) {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .ypk-name {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .ypk-head-sub {
+    color: rgba(226, 232, 240, 0.82) !important;
+}
+
+body.dark-mode :is(.search-box, .filter-select) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.ypk-input, .ypk-select) {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.search-box, .filter-select):focus {
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.ypk-input, .ypk-select):focus {
+    background: var(--app-surface) !important;
+    border-color: rgba(45, 212, 191, 0.32) !important;
+    box-shadow: 0 0 0 0.18rem rgba(45, 212, 191, 0.14) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .student-name,
+    .summary-value,
+    .modal-title,
+    .empty-title,
+    .step-text strong
+) {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .cell-text,
+    .cell-mono,
+    .cell-note,
+    .summary-label,
+    .step-text,
+    .empty-subtitle
+) {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(
+    .pagination-wrap,
+    .modal-header,
+    .modal-footer,
+    .empty-icon
+) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-mode :is(
+    .btn-filter,
+    .btn-reset,
+    .btn-import,
+    .btn-delete-selected,
+    .btn-modal-cancel
+) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .btn-filter:hover,
+    .btn-reset:hover,
+    .btn-import:hover,
+    .btn-delete-selected:hover,
+    .btn-modal-cancel:hover
+) {
+    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #dbeafe !important;
+}
+
+body.dark-mode .btn-delete-all {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .btn-delete-all:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(248, 113, 113, 0.28) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .btn-edit {
+    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .btn-edit:hover {
+    background: rgba(96, 165, 250, 0.22) !important;
+    border-color: rgba(96, 165, 250, 0.32) !important;
+    color: #dbeafe !important;
+}
+
+body.dark-mode .btn-delete {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .btn-delete:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(248, 113, 113, 0.28) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .class-badge {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .badge-valid {
+    background: rgba(6, 182, 212, 0.12) !important;
+    border-color: rgba(34, 211, 238, 0.22) !important;
+    color: #67e8f9 !important;
+}
+
+body.dark-mode .ypk-badge.valid {
+    background: rgba(34, 197, 94, 0.14) !important;
+    color: #bbf7d0 !important;
+}
+
+body.dark-mode .ypk-badge.invalid {
+    background: rgba(239, 68, 68, 0.14) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .ypk-badge.dataset {
+    background: rgba(96, 165, 250, 0.14) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .ypk-filter button.ypk-btn {
+    background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .ypk-filter a.ypk-btn {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .ypk-import-wrap > a.ypk-btn,
+body.dark-mode .ypk-table td > a.ypk-btn {
+    background: rgba(20, 184, 166, 0.14) !important;
+    border-color: rgba(45, 212, 191, 0.22) !important;
+    color: #99f6e4 !important;
+}
+
+body.dark-mode .ypk-file-btn {
+    background: var(--app-surface) !important;
+    border-color: rgba(45, 212, 191, 0.22) !important;
+    color: #99f6e4 !important;
+}
+
+body.dark-mode .ypk-btn.outline-danger {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .ypk-btn.outline-danger:hover {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .ypk-btn.danger,
+body.dark-mode .ypk-table td form .ypk-btn {
+    background: rgba(239, 68, 68, 0.14) !important;
+    border-color: rgba(248, 113, 113, 0.24) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .ypk-btn.danger:hover,
+body.dark-mode .ypk-table td form .ypk-btn:hover {
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: rgba(248, 113, 113, 0.32) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode :is(
+    .tpl-panel,
+    .tplf-card,
+    .tpl-table-wrap,
+    .tplf-footer,
+    .wa-card,
+    .wa-device-list,
+    .wa-provider-card,
+    .rp-card,
+    .eb-card
+) {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.tpl-filter, .wa-active-device, .recipient-list, .recipient-db-section, .wa-excel-info) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .tpl-input,
+    .tplf-input,
+    .tplf-select,
+    .tplf-textarea,
+    .campaign-control-input,
+    .wa-phone-input,
+    .recipient-db-search-input,
+    .recipient-db-class-filter,
+    .device-input,
+    .eb-input,
+    .eb-select,
+    .eb-textarea
+) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .tpl-input,
+    .tplf-input,
+    .tplf-select,
+    .tplf-textarea,
+    .campaign-control-input,
+    .wa-phone-input,
+    .recipient-db-search-input,
+    .recipient-db-class-filter,
+    .device-input,
+    .eb-input,
+    .eb-select,
+    .eb-textarea
+):focus {
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .tpl-label,
+    .tpl-empty,
+    .tpl-content,
+    .tplf-label,
+    .tplf-hint,
+    .tplf-check,
+    .campaign-panel-note,
+    .campaign-search-empty,
+    .campaign-search-meta,
+    .wa-device-sub,
+    .wa-provider-note,
+    .wa-device-hint,
+    .wa-qr-placeholder,
+    .recipient-status,
+    .recipient-db-phone,
+    .eb-header-sub,
+    .eb-campaign-info p,
+    .eb-label,
+    .eb-stat-label,
+    .cell-desc,
+    .cell-meta,
+    .sched-sub,
+    .ann-id,
+    .deact-text
+) {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(
+    .tpl-name,
+    .wa-provider-title,
+    .wa-device-meta-row .meta-value,
+    .wa-qr-title,
+    .s-title,
+    .stat-value,
+    .device-list-title,
+    .device-item-title,
+    .recipient-db-title,
+    .recipient-db-name,
+    .recipient-number,
+    .campaign-panel-label,
+    .eb-campaign-info h5,
+    .eb-stat-value,
+    .eb-section-title,
+    .cell-title,
+    .sched-main,
+    .ann-title
+) {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .tpl-table th {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .tpl-table td {
+    border-color: var(--app-border) !important;
+    color: var(--app-text-soft) !important;
+}
+
+body.dark-mode .tpl-table tr:hover td,
+body.dark-mode .rp-table tbody tr:hover td {
+    background: rgba(96, 165, 250, 0.08) !important;
+}
+
+body.dark-mode .rp-table tbody tr:hover {
+    background: transparent !important;
+}
+
+body.dark-mode .rp-table tbody td {
+    color: var(--app-text-soft) !important;
+}
+
+body.dark-mode .b-nonaktif {
+    background: rgba(148, 163, 184, 0.14) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .b-belum {
+    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .rp-btn-outline {
+    background: transparent !important;
+    border-color: rgba(96, 165, 250, 0.28) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .rp-btn-outline:hover,
+body.dark-mode .rp-btn-outline:focus {
+    background: rgba(96, 165, 250, 0.12) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode :is(.tpl-filter > .tpl-btn:not(.primary):not(.ghost), .tplf-btn.light) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.tplf-back, .wa-header-btn) {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode :is(.tplf-back, .wa-header-btn):hover,
+body.dark-mode :is(.tplf-back, .wa-header-btn):focus {
+    background: rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .tpl-icon-btn {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .tpl-icon-btn.edit {
+    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .tpl-icon-btn.delete {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode :is(.tpl-icon-btn:hover, .tpl-icon-btn:focus) {
+    transform: translateY(-1px);
+}
+
+body.dark-mode .wa-header-btn i {
+    color: #ffffff !important;
+}
+
+body.dark-mode .campaign-clear-btn {
+    background: rgba(148, 163, 184, 0.16) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(.campaign-search-item, .recipient-db-item, .recipient-item, .device-item, .wa-active-device) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-mode :is(.campaign-search-item:hover, .recipient-db-item:hover, .recipient-item:hover, .device-item:hover) {
+    background: rgba(96, 165, 250, 0.08) !important;
+    border-color: rgba(96, 165, 250, 0.24) !important;
+}
+
+body.dark-mode .device-item.active {
+    border-color: rgba(96, 165, 250, 0.34) !important;
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.28) !important;
+}
+
+body.dark-mode .wa-qr-img {
+    background: #0f172a !important;
 }

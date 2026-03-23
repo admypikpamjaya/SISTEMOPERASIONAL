@@ -79,7 +79,7 @@ async function sendFile(req, res, next) {
     });
 
     return ok(res, 'File queued', { jobId: job.id });
-  } catch (err) {
+  } catch (err) {                              
     return next(err);
   }
 }
