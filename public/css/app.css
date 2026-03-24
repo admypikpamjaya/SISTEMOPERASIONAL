@@ -409,6 +409,7 @@ body.dark-mode :is(
     .table-card table,
     .table-scroll table,
     .table-responsive table,
+    .emp-table,
     .rp-table,
     .an-table,
     .tg-table,
@@ -423,6 +424,7 @@ body.dark-mode :is(
     .table-card table,
     .table-scroll table,
     .table-responsive table,
+    .emp-table,
     .rp-table,
     .an-table,
     .tg-table,
@@ -439,6 +441,7 @@ body.dark-mode :is(
     .table-card table,
     .table-scroll table,
     .table-responsive table,
+    .emp-table,
     .rp-table,
     .an-table,
     .tg-table,
@@ -455,6 +458,7 @@ body.dark-mode :is(
     .table-card table tbody tr:hover,
     .table-scroll table tbody tr:hover,
     .table-responsive table tbody tr:hover,
+    .emp-table tbody tr:hover,
     .table.table-hover tbody tr:hover,
     .rp-table tbody tr:hover,
     .an-table tbody tr:hover,
@@ -470,6 +474,7 @@ body.dark-mode :is(
     .table-card table tbody tr:hover,
     .table-scroll table tbody tr:hover,
     .table-responsive table tbody tr:hover,
+    .emp-table tbody tr:hover,
     .table.table-hover tbody tr:hover,
     .rp-table tbody tr:hover,
     .an-table tbody tr:hover,
@@ -485,6 +490,7 @@ body.dark-mode :is(
     .table-card table tbody tr,
     .table-scroll table tbody tr,
     .table-responsive table tbody tr,
+    .emp-table tbody tr,
     .table tbody tr,
     .rp-table tbody tr,
     .an-table tbody tr,
@@ -500,6 +506,7 @@ body.dark-mode :is(
     .table-card table tbody tr,
     .table-scroll table tbody tr,
     .table-responsive table tbody tr,
+    .emp-table tbody tr,
     .table tbody tr,
     .rp-table tbody tr,
     .an-table tbody tr,
@@ -517,6 +524,7 @@ body.dark-mode :is(
     .table-card table tbody tr,
     .table-scroll table tbody tr,
     .table-responsive table tbody tr,
+    .emp-table tbody tr,
     .table tbody tr,
     .rp-table tbody tr,
     .an-table tbody tr,
@@ -529,6 +537,7 @@ body.dark-mode :is(
     .table-card table tbody tr,
     .table-scroll table tbody tr,
     .table-responsive table tbody tr,
+    .emp-table tbody tr,
     .table tbody tr,
     .rp-table tbody tr,
     .an-table tbody tr,
@@ -1170,6 +1179,412 @@ body.dark-mode .ypk-table td form .ypk-btn:hover {
     background: rgba(239, 68, 68, 0.22) !important;
     border-color: rgba(248, 113, 113, 0.32) !important;
     color: #ffffff !important;
+}
+
+body.dark-mode .emp-page {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.emp-stat, .emp-toolbar, .emp-table-wrap) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode :is(.emp-label, .emp-stat-label, .emp-error-detail, .emp-empty) {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .emp-name {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-head-sub {
+    color: rgba(226, 232, 240, 0.82) !important;
+}
+
+body.dark-mode :is(.emp-input, .emp-select) {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(.emp-input, .emp-select):focus {
+    background: var(--app-surface) !important;
+    border-color: rgba(96, 165, 250, 0.32) !important;
+    box-shadow: 0 0 0 0.18rem rgba(96, 165, 250, 0.14) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-badge.valid {
+    background: rgba(34, 197, 94, 0.14) !important;
+    color: #bbf7d0 !important;
+}
+
+body.dark-mode .emp-badge.invalid {
+    background: rgba(239, 68, 68, 0.14) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .emp-filter button.emp-btn {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .emp-filter a.emp-btn {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-import-wrap > a.emp-btn,
+body.dark-mode .emp-table td > a.emp-btn {
+    background: rgba(96, 165, 250, 0.14) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .emp-file-btn {
+    background: var(--app-surface) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .emp-btn.outline-danger {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .emp-btn.outline-danger:hover {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .emp-btn.danger,
+body.dark-mode .emp-table td form .emp-btn {
+    background: rgba(239, 68, 68, 0.14) !important;
+    border-color: rgba(248, 113, 113, 0.24) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .emp-btn.danger:hover,
+body.dark-mode .emp-table td form .emp-btn:hover {
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: rgba(248, 113, 113, 0.32) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode :is(
+    .inv-filter-card,
+    .inv-table-card,
+    .ivf-main-card,
+    .ivd-main-card,
+    .sfr-filter-card,
+    .sfr-table-card,
+    .ivd-note-form-card
+) {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+    box-shadow: var(--app-shadow);
+}
+
+body.dark-mode :is(
+    .inv-filter-header,
+    .sfr-filter-header,
+    .inv-table-header,
+    .sfr-table-header,
+    .inv-table-footer,
+    .sfr-table-footer,
+    .ivf-card-footer,
+    .ivd-tabs-wrap
+) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-mode :is(
+    .inv-item-card,
+    .inv-item-amount,
+    .inv-empty-state,
+    .ivf-meta-banner,
+    .ivf-items-wrap,
+    .ivd-summary-strip,
+    .ivd-sum-item,
+    .ivd-meta-col,
+    .ivd-items-wrap,
+    .ivd-note-item,
+    .sfr-summary-card,
+    .sfr-alert-empty
+) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .inv-header-title,
+    .inv-table-title,
+    .inv-item-title,
+    .cell-journal,
+    .creator-name,
+    .ivf-header-title,
+    .ivf-meta-no,
+    .ivd-header-title,
+    .ivd-sum-value,
+    .ivd-meta-val,
+    .ivd-note-name,
+    .sfr-header-title,
+    .sfr-table-title,
+    .sc-value,
+    .comp-label
+) {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .inv-header-sub,
+    .inv-label,
+    .inv-item-sub,
+    .inv-item-sub .mono,
+    .cell-no,
+    .cell-date,
+    .cell-ref,
+    .ivf-header-sub,
+    .ivf-meta-sub,
+    .ivf-label,
+    .ivf-section-label,
+    .ivd-header-sub,
+    .ivd-sum-label,
+    .ivd-sum-sub,
+    .ivd-meta-key,
+    .ivd-note-role,
+    .ivd-note-time,
+    .ivd-note-body,
+    .cell-muted,
+    .empty-row td,
+    .sfr-header-sub,
+    .sfr-label,
+    .badge-version,
+    .amount-cell,
+    .sfr-empty-text,
+    .sfr-alert-empty,
+    .inv-empty-text
+) {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(
+    .inv-control,
+    .ivf-control,
+    .ivf-cell-input,
+    .ivd-note-textarea,
+    .sfr-control
+) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .inv-control,
+    .ivf-control,
+    .ivf-cell-input,
+    .ivd-note-textarea,
+    .sfr-control
+):focus {
+    background: var(--app-surface) !important;
+    border-color: rgba(96, 165, 250, 0.36) !important;
+    box-shadow: 0 0 0 0.18rem rgba(96, 165, 250, 0.14) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode :is(
+    .inv-control:disabled,
+    .ivf-control:disabled,
+    .ivf-cell-input:disabled,
+    .sfr-control:disabled
+) {
+    background: rgba(148, 163, 184, 0.08) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode :is(.inv-table td, .ivf-items-table td, .ivd-items-table td, .sfr-table td) {
+    color: var(--app-text-soft) !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-mode :is(.inv-item-card:hover, .ivd-note-item:hover, .sfr-summary-card:hover) {
+    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.28) !important;
+}
+
+body.dark-mode .inv-item-title:hover {
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .inv-item-menu-btn {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .inv-item-menu-btn:hover {
+    background: rgba(96, 165, 250, 0.12) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode :is(.btn-inv-new, .btn-apply, .btn-post, .btn-ivd-post, .btn-ivd-note, .btn-sfr-action) {
+    color: #ffffff !important;
+}
+
+body.dark-mode :is(.btn-reset, .btn-ivf-back, .btn-draft, .btn-ivd-back) {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode :is(.btn-add-row, .btn-act-excel, .btn-ivd-excel) {
+    background: rgba(34, 197, 94, 0.12) !important;
+    border-color: rgba(34, 197, 94, 0.22) !important;
+    color: #86efac !important;
+}
+
+body.dark-mode :is(.btn-preview, .btn-act-detail) {
+    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode :is(.btn-ivf-reset, .btn-ivd-reset, .btn-act-edit, .btn-ivd-edit) {
+    background: rgba(245, 158, 11, 0.14) !important;
+    border-color: rgba(245, 158, 11, 0.24) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-mode :is(.btn-act-delete, .btn-act-pdf, .btn-ivd-delete, .btn-ivd-pdf) {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .sfr-actions .btn-edit {
+    background: rgba(245, 158, 11, 0.14) !important;
+    border-color: rgba(245, 158, 11, 0.24) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-mode .sfr-actions .btn-delete {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode :is(
+    .btn-add-row:hover,
+    .btn-preview:hover,
+    .btn-act-detail:hover,
+    .btn-act-excel:hover,
+    .btn-ivd-excel:hover,
+    .btn-ivf-reset:hover,
+    .btn-ivd-reset:hover,
+    .btn-act-edit:hover,
+    .btn-ivd-edit:hover,
+    .btn-act-delete:hover,
+    .btn-act-pdf:hover,
+    .btn-ivd-delete:hover,
+    .btn-ivd-pdf:hover
+) {
+    color: #ffffff !important;
+}
+
+body.dark-mode .ivf-section-label::after {
+    background: var(--app-border) !important;
+}
+
+body.dark-mode .ivd-tab-link {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .ivd-tab-link:hover {
+    background: rgba(96, 165, 250, 0.08) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .ivd-tab-link.active {
+    background: rgba(96, 165, 250, 0.12) !important;
+    color: #dbeafe !important;
+    border-bottom-color: #60a5fa !important;
+}
+
+body.dark-mode .ivd-tab-link .tab-badge {
+    background: rgba(96, 165, 250, 0.12) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .ivd-tab-link.active .tab-badge {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode :is(.badge-posted, .badge-posted-lg, .badge-posted-ivd, .badge-income, .badge-income-ivd) {
+    background: rgba(34, 197, 94, 0.14) !important;
+    color: #bbf7d0 !important;
+}
+
+body.dark-mode :is(.badge-draft, .badge-draft-lg, .badge-draft-ivd, .badge-type.daily) {
+    background: rgba(245, 158, 11, 0.14) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-mode :is(.badge-cancelled, .badge-cancelled-lg, .badge-cancelled-ivd, .badge-expense, .badge-expense-ivd) {
+    background: rgba(239, 68, 68, 0.14) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .badge-type.monthly {
+    background: rgba(96, 165, 250, 0.14) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .badge-type.yearly {
+    background: rgba(167, 139, 250, 0.16) !important;
+    color: #ddd6fe !important;
+}
+
+body.dark-mode .badge-type.all {
+    background: rgba(34, 197, 94, 0.12) !important;
+    color: #bbf7d0 !important;
+}
+
+body.dark-mode .badge-version {
+    background: rgba(148, 163, 184, 0.14) !important;
+    color: var(--app-text-soft) !important;
+}
+
+body.dark-mode .badge-version i {
+    color: #93c5fd !important;
+}
+
+body.dark-mode .sfr-alert-empty {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.22) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-mode :is(.sc-icon-count, .sc-icon-ending) {
+    background: rgba(96, 165, 250, 0.14) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .sc-icon-opening {
+    background: rgba(245, 158, 11, 0.14) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-mode .sc-icon-surplus {
+    background: rgba(34, 197, 94, 0.14) !important;
+    color: #86efac !important;
 }
 
 body.dark-mode :is(
