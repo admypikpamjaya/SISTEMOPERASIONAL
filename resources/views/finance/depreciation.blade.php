@@ -295,6 +295,80 @@
         .ad-card-body { padding: 16px; }
         .ad-card-header { flex-direction: column; align-items: flex-start; }
     }
+    body.dark-mode .ad {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ad-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .ad-card-footer,
+    body.dark-mode .ad-table thead th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ad-form-group label,
+    body.dark-mode .ad-hint,
+    body.dark-mode .ad-result-label,
+    body.dark-mode .ad-asset-sub,
+    body.dark-mode .ad-empty p {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .ad-input,
+    body.dark-mode .ad-select {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ad-input:focus,
+    body.dark-mode .ad-select:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .ad-select option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ad-input-group .ad-prefix {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        color: #93c5fd !important;
+    }
+
+    body.dark-mode .ad-result-row,
+    body.dark-mode .ad-table tbody td {
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .ad-result-value,
+    body.dark-mode .ad-asset-code {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ad-table tbody tr:hover {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .ad-action-link {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: #93c5fd !important;
+    }
+
+    body.dark-mode .ad-action-link:hover {
+        background: rgba(96, 165, 250, 0.12) !important;
+        color: #dbeafe !important;
+    }
 </style>
 
 <div class="ad">

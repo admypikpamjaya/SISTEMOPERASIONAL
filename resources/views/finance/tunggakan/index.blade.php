@@ -448,6 +448,82 @@
         grid-template-columns: 1fr;
     }
 }
+body.dark-mode .tg-shell {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .tg-metric,
+body.dark-mode .tg-panel,
+body.dark-mode .tg-table-wrap {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: var(--app-shadow) !important;
+}
+
+body.dark-mode .tg-panel-head,
+body.dark-mode .tg-action-card {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+}
+
+body.dark-mode .tg-panel-title,
+body.dark-mode .tg-name,
+body.dark-mode .tg-metric .value {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .tg-panel-note,
+body.dark-mode .tg-label,
+body.dark-mode .tg-meta,
+body.dark-mode .tg-empty,
+body.dark-mode .tg-hint {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .tg-input,
+body.dark-mode .tg-select {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .tg-input:focus,
+body.dark-mode .tg-select:focus {
+    background: var(--app-surface) !important;
+    border-color: rgba(96, 165, 250, 0.36) !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+}
+
+body.dark-mode .tg-select option {
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .tg-table th {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .tg-table td {
+    background: transparent !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-soft) !important;
+}
+
+body.dark-mode .tg-table tr:hover td {
+    background: var(--app-row-hover) !important;
+}
+
+body.dark-mode .tg-table tbody tr.is-selected td {
+    background: var(--app-row-selected) !important;
+}
+
+body.dark-mode .tg-btn.ghost {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: #93c5fd !important;
+}
 </style>
 
 <div class="tg-shell">

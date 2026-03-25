@@ -325,6 +325,112 @@
         min-width: 100%;
     }
 }
+body.dark-mode .emp-page {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-panel,
+body.dark-mode .emp-stat,
+body.dark-mode .emp-toolbar,
+body.dark-mode .emp-table-wrap {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: var(--app-shadow) !important;
+}
+
+body.dark-mode .emp-toolbar,
+body.dark-mode .emp-stat {
+    background: var(--app-surface-soft) !important;
+}
+
+body.dark-mode .emp-label,
+body.dark-mode .emp-stat-label,
+body.dark-mode .emp-error-detail,
+body.dark-mode .emp-empty {
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .emp-name,
+body.dark-mode .emp-stat-value {
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-input,
+body.dark-mode .emp-select {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-input:focus,
+body.dark-mode .emp-select:focus {
+    background: var(--app-surface) !important;
+    border-color: rgba(96, 165, 250, 0.36) !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+}
+
+body.dark-mode .emp-select option {
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
+}
+
+body.dark-mode .emp-table th {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-muted) !important;
+}
+
+body.dark-mode .emp-table td {
+    background: transparent !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-soft) !important;
+}
+
+body.dark-mode .emp-table tr:hover td {
+    background: var(--app-row-hover) !important;
+}
+
+body.dark-mode .emp-table tbody tr.is-selected td {
+    background: var(--app-row-selected) !important;
+}
+
+body.dark-mode .emp-filter > button.emp-btn {
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .emp-filter > a.emp-btn,
+body.dark-mode .emp-import-wrap > a.emp-btn,
+body.dark-mode .emp-import-wrap > form .emp-file-btn {
+    background: var(--app-surface-soft) !important;
+    border-color: var(--app-border) !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .emp-btn.outline-danger {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .emp-btn.danger {
+    background: rgba(239, 68, 68, 0.14) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .emp-table td a.emp-btn {
+    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.22) !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .emp-table td form button.emp-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.22) !important;
+    color: #fecaca !important;
+}
 </style>
 
 <div class="emp-page">

@@ -319,6 +319,93 @@
     .anim-d2 { animation-delay: 0.10s; }
     .anim-d3 { animation-delay: 0.15s; }
     .anim-d4 { animation-delay: 0.20s; }
+    body.dark-mode .sfr-page-header,
+    body.dark-mode .sfr-filter-card,
+    body.dark-mode .sfr-table-card {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .sfr-filter-card,
+    body.dark-mode .sfr-table-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .sfr-filter-header,
+    body.dark-mode .sfr-table-header,
+    body.dark-mode .sfr-table-footer {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .sfr-summary-card,
+    body.dark-mode .sfr-alert-empty {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: none !important;
+    }
+
+    body.dark-mode .sfr-header-title,
+    body.dark-mode .sfr-table-title,
+    body.dark-mode .sc-value,
+    body.dark-mode .comp-label {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .sfr-header-sub,
+    body.dark-mode .sfr-label,
+    body.dark-mode .amount-cell,
+    body.dark-mode .comp-none,
+    body.dark-mode .sfr-empty-text {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .sfr-control {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .sfr-control:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .sfr-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .sfr-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .sfr-table td {
+        background: transparent !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .sfr-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .btn-reset,
+    body.dark-mode .btn-action {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
+
+    body.dark-mode .badge-version {
+        background: rgba(148, 163, 184, 0.14) !important;
+        color: var(--app-text-soft) !important;
+    }
 </style>
 
 @php

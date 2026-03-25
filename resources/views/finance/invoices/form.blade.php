@@ -243,6 +243,90 @@
     /* ── Animations ───────────────────────────── */
     @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    body.dark-mode .ivf-page-header,
+    body.dark-mode .ivf-main-card {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ivf-main-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .ivf-meta-banner,
+    body.dark-mode .ivf-card-footer,
+    body.dark-mode .ivf-items-wrap {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ivf-header-title,
+    body.dark-mode .ivf-meta-no,
+    body.dark-mode .ivf-items-table tfoot th,
+    body.dark-mode .ivf-control,
+    body.dark-mode .ivf-cell-input {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ivf-header-sub,
+    body.dark-mode .ivf-meta-sub,
+    body.dark-mode .ivf-label,
+    body.dark-mode .ivf-section-label {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .ivf-control,
+    body.dark-mode .ivf-cell-input {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ivf-control:focus,
+    body.dark-mode .ivf-cell-input:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .ivf-control:disabled,
+    body.dark-mode .ivf-cell-input:disabled {
+        background: rgba(148, 163, 184, 0.08) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .ivf-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ivf-items-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .ivf-items-table td,
+    body.dark-mode .ivf-items-table tfoot th {
+        background: transparent !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ivf-items-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .ivf-items-table tfoot th {
+        background: var(--app-surface) !important;
+    }
+
+    body.dark-mode .btn-ivf-back,
+    body.dark-mode .btn-draft {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
 </style>
 
 @php

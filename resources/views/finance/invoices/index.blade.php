@@ -345,6 +345,99 @@
 
     @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    body.dark-mode .inv-page-header,
+    body.dark-mode .inv-filter-card,
+    body.dark-mode .inv-table-card {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .inv-filter-card,
+    body.dark-mode .inv-table-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .inv-filter-header,
+    body.dark-mode .inv-table-header,
+    body.dark-mode .inv-table-footer {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .inv-filter-body,
+    body.dark-mode .inv-grid-wrap {
+        background: transparent !important;
+    }
+
+    body.dark-mode .inv-item-card,
+    body.dark-mode .inv-item-amount,
+    body.dark-mode .inv-empty-state,
+    body.dark-mode .inv-item-menu {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
+
+    body.dark-mode .inv-header-title,
+    body.dark-mode .inv-table-title,
+    body.dark-mode .inv-item-title,
+    body.dark-mode .cell-journal,
+    body.dark-mode .creator-name {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .inv-header-sub,
+    body.dark-mode .inv-label,
+    body.dark-mode .inv-item-sub,
+    body.dark-mode .inv-item-sub .mono,
+    body.dark-mode .cell-no,
+    body.dark-mode .cell-date,
+    body.dark-mode .cell-ref,
+    body.dark-mode .inv-empty-text {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .inv-control {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .inv-control:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .inv-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .inv-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .inv-table td {
+        background: transparent !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .inv-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .btn-reset {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
 </style>
 
 @php

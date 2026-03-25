@@ -366,6 +366,84 @@
         .fr-card-body { padding: 16px; }
         .fr-card-header { flex-direction: column; align-items: flex-start; }
     }
+    body.dark-mode .fr {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fr-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .fr-card-footer,
+    body.dark-mode .fr-balance-box,
+    body.dark-mode .fr-table thead th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .fr-form-group label,
+    body.dark-mode .fr-balance-box .bal-label {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .fr-input,
+    body.dark-mode .fr-select,
+    body.dark-mode .fr-table .td-input,
+    body.dark-mode .fr-table .td-select {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fr-input:focus,
+    body.dark-mode .fr-select:focus,
+    body.dark-mode .fr-table .td-input:focus,
+    body.dark-mode .fr-table .td-select:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .fr-select option,
+    body.dark-mode .fr-table .td-select option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fr-input-group .fr-prefix {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        color: #93c5fd !important;
+    }
+
+    body.dark-mode .fr-table tbody td {
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .fr-table tbody tr:hover {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .fr-btn-outline,
+    body.dark-mode .fr-btn-add {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fr-btn-outline .fas,
+    body.dark-mode .fr-btn-add .fas {
+        color: #93c5fd !important;
+    }
+
+    body.dark-mode .fr-btn-remove {
+        background: rgba(239, 68, 68, 0.12) !important;
+        border-color: rgba(239, 68, 68, 0.22) !important;
+        color: #fca5a5 !important;
+    }
 </style>
 
 <div class="fr">

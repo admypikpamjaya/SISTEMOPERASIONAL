@@ -277,6 +277,86 @@
     /* ── Animations ───────────────────────────── */
     @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    body.dark-mode .ivd-page-header,
+    body.dark-mode .ivd-main-card {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ivd-main-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .ivd-summary-strip,
+    body.dark-mode .ivd-sum-item,
+    body.dark-mode .ivd-meta-col,
+    body.dark-mode .ivd-tabs-wrap,
+    body.dark-mode .ivd-items-wrap,
+    body.dark-mode .ivd-note-form-card,
+    body.dark-mode .ivd-note-item {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ivd-meta-row {
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ivd-header-title,
+    body.dark-mode .ivd-sum-value,
+    body.dark-mode .ivd-meta-val,
+    body.dark-mode .cell-code,
+    body.dark-mode .cell-amount-td,
+    body.dark-mode .ivd-note-name {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ivd-header-sub,
+    body.dark-mode .ivd-sum-label,
+    body.dark-mode .ivd-sum-sub,
+    body.dark-mode .ivd-meta-key,
+    body.dark-mode .cell-muted,
+    body.dark-mode .empty-row td,
+    body.dark-mode .ivd-note-role,
+    body.dark-mode .ivd-note-time,
+    body.dark-mode .ivd-note-body {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .ivd-items-table th {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .ivd-items-table td,
+    body.dark-mode .ivd-items-table tfoot th {
+        background: transparent !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .ivd-items-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .ivd-note-textarea {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .ivd-note-textarea:focus {
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .btn-ivd-back {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
 </style>
 
 @php

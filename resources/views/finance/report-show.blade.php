@@ -246,6 +246,88 @@
     /* ── Animations ──────────────────────────────── */
     @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    body.dark-mode .plr-page-header,
+    body.dark-mode .plr-main-card,
+    body.dark-mode .plr-meta-item {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .plr-meta-item,
+    body.dark-mode .plr-main-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .plr-meta-label,
+    body.dark-mode .plr-header-sub {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .plr-header-title,
+    body.dark-mode .plr-meta-value,
+    body.dark-mode .plr-table .col-label {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .btn-plr-back {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
+
+    body.dark-mode .btn-plr-download .dropdown-menu {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .btn-plr-download .dropdown-menu .dropdown-item {
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .btn-plr-download .dropdown-menu .dropdown-item:hover {
+        background: var(--app-surface-soft) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .plr-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .plr-table td {
+        background: transparent !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .plr-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .row-subtotal td {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .row-surplus td {
+        background: linear-gradient(90deg, rgba(34, 197, 94, 0.12), rgba(34, 197, 94, 0.06)) !important;
+        border-top-color: rgba(34, 197, 94, 0.24) !important;
+        border-bottom-color: rgba(34, 197, 94, 0.16) !important;
+    }
+
+    body.dark-mode .row-saldo-akhir td {
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.14), rgba(59, 130, 246, 0.06)) !important;
+        border-top-color: rgba(96, 165, 250, 0.24) !important;
+    }
+
+    body.dark-mode .plr-section-divider {
+        background: var(--app-surface-muted) !important;
+    }
 </style>
 
 @php
