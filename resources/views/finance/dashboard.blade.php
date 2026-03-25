@@ -308,6 +308,154 @@
         .fd-card-body { padding: 16px; }
         .fd-card-header { flex-direction: column; align-items: flex-start; }
     }
+
+    body.dark-mode .fd {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fd-brand h1 {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fd-brand p {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .fd-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+
+    body.dark-mode .fd-card-footer {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .fd-label {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .fd-input,
+    body.dark-mode .fd-select {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fd-input:focus,
+    body.dark-mode .fd-select:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+
+    body.dark-mode .fd-select option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .fd-btn-outline {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+        box-shadow: none !important;
+    }
+
+    body.dark-mode .fd-btn-outline .fas {
+        color: #93c5fd !important;
+    }
+
+    body.dark-mode .fd-btn-light {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(148, 163, 184, 0.18) !important;
+        color: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    body.dark-mode .fd-btn-light:hover,
+    body.dark-mode .fd-btn-light:focus {
+        background: rgba(255, 255, 255, 0.14) !important;
+        color: #ffffff !important;
+    }
+
+    body.dark-mode .fd-table thead th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .fd-table tbody td {
+        background: transparent !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .fd-table tbody tr:hover {
+        background: transparent !important;
+    }
+
+    body.dark-mode .fd-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+
+    body.dark-mode .cur-p,
+    body.dark-mode .cur-s,
+    body.dark-mode .gen-date,
+    body.dark-mode .user-chip .uname {
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .gen-time {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .user-chip .avatar {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+
+    body.dark-mode .fd-badge.fb-info {
+        background: rgba(96, 165, 250, 0.12) !important;
+        color: #bfdbfe !important;
+        border-color: rgba(96, 165, 250, 0.22) !important;
+    }
+
+    body.dark-mode .fd-badge.fb-gray {
+        background: rgba(148, 163, 184, 0.14) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(148, 163, 184, 0.22) !important;
+    }
+
+    body.dark-mode .fd-badge.fb-success {
+        background: rgba(34, 197, 94, 0.14) !important;
+        color: #bbf7d0 !important;
+        border-color: rgba(34, 197, 94, 0.22) !important;
+    }
+
+    body.dark-mode .fd-badge.fb-warn {
+        background: rgba(245, 158, 11, 0.14) !important;
+        color: #fcd34d !important;
+        border-color: rgba(245, 158, 11, 0.24) !important;
+    }
+
+    body.dark-mode .fd-empty h5,
+    body.dark-mode .fd-empty p,
+    body.dark-mode .fd-footer-info {
+        color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .pagination .page-link {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+        border: 1px solid var(--app-border) !important;
+    }
+
+    body.dark-mode .pagination .page-link:hover {
+        background: var(--app-surface-soft) !important;
+        color: var(--app-text) !important;
+    }
 </style>
 
 <div class="fd">
