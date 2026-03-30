@@ -421,6 +421,12 @@
     $totalOpeningBalance = (float) data_get($totals ?? [], 'total_opening_balance', 0);
     $totalNetResult = (float) data_get($totals ?? [], 'total_net_result', 0);
     $totalCount = (int) data_get($totals ?? [], 'count', 0);
+    $statementRouteParams = array_filter([
+        'period_type' => $periodType,
+        'report_date' => $reportDate,
+        'month' => $month,
+        'year' => $year,
+    ], static fn ($value) => $value !== null && $value !== '');
 @endphp
 
 {{-- ── Page Header ──────────────────────────────────── --}}
@@ -432,9 +438,26 @@
             <p class="sfr-header-sub">Monitoring &amp; Snapshot Laporan Keuangan</p>
         </div>
     </div>
-    <a href="{{ route('finance.report.index') }}" class="btn-sfr-action">
-        <i class="fas fa-plus"></i> Input Finance Report
-    </a>
+    <div style="display:flex; gap:.55rem; flex-wrap:wrap;">
+        <a href="{{ route('finance.report.index') }}" class="btn-sfr-action">
+            <i class="fas fa-plus"></i> Input Finance Report
+        </a>
+        @permission('finance_balance_sheet.read')
+            <a href="{{ route('finance.report.balance-sheet', $statementRouteParams) }}" class="btn-reset">
+                <i class="fas fa-balance-scale"></i> Lembar Saldo
+            </a>
+        @endpermission
+        @permission('finance_profit_loss.read')
+            <a href="{{ route('finance.report.profit-loss', $statementRouteParams) }}" class="btn-reset">
+                <i class="fas fa-chart-area"></i> Laba Rugi
+            </a>
+        @endpermission
+        @permission('finance_general_ledger.read')
+            <a href="{{ route('finance.report.general-ledger', $statementRouteParams) }}" class="btn-reset">
+                <i class="fas fa-book-open"></i> Buku Besar
+            </a>
+        @endpermission
+    </div>
 </div>
 
 {{-- ── Filter Card ──────────────────────────────────── --}}

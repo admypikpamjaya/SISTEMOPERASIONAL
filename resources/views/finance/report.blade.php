@@ -117,6 +117,12 @@
         ->filter()
         ->unique()
         ->values();
+    $statementRouteParams = array_filter([
+        'period_type' => $defaultPeriodType,
+        'report_date' => $defaultReportDate,
+        'month' => $defaultMonth,
+        'year' => $defaultYear,
+    ], static fn ($value) => $value !== null && $value !== '');
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -481,13 +487,33 @@
                         <span class="hicon"><i class="fas fa-clipboard-list"></i></span>
                         <h3>{{ $formTitle }}</h3>
                     </div>
-                    <a
-                        href="{{ route('finance.report.snapshots', ['period_type' => 'MONTHLY', 'month' => now()->month, 'year' => now()->year]) }}"
-                        class="fr-btn fr-btn-light"
-                    >
-                        <i class="fas fa-list"></i>
-                        <span>Buka Snapshot Laporan</span>
-                    </a>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <a
+                            href="{{ route('finance.report.snapshots', ['period_type' => 'MONTHLY', 'month' => now()->month, 'year' => now()->year]) }}"
+                            class="fr-btn fr-btn-light"
+                        >
+                            <i class="fas fa-list"></i>
+                            <span>Buka Snapshot</span>
+                        </a>
+                        @permission('finance_balance_sheet.read')
+                            <a href="{{ route('finance.report.balance-sheet', $statementRouteParams) }}" class="fr-btn fr-btn-light">
+                                <i class="fas fa-balance-scale"></i>
+                                <span>Lembar Saldo</span>
+                            </a>
+                        @endpermission
+                        @permission('finance_profit_loss.read')
+                            <a href="{{ route('finance.report.profit-loss', $statementRouteParams) }}" class="fr-btn fr-btn-light">
+                                <i class="fas fa-chart-area"></i>
+                                <span>Laba Rugi</span>
+                            </a>
+                        @endpermission
+                        @permission('finance_general_ledger.read')
+                            <a href="{{ route('finance.report.general-ledger', $statementRouteParams) }}" class="fr-btn fr-btn-light">
+                                <i class="fas fa-book-open"></i>
+                                <span>Buku Besar</span>
+                            </a>
+                        @endpermission
+                    </div>
                 </div>
 
                 <form method="POST" action="{{ $formAction }}" id="profit-loss-form">

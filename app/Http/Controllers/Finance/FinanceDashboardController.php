@@ -2,80 +2,70 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\DTOs\Finance\StatementFilterDTO;
+use App\Enums\Portal\PortalPermission;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Finance\FinanceDashboardRequest;
+use App\Http\Requests\Finance\FinanceStatementFilterRequest;
+use App\Services\AccessControl\PermissionService;
+use App\Services\Finance\FinancialStatementService;
 use App\Services\Finance\ReportService;
 use Throwable;
 
 class FinanceDashboardController extends Controller
 {
     public function __construct(
-        private ReportService $reportService
+        private ReportService $reportService,
+        private FinancialStatementService $financialStatementService,
+        private PermissionService $permissionService
     ) {}
 
-    public function index(FinanceDashboardRequest $request)
+    public function index(FinanceStatementFilterRequest $request)
     {
         try {
-            $validated = $request->validated();
-            $filterType = strtolower((string) ($validated['filter_type'] ?? 'monthly'));
-            $date = !empty($validated['date'])
-                ? \Carbon\Carbon::parse((string) $validated['date'])->toDateString()
-                : null;
-            $year = isset($validated['year']) ? (int) $validated['year'] : null;
-            $month = isset($validated['month']) ? (int) $validated['month'] : null;
-            $page = (int) ($validated['page'] ?? 1);
-            $perPage = (int) ($validated['per_page'] ?? 5);
-            $currentYear = (int) now()->year;
-            $currentMonth = (int) now()->month;
-            $hasMonthQuery = $request->query->has('month');
-
-            $periodType = null;
-            $reportDate = null;
-
-            if ($filterType === 'monthly') {
-                $periodType = 'MONTHLY';
-                $year = $year ?? $currentYear;
-                if ($month === null && !$hasMonthQuery) {
-                    $month = $currentMonth;
-                }
-            } elseif ($filterType === 'yearly') {
-                $periodType = 'YEARLY';
-                $year = $year ?? $currentYear;
-                $month = null;
-            } else {
-                if ($date !== null) {
-                    $periodType = 'DAILY';
-                    $reportDate = $date;
-                    $parsedDate = \Carbon\Carbon::parse($date);
-                    $year = (int) $parsedDate->year;
-                    $month = (int) $parsedDate->month;
-                } elseif ($month !== null && $year === null) {
-                    $year = $currentYear;
-                }
-            }
-
+            $filter = StatementFilterDTO::fromArray($request->validated());
             $reports = $this->reportService->getReports(
-                year: $year,
-                month: $month,
-                periodType: $periodType,
-                reportDate: $reportDate,
-                page: $page,
-                perPage: $perPage
+                year: $filter->year,
+                month: $filter->month,
+                periodType: $filter->periodType,
+                reportDate: $filter->reportDate,
+                page: $filter->page,
+                perPage: $filter->perPage
             );
+
+            $user = auth()->user();
+            $featureAccess = [
+                'balance_sheet' => $user !== null && $this->permissionService->checkAccess(
+                    $user,
+                    PortalPermission::FINANCE_BALANCE_SHEET_READ->value
+                ),
+                'profit_loss' => $user !== null && $this->permissionService->checkAccess(
+                    $user,
+                    PortalPermission::FINANCE_PROFIT_LOSS_READ->value
+                ),
+                'general_ledger' => $user !== null && $this->permissionService->checkAccess(
+                    $user,
+                    PortalPermission::FINANCE_GENERAL_LEDGER_READ->value
+                ),
+            ];
+
+            $dashboardSummary = [];
+            if (in_array(true, $featureAccess, true)) {
+                $dashboardSummary = $this->financialStatementService->getDashboardSummary($filter);
+            }
 
             return view('finance.dashboard', [
                 'reports' => $reports,
                 'totalReports' => $reports->total(),
                 'filters' => [
-                    'filter_type' => $filterType,
-                    'date' => $reportDate ?? $date,
-                    'month' => $month,
-                    'year' => $year ?? (
-                        in_array($filterType, ['monthly', 'yearly'], true)
-                            ? $currentYear
-                            : null
-                    ),
+                    'period_type' => $filter->periodType ?? 'ALL',
+                    'report_date' => $filter->reportDate,
+                    'month' => $filter->month,
+                    'year' => $filter->year,
+                    'per_page' => $filter->perPage,
                 ],
+                'filterQuery' => $filter->toQueryArray(),
+                'featureAccess' => $featureAccess,
+                'dashboardSummary' => $dashboardSummary,
             ]);
         } catch (Throwable $exception) {
             report($exception);

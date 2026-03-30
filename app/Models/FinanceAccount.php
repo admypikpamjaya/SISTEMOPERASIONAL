@@ -12,6 +12,8 @@ class FinanceAccount extends Model
 {
     use HasFactory, HasUuids;
 
+    public const TYPE_KAS = 'KAS';
+    public const TYPE_ASET = 'ASET';
     public const TYPE_PIUTANG = 'PIUTANG';
     public const TYPE_PASIVA_TERKINI = 'PASIVA_TERKINI';
     public const TYPE_HUTANG = 'HUTANG';
@@ -23,6 +25,8 @@ class FinanceAccount extends Model
     public const TYPE_PENGHASILAN_TAHUN_TERKINI = 'PENGHASILAN_TAHUN_TERKINI';
 
     public const TYPE_CLASS_MAP = [
+        self::TYPE_KAS => 1,
+        self::TYPE_ASET => 1,
         self::TYPE_PIUTANG => 1,
         self::TYPE_PASIVA_TERKINI => 2,
         self::TYPE_HUTANG => 2,
@@ -35,6 +39,8 @@ class FinanceAccount extends Model
     ];
 
     public const TYPE_LABELS = [
+        self::TYPE_KAS => 'Kas',
+        self::TYPE_ASET => 'Aset',
         self::TYPE_PIUTANG => 'Piutang',
         self::TYPE_PASIVA_TERKINI => 'Pasiva Terkini',
         self::TYPE_HUTANG => 'Hutang',
@@ -47,8 +53,8 @@ class FinanceAccount extends Model
     ];
 
     public const CLASS_LABELS = [
-        1 => 'Piutang',
-        2 => 'Pasiva Terkini / Hutang / Hutang Tidak Lancar',
+        1 => 'Kas / Piutang / Aset',
+        2 => 'Liabilitas',
         3 => 'Ekuitas',
         4 => 'Penghasilan',
         5 => 'Pengeluaran',
@@ -87,6 +93,24 @@ class FinanceAccount extends Model
     public static function classOrder(): array
     {
         return [1, 2, 3, 4, 5, 8, 9];
+    }
+
+    public static function incomeTypes(): array
+    {
+        return [
+            self::TYPE_PENGHASILAN,
+            self::TYPE_PENGHASILAN_LAINNYA,
+            self::TYPE_PENGHASILAN_TAHUN_TERKINI,
+        ];
+    }
+
+    public static function liabilityTypes(): array
+    {
+        return [
+            self::TYPE_PASIVA_TERKINI,
+            self::TYPE_HUTANG,
+            self::TYPE_HUTANG_TIDAK_LANCAR,
+        ];
     }
 
     public static function classForType(string $type): int

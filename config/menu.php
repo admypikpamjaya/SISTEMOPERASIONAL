@@ -140,6 +140,24 @@ return [
                 'route' => 'finance.report.index',
             ],
             [
+                'label' => 'Lembar Saldo',
+                'icon'  => 'fas fa-balance-scale',
+                'route' => 'finance.report.balance-sheet',
+                'module_name' => 'finance_balance_sheet',
+            ],
+            [
+                'label' => 'Laba Rugi',
+                'icon'  => 'fas fa-chart-area',
+                'route' => 'finance.report.profit-loss',
+                'module_name' => 'finance_profit_loss',
+            ],
+            [
+                'label' => 'Buku Besar',
+                'icon'  => 'fas fa-book-open',
+                'route' => 'finance.report.general-ledger',
+                'module_name' => 'finance_general_ledger',
+            ],
+            [
                 'label' => 'Bagan Akun',
                 'icon'  => 'fas fa-sitemap',
                 'route' => 'finance.accounts.index',

@@ -18,6 +18,7 @@ use App\Http\Controllers\Finance\FinanceAccountController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
+use App\Http\Controllers\Finance\FinanceStatementController;
 use App\Http\Controllers\Finance\FinanceTunggakanController;
 use App\Enums\User\UserRole;
 
@@ -237,6 +238,18 @@ Route::prefix('finance')
         Route::get('/report/snapshots', [FinanceReportController::class, 'snapshots'])
             ->middleware('check_access:finance_report.read')
             ->name('report.snapshots');
+
+        Route::get('/report/balance-sheet', [FinanceStatementController::class, 'balanceSheet'])
+            ->middleware('check_access:finance_balance_sheet.read')
+            ->name('report.balance-sheet');
+
+        Route::get('/report/profit-loss', [FinanceStatementController::class, 'profitLoss'])
+            ->middleware('check_access:finance_profit_loss.read')
+            ->name('report.profit-loss');
+
+        Route::get('/report/general-ledger', [FinanceStatementController::class, 'generalLedger'])
+            ->middleware('check_access:finance_general_ledger.read')
+            ->name('report.general-ledger');
 
         Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
             ->middleware('check_access:finance_report.read')

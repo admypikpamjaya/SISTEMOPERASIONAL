@@ -44,6 +44,9 @@ enum PortalPermission: string
     case FINANCE_DEPRECIATION_CALCULATE = 'finance_depreciation.calculate';
     case FINANCE_REPORT_READ            = 'finance_report.read';
     case FINANCE_REPORT_GENERATE        = 'finance_report.generate';
+    case FINANCE_BALANCE_SHEET_READ     = 'finance_balance_sheet.read';
+    case FINANCE_PROFIT_LOSS_READ       = 'finance_profit_loss.read';
+    case FINANCE_GENERAL_LEDGER_READ    = 'finance_general_ledger.read';
     case FINANCE_INVOICE_READ           = 'finance_invoice.read';
     case FINANCE_INVOICE_CREATE         = 'finance_invoice.create';
     case FINANCE_INVOICE_UPDATE         = 'finance_invoice.update';

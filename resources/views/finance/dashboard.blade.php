@@ -1,674 +1,334 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $periodType = strtoupper((string) ($filters['period_type'] ?? 'ALL'));
+    $reportDate = $filters['report_date'] ?? null;
+    $month = $filters['month'] ?? null;
+    $year = $filters['year'] ?? null;
+    $perPage = (int) ($filters['per_page'] ?? 10);
+    $featureAccess = $featureAccess ?? [];
+    $dashboardSummary = $dashboardSummary ?? [];
+    $balanceSheetSummary = data_get($dashboardSummary, 'balance_sheet.summary', []);
+    $balanceSheetUncategorized = (int) data_get($dashboardSummary, 'balance_sheet.uncategorized_count', 0);
+    $profitLossSummary = data_get($dashboardSummary, 'profit_loss.totals', []);
+    $generalLedgerSummary = data_get($dashboardSummary, 'general_ledger', []);
+@endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-    /* ── Design Tokens — Blue-Slate palette (matches dark sidebar + blue accent) ── */
     :root {
-        --p1:        #3B82F6;
-        --p2:        #2563EB;
-        --p3:        #1E40AF;
-        --grad:      linear-gradient(135deg, #3B82F6 0%, #2563EB 55%, #1D4ED8 100%);
-        --grad-hero: linear-gradient(135deg, #1E3A5F 0%, #1E40AF 55%, #2563EB 100%);
-        --surface:   #FFFFFF;
-        --bg:        #F0F4FF;
-        --border:    #DBEAFE;
-        --text:      #1E293B;
-        --muted:     #64748B;
-        --success:   #22C55E;
-        --s-bg:      #F0FDF4;
-        --s-b:       #BBF7D0;
-        --warn:      #F59E0B;
-        --w-bg:      #FFFBEB;
-        --w-b:       #FDE68A;
-        --danger:    #EF4444;
-        --d-bg:      #FFF1F2;
-        --d-b:       #FECDD3;
-        --radius:    18px;
-        --radius-sm: 11px;
-        --shadow:    0 4px 24px rgba(37,99,235,.09);
-        --shadow-lg: 0 8px 32px rgba(37,99,235,.16);
-        --font:      'Plus Jakarta Sans', 'Nunito', 'Segoe UI', sans-serif;
+        --fd-blue: #2563eb;
+        --fd-blue-dark: #1e3a8a;
+        --fd-green: #059669;
+        --fd-red: #dc2626;
+        --fd-amber: #d97706;
+        --fd-bg: #f0f4fd;
+        --fd-card: #ffffff;
+        --fd-text: #0f172a;
+        --fd-muted: #64748b;
+        --fd-border: rgba(37, 99, 235, 0.10);
+        --fd-shadow: 0 10px 32px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(37, 99, 235, 0.06);
+        --fd-radius: 18px;
+        --fd-radius-sm: 12px;
     }
 
-    .fd, .fd * {
-        font-family: var(--font) !important;
-        box-sizing: border-box;
-    }
-
-    /* pastikan Font Awesome tidak di-override */
-    .fd .fas,
-    .fd .far,
-    .fd .fab,
-    .fd .fal {
-        font-family: 'Font Awesome 5 Free' !important;
-        font-style: normal !important;
-        -webkit-font-smoothing: antialiased;
-        display: inline-block;
-        line-height: 1;
-        vertical-align: middle;
-    }
-
-    /* ── Icon wrapper ── */
-    .ico {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        flex-shrink: 0;
-    }
-    .ico-md { width: 38px; height: 38px; font-size: 1rem; }
-    .ico-sm { width: 30px; height: 30px; font-size: .85rem; }
-    .ico-xs { width: 24px; height: 24px; font-size: .72rem; border-radius: 6px; }
-
-    .ico-white  { background: rgba(255,255,255,.18); color: #fff; }
-    .ico-blue   { background: #EFF6FF; color: var(--p1); border: 1px solid #BFDBFE; }
-    .ico-green  { background: var(--s-bg); color: #16A34A; border: 1px solid var(--s-b); }
-    .ico-yellow { background: var(--w-bg); color: #B45309; border: 1px solid var(--w-b); }
-    .ico-red    { background: var(--d-bg); color: var(--danger); border: 1px solid var(--d-b); }
-    .ico-gray   { background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; }
-    .ico-circle { border-radius: 50% !important; }
-
-    /* ── Page brand ── */
-    .fd-brand {
-        display: flex; align-items: center; gap: 14px;
-        margin-bottom: 24px;
-    }
-    .fd-brand-logo {
-        width: 52px; height: 52px;
-        background: var(--grad);
-        border-radius: 14px;
-        display: flex; align-items: center; justify-content: center;
-        color: #fff; font-size: 1.4rem;
-        box-shadow: 0 4px 16px rgba(37,99,235,.28);
-        flex-shrink: 0;
-    }
-    .fd-brand-logo .fas { font-size: 1.4rem !important; color: #fff !important; }
-    .fd-brand h1 {
-        font-size: 1.3rem; font-weight: 800;
-        color: var(--text); margin: 0 0 2px; line-height: 1.2;
-    }
-    .fd-brand p {
-        font-size: .8rem; color: var(--muted); font-weight: 500; margin: 0;
-    }
-
-    /* ── Card ── */
-    .fd-card {
-        background: var(--surface);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        border: 1.5px solid var(--border);
-        overflow: hidden;
-        margin-bottom: 24px;
-        transition: box-shadow .2s, transform .2s;
-    }
-    .fd-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-
-    .fd-card-header {
-        background: var(--grad);
-        padding: 15px 22px;
-        display: flex; align-items: center;
-        justify-content: space-between; gap: 12px;
-    }
-    .fd-card-header-left { display: flex; align-items: center; gap: 12px; }
-    .fd-card-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #fff; }
-
-    .fd-card-body { padding: 22px; }
-
-    .fd-card-footer {
-        padding: 13px 22px;
-        background: #F8FAFF;
-        border-top: 1.5px solid var(--border);
-        display: flex; align-items: center;
-        justify-content: space-between; flex-wrap: wrap; gap: 10px;
-        font-size: .83rem; color: var(--muted);
-    }
-    .fd-card-footer .pagination { margin: 0; }
-
-    /* ── Hero snapshot ── */
-    .fd-hero {
-        background: var(--grad-hero);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-lg);
-        padding: 26px 24px 0;
-        margin-bottom: 24px;
-        position: relative; overflow: hidden;
-        transition: transform .2s, box-shadow .2s;
-    }
-    .fd-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(37,99,235,.24); }
-    .fd-hero .deco  { position: absolute; right: -16px; top: -16px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,.08); pointer-events: none; }
-    .fd-hero .deco2 { position: absolute; right: 50px; bottom: 22px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.06); pointer-events: none; }
-    .fd-hero .hero-icon { font-size: 2rem; color: rgba(255,255,255,.30); margin-bottom: 8px; display: block; }
-    .fd-hero .hero-icon .fas { font-size: 2rem !important; color: rgba(255,255,255,.30) !important; }
-    .fd-hero .hero-num   { font-size: 2.8rem; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 4px; }
-    .fd-hero .hero-label { font-size: .88rem; color: rgba(255,255,255,.72); font-weight: 500; margin-bottom: 18px; }
-    .fd-hero .hero-footer {
-        display: flex; align-items: center; gap: 8px;
-        margin: 0 -24px;
-        padding: 11px 24px;
-        background: rgba(0,0,0,.16);
-        color: rgba(255,255,255,.88);
-        font-size: .82rem; font-weight: 600;
-        text-decoration: none;
-        transition: background .2s;
-    }
-    .fd-hero .hero-footer:hover { background: rgba(0,0,0,.26); color: #fff; text-decoration: none; }
-    .fd-hero .hero-footer .fas { font-size: .9rem !important; color: rgba(255,255,255,.88) !important; }
-
-    /* ── Form labels ── */
-    .fd-label {
-        font-size: .74rem; font-weight: 700;
-        color: var(--muted); text-transform: uppercase;
-        letter-spacing: .04em; margin-bottom: 6px;
-        display: flex; align-items: center; gap: 6px;
-    }
-    .fd-label .fas, .fd-label .far {
-        font-size: .78rem !important;
-        color: var(--p1) !important;
-        width: 14px; text-align: center;
-    }
-
-    /* ── Inputs ── */
-    .fd-input, .fd-select {
-        width: 100%;
-        background: #F8FAFF;
-        border: 1.5px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 9px 13px;
-        font-size: .9rem; color: var(--text);
-        font-family: var(--font) !important; outline: none;
-        transition: border-color .2s, box-shadow .2s;
-        height: auto; appearance: auto;
-    }
-    .fd-input:focus, .fd-select:focus {
-        border-color: var(--p1);
-        box-shadow: 0 0 0 3px rgba(59,130,246,.14);
-        background: #fff;
-    }
-
-    /* ── Buttons ── */
-    .fd-btn {
-        display: inline-flex; align-items: center; gap: 8px;
-        padding: 10px 20px; border-radius: var(--radius-sm);
-        font-size: .88rem; font-weight: 700;
-        cursor: pointer; border: none;
-        transition: transform .15s, box-shadow .15s;
-        text-decoration: none; font-family: var(--font) !important;
-        white-space: nowrap; line-height: 1;
-    }
-    .fd-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,99,235,.22); text-decoration: none; }
-    .fd-btn .fas, .fd-btn .far { font-size: .88rem !important; }
-
-    .fd-btn-primary { background: var(--grad); color: #fff !important; }
-    .fd-btn-primary .fas { color: #fff !important; }
-
-    .fd-btn-outline { background: var(--surface); color: var(--p1) !important; border: 1.5px solid var(--border); }
-    .fd-btn-outline .fas { color: var(--p1) !important; }
-
-    .fd-btn-sm { padding: 7px 14px; font-size: .8rem; border-radius: 9px; }
-    .fd-btn-sm .fas { font-size: .8rem !important; }
-
-    .fd-btn-light { background: rgba(255,255,255,.15); color: #fff !important; border: 1.5px solid rgba(255,255,255,.25); }
-    .fd-btn-light .fas { color: #fff !important; }
-    .fd-btn-light:hover { background: rgba(255,255,255,.28); color: #fff !important; }
-
-    /* ── Table ── */
-    .fd-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-    .fd-table thead th {
-        font-size: .71rem; font-weight: 800;
-        text-transform: uppercase; letter-spacing: .05em;
-        color: var(--muted); padding: 12px 16px;
-        background: #F8FAFF; border-bottom: 2px solid var(--border);
-        white-space: nowrap;
-    }
-    .fd-table thead th .fas,
-    .fd-table thead th .far {
-        font-size: .72rem !important;
-        color: var(--p1) !important;
-        margin-right: 5px; opacity: .85;
-    }
-    .fd-table tbody tr { transition: background .15s; }
-    .fd-table tbody tr:hover { background: #F0F6FF; }
-    .fd-table tbody td {
-        padding: 13px 16px; vertical-align: middle;
-        border-bottom: 1px solid var(--border);
-        font-size: .88rem; color: var(--text);
-    }
-    .fd-table tbody tr:last-child td { border-bottom: none; }
-
-    /* ── Badges ── */
-    .fd-badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 4px 11px; border-radius: 20px;
-        font-size: .74rem; font-weight: 700; line-height: 1;
-    }
-    .fd-badge .fas { font-size: .68rem !important; }
-
-    /* Biru — menggantikan ungu sebelumnya */
-    .fb-info    { background: #EFF6FF; color: var(--p1); border: 1px solid #BFDBFE; }
-    .fb-info .fas { color: var(--p1) !important; }
-
-    .fb-gray    { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
-    .fb-gray .fas { color: #64748B !important; }
-
-    .fb-success { background: var(--s-bg); color: #16A34A; border: 1px solid var(--s-b); }
-    .fb-success .fas { color: #16A34A !important; }
-
-    .fb-warn    { background: var(--w-bg); color: #B45309; border: 1px solid var(--w-b); }
-    .fb-warn .fas { color: #B45309 !important; }
-
-    /* ── Currency ── */
-    .cur-p { font-weight: 700; color: var(--p2); }
-    .cur-s { font-weight: 700; color: #16A34A; }
-
-    /* ── User chip ── */
-    .user-chip { display: inline-flex; align-items: center; gap: 8px; }
-    .user-chip .avatar {
-        width: 28px; height: 28px;
-        background: #EFF6FF; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; border: 1.5px solid #BFDBFE;
-    }
-    .user-chip .avatar .fas { font-size: .72rem !important; color: var(--p1) !important; }
-    .user-chip .uname { font-weight: 600; font-size: .87rem; }
-
-    /* ── Generated at ── */
-    .gen-date { font-weight: 600; font-size: .87rem; color: var(--text); }
-    .gen-time { font-size: .76rem; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-    .gen-time .fas { font-size: .72rem !important; color: var(--muted) !important; }
-
-    /* ── Empty ── */
-    .fd-empty { text-align: center; padding: 52px 24px; }
-    .fd-empty .ei { font-size: 3rem; color: #BFDBFE; margin-bottom: 12px; display: block; }
-    .fd-empty .ei .fas { font-size: 3rem !important; color: #BFDBFE !important; }
-    .fd-empty h5 { color: var(--muted); font-weight: 700; margin-bottom: 6px; }
-    .fd-empty p  { color: var(--muted); font-size: .87rem; margin-bottom: 18px; }
-
-    /* ── Footer info ── */
-    .fd-footer-info { display: flex; align-items: center; gap: 6px; }
-    .fd-footer-info .fas { font-size: .82rem !important; color: var(--p1) !important; }
-
-    /* ── Pagination ── */
-    .pagination .page-link {
-        border: none; margin: 0 2px;
-        border-radius: 9px !important;
-        color: var(--p1); padding: 6px 11px;
-        font-size: .82rem; font-weight: 600;
-        transition: background .15s, color .15s;
-    }
-    .pagination .page-item.active .page-link {
-        background: var(--grad); color: #fff;
-        box-shadow: 0 2px 10px rgba(37,99,235,.28);
-    }
-    .pagination .page-link:hover { background: #EFF6FF; color: var(--p1); }
-
-    @media (max-width: 768px) {
-        .fd-card-body { padding: 16px; }
-        .fd-card-header { flex-direction: column; align-items: flex-start; }
-    }
-
-    body.dark-mode .fd {
-        color: var(--app-text) !important;
-    }
-
-    body.dark-mode .fd-brand h1 {
-        color: var(--app-text) !important;
-    }
-
-    body.dark-mode .fd-brand p {
-        color: var(--app-text-muted) !important;
-    }
-
-    body.dark-mode .fd-card {
-        background: var(--app-surface) !important;
-        border-color: var(--app-border) !important;
-        box-shadow: var(--app-shadow) !important;
-    }
-
-    body.dark-mode .fd-card-footer {
-        background: var(--app-surface-soft) !important;
-        border-color: var(--app-border) !important;
-        color: var(--app-text-muted) !important;
-    }
-
-    body.dark-mode .fd-label {
-        color: var(--app-text-muted) !important;
-    }
-
-    body.dark-mode .fd-input,
-    body.dark-mode .fd-select {
-        background: var(--app-surface-soft) !important;
-        border-color: var(--app-border) !important;
-        color: var(--app-text) !important;
-    }
-
-    body.dark-mode .fd-input:focus,
-    body.dark-mode .fd-select:focus {
-        background: var(--app-surface) !important;
-        border-color: rgba(96, 165, 250, 0.36) !important;
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
-    }
-
-    body.dark-mode .fd-select option {
-        background: var(--app-surface) !important;
-        color: var(--app-text) !important;
-    }
-
-    body.dark-mode .fd-btn-outline {
-        background: var(--app-surface-soft) !important;
-        border-color: var(--app-border) !important;
-        color: var(--app-text) !important;
-        box-shadow: none !important;
-    }
-
-    body.dark-mode .fd-btn-outline .fas {
-        color: #93c5fd !important;
-    }
-
-    body.dark-mode .fd-btn-light {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border-color: rgba(148, 163, 184, 0.18) !important;
-        color: #ffffff !important;
-        box-shadow: none !important;
-    }
-
-    body.dark-mode .fd-btn-light:hover,
-    body.dark-mode .fd-btn-light:focus {
-        background: rgba(255, 255, 255, 0.14) !important;
-        color: #ffffff !important;
-    }
-
-    body.dark-mode .fd-table thead th {
-        background: var(--app-surface-soft) !important;
-        border-color: var(--app-border) !important;
-        color: var(--app-text-muted) !important;
-    }
-
-    body.dark-mode .fd-table tbody td {
-        background: transparent !important;
-        border-color: var(--app-border) !important;
-        color: var(--app-text-soft) !important;
-    }
-
-    body.dark-mode .fd-table tbody tr:hover {
-        background: transparent !important;
-    }
-
-    body.dark-mode .fd-table tbody tr:hover td {
-        background: var(--app-row-hover) !important;
-    }
-
-    body.dark-mode .cur-p,
-    body.dark-mode .cur-s,
-    body.dark-mode .gen-date,
-    body.dark-mode .user-chip .uname {
-        color: var(--app-text) !important;
-    }
-
-    body.dark-mode .gen-time {
-        color: var(--app-text-muted) !important;
-    }
-
-    body.dark-mode .user-chip .avatar {
-        background: var(--app-surface-soft) !important;
-        border-color: var(--app-border) !important;
-    }
-
-    body.dark-mode .fd-badge.fb-info {
-        background: rgba(96, 165, 250, 0.12) !important;
-        color: #bfdbfe !important;
-        border-color: rgba(96, 165, 250, 0.22) !important;
-    }
-
-    body.dark-mode .fd-badge.fb-gray {
-        background: rgba(148, 163, 184, 0.14) !important;
-        color: #cbd5e1 !important;
-        border-color: rgba(148, 163, 184, 0.22) !important;
-    }
-
-    body.dark-mode .fd-badge.fb-success {
-        background: rgba(34, 197, 94, 0.14) !important;
-        color: #bbf7d0 !important;
-        border-color: rgba(34, 197, 94, 0.22) !important;
-    }
-
-    body.dark-mode .fd-badge.fb-warn {
-        background: rgba(245, 158, 11, 0.14) !important;
-        color: #fcd34d !important;
-        border-color: rgba(245, 158, 11, 0.24) !important;
-    }
-
-    body.dark-mode .fd-empty h5,
-    body.dark-mode .fd-empty p,
-    body.dark-mode .fd-footer-info {
-        color: var(--app-text-muted) !important;
-    }
-
-    body.dark-mode .pagination .page-link {
-        background: var(--app-surface) !important;
-        color: var(--app-text) !important;
-        border: 1px solid var(--app-border) !important;
-    }
-
-    body.dark-mode .pagination .page-link:hover {
-        background: var(--app-surface-soft) !important;
-        color: var(--app-text) !important;
-    }
+    body, .content-wrapper { background: var(--fd-bg) !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+    .fd-wrap { color: var(--fd-text); }
+    .fd-head { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .fd-head-main { display:flex; align-items:center; gap:.9rem; }
+    .fd-head-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--fd-blue),var(--fd-blue-dark)); color:#fff; box-shadow:var(--fd-shadow); }
+    .fd-head h1 { margin:0; font-size:1.45rem; font-weight:800; color:var(--fd-text); }
+    .fd-head p { margin:.15rem 0 0; font-size:.82rem; font-weight:500; color:var(--fd-muted); }
+    .fd-actions-top { display:flex; gap:.55rem; flex-wrap:wrap; }
+    .fd-btn { display:inline-flex; align-items:center; gap:.45rem; padding:.62rem 1rem; border-radius:12px; font-size:.82rem; font-weight:700; text-decoration:none; border:1px solid transparent; transition:.2s ease; }
+    .fd-btn:hover { text-decoration:none; transform:translateY(-1px); }
+    .fd-btn-primary { background:linear-gradient(135deg,var(--fd-blue),#3b82f6); color:#fff; box-shadow:0 8px 22px rgba(37,99,235,.24); }
+    .fd-btn-muted { background:#fff; color:var(--fd-muted); border-color:var(--fd-border); }
+    .fd-card, .fd-hero, .fd-feature-card { background:var(--fd-card); border:1px solid var(--fd-border); border-radius:var(--fd-radius); box-shadow:var(--fd-shadow); }
+    .fd-card-head { padding:1rem 1.15rem; border-bottom:1px solid var(--fd-border); display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:wrap; }
+    .fd-card-title { display:flex; align-items:center; gap:.6rem; font-size:.9rem; font-weight:700; }
+    .fd-card-icon { width:32px; height:32px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; background:rgba(37,99,235,.08); color:var(--fd-blue); }
+    .fd-card-body { padding:1.1rem 1.15rem; }
+    .fd-field { margin-bottom:1rem; }
+    .fd-label { display:flex; align-items:center; gap:.35rem; margin-bottom:.4rem; color:var(--fd-muted); font-size:.7rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+    .fd-control { width:100%; border:1.5px solid rgba(148,163,184,.18); border-radius:var(--fd-radius-sm); padding:.65rem .85rem; font-size:.84rem; color:var(--fd-text); background:#fff; }
+    .fd-control:focus { outline:none; border-color:rgba(37,99,235,.4); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+    .fd-actions { display:flex; align-items:flex-end; gap:.55rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .fd-hero { padding:1.35rem; background:linear-gradient(135deg,#0f2f64 0%,#1e3a8a 55%,#2563eb 100%); color:#fff; min-height:100%; }
+    .fd-hero small { display:inline-flex; align-items:center; gap:.35rem; padding:.32rem .7rem; border-radius:999px; background:rgba(255,255,255,.12); font-size:.72rem; font-weight:700; }
+    .fd-hero strong { display:block; margin-top:.9rem; font-size:2.5rem; line-height:1; }
+    .fd-hero p { margin:.35rem 0 1rem; color:rgba(255,255,255,.82); font-size:.82rem; }
+    .fd-hero a { display:inline-flex; align-items:center; gap:.45rem; color:#fff; font-weight:700; text-decoration:none; }
+    .fd-feature-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; margin:1.2rem 0; }
+    .fd-feature-card { padding:1.1rem 1.15rem; }
+    .fd-feature-top { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin-bottom:.9rem; }
+    .fd-feature-title { display:flex; align-items:center; gap:.6rem; font-size:.9rem; font-weight:800; }
+    .fd-feature-icon { width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; background:rgba(37,99,235,.08); color:var(--fd-blue); }
+    .fd-badge { display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.26rem .7rem; font-size:.68rem; font-weight:800; background:rgba(37,99,235,.10); color:var(--fd-blue); }
+    .fd-mini-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
+    .fd-mini-item { background:#f8fbff; border:1px solid rgba(148,163,184,.12); border-radius:12px; padding:.75rem .8rem; }
+    .fd-mini-label { color:var(--fd-muted); font-size:.68rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-bottom:.25rem; }
+    .fd-mini-value { color:var(--fd-text); font-size:.86rem; font-weight:800; line-height:1.35; }
+    .fd-mini-value.green { color:var(--fd-green); } .fd-mini-value.red { color:var(--fd-red); } .fd-mini-value.blue { color:var(--fd-blue); }
+    .fd-mini-note { margin-top:.85rem; color:var(--fd-muted); font-size:.76rem; font-weight:500; }
+    .fd-table { width:100%; border-collapse:collapse; }
+    .fd-table th { background:#f8fbff; color:var(--fd-muted); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; padding:.75rem 1rem; border-bottom:1px solid var(--fd-border); }
+    .fd-table td { padding:.8rem 1rem; font-size:.82rem; color:#334155; border-bottom:1px solid rgba(148,163,184,.12); vertical-align:middle; }
+    .fd-table tbody tr:last-child td { border-bottom:none; }
+    .fd-table tbody tr:hover td { background:rgba(37,99,235,.03); }
+    .fd-amount { font-weight:800; white-space:nowrap; color:var(--fd-blue); }
+    .fd-user { display:inline-flex; align-items:center; gap:.55rem; }
+    .fd-user-avatar { width:28px; height:28px; border-radius:50%; background:rgba(37,99,235,.10); color:var(--fd-blue); display:inline-flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:800; }
+    .fd-empty { padding:2.5rem 1rem; text-align:center; color:var(--fd-muted); }
+    .fd-empty i { font-size:2.2rem; margin-bottom:.8rem; color:rgba(37,99,235,.28); }
+    .fd-footer { padding:.95rem 1rem; border-top:1px solid var(--fd-border); background:#fafcff; }
+    .fd-footer .pagination { margin:0; }
+    @media (max-width: 768px) { .fd-mini-grid { grid-template-columns:1fr; } }
 </style>
 
-<div class="fd">
-
-    {{-- ── Brand Header ── --}}
-    <div class="fd-brand">
-        <div class="fd-brand-logo">
-            <i class="fas fa-chart-pie"></i>
+<div class="fd-wrap">
+    <div class="fd-head">
+        <div class="fd-head-main">
+            <div class="fd-head-icon"><i class="fas fa-chart-pie"></i></div>
+            <div>
+                <h1>Finance Dashboard</h1>
+                <p>Ringkasan snapshot, lembar saldo, laba rugi, dan buku besar dalam satu tampilan.</p>
+            </div>
         </div>
-        <div>
-            <h1>Finance Dashboard</h1>
-            <p>Monitoring &amp; Snapshot Laporan Keuangan</p>
+        <div class="fd-actions-top">
+            <a href="{{ route('finance.report.index') }}" class="fd-btn fd-btn-primary"><i class="fas fa-plus"></i> Input Finance Report</a>
+            <a href="{{ route('finance.invoice.index') }}" class="fd-btn fd-btn-muted"><i class="fas fa-file-invoice-dollar"></i> Faktur / Jurnal</a>
         </div>
     </div>
 
     <div class="row">
-
-        {{-- ══ Filter Card ══ --}}
-        <div class="col-lg-8 col-md-12">
+        <div class="col-lg-8">
             <div class="fd-card">
-                <div class="fd-card-header">
-                    <div class="fd-card-header-left">
-                        <span class="ico ico-sm ico-white">
-                            <i class="fas fa-filter"></i>
-                        </span>
-                        <h3>Filter Snapshot Finance</h3>
-                    </div>
+                <div class="fd-card-head">
+                    <div class="fd-card-title"><span class="fd-card-icon"><i class="fas fa-filter"></i></span><span>Filter Periode Finance</span></div>
                 </div>
                 <div class="fd-card-body">
                     <form method="GET" action="{{ route('finance.dashboard') }}">
-                        <div class="form-row">
-                            <div class="form-group col-md-3">
-                                <label class="fd-label" for="month">
-                                    <i class="fas fa-calendar"></i> Bulan
-                                </label>
-                                <select name="month" id="month" class="fd-select">
-                                    <option value="">Semua</option>
+                        <div class="row">
+                            <div class="col-md-2 fd-field">
+                                <label class="fd-label" for="dashboard_period_type"><i class="fas fa-layer-group"></i> Periode</label>
+                                <select name="period_type" id="dashboard_period_type" class="fd-control">
+                                    <option value="ALL" {{ $periodType === 'ALL' ? 'selected' : '' }}>Semua</option>
+                                    <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>Harian</option>
+                                    <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
+                                    <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>Tahunan</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 fd-field" id="dashboard_report_date_group">
+                                <label class="fd-label" for="dashboard_report_date"><i class="fas fa-calendar-day"></i> Tanggal</label>
+                                <input type="date" name="report_date" id="dashboard_report_date" class="fd-control" value="{{ $reportDate }}">
+                            </div>
+                            <div class="col-md-2 fd-field" id="dashboard_month_group">
+                                <label class="fd-label" for="dashboard_month"><i class="fas fa-calendar-week"></i> Bulan</label>
+                                <select name="month" id="dashboard_month" class="fd-control">
                                     @for($m = 1; $m <= 12; $m++)
-                                        <option value="{{ $m }}" {{ (int) ($filters['month'] ?? 0) === $m ? 'selected' : '' }}>
-                                            {{ $m }}
-                                        </option>
+                                        <option value="{{ $m }}" {{ (int) $month === $m ? 'selected' : '' }}>{{ str_pad((string) $m, 2, '0', STR_PAD_LEFT) }}</option>
                                     @endfor
                                 </select>
                             </div>
-
-                            <div class="form-group col-md-3">
-                                <label class="fd-label" for="year">
-                                    <i class="fas fa-calendar-alt"></i> Tahun
-                                </label>
-                                <input
-                                    type="number" name="year" id="year"
-                                    class="fd-input" min="1900" max="2100"
-                                    value="{{ $filters['year'] }}"
-                                >
+                            <div class="col-md-2 fd-field" id="dashboard_year_group">
+                                <label class="fd-label" for="dashboard_year"><i class="fas fa-calendar-alt"></i> Tahun</label>
+                                <input type="number" name="year" id="dashboard_year" class="fd-control" min="1900" max="2100" value="{{ $year }}">
                             </div>
-
-                            <div class="form-group col-md-2">
-                                <label class="fd-label" for="per_page">
-                                    <i class="fas fa-list-ol"></i> Per Page
-                                </label>
-                                <select name="per_page" id="per_page" class="fd-select">
+                            <div class="col-md-2 fd-field">
+                                <label class="fd-label" for="dashboard_per_page"><i class="fas fa-list-ol"></i> Snapshot</label>
+                                <select name="per_page" id="dashboard_per_page" class="fd-control">
                                     @foreach([5, 10, 20, 50] as $size)
-                                        <option value="{{ $size }}" {{ (int) request('per_page', 5) === $size ? 'selected' : '' }}>
-                                            {{ $size }}
-                                        </option>
+                                        <option value="{{ $size }}" {{ $perPage === $size ? 'selected' : '' }}>{{ $size }}</option>
                                     @endforeach
                                 </select>
                             </div>
-
-                            <div class="form-group col-md-4 d-flex align-items-end" style="gap: 8px;">
-                                <button type="submit" class="fd-btn fd-btn-primary">
-                                    <i class="fas fa-filter"></i>
-                                    <span>Filter</span>
-                                </button>
-                                <a href="{{ route('finance.dashboard') }}" class="fd-btn fd-btn-outline">
-                                    <i class="fas fa-sync-alt"></i>
-                                    <span>Reset</span>
-                                </a>
+                            <div class="col-md-1 fd-actions">
+                                <button type="submit" class="fd-btn fd-btn-primary"><i class="fas fa-search"></i> Filter</button>
+                                <a href="{{ route('finance.dashboard') }}" class="fd-btn fd-btn-muted"><i class="fas fa-redo"></i> Reset</a>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
-        {{-- ══ Hero Snapshot ══ --}}
-        <div class="col-lg-4 col-md-12">
+        <div class="col-lg-4">
             <div class="fd-hero">
-                <div class="deco"></div>
-                <div class="deco2"></div>
-                <span class="hero-icon"><i class="fas fa-file-invoice"></i></span>
-                <div class="hero-num">{{ $totalReports }}</div>
-                <div class="hero-label">Total Snapshot</div>
-                <a href="{{ route('finance.report.snapshots', ['year' => $filters['year']]) }}" class="hero-footer">
-                    <i class="fas fa-arrow-circle-right"></i>
-                    <span>Buka Snapshot Laporan</span>
-                </a>
-            </div>
-        </div>
-
-    </div>
-
-    {{-- ══ Snapshot Table ══ --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="fd-card">
-                <div class="fd-card-header">
-                    <div class="fd-card-header-left">
-                        <span class="ico ico-sm ico-white">
-                            <i class="fas fa-history"></i>
-                        </span>
-                        <h3>Snapshot Terbaru</h3>
-                    </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <a href="{{ route('finance.depreciation.index') }}" class="fd-btn fd-btn-light fd-btn-sm">
-                            <i class="fas fa-calculator"></i>
-                            <span>Hitung Penyusutan</span>
-                        </a>
-                        <a href="{{ route('finance.invoice.index') }}" class="fd-btn fd-btn-light fd-btn-sm">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <span>Faktur / Jurnal</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div style="overflow-x: auto;">
-                    <table class="fd-table">
-                        <thead>
-                            <tr>
-                                <th><i class="fas fa-tag"></i>Tipe</th>
-                                <th><i class="fas fa-code-branch"></i>Versi</th>
-                                <th><i class="fas fa-arrow-up"></i>Saldo Awal</th>
-                                <th><i class="fas fa-arrow-down"></i>Saldo Akhir</th>
-                                <th><i class="far fa-clock"></i>Generated At</th>
-                                <th><i class="far fa-user"></i>Generated By</th>
-                                <th style="text-align: center;"><i class="fas fa-shield-alt"></i>Read Only</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($reports as $report)
-                                <tr>
-                                    <td>
-                                        <span class="fd-badge fb-info">
-                                            <i class="fas fa-file-invoice"></i>
-                                            {{ $report->report_type }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="fd-badge fb-gray">
-                                            <i class="fas fa-tag"></i>
-                                            v{{ $report->version_no }}
-                                        </span>
-                                    </td>
-                                    <td class="cur-p">
-                                        Rp {{ number_format((float) data_get($report->summary, 'opening_balance', 0), 2, ',', '.') }}
-                                    </td>
-                                    <td class="cur-s">
-                                        Rp {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}
-                                    </td>
-                                    <td>
-                                        <div class="gen-date">
-                                            {{ optional($report->generated_at)->format('Y-m-d') ?? '-' }}
-                                        </div>
-                                        <div class="gen-time">
-                                            <i class="fas fa-clock"></i>
-                                            {{ optional($report->generated_at)->format('H:i:s') ?? '-' }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="user-chip">
-                                            <span class="avatar">
-                                                <i class="fas fa-user"></i>
-                                            </span>
-                                            <span class="uname">{{ $report->user?->name ?? '-' }}</span>
-                                        </div>
-                                    </td>
-                                    <td style="text-align: center;">
-                                        @if($report->is_read_only)
-                                            <span class="fd-badge fb-success">
-                                                <i class="fas fa-check-circle"></i> Yes
-                                            </span>
-                                        @else
-                                            <span class="fd-badge fb-warn">
-                                                <i class="fas fa-pen"></i> No
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7">
-                                        <div class="fd-empty">
-                                            <span class="ei"><i class="fas fa-inbox"></i></span>
-                                            <h5>Belum ada snapshot laporan finance.</h5>
-                                            <p>Mulai dengan membuat snapshot laporan baru.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="fd-card-footer">
-                    <div class="fd-footer-info">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Menampilkan data snapshot</span>
-                    </div>
-                    <div>{{ $reports->appends(request()->query())->links() }}</div>
-                </div>
+                <small><i class="fas fa-file-invoice"></i> Snapshot Tersedia</small>
+                <strong>{{ number_format($totalReports, 0, ',', '.') }}</strong>
+                <p>Total snapshot laporan finance untuk filter yang sedang aktif.</p>
+                <a href="{{ route('finance.report.snapshots', $filterQuery) }}"><i class="fas fa-arrow-right"></i> Buka Snapshot Laporan</a>
             </div>
         </div>
     </div>
 
-</div>{{-- /fd --}}
+    <div class="fd-feature-grid">
+        @if(!empty($featureAccess['balance_sheet']))
+            <div class="fd-feature-card">
+                <div class="fd-feature-top">
+                    <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-amber);"><i class="fas fa-balance-scale"></i></span><span>Lembar Saldo</span></div>
+                    <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-badge"><i class="fas fa-arrow-right"></i> Buka</a>
+                </div>
+                <div class="fd-mini-grid">
+                    <div class="fd-mini-item"><div class="fd-mini-label">Liabilitas</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['liabilitas_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Piutang</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['piutang_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Kas</div><div class="fd-mini-value green">Rp {{ number_format((float) ($balanceSheetSummary['kas_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Aset</div><div class="fd-mini-value blue">Rp {{ number_format((float) ($balanceSheetSummary['aset_total'] ?? 0), 2, ',', '.') }}</div></div>
+                </div>
+                <div class="fd-mini-note">{{ number_format((int) ($balanceSheetSummary['account_count'] ?? 0), 0, ',', '.') }} akun terpetakan. @if($balanceSheetUncategorized > 0) {{ number_format($balanceSheetUncategorized, 0, ',', '.') }} akun belum masuk kategori lembar saldo. @endif</div>
+            </div>
+        @endif
+
+        @if(!empty($featureAccess['profit_loss']))
+            <div class="fd-feature-card">
+                <div class="fd-feature-top">
+                    <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-green);"><i class="fas fa-chart-area"></i></span><span>Laba Rugi</span></div>
+                    <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-badge"><i class="fas fa-arrow-right"></i> Buka</a>
+                </div>
+                <div class="fd-mini-grid">
+                    <div class="fd-mini-item"><div class="fd-mini-label">Pemasukan</div><div class="fd-mini-value green">Rp {{ number_format((float) ($profitLossSummary['income'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Pengeluaran</div><div class="fd-mini-value red">Rp {{ number_format((float) ($profitLossSummary['expense'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item" style="grid-column: span 2;"><div class="fd-mini-label">Laba / Rugi Bersih</div><div class="fd-mini-value {{ (float) ($profitLossSummary['net_result'] ?? 0) >= 0 ? 'green' : 'red' }}">Rp {{ number_format((float) ($profitLossSummary['net_result'] ?? 0), 2, ',', '.') }}</div></div>
+                </div>
+                <div class="fd-mini-note">Laporan ini hanya menampilkan akun pemasukan dan pengeluaran.</div>
+            </div>
+        @endif
+
+        @if(!empty($featureAccess['general_ledger']))
+            <div class="fd-feature-card">
+                <div class="fd-feature-top">
+                    <div class="fd-feature-title"><span class="fd-feature-icon"><i class="fas fa-book-open"></i></span><span>Buku Besar</span></div>
+                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-badge"><i class="fas fa-arrow-right"></i> Buka</a>
+                </div>
+                <div class="fd-mini-grid">
+                    <div class="fd-mini-item"><div class="fd-mini-label">Akun</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['account_count'] ?? 0), 0, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Baris Jurnal</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['entry_count'] ?? 0), 0, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Debit</div><div class="fd-mini-value green">Rp {{ number_format((float) ($generalLedgerSummary['total_debit'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">Kredit</div><div class="fd-mini-value red">Rp {{ number_format((float) ($generalLedgerSummary['total_credit'] ?? 0), 2, ',', '.') }}</div></div>
+                </div>
+                <div class="fd-mini-note">Buku besar mencakup seluruh baris jurnal finance yang sudah diposting.</div>
+            </div>
+        @endif
+    </div>
+
+    <div class="fd-card">
+        <div class="fd-card-head">
+            <div class="fd-card-title"><span class="fd-card-icon"><i class="fas fa-history"></i></span><span>Snapshot Laporan Finance</span></div>
+            <div class="fd-actions-top">
+                @permission('finance_balance_sheet.read')
+                    <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-balance-scale"></i> Lembar Saldo</a>
+                @endpermission
+                @permission('finance_profit_loss.read')
+                    <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-chart-area"></i> Laba Rugi</a>
+                @endpermission
+                @permission('finance_general_ledger.read')
+                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-book-open"></i> Buku Besar</a>
+                @endpermission
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="fd-table">
+                <thead>
+                    <tr>
+                        <th>Periode</th>
+                        <th>Tipe</th>
+                        <th>Versi</th>
+                        <th>Saldo Awal</th>
+                        <th>Saldo Akhir</th>
+                        <th>Generated At</th>
+                        <th>Generated By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($reports as $report)
+                        @php
+                            $period = $report->period;
+                            $rowPeriodType = strtoupper((string) ($period->period_type ?? $report->report_type));
+                            if ($rowPeriodType === 'DAILY') {
+                                $periodLabel = optional($period?->start_date)->format('d/m/Y') ?? '-';
+                            } elseif ($rowPeriodType === 'YEARLY') {
+                                $periodLabel = (string) ($period->year ?? '-');
+                            } else {
+                                $periodLabel = sprintf('%02d/%04d', (int) ($period->month ?? 0), (int) ($period->year ?? 0));
+                            }
+                        @endphp
+                        <tr>
+                            <td><strong>{{ $periodLabel }}</strong></td>
+                            <td><span class="fd-badge">{{ $rowPeriodType }}</span></td>
+                            <td><span class="fd-badge" style="background:rgba(245,158,11,.12);color:var(--fd-amber);">v{{ $report->version_no }}</span></td>
+                            <td class="fd-amount">Rp {{ number_format((float) data_get($report->summary, 'opening_balance', 0), 2, ',', '.') }}</td>
+                            <td class="fd-amount">Rp {{ number_format((float) data_get($report->summary, 'ending_balance', data_get($report->summary, 'net_result', 0)), 2, ',', '.') }}</td>
+                            <td>
+                                <div><strong>{{ optional($report->generated_at)->format('d/m/Y') ?? '-' }}</strong></div>
+                                <div style="font-size:.74rem;color:var(--fd-muted);">{{ optional($report->generated_at)->format('H:i:s') ?? '-' }}</div>
+                            </td>
+                            <td>
+                                <span class="fd-user">
+                                    <span class="fd-user-avatar">{{ strtoupper(substr($report->user?->name ?? '?', 0, 1)) }}</span>
+                                    <span>{{ $report->user?->name ?? '-' }}</span>
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7">
+                                <div class="fd-empty">
+                                    <i class="fas fa-inbox"></i>
+                                    <div style="font-weight:700;color:var(--fd-text);margin-bottom:.35rem;">Belum ada snapshot laporan finance.</div>
+                                    <div>Mulai dari input finance report atau ubah filter periode yang sedang aktif.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="fd-footer">{{ $reports->appends(request()->query())->links() }}</div>
+    </div>
+</div>
+@endsection
+
+@section('js')
+<script>
+    (function () {
+        const periodTypeInput = document.getElementById('dashboard_period_type');
+        const reportDateGroup = document.getElementById('dashboard_report_date_group');
+        const reportDateInput = document.getElementById('dashboard_report_date');
+        const monthGroup = document.getElementById('dashboard_month_group');
+        const monthInput = document.getElementById('dashboard_month');
+        const yearGroup = document.getElementById('dashboard_year_group');
+        const yearInput = document.getElementById('dashboard_year');
+
+        if (!periodTypeInput || !reportDateGroup || !monthGroup || !yearGroup) return;
+
+        function syncDashboardFilters() {
+            const periodType = periodTypeInput.value;
+            const isAll = periodType === 'ALL';
+            const isDaily = periodType === 'DAILY';
+            const isMonthly = periodType === 'MONTHLY';
+            const isYearly = periodType === 'YEARLY';
+
+            reportDateGroup.style.display = isDaily ? '' : 'none';
+            monthGroup.style.display = isMonthly ? '' : 'none';
+            yearGroup.style.display = (isMonthly || isYearly) ? '' : 'none';
+
+            if (reportDateInput) {
+                reportDateInput.disabled = !isDaily;
+                if (isAll) reportDateInput.value = '';
+            }
+            if (monthInput) monthInput.disabled = !isMonthly;
+            if (yearInput) {
+                yearInput.disabled = !(isMonthly || isYearly);
+                if (isAll) yearInput.value = '';
+            }
+        }
+
+        periodTypeInput.addEventListener('change', syncDashboardFilters);
+        syncDashboardFilters();
+    })();
+</script>
 @endsection
