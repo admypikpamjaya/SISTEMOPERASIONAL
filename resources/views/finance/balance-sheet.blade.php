@@ -326,6 +326,10 @@
         margin-bottom: 0.35rem;
     }
 
+    body.dark-mode,
+    body.dark-mode .content-wrapper {
+        background: var(--app-bg) !important;
+    }
     body.dark-mode .fs-filter-card,
     body.dark-mode .fs-summary-card,
     body.dark-mode .fs-section-card,
@@ -347,7 +351,8 @@
     body.dark-mode .fs-summary-label,
     body.dark-mode .fs-section-total,
     body.dark-mode .fs-empty-card,
-    body.dark-mode .fs-table th {
+    body.dark-mode .fs-table th,
+    body.dark-mode .fs-note-card {
         color: var(--app-text-muted) !important;
     }
     body.dark-mode .fs-control,
@@ -357,12 +362,34 @@
         border-color: var(--app-border) !important;
         color: var(--app-text) !important;
     }
+    body.dark-mode .fs-control:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+    body.dark-mode .fs-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fs-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
     body.dark-mode .fs-table td {
         color: var(--app-text-soft) !important;
         border-color: var(--app-border) !important;
     }
+    body.dark-mode .fs-table td strong,
+    body.dark-mode .fs-note-card i,
+    body.dark-mode .fs-amount {
+        color: var(--app-text) !important;
+    }
     body.dark-mode .fs-table tbody tr:hover td {
         background: var(--app-row-hover) !important;
+    }
+    body.dark-mode .fs-section-icon {
+        background: rgba(96, 165, 250, 0.12) !important;
+        color: var(--app-accent) !important;
     }
 </style>
 
@@ -379,10 +406,13 @@
         <a href="{{ route('finance.dashboard') }}" class="fs-nav-link muted">
             <i class="fas fa-arrow-left"></i> Dashboard
         </a>
+        <a href="{{ route('finance.report.balance-sheet.download', $filterQuery) }}" class="fs-nav-link primary">
+            <i class="fas fa-file-pdf"></i> Download PDF
+        </a>
         <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fs-nav-link muted">
             <i class="fas fa-chart-area"></i> Laba Rugi
         </a>
-        <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fs-nav-link primary">
+        <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fs-nav-link muted">
             <i class="fas fa-book-open"></i> Buku Besar
         </a>
     </div>

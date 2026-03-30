@@ -56,6 +56,24 @@
         box-shadow: 0 3px 10px rgba(37,99,235,0.35);
     }
     .btn-inv-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.45); color: white; text-decoration: none; }
+    .inv-header-actions { display:flex; align-items:center; gap:.65rem; flex-wrap:wrap; }
+    .btn-inv-publish {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: linear-gradient(135deg, #047857, var(--accent-green));
+        color: white; font-size: 0.82rem; font-weight: 700;
+        padding: 0.55rem 1.15rem; border-radius: var(--radius-sm);
+        border: none; transition: all 0.25s;
+        box-shadow: 0 3px 10px rgba(16,185,129,0.28);
+        font-family: inherit;
+        cursor: pointer;
+    }
+    .btn-inv-publish:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.38); }
+    .btn-inv-publish:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+        transform: none;
+        box-shadow: none;
+    }
 
     .inv-filter-card {
         background: white; border-radius: var(--radius-lg);
@@ -438,11 +456,17 @@
         color: var(--app-text) !important;
         box-shadow: none !important;
     }
+
+    body.dark-mode .btn-inv-publish:disabled {
+        background: linear-gradient(135deg, #1f2937, #334155) !important;
+        color: var(--app-text-muted) !important;
+    }
 </style>
 
 @php
     $filters = $filters ?? [];
     $journalOptions = $journalOptions ?? [];
+    $draftPublishCount = (int) ($draftPublishCount ?? 0);
 @endphp
 
 <div class="inv-page-header">
@@ -453,9 +477,26 @@
             <p class="inv-header-sub">Manajemen Invoice &amp; Jurnal Keuangan</p>
         </div>
     </div>
-    <a href="{{ route('finance.invoice.create') }}" class="btn-inv-new">
-        <i class="fas fa-plus"></i> Buat Faktur Baru
-    </a>
+    <div class="inv-header-actions">
+        @permission('finance_invoice.update')
+            <form method="POST" action="{{ route('finance.invoice.publish-all-draft') }}" onsubmit="return confirm('Publish semua draft yang sesuai filter saat ini? Draft dengan item kosong atau debit/kredit belum seimbang akan dilewati.');">
+                @csrf
+                <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
+                <input type="hidden" name="entry_type" value="{{ $filters['entry_type'] ?? 'ALL' }}">
+                <input type="hidden" name="accounting_date" value="{{ $filters['accounting_date'] ?? '' }}">
+                <input type="hidden" name="month" value="{{ $filters['month'] ?? '' }}">
+                <input type="hidden" name="year" value="{{ $filters['year'] ?? '' }}">
+                <input type="hidden" name="journal_name" value="{{ $filters['journal_name'] ?? '' }}">
+                <button type="submit" class="btn-inv-publish" {{ $draftPublishCount < 1 ? 'disabled' : '' }}>
+                    <i class="fas fa-upload"></i> Publish Semua Draft
+                    <span>({{ number_format($draftPublishCount, 0, ',', '.') }})</span>
+                </button>
+            </form>
+        @endpermission
+        <a href="{{ route('finance.invoice.create') }}" class="btn-inv-new">
+            <i class="fas fa-plus"></i> Buat Faktur Baru
+        </a>
+    </div>
 </div>
 
 <div class="inv-filter-card">

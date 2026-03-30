@@ -346,6 +346,10 @@
         margin-bottom: 0.35rem;
     }
 
+    body.dark-mode,
+    body.dark-mode .content-wrapper {
+        background: var(--app-bg) !important;
+    }
     body.dark-mode .fs-filter-card,
     body.dark-mode .gl-summary-card,
     body.dark-mode .gl-ledger-card,
@@ -381,12 +385,35 @@
         border-color: var(--app-border) !important;
         color: var(--app-text) !important;
     }
+    body.dark-mode .fs-control:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+    body.dark-mode .fs-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .gl-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
     body.dark-mode .gl-table td {
         color: var(--app-text-soft) !important;
         border-color: var(--app-border) !important;
     }
     body.dark-mode .gl-table tbody tr:hover td {
         background: var(--app-row-hover) !important;
+    }
+    body.dark-mode .gl-pagination .page-link {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+    body.dark-mode .gl-pagination .page-item.active .page-link {
+        background: var(--app-accent) !important;
+        border-color: var(--app-accent) !important;
+        color: #fff !important;
     }
     @media (max-width: 991px) {
         .gl-ledger-totals {
@@ -409,10 +436,13 @@
         <a href="{{ route('finance.dashboard') }}" class="gl-nav-link muted">
             <i class="fas fa-arrow-left"></i> Dashboard
         </a>
+        <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="gl-nav-link primary">
+            <i class="fas fa-file-pdf"></i> Download PDF
+        </a>
         <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="gl-nav-link muted">
             <i class="fas fa-balance-scale"></i> Lembar Saldo
         </a>
-        <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="gl-nav-link primary">
+        <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="gl-nav-link muted">
             <i class="fas fa-chart-area"></i> Laba Rugi
         </a>
     </div>

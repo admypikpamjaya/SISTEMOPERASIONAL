@@ -243,13 +243,25 @@ Route::prefix('finance')
             ->middleware('check_access:finance_balance_sheet.read')
             ->name('report.balance-sheet');
 
+        Route::get('/report/balance-sheet/download', [FinanceStatementController::class, 'downloadBalanceSheet'])
+            ->middleware('check_access:finance_balance_sheet.read')
+            ->name('report.balance-sheet.download');
+
         Route::get('/report/profit-loss', [FinanceStatementController::class, 'profitLoss'])
             ->middleware('check_access:finance_profit_loss.read')
             ->name('report.profit-loss');
 
+        Route::get('/report/profit-loss/download', [FinanceStatementController::class, 'downloadProfitLoss'])
+            ->middleware('check_access:finance_profit_loss.read')
+            ->name('report.profit-loss.download');
+
         Route::get('/report/general-ledger', [FinanceStatementController::class, 'generalLedger'])
             ->middleware('check_access:finance_general_ledger.read')
             ->name('report.general-ledger');
+
+        Route::get('/report/general-ledger/download', [FinanceStatementController::class, 'downloadGeneralLedger'])
+            ->middleware('check_access:finance_general_ledger.read')
+            ->name('report.general-ledger.download');
 
         Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
             ->middleware('check_access:finance_report.read')
@@ -293,6 +305,10 @@ Route::prefix('finance')
                 Route::post('/', [FinanceInvoiceController::class, 'store'])
                     ->middleware('check_access:finance_invoice.create')
                     ->name('store');
+
+                Route::post('/publish-all-draft', [FinanceInvoiceController::class, 'publishAllDraft'])
+                    ->middleware('check_access:finance_invoice.update')
+                    ->name('publish-all-draft');
 
                 Route::get('/{invoice}/download', [FinanceInvoiceController::class, 'download'])
                     ->middleware('check_access:finance_invoice.read')

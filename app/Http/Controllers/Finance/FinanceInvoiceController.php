@@ -10,6 +10,7 @@ use App\Models\FinanceAccount;
 use App\Models\FinanceInvoice;
 use App\Services\Finance\FinanceInvoiceDocumentService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -38,53 +39,28 @@ class FinanceInvoiceController extends Controller
             ->orderByDesc('accounting_date')
             ->orderByDesc('created_at');
 
+        $this->applyInvoiceFilters($query, $filters);
+
         $search = trim((string) ($filters['q'] ?? ''));
-        if ($search !== '') {
-            $query->where(function ($innerQuery) use ($search) {
-                $innerQuery->where('invoice_no', 'like', '%' . $search . '%')
-                    ->orWhere('journal_name', 'like', '%' . $search . '%')
-                    ->orWhere('reference', 'like', '%' . $search . '%');
-            });
-        }
-
         $status = strtoupper((string) ($filters['status'] ?? 'ALL'));
-        if ($status !== 'ALL') {
-            $query->where('status', $status);
-        }
-
         $entryType = strtoupper((string) ($filters['entry_type'] ?? 'ALL'));
-        if ($entryType !== 'ALL') {
-            $query->where('entry_type', $entryType);
-        }
-
         $accountingDate = $filters['accounting_date'] ?? null;
-        if ($accountingDate !== null) {
-            $query->whereDate('accounting_date', $accountingDate);
-        }
-
         $year = isset($filters['year']) ? (int) $filters['year'] : null;
-        if ($year !== null) {
-            $query->whereYear('accounting_date', $year);
-        }
-
         $month = isset($filters['month']) ? (int) $filters['month'] : null;
-        if ($month !== null) {
-            $query->whereMonth('accounting_date', $month);
-        }
-
         $journalName = trim((string) ($filters['journal_name'] ?? ''));
-        if ($journalName !== '') {
-            $query->where('journal_name', $journalName);
-        }
 
         $journalOptions = $this->getJournalOptions();
 
         $perPage = (int) ($filters['per_page'] ?? 15);
         $invoices = $query->paginate($perPage)->withQueryString();
+        $draftPublishCount = FinanceInvoice::query()
+            ->tap(fn (Builder $draftQuery) => $this->applyInvoiceFilters($draftQuery, $filters, 'DRAFT'))
+            ->count();
 
         return view('finance.invoices.index', [
             'invoices' => $invoices,
             'journalOptions' => $journalOptions,
+            'draftPublishCount' => $draftPublishCount,
             'filters' => [
                 'q' => $search,
                 'status' => $status,
@@ -320,37 +296,93 @@ class FinanceInvoiceController extends Controller
     public function post(FinanceInvoice $invoice)
     {
         $invoice->load('items');
-        if ($invoice->items->count() === 0) {
+        $validation = $this->resolvePostingValidation($invoice);
+        if (!$validation['can_post']) {
             return redirect()
                 ->route('finance.invoice.show', $invoice->id)
-                ->with('error', 'Item jurnal kosong. Tidak dapat merekam.');
+                ->with('error', $validation['message']);
         }
 
-        $totalDebit = round((float) $invoice->items->sum('debit'), 2);
-        $totalCredit = round((float) $invoice->items->sum('credit'), 2);
-
-        if ($totalDebit <= 0 || $totalCredit <= 0 || $totalDebit !== $totalCredit) {
-            return redirect()
-                ->route('finance.invoice.show', $invoice->id)
-                ->with('error', 'Total debit dan kredit harus seimbang sebelum direkam.');
-        }
-
-        $invoice->update([
-            'status' => 'POSTED',
-            'total_debit' => $totalDebit,
-            'total_credit' => $totalCredit,
-            'posted_by' => auth()->id() ? (string) auth()->id() : null,
-            'posted_at' => now(),
-            'updated_by' => auth()->id() ? (string) auth()->id() : null,
-        ]);
-        $invoice->notes()->create([
-            'user_id' => auth()->id() ? (string) auth()->id() : null,
-            'note' => 'Faktur direkam (status POSTED).',
-        ]);
+        $this->markInvoiceAsPosted(
+            $invoice,
+            (float) $validation['total_debit'],
+            (float) $validation['total_credit'],
+            auth()->id() ? (string) auth()->id() : null,
+            'Faktur direkam (status POSTED).'
+        );
 
         return redirect()
             ->route('finance.invoice.show', $invoice->id)
             ->with('success', 'Faktur/jurnal berhasil direkam.');
+    }
+
+    public function publishAllDraft(Request $request)
+    {
+        $filters = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
+            'accounting_date' => 'nullable|date_format:Y-m-d',
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|digits:4|between:1900,2100',
+            'journal_name' => 'nullable|string|max:255',
+        ]);
+
+        $draftInvoices = FinanceInvoice::query()
+            ->with(['items:id,invoice_id,debit,credit'])
+            ->orderBy('accounting_date')
+            ->orderBy('created_at')
+            ->tap(fn (Builder $query) => $this->applyInvoiceFilters($query, $filters, 'DRAFT'))
+            ->get();
+
+        if ($draftInvoices->isEmpty()) {
+            return redirect()
+                ->back()
+                ->with('error', 'Tidak ada draft invoice/jurnal yang sesuai filter untuk dipublish.');
+        }
+
+        $actorId = auth()->id() ? (string) auth()->id() : null;
+        $postedCount = 0;
+        $skippedInvoices = [];
+
+        DB::transaction(function () use ($draftInvoices, $actorId, &$postedCount, &$skippedInvoices) {
+            foreach ($draftInvoices as $invoice) {
+                $validation = $this->resolvePostingValidation($invoice);
+                if (!$validation['can_post']) {
+                    $skippedInvoices[] = (string) $invoice->invoice_no;
+                    continue;
+                }
+
+                $this->markInvoiceAsPosted(
+                    $invoice,
+                    (float) $validation['total_debit'],
+                    (float) $validation['total_credit'],
+                    $actorId,
+                    'Faktur direkam massal dari daftar draft.'
+                );
+                $postedCount++;
+            }
+        });
+
+        $skippedCount = count($skippedInvoices);
+        if ($postedCount === 0) {
+            $message = 'Tidak ada draft yang bisa dipublish.';
+            if ($skippedCount > 0) {
+                $message .= ' Draft dilewati karena item kosong atau debit/kredit belum seimbang.';
+            }
+
+            return redirect()
+                ->back()
+                ->with('error', $message);
+        }
+
+        $message = $postedCount . ' draft invoice/jurnal berhasil dipublish.';
+        if ($skippedCount > 0) {
+            $message .= ' ' . $skippedCount . ' draft dilewati karena item kosong atau debit/kredit belum seimbang.';
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', $message);
     }
 
     public function setDraft(FinanceInvoice $invoice)
@@ -381,6 +413,106 @@ class FinanceInvoiceController extends Controller
         return redirect()
             ->route('finance.invoice.show', $invoice->id)
             ->with('success', 'Catatan berhasil ditambahkan.');
+    }
+
+    private function applyInvoiceFilters(Builder $query, array $filters, ?string $forcedStatus = null): Builder
+    {
+        $search = trim((string) ($filters['q'] ?? ''));
+        if ($search !== '') {
+            $query->where(function (Builder $innerQuery) use ($search) {
+                $innerQuery->where('invoice_no', 'like', '%' . $search . '%')
+                    ->orWhere('journal_name', 'like', '%' . $search . '%')
+                    ->orWhere('reference', 'like', '%' . $search . '%');
+            });
+        }
+
+        $status = $forcedStatus ?? strtoupper((string) ($filters['status'] ?? 'ALL'));
+        if ($status !== 'ALL') {
+            $query->where('status', $status);
+        }
+
+        $entryType = strtoupper((string) ($filters['entry_type'] ?? 'ALL'));
+        if ($entryType !== 'ALL') {
+            $query->where('entry_type', $entryType);
+        }
+
+        $accountingDate = $filters['accounting_date'] ?? null;
+        if ($accountingDate !== null) {
+            $query->whereDate('accounting_date', $accountingDate);
+        }
+
+        $year = isset($filters['year']) ? (int) $filters['year'] : null;
+        if ($year !== null) {
+            $query->whereYear('accounting_date', $year);
+        }
+
+        $month = isset($filters['month']) ? (int) $filters['month'] : null;
+        if ($month !== null) {
+            $query->whereMonth('accounting_date', $month);
+        }
+
+        $journalName = trim((string) ($filters['journal_name'] ?? ''));
+        if ($journalName !== '') {
+            $query->where('journal_name', $journalName);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @return array{can_post:bool,message:string,total_debit:float,total_credit:float}
+     */
+    private function resolvePostingValidation(FinanceInvoice $invoice): array
+    {
+        $totalDebit = round((float) $invoice->items->sum('debit'), 2);
+        $totalCredit = round((float) $invoice->items->sum('credit'), 2);
+
+        if ($invoice->items->count() === 0) {
+            return [
+                'can_post' => false,
+                'message' => 'Item jurnal kosong. Tidak dapat merekam.',
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
+            ];
+        }
+
+        if ($totalDebit <= 0 || $totalCredit <= 0 || $totalDebit !== $totalCredit) {
+            return [
+                'can_post' => false,
+                'message' => 'Total debit dan kredit harus seimbang sebelum direkam.',
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
+            ];
+        }
+
+        return [
+            'can_post' => true,
+            'message' => 'Valid',
+            'total_debit' => $totalDebit,
+            'total_credit' => $totalCredit,
+        ];
+    }
+
+    private function markInvoiceAsPosted(
+        FinanceInvoice $invoice,
+        float $totalDebit,
+        float $totalCredit,
+        ?string $actorId,
+        string $note
+    ): void {
+        $invoice->update([
+            'status' => 'POSTED',
+            'total_debit' => $totalDebit,
+            'total_credit' => $totalCredit,
+            'posted_by' => $actorId,
+            'posted_at' => now(),
+            'updated_by' => $actorId,
+        ]);
+
+        $invoice->notes()->create([
+            'user_id' => $actorId,
+            'note' => $note,
+        ]);
     }
 
     /**

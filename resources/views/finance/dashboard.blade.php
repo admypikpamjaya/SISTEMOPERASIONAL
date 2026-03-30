@@ -73,6 +73,11 @@
     .fd-mini-value { color:var(--fd-text); font-size:.86rem; font-weight:800; line-height:1.35; }
     .fd-mini-value.green { color:var(--fd-green); } .fd-mini-value.red { color:var(--fd-red); } .fd-mini-value.blue { color:var(--fd-blue); }
     .fd-mini-note { margin-top:.85rem; color:var(--fd-muted); font-size:.76rem; font-weight:500; }
+    .fd-feature-actions { display:flex; align-items:center; gap:.65rem; flex-wrap:wrap; margin-top:1rem; }
+    .fd-feature-btn { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem .95rem; border-radius:10px; font-size:.78rem; font-weight:700; text-decoration:none; border:1px solid transparent; transition:.2s ease; }
+    .fd-feature-btn:hover { text-decoration:none; transform:translateY(-1px); }
+    .fd-feature-btn.primary { background:linear-gradient(135deg,var(--fd-blue),#3b82f6); color:#fff; box-shadow:0 6px 18px rgba(37,99,235,.2); }
+    .fd-feature-btn.muted { background:#fff; color:var(--fd-muted); border-color:var(--fd-border); }
     .fd-table { width:100%; border-collapse:collapse; }
     .fd-table th { background:#f8fbff; color:var(--fd-muted); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; padding:.75rem 1rem; border-bottom:1px solid var(--fd-border); }
     .fd-table td { padding:.8rem 1rem; font-size:.82rem; color:#334155; border-bottom:1px solid rgba(148,163,184,.12); vertical-align:middle; }
@@ -85,6 +90,93 @@
     .fd-empty i { font-size:2.2rem; margin-bottom:.8rem; color:rgba(37,99,235,.28); }
     .fd-footer { padding:.95rem 1rem; border-top:1px solid var(--fd-border); background:#fafcff; }
     .fd-footer .pagination { margin:0; }
+    body.dark-mode,
+    body.dark-mode .content-wrapper { background: var(--app-bg) !important; }
+    body.dark-mode .fd-wrap,
+    body.dark-mode .fd-card,
+    body.dark-mode .fd-feature-card,
+    body.dark-mode .fd-head,
+    body.dark-mode .fd-hero {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fd-card,
+    body.dark-mode .fd-feature-card,
+    body.dark-mode .fd-footer {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+    body.dark-mode .fd-card-head,
+    body.dark-mode .fd-mini-item,
+    body.dark-mode .fd-table th,
+    body.dark-mode .fd-footer {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+    body.dark-mode .fd-head h1,
+    body.dark-mode .fd-card-title,
+    body.dark-mode .fd-feature-title,
+    body.dark-mode .fd-mini-value,
+    body.dark-mode .fd-empty div[style*='font-weight:700'],
+    body.dark-mode .fd-user strong {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fd-head p,
+    body.dark-mode .fd-label,
+    body.dark-mode .fd-mini-label,
+    body.dark-mode .fd-mini-note,
+    body.dark-mode .fd-table th,
+    body.dark-mode .fd-empty,
+    body.dark-mode .fd-card-head span[style*='font-size:0.75rem'] {
+        color: var(--app-text-muted) !important;
+    }
+    body.dark-mode .fd-control,
+    body.dark-mode .fd-btn-muted,
+    body.dark-mode .fd-feature-btn.muted {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fd-control:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+    body.dark-mode .fd-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fd-table td {
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+    body.dark-mode .fd-table tbody tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+    body.dark-mode .fd-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #172554 55%, #1d4ed8 100%) !important;
+        box-shadow: var(--app-shadow) !important;
+        border-color: rgba(96, 165, 250, 0.12) !important;
+    }
+    body.dark-mode .fd-hero p,
+    body.dark-mode .fd-hero small {
+        color: rgba(226, 232, 240, 0.86) !important;
+    }
+    body.dark-mode .fd-feature-btn.muted:hover,
+    body.dark-mode .fd-btn-muted:hover {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fd-footer .page-link {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text-soft) !important;
+    }
+    body.dark-mode .fd-footer .page-item.active .page-link {
+        background: var(--app-accent) !important;
+        border-color: var(--app-accent) !important;
+        color: #fff !important;
+    }
     @media (max-width: 768px) { .fd-mini-grid { grid-template-columns:1fr; } }
 </style>
 
@@ -169,7 +261,7 @@
             <div class="fd-feature-card">
                 <div class="fd-feature-top">
                     <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-amber);"><i class="fas fa-balance-scale"></i></span><span>Lembar Saldo</span></div>
-                    <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-badge"><i class="fas fa-arrow-right"></i> Buka</a>
+                    <span class="fd-badge"><i class="fas fa-check-circle"></i> Tersedia</span>
                 </div>
                 <div class="fd-mini-grid">
                     <div class="fd-mini-item"><div class="fd-mini-label">Liabilitas</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['liabilitas_total'] ?? 0), 2, ',', '.') }}</div></div>
@@ -178,6 +270,14 @@
                     <div class="fd-mini-item"><div class="fd-mini-label">Aset</div><div class="fd-mini-value blue">Rp {{ number_format((float) ($balanceSheetSummary['aset_total'] ?? 0), 2, ',', '.') }}</div></div>
                 </div>
                 <div class="fd-mini-note">{{ number_format((int) ($balanceSheetSummary['account_count'] ?? 0), 0, ',', '.') }} akun terpetakan. @if($balanceSheetUncategorized > 0) {{ number_format($balanceSheetUncategorized, 0, ',', '.') }} akun belum masuk kategori lembar saldo. @endif</div>
+                <div class="fd-feature-actions">
+                    <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-feature-btn primary">
+                        <i class="fas fa-eye"></i> Lihat Detail
+                    </a>
+                    <a href="{{ route('finance.report.balance-sheet.download', $filterQuery) }}" class="fd-feature-btn muted">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </a>
+                </div>
             </div>
         @endif
 
@@ -185,7 +285,7 @@
             <div class="fd-feature-card">
                 <div class="fd-feature-top">
                     <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-green);"><i class="fas fa-chart-area"></i></span><span>Laba Rugi</span></div>
-                    <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-badge"><i class="fas fa-arrow-right"></i> Buka</a>
+                    <span class="fd-badge"><i class="fas fa-check-circle"></i> Tersedia</span>
                 </div>
                 <div class="fd-mini-grid">
                     <div class="fd-mini-item"><div class="fd-mini-label">Pemasukan</div><div class="fd-mini-value green">Rp {{ number_format((float) ($profitLossSummary['income'] ?? 0), 2, ',', '.') }}</div></div>
@@ -193,6 +293,14 @@
                     <div class="fd-mini-item" style="grid-column: span 2;"><div class="fd-mini-label">Laba / Rugi Bersih</div><div class="fd-mini-value {{ (float) ($profitLossSummary['net_result'] ?? 0) >= 0 ? 'green' : 'red' }}">Rp {{ number_format((float) ($profitLossSummary['net_result'] ?? 0), 2, ',', '.') }}</div></div>
                 </div>
                 <div class="fd-mini-note">Laporan ini hanya menampilkan akun pemasukan dan pengeluaran.</div>
+                <div class="fd-feature-actions">
+                    <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-feature-btn primary">
+                        <i class="fas fa-eye"></i> Lihat Detail
+                    </a>
+                    <a href="{{ route('finance.report.profit-loss.download', $filterQuery) }}" class="fd-feature-btn muted">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </a>
+                </div>
             </div>
         @endif
 
@@ -200,7 +308,7 @@
             <div class="fd-feature-card">
                 <div class="fd-feature-top">
                     <div class="fd-feature-title"><span class="fd-feature-icon"><i class="fas fa-book-open"></i></span><span>Buku Besar</span></div>
-                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-badge"><i class="fas fa-arrow-right"></i> Buka</a>
+                    <span class="fd-badge"><i class="fas fa-check-circle"></i> Tersedia</span>
                 </div>
                 <div class="fd-mini-grid">
                     <div class="fd-mini-item"><div class="fd-mini-label">Akun</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['account_count'] ?? 0), 0, ',', '.') }}</div></div>
@@ -209,6 +317,14 @@
                     <div class="fd-mini-item"><div class="fd-mini-label">Kredit</div><div class="fd-mini-value red">Rp {{ number_format((float) ($generalLedgerSummary['total_credit'] ?? 0), 2, ',', '.') }}</div></div>
                 </div>
                 <div class="fd-mini-note">Buku besar mencakup seluruh baris jurnal finance yang sudah diposting.</div>
+                <div class="fd-feature-actions">
+                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-feature-btn primary">
+                        <i class="fas fa-eye"></i> Lihat Detail
+                    </a>
+                    <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="fd-feature-btn muted">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </a>
+                </div>
             </div>
         @endif
     </div>

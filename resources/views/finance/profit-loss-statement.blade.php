@@ -275,6 +275,10 @@
         margin-bottom: 0.35rem;
     }
 
+    body.dark-mode,
+    body.dark-mode .content-wrapper {
+        background: var(--app-bg) !important;
+    }
     body.dark-mode .fs-filter-card,
     body.dark-mode .pl-summary-card,
     body.dark-mode .pl-section-card,
@@ -303,12 +307,29 @@
         border-color: var(--app-border) !important;
         color: var(--app-text) !important;
     }
+    body.dark-mode .fs-control:focus {
+        background: var(--app-surface) !important;
+        border-color: rgba(96, 165, 250, 0.36) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
+    }
+    body.dark-mode .fs-control option {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .pl-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
     body.dark-mode .pl-table td {
         color: var(--app-text-soft) !important;
         border-color: var(--app-border) !important;
     }
     body.dark-mode .pl-table tbody tr:hover td {
         background: var(--app-row-hover) !important;
+    }
+    body.dark-mode .pl-total-row td {
+        background: var(--app-surface-soft) !important;
+        color: var(--app-text) !important;
     }
 </style>
 
@@ -325,10 +346,13 @@
         <a href="{{ route('finance.dashboard') }}" class="pl-nav-link muted">
             <i class="fas fa-arrow-left"></i> Dashboard
         </a>
+        <a href="{{ route('finance.report.profit-loss.download', $filterQuery) }}" class="pl-nav-link primary">
+            <i class="fas fa-file-pdf"></i> Download PDF
+        </a>
         <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="pl-nav-link muted">
             <i class="fas fa-balance-scale"></i> Lembar Saldo
         </a>
-        <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="pl-nav-link primary">
+        <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="pl-nav-link muted">
             <i class="fas fa-book-open"></i> Buku Besar
         </a>
     </div>

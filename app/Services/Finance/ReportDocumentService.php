@@ -786,7 +786,7 @@ class ReportDocumentService
         $pages = $this->buildStyledPdfPages($report);
 
         $objects = [];
-        $objectIndex = 1;
+        $objectIndex = 2;
 
         $fontRegularId = ++$objectIndex;
         $objects[$fontRegularId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';

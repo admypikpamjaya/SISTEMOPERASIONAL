@@ -180,23 +180,30 @@ class FinancialStatementService
     /**
      * @return array{
      *   groups: array<int, array<string, mixed>>,
-     *   accounts: \Illuminate\Contracts\Pagination\LengthAwarePaginator,
+     *   accounts: mixed,
      *   summary: array{account_count:int,entry_count:int,total_debit:float,total_credit:float,balance_gap:float}
      * }
      */
-    public function getGeneralLedgerReport(StatementFilterDTO $filter): array
+    public function getGeneralLedgerReport(StatementFilterDTO $filter, bool $paginate = true): array
     {
-        $accounts = $this->makeFilteredItemQuery($filter)
+        $accountQuery = $this->makeFilteredItemQuery($filter)
             ->selectRaw('fii.account_code as account_code')
             ->selectRaw("COALESCE(MAX(fa.name), MAX(fii.label), fii.account_code) as account_name")
             ->selectRaw("UPPER(COALESCE(MAX(fa.type), '')) as finance_type")
             ->selectRaw('SUM(fii.debit) as total_debit')
             ->selectRaw('SUM(fii.credit) as total_credit')
             ->groupBy('fii.account_code')
-            ->orderBy('fii.account_code')
-            ->paginate($filter->perPage, ['*'], 'page', $filter->page);
+            ->orderBy('fii.account_code');
 
-        $accountCodes = collect($accounts->items())
+        $accounts = $paginate
+            ? $accountQuery->paginate($filter->perPage, ['*'], 'page', $filter->page)
+            : $accountQuery->get();
+
+        $accountRows = $paginate
+            ? collect($accounts->items())
+            : collect($accounts);
+
+        $accountCodes = $accountRows
             ->map(static fn ($row): string => (string) $row->account_code)
             ->filter()
             ->values()
@@ -232,7 +239,7 @@ class FinancialStatementService
                 ->groupBy('account_code');
         }
 
-        $groups = collect($accounts->items())
+        $groups = $accountRows
             ->map(function ($accountRow) use ($entriesByAccount): array {
                 $financeType = strtoupper(trim((string) ($accountRow->finance_type ?? '')));
                 $normalSide = $this->resolveNormalSide($financeType);

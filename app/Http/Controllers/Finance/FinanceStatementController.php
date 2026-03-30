@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\DTOs\Finance\StatementFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\FinanceStatementFilterRequest;
+use App\Services\Finance\FinancialStatementDocumentService;
 use App\Services\Finance\FinancialStatementService;
 use Carbon\Carbon;
 use Throwable;
@@ -12,7 +13,8 @@ use Throwable;
 class FinanceStatementController extends Controller
 {
     public function __construct(
-        private FinancialStatementService $financialStatementService
+        private FinancialStatementService $financialStatementService,
+        private FinancialStatementDocumentService $financialStatementDocumentService
     ) {}
 
     public function balanceSheet(FinanceStatementFilterRequest $request)
@@ -75,6 +77,21 @@ class FinanceStatementController extends Controller
         }
     }
 
+    public function downloadBalanceSheet(FinanceStatementFilterRequest $request)
+    {
+        return $this->downloadStatementDocument($request, 'balance_sheet');
+    }
+
+    public function downloadProfitLoss(FinanceStatementFilterRequest $request)
+    {
+        return $this->downloadStatementDocument($request, 'profit_loss');
+    }
+
+    public function downloadGeneralLedger(FinanceStatementFilterRequest $request)
+    {
+        return $this->downloadStatementDocument($request, 'general_ledger');
+    }
+
     /**
      * @return array<string, int|string|null>
      */
@@ -106,5 +123,56 @@ class FinanceStatementController extends Controller
         }
 
         return 'Semua Periode';
+    }
+
+    private function downloadStatementDocument(FinanceStatementFilterRequest $request, string $statementType)
+    {
+        try {
+            $filter = StatementFilterDTO::fromArray($request->validated());
+
+            $exported = match ($statementType) {
+                'balance_sheet' => $this->financialStatementDocumentService->exportBalanceSheet(
+                    $this->financialStatementService->getBalanceSheetReport($filter),
+                    $filter
+                ),
+                'profit_loss' => $this->financialStatementDocumentService->exportProfitLoss(
+                    $this->financialStatementService->getProfitLossReport($filter),
+                    $filter
+                ),
+                'general_ledger' => $this->financialStatementDocumentService->exportGeneralLedger(
+                    $this->financialStatementService->getGeneralLedgerReport(
+                        new StatementFilterDTO(
+                            periodType: $filter->periodType,
+                            reportDate: $filter->reportDate,
+                            year: $filter->year,
+                            month: $filter->month,
+                            page: 1,
+                            perPage: 5000
+                        ),
+                        false
+                    ),
+                    $filter
+                ),
+                default => null,
+            };
+
+            if ($exported === null) {
+                return redirect()
+                    ->route('finance.dashboard')
+                    ->with('error', 'Format dokumen laporan tidak dikenali.');
+            }
+
+            return response($exported['content'], 200, [
+                'Content-Type' => $exported['mime'],
+                'Content-Disposition' => 'attachment; filename="' . $exported['filename'] . '"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengunduh dokumen laporan finance.');
+        }
     }
 }

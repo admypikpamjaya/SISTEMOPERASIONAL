@@ -481,7 +481,7 @@ class FinanceInvoiceDocumentService
     private function buildPdfDocument(array $pageStreams): string
     {
         $objects = [];
-        $objectIndex = 1;
+        $objectIndex = 2;
 
         $fontRegularId = ++$objectIndex;
         $objects[$fontRegularId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>';
@@ -627,4 +627,3 @@ class FinanceInvoiceDocumentService
         return 'faktur-' . strtolower($sanitized) . '.' . strtolower($extension);
     }
 }
-
