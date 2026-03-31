@@ -16,7 +16,13 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MaintenanceReportService
 {
-    public function getLogs(?string $keyword = null, ?AssetMaintenanceReportStatus $status = null, ?int $page = 1)
+    public function getLogs(
+        ?string $keyword = null, 
+        ?AssetMaintenanceReportStatus $status = null, 
+        ?int $page = 1,     
+        ?string $dateFrom = null,
+        ?string $dateTo = null
+    )
     {
         $query = MaintenanceLog::query();
         if($keyword)
@@ -34,13 +40,22 @@ class MaintenanceReportService
             $query->where('status', $status->value);
         }
 
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('date', [$dateFrom, $dateTo]);
+        } elseif ($dateFrom) {
+            $query->whereDate('date', '>=', $dateFrom);
+        } elseif ($dateTo) {
+            $query->whereDate('date', '<=', $dateTo);
+        }
 
         return $query
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'page', $page)
             ->appends(array_filter([
-                'keyword' => $keyword,
-                'status' => $status?->value
+                'keyword'   => $keyword,
+                'status'    => $status?->value,
+                'date_from' => $dateFrom,
+                'date_to'   => $dateTo,
             ]));
     }
 

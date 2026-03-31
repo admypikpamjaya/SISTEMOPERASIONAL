@@ -1,4 +1,5 @@
 @php 
+use Carbon\Carbon;
 use App\Enums\Portal\PortalPermission;
 use App\Services\AccessControl\PermissionService;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
@@ -24,7 +25,24 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
             </div>
             <div class="col-md-6">
                 <div class="row align-items-center">
-                    <div class="col-3">
+                    <div class="col">
+                        <div class="d-flex align-items-center input-group input-group-sm">
+                            <input 
+                                type="date" 
+                                name="date_from" 
+                                value="{{ request('date_from') ?? Carbon::now()->toDateString() }}" 
+                                class="form-control mr-2"
+                            />
+                            <span class="mr-2">s/d</span>
+                            <input 
+                                type="date" 
+                                name="date_to" 
+                                value="{{ request('date_to') ?? Carbon::now()->toDateString() }}" 
+                                class="form-control"
+                            />
+                        </div>
+                    </div>
+                    <div class="col-2">
                         <div class="input-group input-group-sm">
                             <select name="status" id="filter-status-select" class="form-control">
                                 <option value="">Semua Status</option>
@@ -34,7 +52,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                             </select>
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col-3">
                         <div class="input-group input-group-sm">
                             <input 
                                 type="text" 
@@ -206,6 +224,10 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
 
         $('#filter-status-select').on('change', function() {
             $(this).closest('form').submit(); 
+        });
+
+        $('input[name="date_from"], input[name="date_to"]').on('change', function() {
+            $(this).closest('form').submit();
         });
 
         $('#root-checkbox').on('click', function() {

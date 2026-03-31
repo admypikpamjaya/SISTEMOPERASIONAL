@@ -125,6 +125,7 @@ class AssetService
 
     public function registerAsset(RegisterAssetDTO $dto)
     {
+        Log::info($dto->toArray());
         DB::beginTransaction();
         try
         {

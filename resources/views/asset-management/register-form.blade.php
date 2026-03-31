@@ -105,11 +105,20 @@ use App\Enums\Asset\AssetUnit;
             { label: 'Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
             { label: 'Voltase <span class="text-red">*</span>', name: 'power_rating', type: 'number', min: 1 },            
         ],
-        'OTHER': [
-            { label: 'Brand <span class="text-red">*</span>', name: 'brand', type: 'text' },
-            { label: 'Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
-            { label: 'Voltase <span class="text-red">*</span>', name: 'power_rating', type: 'number', min: 1 },            
-        ]
+        'COMPUTER': [
+            { type: 'component', component: 'Monitor' },
+            { type: 'component', component: 'Motherboard' },
+            { type: 'component', component: 'Processor' },
+            { type: 'component', component: 'RAM' },
+            { type: 'component', component: 'Storage' },
+            { type: 'component', component: 'GPU' },
+            { type: 'component', component: 'Keyboard / Mouse' },
+        ],
+        // 'OTHER': [
+        //     { label: 'Brand <span class="text-red">*</span>', name: 'brand', type: 'text' },
+        //     { label: 'Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
+        //     { label: 'Voltase <span class="text-red">*</span>', name: 'power_rating', type: 'number', min: 1 },            
+        // ]
     }
 
     function resetAssetForm() 
@@ -125,32 +134,90 @@ use App\Enums\Asset\AssetUnit;
 
     function constructAssetDetailForm(category)
     {
-        const fields = assetDetailForm[category] || assetDetailForm.AC;
+        // const fields = assetDetailForm[category] || assetDetailForm.AC;
 
-        const chunkedFields = chunkArray(fields, 2);
+        // const chunkedFields = chunkArray(fields, 2);
+
+        // let html = ``;
+        // if(fields.length > 0)
+        // {
+        //     chunkedFields.forEach(chunk => {
+        //         chunk.forEach(field => {
+        //             html += `
+        //                 <div class="col">
+        //                     <div class="form-group">
+        //                         <label for="${field.name}">${field.label}</label>
+        //                         <input 
+        //                             type="${field.type}" 
+        //                             name="${field.name}" 
+        //                             class="form-control" 
+        //                             id="${field.name}" 
+        //                             placeholder="Masukkan ${field.label.split('<')[0]}"
+        //                             min="${(field.type === 'number' && field.min) ? field.min : ''}"
+        //                             max="${(field.type === 'number' && field.max) ? field.max : ''}"
+        //                         >
+        //                     </div>
+        //                 </div>
+        //             `
+        //         });
+        //     });
+        // }
+
+        // $('#asset-detail-form').find('.card-body').html(html);
+
+        const fields = assetDetailForm[category] || [];
 
         let html = ``;
-        if(fields.length > 0)
+
+        if (category === 'COMPUTER') {
+            fields.forEach((item, index) => {
+                html += `
+                    <div class="card mb-3 p-3">
+                        <h5>${item.component}</h5>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label>Brand</label>
+                                    <input type="text" class="form-control" name="components[${index}][brand]">
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label>Spesifikasi</label>
+                                    <input type="text" class="form-control" name="components[${index}][specification]">
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label>Serial Number</label>
+                                    <input type="text" class="form-control" name="components[${index}][serial_number]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="components[${index}][component_type]" value="${item.component}">
+                    </div>
+                `;
+            });
+        } 
+        else 
         {
+            // existing AC logic
+            const chunkedFields = chunkArray(fields, 2);
+
             chunkedFields.forEach(chunk => {
+                html += `<div class="row">`;
                 chunk.forEach(field => {
                     html += `
                         <div class="col">
                             <div class="form-group">
-                                <label for="${field.name}">${field.label}</label>
-                                <input 
-                                    type="${field.type}" 
-                                    name="${field.name}" 
-                                    class="form-control" 
-                                    id="${field.name}" 
-                                    placeholder="Masukkan ${field.label.split('<')[0]}"
-                                    min="${(field.type === 'number' && field.min) ? field.min : ''}"
-                                    max="${(field.type === 'number' && field.max) ? field.max : ''}"
-                                >
+                                <label>${field.label}</label>
+                                <input type="${field.type}" name="${field.name}" class="form-control">
                             </div>
                         </div>
-                    `
+                    `;
                 });
+                html += `</div>`;
             });
         }
 
@@ -166,8 +233,37 @@ use App\Enums\Asset\AssetUnit;
         });
 
         $('#register-asset-button').on('click', async function() {
+            // Loading.show();
+            // $(this).prop('disabled', true);
+            // try 
+            // {
+            //     const basicFormData = new FormData(document.getElementById('asset-basic-information-form'));
+            //     const detailFormData = new FormData(document.getElementById('asset-detail-form'));
+
+            //     const formData = new FormData();
+
+            //     for (const [key, value] of basicFormData.entries())
+            //         formData.append(key, value);
+
+            //     for (const [key, value] of detailFormData.entries())
+            //         formData.append(`detail[${key}]`, value);
+
+            //     await Http.post("{{ route('asset-management.store') }}", formData);
+            //     refreshUI();
+            // }
+            // catch(error)
+            // {
+            //     Notification.error(error);
+            // }
+            // finally
+            // {
+            //     Loading.hide();
+            //     $(this).prop('disabled', false);
+            // }
+
             Loading.show();
             $(this).prop('disabled', true);
+
             try 
             {
                 const basicFormData = new FormData(document.getElementById('asset-basic-information-form'));
@@ -175,11 +271,22 @@ use App\Enums\Asset\AssetUnit;
 
                 const formData = new FormData();
 
-                for (const [key, value] of basicFormData.entries())
+                for (const [key, value] of basicFormData.entries()) {
                     formData.append(key, value);
+                }
 
-                for (const [key, value] of detailFormData.entries())
-                    formData.append(`detail[${key}]`, value);
+                const category = basicFormData.get('category');
+
+                for (const [key, value] of detailFormData.entries()) {
+                    const match = key.match(/^components\[(\d+)\]\[(.+)\]$/);
+                    if (match) {
+                        const index = match[1];
+                        const field = match[2];
+                        formData.append(`detail[components][${index}][${field}]`, value);
+                    } else {
+                        formData.append(`detail[${key}]`, value);
+                    }
+                }
 
                 await Http.post("{{ route('asset-management.store') }}", formData);
                 refreshUI();

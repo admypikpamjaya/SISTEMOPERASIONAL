@@ -2,6 +2,7 @@
     use Carbon\Carbon;
     use App\Enums\Asset\AssetCategory;
     use App\Enums\Asset\AssetUnit;
+    use App\Enums\Asset\ComputerComponent;
     use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 
     $basicAssetInfoFields = [
@@ -61,6 +62,9 @@
 
     $chunkedBasicAssetInfoFields = array_chunk($basicAssetInfoFields, 2);
     $chunkedAssetDetailFields = array_chunk($currentAssetDetail, 2);
+
+    $groupedComponents = collect($asset->detail ?? [])
+        ->keyBy('component_type');
 @endphp
 
 <!DOCTYPE html>
@@ -135,23 +139,76 @@
                 <span class="card-title font-weight-bolder">II. Informasi Detail Aset</span>
             </div>
             <div class="card-body">
-                @if(empty($chunkedAssetDetailFields))
-                    <div class="alert alert-info mb-0">
-                        Kategori aset ini tidak memiliki detail tambahan.
-                    </div>
-                @else
-                    @foreach($chunkedAssetDetailFields as $chunk) 
-                        <div class="row">
-                            @foreach($chunk as $field)
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>{{ $field['label'] }}</label>
-                                        <input type="text" class="form-control" value="{{ data_get($asset->detail, $field['key']) }}" readonly>
+                @if($asset->category->value === AssetCategory::COMPUTER->value)
+
+                    @foreach(ComputerComponent::cases() as $componentEnum)
+                        @php
+                            $component = $groupedComponents->get($componentEnum->value);
+                        @endphp
+
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <strong>{{ $componentEnum->value }}</strong>
+                            </div>
+                            <div class="card-body">
+                                @if(!$component || (
+                                    empty($component['brand']) &&
+                                    empty($component['specification']) &&
+                                    empty($component['serial_number'])
+                                ))
+                                    <div class="text-muted">
+                                        Tidak ada data
                                     </div>
-                                </div>
-                            @endforeach
+                                @else
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Brand</label>
+                                                <input type="text" class="form-control" value="{{ $component['brand'] }}" readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Spesifikasi</label>
+                                                <input type="text" class="form-control" value="{{ $component['specification'] }}" readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Serial Number</label>
+                                                <input type="text" class="form-control" value="{{ $component['serial_number'] }}" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     @endforeach
+
+                @else
+
+                    {{-- EXISTING (AC / OTHER) --}}
+                    @if(empty($chunkedAssetDetailFields))
+                        <div class="alert alert-info mb-0">
+                            Kategori aset ini tidak memiliki detail tambahan.
+                        </div>
+                    @else
+                        @foreach($chunkedAssetDetailFields as $chunk) 
+                            <div class="row">
+                                @foreach($chunk as $field)
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ $field['label'] }}</label>
+                                            <input type="text" class="form-control" value="{{ data_get($asset->detail, $field['key']) }}" readonly>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    @endif
+
                 @endif
             </div>
         </div>
