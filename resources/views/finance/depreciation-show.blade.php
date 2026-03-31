@@ -12,10 +12,28 @@
     }
 @endphp
 <style>
+    :root {
+        --adl-blue: #2563eb;
+        --adl-blue-dark: #1e3a8a;
+        --adl-bg: #f0f4fd;
+        --adl-card: #ffffff;
+        --adl-card-soft: #f8fbff;
+        --adl-text: #0f172a;
+        --adl-text-soft: #334155;
+        --adl-muted: #64748b;
+        --adl-border: rgba(37, 99, 235, 0.12);
+        --adl-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(37, 99, 235, 0.08);
+    }
+
+    body,
+    .content-wrapper {
+        background: var(--adl-bg) !important;
+    }
     .adl-wrap {
         max-width: 980px;
         margin: 0 auto;
         font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+        color: var(--adl-text);
     }
     .adl-head {
         display: flex;
@@ -29,12 +47,12 @@
         margin: 0;
         font-size: 1.22rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--adl-text);
     }
     .adl-subtitle {
         margin: 3px 0 0;
         font-size: .8rem;
-        color: #64748b;
+        color: var(--adl-muted);
     }
     .adl-actions {
         display: inline-flex;
@@ -42,9 +60,9 @@
         flex-wrap: wrap;
     }
     .adl-btn {
-        border: 1px solid #bfdbfe;
+        border: 1px solid var(--adl-border);
         background: #eff6ff;
-        color: #1d4ed8;
+        color: var(--adl-blue);
         border-radius: 10px;
         font-size: .8rem;
         font-weight: 700;
@@ -53,26 +71,29 @@
         display: inline-flex;
         align-items: center;
         gap: 7px;
+        transition: all .2s ease;
     }
     .adl-btn:hover {
         text-decoration: none;
         background: #dbeafe;
-        color: #1e3a8a;
+        color: var(--adl-blue-dark);
+        transform: translateY(-1px);
     }
     .adl-btn-primary {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        background: linear-gradient(135deg, var(--adl-blue), #1d4ed8);
         color: #fff;
         border-color: transparent;
+        box-shadow: 0 8px 22px rgba(37, 99, 235, .22);
     }
     .adl-btn-primary:hover {
         color: #fff;
         background: linear-gradient(135deg, #1d4ed8, #1e40af);
     }
     .adl-card {
-        background: #fff;
-        border: 1px solid #dbeafe;
+        background: var(--adl-card);
+        border: 1px solid var(--adl-border);
         border-radius: 16px;
-        box-shadow: 0 10px 28px rgba(37, 99, 235, .1);
+        box-shadow: var(--adl-shadow);
         overflow: hidden;
     }
     .adl-card-head {
@@ -93,23 +114,83 @@
         width: 230px;
         padding: 12px 16px;
         font-size: .73rem;
-        color: #64748b;
+        color: var(--adl-muted);
         text-transform: uppercase;
         letter-spacing: .05em;
-        border-bottom: 1px solid #dbeafe;
-        background: #f8fbff;
+        border-bottom: 1px solid var(--adl-border);
+        background: var(--adl-card-soft);
         vertical-align: top;
     }
     .adl-table td {
         padding: 12px 16px;
         font-size: .88rem;
-        color: #0f172a;
-        border-bottom: 1px solid #dbeafe;
+        color: var(--adl-text-soft);
+        border-bottom: 1px solid var(--adl-border);
         font-weight: 600;
+        background: var(--adl-card);
     }
     .adl-table tr:last-child th,
     .adl-table tr:last-child td {
         border-bottom: none;
+    }
+    .adl-table tr:hover td {
+        background: rgba(37, 99, 235, .03);
+    }
+
+    body.dark-mode,
+    body.dark-mode .content-wrapper {
+        background: var(--app-bg) !important;
+    }
+    body.dark-mode .adl-title {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .adl-subtitle,
+    body.dark-mode .adl-table th {
+        color: var(--app-text-muted) !important;
+    }
+    body.dark-mode .adl-card {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+    body.dark-mode .adl-btn {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .adl-btn:hover {
+        background: var(--app-surface) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .adl-btn-primary {
+        background: linear-gradient(135deg, var(--adl-blue), #1d4ed8) !important;
+        color: #fff !important;
+        border-color: transparent !important;
+    }
+    body.dark-mode .adl-btn-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+        color: #fff !important;
+    }
+    body.dark-mode .adl-table th {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+    body.dark-mode .adl-table td {
+        background: var(--app-surface) !important;
+        color: var(--app-text-soft) !important;
+        border-color: var(--app-border) !important;
+    }
+    body.dark-mode .adl-table tr:hover td {
+        background: var(--app-row-hover) !important;
+    }
+    @media (max-width: 768px) {
+        .adl-table th,
+        .adl-table td {
+            padding: 11px 14px;
+        }
+        .adl-table th {
+            width: 180px;
+        }
     }
 </style>
 
