@@ -525,6 +525,9 @@
         <a href="{{ route('finance.dashboard') }}" class="gl-nav-link muted">
             <i class="fas fa-arrow-left"></i> Dashboard
         </a>
+        <a href="{{ route('finance.report.general-ledger.download', array_merge($filterQuery, ['format' => 'excel'])) }}" class="gl-nav-link muted">
+            <i class="fas fa-file-excel"></i> Download Excel
+        </a>
         <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="gl-nav-link primary">
             <i class="fas fa-file-pdf"></i> Download PDF
         </a>

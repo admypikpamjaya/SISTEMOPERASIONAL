@@ -340,6 +340,113 @@ class FinancialStatementService
         ];
     }
 
+    /**
+     * @return array{
+     *   items:mixed,
+     *   summary:array{
+     *     entry_count:int,
+     *     selected_count:int,
+     *     total_debit:float,
+     *     total_credit:float,
+     *     total_amount:float
+     *   },
+     *   account:array{code:?string,name:?string}
+     * }
+     */
+    public function getJournalItemsReport(StatementFilterDTO $filter, bool $paginate = true): array
+    {
+        $itemQuery = $this->makeJournalItemsQuery($filter);
+
+        $items = $paginate
+            ? $itemQuery->paginate($filter->perPage, ['*'], 'page', $filter->page)
+            : $itemQuery->get();
+
+        $itemRows = $paginate
+            ? collect($items->items())
+            : collect($items);
+
+        $journalItems = $itemRows
+            ->map(function ($item): array {
+                $meta = [];
+                if (is_string($item->meta) && $item->meta !== '') {
+                    $decodedMeta = json_decode($item->meta, true);
+                    $meta = is_array($decodedMeta) ? $decodedMeta : [];
+                } elseif (is_array($item->meta ?? null)) {
+                    $meta = $item->meta;
+                }
+
+                $amount = (float) $item->debit > 0
+                    ? (float) $item->debit
+                    : (float) $item->credit;
+
+                return [
+                    'item_id' => (int) $item->id,
+                    'accounting_date' => (string) $item->accounting_date,
+                    'invoice_id' => (string) $item->invoice_id,
+                    'invoice_no' => (string) $item->invoice_no,
+                    'journal_name' => (string) $item->journal_name,
+                    'reference' => $item->reference !== null ? (string) $item->reference : null,
+                    'entry_type' => (string) $item->entry_type,
+                    'account_code' => (string) $item->account_code,
+                    'account_name' => (string) $item->account_name,
+                    'partner_name' => $item->partner_name !== null ? (string) $item->partner_name : null,
+                    'label' => (string) $item->label,
+                    'asset_category' => $item->asset_category !== null ? (string) $item->asset_category : null,
+                    'analytic_distribution' => $item->analytic_distribution !== null
+                        ? (string) $item->analytic_distribution
+                        : null,
+                    'tax_label' => (string) (data_get($meta, 'tax_name')
+                        ?? data_get($meta, 'tax')
+                        ?? '-'),
+                    'tax_grids' => (string) (data_get($meta, 'tax_grids')
+                        ?? data_get($meta, 'tax_grid')
+                        ?? '-'),
+                    'amount_currency' => round((float) (data_get($meta, 'amount_currency') ?? $amount), 2),
+                    'debit' => round((float) $item->debit, 2),
+                    'credit' => round((float) $item->credit, 2),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $summaryQuery = $this->makeJournalItemsQuery($filter, false);
+
+        $entryCount = (int) (clone $summaryQuery)->count('fii.id');
+        $totalDebit = round((float) (clone $summaryQuery)->sum('fii.debit'), 2);
+        $totalCredit = round((float) (clone $summaryQuery)->sum('fii.credit'), 2);
+        $totalAmount = round((float) (clone $summaryQuery)
+            ->selectRaw('COALESCE(SUM(CASE WHEN fii.debit > 0 THEN fii.debit ELSE fii.credit END), 0) as total_amount')
+            ->value('total_amount'), 2);
+
+        $accountName = null;
+        if (!empty($filter->accountCode)) {
+            $accountName = DB::table('finance_accounts')
+                ->where('code', $filter->accountCode)
+                ->value('name');
+        }
+
+        if ($accountName === null && !empty($journalItems)) {
+            $accountName = (string) ($journalItems[0]['account_name'] ?? null);
+        }
+
+        return [
+            'items' => $paginate
+                ? $items->setCollection(collect($journalItems))
+                : $journalItems,
+            'summary' => [
+                'entry_count' => $entryCount,
+                'selected_count' => count($filter->selectedIds),
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
+                'total_amount' => $totalAmount,
+            ],
+            'account' => [
+                'code' => $filter->accountCode,
+                'name' => $accountName !== null ? (string) $accountName : null,
+            ],
+        ];
+    }
+
     private function makeFilteredItemQuery(StatementFilterDTO $filter): Builder
     {
         $query = DB::table('finance_invoice_items as fii')
@@ -349,6 +456,48 @@ class FinancialStatementService
             ->where('fi.status', 'POSTED');
 
         return $this->applyPeriodFilter($query, $filter);
+    }
+
+    private function makeJournalItemsQuery(StatementFilterDTO $filter, bool $withOrdering = true): Builder
+    {
+        $query = $this->makeFilteredItemQuery($filter)
+            ->select([
+                'fii.id',
+                'fi.accounting_date',
+                'fi.id as invoice_id',
+                'fi.invoice_no',
+                'fi.journal_name',
+                'fi.reference',
+                'fi.entry_type',
+                'fii.account_code',
+                'fii.partner_name',
+                'fii.label',
+                'fii.asset_category',
+                'fii.analytic_distribution',
+                'fii.debit',
+                'fii.credit',
+                'fii.meta',
+                'fii.sort_order',
+            ])
+            ->selectRaw("COALESCE(fa.name, fii.label, fii.account_code) as account_name");
+
+        if (!empty($filter->search)) {
+            $this->applyJournalSearchFilter($query, $filter->search);
+        }
+
+        if (!empty($filter->selectedIds)) {
+            $query->whereIn('fii.id', $filter->selectedIds);
+        }
+
+        if ($withOrdering) {
+            $query
+                ->orderByDesc('fi.accounting_date')
+                ->orderByDesc('fi.invoice_no')
+                ->orderBy('fii.sort_order')
+                ->orderBy('fii.id');
+        }
+
+        return $query;
     }
 
     private function applyPeriodFilter(Builder $query, StatementFilterDTO $filter): Builder
@@ -380,6 +529,28 @@ class FinancialStatementService
         }
 
         return $query;
+    }
+
+    private function applyJournalSearchFilter(Builder $query, string $search): Builder
+    {
+        $keyword = trim($search);
+        if ($keyword === '') {
+            return $query;
+        }
+
+        return $query->where(function (Builder $nestedQuery) use ($keyword): void {
+            $likeKeyword = '%' . $keyword . '%';
+
+            $nestedQuery
+                ->where('fi.invoice_no', 'like', $likeKeyword)
+                ->orWhere('fi.journal_name', 'like', $likeKeyword)
+                ->orWhere('fi.reference', 'like', $likeKeyword)
+                ->orWhere('fii.account_code', 'like', $likeKeyword)
+                ->orWhere('fa.name', 'like', $likeKeyword)
+                ->orWhere('fii.partner_name', 'like', $likeKeyword)
+                ->orWhere('fii.label', 'like', $likeKeyword)
+                ->orWhere('fii.analytic_distribution', 'like', $likeKeyword);
+        });
     }
 
     private function resolveBalanceSheetSection(string $financeType, bool $hasAssetRecord): ?string

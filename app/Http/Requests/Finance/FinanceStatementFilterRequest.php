@@ -26,6 +26,10 @@ class FinanceStatementFilterRequest extends FormRequest
             'start_year' => 'nullable|integer|digits:4|between:1900,2100',
             'end_year' => 'nullable|integer|digits:4|between:1900,2100',
             'account_code' => 'nullable|string|max:100',
+            'search' => 'nullable|string|max:255',
+            'statement_source' => 'nullable|string|in:balance_sheet,profit_loss,general_ledger',
+            'selected_ids' => 'nullable|array',
+            'selected_ids.*' => 'integer|min:1',
             'page' => 'nullable|integer|min:1',
             'per_page' => 'nullable|integer|min:1|max:100',
         ];
@@ -47,7 +51,13 @@ class FinanceStatementFilterRequest extends FormRequest
         $startYearInput = $this->input('start_year', $legacyYear);
         $endYearInput = $this->input('end_year', $legacyYear);
 
-        $payload = ['period_type' => $periodType];
+        $payload = [
+            'period_type' => $periodType,
+            'search' => $this->filled('search') ? trim((string) $this->input('search')) : null,
+            'statement_source' => $this->filled('statement_source')
+                ? strtolower(trim((string) $this->input('statement_source')))
+                : null,
+        ];
 
         if ($periodType === 'DAILY') {
             $startDate = !empty($startDateInput)
@@ -157,6 +167,10 @@ class FinanceStatementFilterRequest extends FormRequest
             'end_year.digits' => 'Tahun selesai harus 4 digit.',
             'end_year.between' => 'Tahun selesai harus antara 1900 sampai 2100.',
             'account_code.max' => 'Kode akun maksimal 100 karakter.',
+            'search.max' => 'Pencarian maksimal 255 karakter.',
+            'statement_source.in' => 'Sumber laporan tidak valid.',
+            'selected_ids.array' => 'Daftar item terpilih tidak valid.',
+            'selected_ids.*.integer' => 'Item terpilih tidak valid.',
         ];
     }
 }

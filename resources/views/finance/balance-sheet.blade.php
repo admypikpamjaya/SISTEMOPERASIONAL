@@ -252,8 +252,11 @@
 
     .fs-section-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        grid-template-columns: 1fr;
         gap: 1rem;
+    }
+    .fs-section-card {
+        width: 100%;
     }
     .fs-section-total {
         color: var(--fs-muted);
@@ -317,6 +320,22 @@
     .fs-account-name {
         min-width: 0;
         flex: 1 1 auto;
+    }
+    .fs-account-link,
+    .fs-amount-link {
+        color: inherit;
+        text-decoration: none;
+    }
+    .fs-account-link:hover,
+    .fs-amount-link:hover {
+        color: var(--fs-blue);
+        text-decoration: none;
+    }
+    .fs-amount-link {
+        display: inline-flex;
+        justify-content: flex-end;
+        width: 100%;
+        font-weight: 800;
     }
     .fs-row-menu-btn {
         width: 30px;
@@ -435,6 +454,14 @@
     body.dark-mode .fs-amount {
         color: var(--app-text) !important;
     }
+    body.dark-mode .fs-account-link,
+    body.dark-mode .fs-amount-link {
+        color: inherit !important;
+    }
+    body.dark-mode .fs-account-link:hover,
+    body.dark-mode .fs-amount-link:hover {
+        color: var(--app-accent) !important;
+    }
     body.dark-mode .fs-row-menu {
         background: var(--app-surface) !important;
         border-color: var(--app-border) !important;
@@ -454,6 +481,16 @@
         background: rgba(96, 165, 250, 0.12) !important;
         color: var(--app-accent) !important;
     }
+    @media (min-width: 1200px) {
+        .fs-section-grid {
+            gap: 1.15rem;
+        }
+        .fs-table th,
+        .fs-table td {
+            padding-left: 1.1rem;
+            padding-right: 1.1rem;
+        }
+    }
 </style>
 
 <div class="fs-page-header">
@@ -468,6 +505,9 @@
     <div class="fs-nav">
         <a href="{{ route('finance.dashboard') }}" class="fs-nav-link muted">
             <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+        <a href="{{ route('finance.report.balance-sheet.download', array_merge($filterQuery, ['format' => 'excel'])) }}" class="fs-nav-link muted">
+            <i class="fas fa-file-excel"></i> Download Excel
         </a>
         <a href="{{ route('finance.report.balance-sheet.download', $filterQuery) }}" class="fs-nav-link primary">
             <i class="fas fa-file-pdf"></i> Download PDF
@@ -553,16 +593,29 @@
                         </thead>
                         <tbody>
                             @forelse($section['rows'] as $row)
+                                @php
+                                    $journalItemsRoute = route('finance.report.journal-items', array_merge($baseFilterQuery, [
+                                        'account_code' => $row['account_code'],
+                                        'statement_source' => 'balance_sheet',
+                                    ]));
+                                @endphp
                                 <tr>
-                                    <td><strong>{{ $row['account_code'] }}</strong></td>
+                                    <td>
+                                        <a href="{{ $journalItemsRoute }}" class="fs-account-link">
+                                            <strong>{{ $row['account_code'] }}</strong>
+                                        </a>
+                                    </td>
                                     <td>
                                         <div class="fs-account-cell">
-                                            <span class="fs-account-name">{{ $row['account_name'] }}</span>
+                                            <a href="{{ $journalItemsRoute }}" class="fs-account-name fs-account-link">{{ $row['account_name'] }}</a>
                                             <div class="dropdown">
                                                 <button type="button" class="fs-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                     <i class="fas fa-ellipsis-v"></i>
                                                 </button>
                                                 <div class="dropdown-menu dropdown-menu-right fs-row-menu">
+                                                    <a class="dropdown-item" href="{{ $journalItemsRoute }}">
+                                                        <i class="fas fa-table"></i> Item Jurnal
+                                                    </a>
                                                     <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
                                                         <i class="fas fa-book-open"></i> Buku Besar
                                                     </a>
@@ -576,7 +629,11 @@
                                             {{ $row['finance_type'] !== '' ? str_replace('_', ' ', $row['finance_type']) : strtoupper($section['label']) }}
                                         </span>
                                     </td>
-                                    <td class="fs-amount">Rp {{ number_format((float) $row['balance'], 2, ',', '.') }}</td>
+                                    <td class="fs-amount">
+                                        <a href="{{ $journalItemsRoute }}" class="fs-amount-link">
+                                            Rp {{ number_format((float) $row['balance'], 2, ',', '.') }}
+                                        </a>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>

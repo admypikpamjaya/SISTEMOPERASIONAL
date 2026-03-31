@@ -6,6 +6,7 @@ use App\DTOs\Finance\StatementFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\FinanceStatementFilterRequest;
 use App\Services\Finance\FinancialStatementDocumentService;
+use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
 use Carbon\Carbon;
 use Throwable;
@@ -14,7 +15,8 @@ class FinanceStatementController extends Controller
 {
     public function __construct(
         private FinancialStatementService $financialStatementService,
-        private FinancialStatementDocumentService $financialStatementDocumentService
+        private FinancialStatementDocumentService $financialStatementDocumentService,
+        private FinancialStatementSpreadsheetService $financialStatementSpreadsheetService
     ) {}
 
     public function balanceSheet(FinanceStatementFilterRequest $request)
@@ -96,6 +98,39 @@ class FinanceStatementController extends Controller
         return $this->downloadStatementDocument($request, 'general_ledger');
     }
 
+    public function journalItems(FinanceStatementFilterRequest $request)
+    {
+        try {
+            $filter = StatementFilterDTO::fromArray($request->validated());
+
+            return view('finance.journal-items', [
+                'report' => $this->financialStatementService->getJournalItemsReport($filter),
+                'filters' => $this->buildFilterPayload($filter),
+                'periodLabel' => $this->buildPeriodLabel($filter),
+                'filterQuery' => $filter->toQueryArray(),
+                'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
+                'selectedAccountCode' => $filter->accountCode,
+                'statementSource' => $filter->statementSource,
+                'statementSourceLabel' => $this->resolveStatementSourceLabel($filter->statementSource),
+                'statementBackUrl' => route(
+                    $this->resolveStatementSourceRoute($filter->statementSource),
+                    $this->buildBaseFilterQuery($filter)
+                ),
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('finance.dashboard')
+                ->with('error', 'Gagal memuat item jurnal laporan finance.');
+        }
+    }
+
+    public function downloadJournalItems(FinanceStatementFilterRequest $request)
+    {
+        return $this->downloadStatementDocument($request, 'journal_items');
+    }
+
     /**
      * @return array<string, int|string|null>
      */
@@ -113,6 +148,8 @@ class FinanceStatementController extends Controller
             'month' => $filter->month,
             'year' => $filter->year,
             'account_code' => $filter->accountCode,
+            'search' => $filter->search,
+            'statement_source' => $filter->statementSource,
             'per_page' => $filter->perPage,
         ];
     }
@@ -188,37 +225,73 @@ class FinanceStatementController extends Controller
     {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            $format = strtolower((string) $request->query('format', 'pdf'));
+            if ($format === 'xlsx') {
+                $format = 'excel';
+            }
+
+            if (!in_array($format, ['pdf', 'excel'], true)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Format dokumen laporan tidak dikenali.');
+            }
+
+            $exportFilter = new StatementFilterDTO(
+                periodType: $filter->periodType,
+                reportDate: $filter->reportDate,
+                year: $filter->year,
+                month: $filter->month,
+                startDate: $filter->startDate,
+                endDate: $filter->endDate,
+                startMonth: $filter->startMonth,
+                endMonth: $filter->endMonth,
+                startYear: $filter->startYear,
+                endYear: $filter->endYear,
+                accountCode: $filter->accountCode,
+                search: $filter->search,
+                statementSource: $filter->statementSource,
+                selectedIds: $filter->selectedIds,
+                page: 1,
+                perPage: 5000
+            );
 
             $exported = match ($statementType) {
-                'balance_sheet' => $this->financialStatementDocumentService->exportBalanceSheet(
-                    $this->financialStatementService->getBalanceSheetReport($filter),
-                    $filter
-                ),
-                'profit_loss' => $this->financialStatementDocumentService->exportProfitLoss(
-                    $this->financialStatementService->getProfitLossReport($filter),
-                    $filter
-                ),
-                'general_ledger' => $this->financialStatementDocumentService->exportGeneralLedger(
-                    $this->financialStatementService->getGeneralLedgerReport(
-                        new StatementFilterDTO(
-                            periodType: $filter->periodType,
-                            reportDate: $filter->reportDate,
-                            year: $filter->year,
-                            month: $filter->month,
-                            startDate: $filter->startDate,
-                            endDate: $filter->endDate,
-                            startMonth: $filter->startMonth,
-                            endMonth: $filter->endMonth,
-                            startYear: $filter->startYear,
-                            endYear: $filter->endYear,
-                            accountCode: $filter->accountCode,
-                            page: 1,
-                            perPage: 5000
-                        ),
-                        false
+                'balance_sheet' => $format === 'excel'
+                    ? $this->financialStatementSpreadsheetService->exportBalanceSheet(
+                        $this->financialStatementService->getBalanceSheetReport($exportFilter),
+                        $exportFilter
+                    )
+                    : $this->financialStatementDocumentService->exportBalanceSheet(
+                        $this->financialStatementService->getBalanceSheetReport($exportFilter),
+                        $exportFilter
                     ),
-                    $filter
-                ),
+                'profit_loss' => $format === 'excel'
+                    ? $this->financialStatementSpreadsheetService->exportProfitLoss(
+                        $this->financialStatementService->getProfitLossReport($exportFilter),
+                        $exportFilter
+                    )
+                    : $this->financialStatementDocumentService->exportProfitLoss(
+                        $this->financialStatementService->getProfitLossReport($exportFilter),
+                        $exportFilter
+                    ),
+                'general_ledger' => $format === 'excel'
+                    ? $this->financialStatementSpreadsheetService->exportGeneralLedger(
+                        $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
+                        $exportFilter
+                    )
+                    : $this->financialStatementDocumentService->exportGeneralLedger(
+                        $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
+                        $exportFilter
+                    ),
+                'journal_items' => $format === 'excel'
+                    ? $this->financialStatementSpreadsheetService->exportJournalItems(
+                        $this->financialStatementService->getJournalItemsReport($exportFilter, false),
+                        $exportFilter
+                    )
+                    : $this->financialStatementDocumentService->exportJournalItems(
+                        $this->financialStatementService->getJournalItemsReport($exportFilter, false),
+                        $exportFilter
+                    ),
                 default => null,
             };
 
@@ -240,5 +313,24 @@ class FinanceStatementController extends Controller
                 ->back()
                 ->with('error', 'Gagal mengunduh dokumen laporan finance.');
         }
+    }
+
+    private function resolveStatementSourceLabel(?string $statementSource): string
+    {
+        return match ($statementSource) {
+            'balance_sheet' => 'Lembar Saldo',
+            'profit_loss' => 'Laba Rugi',
+            'general_ledger' => 'Buku Besar',
+            default => 'Laporan Finance',
+        };
+    }
+
+    private function resolveStatementSourceRoute(?string $statementSource): string
+    {
+        return match ($statementSource) {
+            'balance_sheet' => 'finance.report.balance-sheet',
+            'profit_loss' => 'finance.report.profit-loss',
+            default => 'finance.report.general-ledger',
+        };
     }
 }

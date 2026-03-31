@@ -56,6 +56,22 @@ class FinancialStatementDocumentService
     }
 
     /**
+     * @return array{content:string,filename:string,mime:string}
+     */
+    public function exportJournalItems(array $report, StatementFilterDTO $filter): array
+    {
+        return [
+            'content' => $this->renderPdfDocument(
+                'Item Jurnal',
+                $this->buildSubtitle('Rincian item jurnal per akun.', $filter),
+                $this->buildJournalItemLines($report)
+            ),
+            'filename' => $this->buildFilename('item-jurnal', $filter),
+            'mime' => 'application/pdf',
+        ];
+    }
+
+    /**
      * @return array<int, array<string, int|string|bool>>
      */
     private function buildBalanceSheetLines(array $report): array
@@ -279,6 +295,81 @@ class FinancialStatementDocumentService
             }
 
             $lines[] = $this->bodyLine('', false, 0, 4);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @return array<int, array<string, int|string|bool>>
+     */
+    private function buildJournalItemLines(array $report): array
+    {
+        $summary = $report['summary'] ?? [];
+        $account = $report['account'] ?? ['code' => null, 'name' => null];
+        $items = $report['items'] ?? [];
+
+        if (is_object($items) && method_exists($items, 'items')) {
+            $items = $items->items();
+        }
+
+        $accountLabel = !empty($account['code'])
+            ? '[' . (string) $account['code'] . '] ' . (string) ($account['name'] ?? '-')
+            : 'Semua Akun';
+
+        $lines = [
+            $this->sectionLine('Ringkasan'),
+            $this->bodyLine('Akun           : ' . $accountLabel),
+            $this->bodyLine('Baris Jurnal   : ' . number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.')),
+            $this->bodyLine('Nilai Jurnal   : ' . $this->formatCurrency((float) ($summary['total_amount'] ?? 0))),
+            $this->bodyLine('Total Debit    : ' . $this->formatCurrency((float) ($summary['total_debit'] ?? 0))),
+            $this->bodyLine('Total Kredit   : ' . $this->formatCurrency((float) ($summary['total_credit'] ?? 0)), true, 0, 6),
+
+            $this->sectionLine('DETAIL ITEM JURNAL'),
+            $this->monoLine(
+                $this->formatColumns([
+                    ['text' => 'Tanggal', 'width' => 12],
+                    ['text' => 'No Jurnal', 'width' => 18],
+                    ['text' => 'Akun', 'width' => 14],
+                    ['text' => 'Jumlah', 'width' => 14, 'align' => 'right'],
+                    ['text' => 'Debit', 'width' => 14, 'align' => 'right'],
+                    ['text' => 'Kredit', 'width' => 14, 'align' => 'right'],
+                ]),
+                true
+            ),
+        ];
+
+        if (empty($items)) {
+            $lines[] = $this->bodyLine('Belum ada item jurnal pada filter aktif.', false, 2, 4);
+
+            return $lines;
+        }
+
+        foreach ($items as $item) {
+            $lines[] = $this->monoLine(
+                $this->formatColumns([
+                    ['text' => $this->formatDate((string) ($item['accounting_date'] ?? '')), 'width' => 12],
+                    ['text' => (string) ($item['invoice_no'] ?? '-'), 'width' => 18],
+                    ['text' => (string) ($item['account_code'] ?? '-'), 'width' => 14],
+                    ['text' => $this->formatCurrency((float) ($item['amount_currency'] ?? 0)), 'width' => 14, 'align' => 'right'],
+                    ['text' => $this->formatCurrency((float) ($item['debit'] ?? 0)), 'width' => 14, 'align' => 'right'],
+                    ['text' => $this->formatCurrency((float) ($item['credit'] ?? 0)), 'width' => 14, 'align' => 'right'],
+                ]),
+                false,
+                2
+            );
+
+            $detailSegments = array_filter([
+                'Akun: ' . trim((string) ($item['account_code'] ?? '-') . ' ' . (string) ($item['account_name'] ?? '')),
+                'Label: ' . (string) ($item['label'] ?? '-'),
+                !empty($item['partner_name']) ? 'Rekanan: ' . (string) $item['partner_name'] : null,
+                !empty($item['tax_label']) && $item['tax_label'] !== '-' ? 'Pajak: ' . (string) $item['tax_label'] : null,
+                !empty($item['tax_grids']) && $item['tax_grids'] !== '-' ? 'Tax Grids: ' . (string) $item['tax_grids'] : null,
+                !empty($item['analytic_distribution']) ? 'Analitik: ' . (string) $item['analytic_distribution'] : null,
+                !empty($item['reference']) ? 'Ref: ' . (string) $item['reference'] : null,
+            ]);
+
+            $lines[] = $this->bodyLine(implode(' | ', $detailSegments), false, 4, 2);
         }
 
         return $lines;

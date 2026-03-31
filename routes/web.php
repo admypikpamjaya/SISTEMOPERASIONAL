@@ -263,6 +263,14 @@ Route::prefix('finance')
             ->middleware('check_access:finance_general_ledger.read')
             ->name('report.general-ledger.download');
 
+        Route::get('/report/journal-items', [FinanceStatementController::class, 'journalItems'])
+            ->middleware('check_access:finance_general_ledger.read')
+            ->name('report.journal-items');
+
+        Route::get('/report/journal-items/download', [FinanceStatementController::class, 'downloadJournalItems'])
+            ->middleware('check_access:finance_general_ledger.read')
+            ->name('report.journal-items.download');
+
         Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
             ->middleware('check_access:finance_report.read')
             ->name('report.download');

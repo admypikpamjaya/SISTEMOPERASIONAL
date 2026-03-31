@@ -11,6 +11,8 @@
     $startYear = (int) ($statementFilters['start_year'] ?? $year ?? now()->year);
     $endYear = (int) ($statementFilters['end_year'] ?? $year ?? now()->year);
     $accountCode = $statementFilters['account_code'] ?? null;
+    $search = $statementFilters['search'] ?? null;
+    $statementSource = $statementFilters['statement_source'] ?? null;
     $perPage = (int) ($statementFilters['per_page'] ?? 10);
     $action = $action ?? url()->current();
     $perPageOptions = $perPageOptions ?? [10, 20, 50, 100];
@@ -42,6 +44,12 @@
         <form method="GET" action="{{ $action }}">
             @if(!empty($accountCode))
                 <input type="hidden" name="account_code" value="{{ $accountCode }}">
+            @endif
+            @if(!empty($search))
+                <input type="hidden" name="search" value="{{ $search }}">
+            @endif
+            @if(!empty($statementSource))
+                <input type="hidden" name="statement_source" value="{{ $statementSource }}">
             @endif
             <div class="row">
                 <div class="col-md-2 fs-field" id="statement_period_type_group">

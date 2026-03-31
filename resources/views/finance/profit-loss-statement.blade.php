@@ -268,6 +268,22 @@
         min-width: 0;
         flex: 1 1 auto;
     }
+    .pl-account-link,
+    .pl-amount-link {
+        color: inherit;
+        text-decoration: none;
+    }
+    .pl-account-link:hover,
+    .pl-amount-link:hover {
+        color: var(--pl-blue);
+        text-decoration: none;
+    }
+    .pl-amount-link {
+        display: inline-flex;
+        justify-content: flex-end;
+        width: 100%;
+        font-weight: 800;
+    }
     .pl-row-menu-btn {
         width: 30px;
         height: 30px;
@@ -394,6 +410,14 @@
         background: var(--app-surface-soft) !important;
         color: var(--app-text) !important;
     }
+    body.dark-mode .pl-account-link,
+    body.dark-mode .pl-amount-link {
+        color: inherit !important;
+    }
+    body.dark-mode .pl-account-link:hover,
+    body.dark-mode .pl-amount-link:hover {
+        color: var(--app-accent) !important;
+    }
 </style>
 
 <div class="pl-page-header">
@@ -408,6 +432,9 @@
     <div class="pl-nav">
         <a href="{{ route('finance.dashboard') }}" class="pl-nav-link muted">
             <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+        <a href="{{ route('finance.report.profit-loss.download', array_merge($filterQuery, ['format' => 'excel'])) }}" class="pl-nav-link muted">
+            <i class="fas fa-file-excel"></i> Download Excel
         </a>
         <a href="{{ route('finance.report.profit-loss.download', $filterQuery) }}" class="pl-nav-link primary">
             <i class="fas fa-file-pdf"></i> Download PDF
@@ -467,18 +494,31 @@
                             <th style="width:180px; text-align:right;">Nominal</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse($incomeRows as $row)
+                        <tbody>
+                            @forelse($incomeRows as $row)
+                                @php
+                                    $journalItemsRoute = route('finance.report.journal-items', array_merge($baseFilterQuery, [
+                                        'account_code' => $row['account_code'],
+                                        'statement_source' => 'profit_loss',
+                                    ]));
+                                @endphp
                             <tr>
-                                <td><strong>{{ $row['account_code'] }}</strong></td>
+                                <td>
+                                    <a href="{{ $journalItemsRoute }}" class="pl-account-link">
+                                        <strong>{{ $row['account_code'] }}</strong>
+                                    </a>
+                                </td>
                                 <td>
                                     <div class="pl-account-cell">
-                                        <span class="pl-account-name">{{ $row['account_name'] }}</span>
+                                        <a href="{{ $journalItemsRoute }}" class="pl-account-name pl-account-link">{{ $row['account_name'] }}</a>
                                         <div class="dropdown">
                                             <button type="button" class="pl-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right pl-row-menu">
+                                                <a class="dropdown-item" href="{{ $journalItemsRoute }}">
+                                                    <i class="fas fa-table"></i> Item Jurnal
+                                                </a>
                                                 <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
                                                     <i class="fas fa-book-open"></i> Buku Besar
                                                 </a>
@@ -486,7 +526,11 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="pl-amount income">Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}</td>
+                                <td class="pl-amount income">
+                                    <a href="{{ $journalItemsRoute }}" class="pl-amount-link">
+                                        Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -520,18 +564,31 @@
                             <th style="width:180px; text-align:right;">Nominal</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse($expenseRows as $row)
+                        <tbody>
+                            @forelse($expenseRows as $row)
+                                @php
+                                    $journalItemsRoute = route('finance.report.journal-items', array_merge($baseFilterQuery, [
+                                        'account_code' => $row['account_code'],
+                                        'statement_source' => 'profit_loss',
+                                    ]));
+                                @endphp
                             <tr>
-                                <td><strong>{{ $row['account_code'] }}</strong></td>
+                                <td>
+                                    <a href="{{ $journalItemsRoute }}" class="pl-account-link">
+                                        <strong>{{ $row['account_code'] }}</strong>
+                                    </a>
+                                </td>
                                 <td>
                                     <div class="pl-account-cell">
-                                        <span class="pl-account-name">{{ $row['account_name'] }}</span>
+                                        <a href="{{ $journalItemsRoute }}" class="pl-account-name pl-account-link">{{ $row['account_name'] }}</a>
                                         <div class="dropdown">
                                             <button type="button" class="pl-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right pl-row-menu">
+                                                <a class="dropdown-item" href="{{ $journalItemsRoute }}">
+                                                    <i class="fas fa-table"></i> Item Jurnal
+                                                </a>
                                                 <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
                                                     <i class="fas fa-book-open"></i> Buku Besar
                                                 </a>
@@ -539,7 +596,11 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="pl-amount expense">Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}</td>
+                                <td class="pl-amount expense">
+                                    <a href="{{ $journalItemsRoute }}" class="pl-amount-link">
+                                        Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>

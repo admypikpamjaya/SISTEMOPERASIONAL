@@ -16,6 +16,10 @@ class StatementFilterDTO
         public ?int $startYear = null,
         public ?int $endYear = null,
         public ?string $accountCode = null,
+        public ?string $search = null,
+        public ?string $statementSource = null,
+        /** @var array<int, int> */
+        public array $selectedIds = [],
         public int $page = 1,
         public int $perPage = 10
     ) {}
@@ -41,6 +45,17 @@ class StatementFilterDTO
             accountCode: isset($data['account_code']) && $data['account_code'] !== ''
                 ? (string) $data['account_code']
                 : null,
+            search: isset($data['search']) && trim((string) $data['search']) !== ''
+                ? trim((string) $data['search'])
+                : null,
+            statementSource: isset($data['statement_source']) && trim((string) $data['statement_source']) !== ''
+                ? strtolower(trim((string) $data['statement_source']))
+                : null,
+            selectedIds: collect($data['selected_ids'] ?? [])
+                ->map(static fn ($id): int => (int) $id)
+                ->filter(static fn (int $id): bool => $id > 0)
+                ->values()
+                ->all(),
             page: max(1, (int) ($data['page'] ?? 1)),
             perPage: max(1, (int) ($data['per_page'] ?? 10))
         );
@@ -63,6 +78,8 @@ class StatementFilterDTO
             'month' => $this->month,
             'year' => $this->year,
             'account_code' => $this->accountCode,
+            'search' => $this->search,
+            'statement_source' => $this->statementSource,
             'per_page' => $this->perPage,
         ];
 
