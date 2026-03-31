@@ -409,7 +409,8 @@ class FinancialStatementService
             ->values()
             ->all();
 
-        $summaryQuery = $this->makeJournalItemsQuery($filter, false);
+        $summaryQuery = $this->makeFilteredItemQuery($filter);
+        $this->applyJournalItemFilters($summaryQuery, $filter);
 
         $entryCount = (int) (clone $summaryQuery)->count('fii.id');
         $totalDebit = round((float) (clone $summaryQuery)->sum('fii.debit'), 2);
@@ -481,13 +482,7 @@ class FinancialStatementService
             ])
             ->selectRaw("COALESCE(fa.name, fii.label, fii.account_code) as account_name");
 
-        if (!empty($filter->search)) {
-            $this->applyJournalSearchFilter($query, $filter->search);
-        }
-
-        if (!empty($filter->selectedIds)) {
-            $query->whereIn('fii.id', $filter->selectedIds);
-        }
+        $this->applyJournalItemFilters($query, $filter);
 
         if ($withOrdering) {
             $query
@@ -495,6 +490,19 @@ class FinancialStatementService
                 ->orderByDesc('fi.invoice_no')
                 ->orderBy('fii.sort_order')
                 ->orderBy('fii.id');
+        }
+
+        return $query;
+    }
+
+    private function applyJournalItemFilters(Builder $query, StatementFilterDTO $filter): Builder
+    {
+        if (!empty($filter->search)) {
+            $this->applyJournalSearchFilter($query, $filter->search);
+        }
+
+        if (!empty($filter->selectedIds)) {
+            $query->whereIn('fii.id', $filter->selectedIds);
         }
 
         return $query;
