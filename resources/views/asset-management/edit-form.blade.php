@@ -2,6 +2,10 @@
 
 @php 
 use App\Enums\Asset\AssetUnit;
+use App\Enums\Asset\ComputerComponent;
+
+$groupedComponents = collect($asset->detail)
+    ->keyBy('component_type');
 @endphp 
 
 @section('content')
@@ -118,6 +122,60 @@ use App\Enums\Asset\AssetUnit;
                                     </div>
                                 </div>
                             </div>
+                        @elseif($asset->category->value === 'COMPUTER')
+                            @foreach(ComputerComponent::cases() as $index => $componentEnum)
+                                @php
+                                    $component = $groupedComponents->get($componentEnum->value);
+                                @endphp
+
+                                <div class="card mb-3 p-3">
+                                    <h5>{{ $componentEnum->value }}</h5>
+
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label>Brand</label>
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control"
+                                                    name="components[{{ $index }}][brand]"
+                                                    value="{{ $component['brand'] ?? '' }}"
+                                                >
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label>Spesifikasi</label>
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control"
+                                                    name="components[{{ $index }}][specification]"
+                                                    value="{{ $component['specification'] ?? '' }}"
+                                                >
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="form-group">
+                                                <label>Serial Number</label>
+                                                <input 
+                                                    type="text" 
+                                                    class="form-control"
+                                                    name="components[{{ $index }}][serial_number]"
+                                                    value="{{ $component['serial_number'] ?? '' }}"
+                                                >
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <input 
+                                        type="hidden" 
+                                        name="components[{{ $index }}][component_type]" 
+                                        value="{{ $componentEnum->value }}"
+                                    >
+                                </div>
+                            @endforeach
                         @endif
                     </div>
                 </form>
@@ -153,8 +211,19 @@ use App\Enums\Asset\AssetUnit;
                 for (const [key, value] of basicFormData.entries())
                     formData.append(key, value);
 
-                for (const [key, value] of detailFormData.entries())
-                    formData.append(`detail[${key}]`, value);
+                for (const [key, value] of detailFormData.entries()) {
+
+                    const match = key.match(/^components\[(\d+)\]\[(.+)\]$/);
+
+                    if (match) {
+                        const index = match[1];
+                        const field = match[2];
+
+                        formData.append(`detail[components][${index}][${field}]`, value);
+                    } else {
+                        formData.append(`detail[${key}]`, value);
+                    }
+                }
 
                 formData.append('category', category);
                 formData.append('id', assetId);

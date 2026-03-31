@@ -23,7 +23,39 @@ class MaintenanceReportController extends Controller
 
     public function index(Request $request)
     {
-        $reports = $this->service->getLogs($request->keyword, ($request->status) ? AssetMaintenanceReportStatus::from($request->status) : null, $request->page);
+        // $reports = $this->service->getLogs($request->keyword, ($request->status) ? AssetMaintenanceReportStatus::from($request->status) : null, $request->page);
+        // return view('maintenance-report.index', [
+        //     'reports' => $reports
+        // ]);
+
+        $request->validate([
+            'keyword'   => ['nullable', 'string'],
+
+            'status' => [
+                'nullable',
+                'in:' . implode(',', array_column(AssetMaintenanceReportStatus::cases(), 'value'))
+            ],
+
+            'date_from' => ['nullable', 'date'],
+            'date_to'   => ['nullable', 'date', 'after_or_equal:date_from'],
+        ], [
+            'date_from.date' => 'Tanggal mulai tidak valid.',
+            'date_to.date' => 'Tanggal akhir tidak valid.',
+            'date_to.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal mulai.',
+
+            'status.in' => 'Status yang dipilih tidak valid.',
+        ]);
+
+        $reports = $this->service->getLogs(
+            $request->keyword,
+            $request->status 
+                ? AssetMaintenanceReportStatus::from($request->status) 
+                : null,
+            $request->page ?? 1,
+            $request->date_from,
+            $request->date_to
+        );
+
         return view('maintenance-report.index', [
             'reports' => $reports
         ]);

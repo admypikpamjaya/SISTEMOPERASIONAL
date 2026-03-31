@@ -174,7 +174,7 @@ $canAssetDelete = $permissionService->checkAccess(auth()->user(), PortalPermissi
                 </div>
             </div>
         </div>
-        {{ $assets->links() }}
+        {{ $assets->appends(request()->query())->links() }}
     </div>
 </div>
 </div>

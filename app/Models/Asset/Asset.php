@@ -90,6 +90,11 @@ class Asset extends Model
         return $this->hasOne(AirConditionerDetail::class);
     }
 
+    public function computerComponents()
+    {
+        return $this->hasMany(ComputerComponent::class);
+    }
+
     public function loadWithRelation()
     {
         $handler = AssetFactory::createHandler($this->category);
