@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\Http\Controllers\Controller;
 use App\Models\BlastMessageTemplate;
 use App\Models\TunggakanRecord;
+use App\Services\Blast\WhatsAppGatewayDeviceService;
 use App\Services\Finance\TunggakanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Throwable;
 class FinanceTunggakanController extends Controller
 {
     public function __construct(
-        private readonly TunggakanService $tunggakanService
+        private readonly TunggakanService $tunggakanService,
+        private readonly WhatsAppGatewayDeviceService $whatsappGatewayDeviceService
     ) {}
 
     public function index(Request $request)
@@ -113,11 +115,48 @@ class FinanceTunggakanController extends Controller
             ->orderBy('kelas')
             ->pluck('kelas');
 
+        $whatsappDevices = [];
+        $activeWhatsappDeviceId = null;
+        $whatsappDeviceError = null;
+
+        try {
+            $devicePayload = $this->whatsappGatewayDeviceService->listDevices();
+            $deviceData = $devicePayload['data'] ?? [];
+            $whatsappDevices = is_array($deviceData['devices'] ?? null)
+                ? array_values($deviceData['devices'])
+                : [];
+
+            $activeWhatsappDeviceId = trim((string) ($deviceData['activeDeviceId'] ?? ''));
+
+            if ($activeWhatsappDeviceId === '') {
+                foreach ($whatsappDevices as $device) {
+                    if (!is_array($device)) {
+                        continue;
+                    }
+
+                    if ((bool) ($device['isActive'] ?? false)) {
+                        $activeWhatsappDeviceId = trim((string) ($device['deviceId'] ?? ''));
+                        break;
+                    }
+                }
+            }
+
+            if ($activeWhatsappDeviceId === '') {
+                $activeWhatsappDeviceId = null;
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+            $whatsappDeviceError = $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.';
+        }
+
         return view('finance.tunggakan.index', [
             'records' => $records,
             'editRecord' => $editRecord,
             'whatsappTemplates' => $whatsappTemplates,
             'kelasOptions' => $kelasOptions,
+            'whatsappDevices' => $whatsappDevices,
+            'activeWhatsappDeviceId' => $activeWhatsappDeviceId,
+            'whatsappDeviceError' => $whatsappDeviceError,
             'filters' => [
                 'q' => $search,
                 'kelas' => $selectedClass,
@@ -163,12 +202,22 @@ class FinanceTunggakanController extends Controller
     {
         $validated = $request->validate([
             'template_id' => 'nullable|string|max:50',
+            'device_id' => 'nullable|string|max:100',
             'blast_mode' => 'nullable|in:all,selected',
             'selected_ids' => 'nullable|array',
             'selected_ids.*' => 'uuid',
         ]);
 
         try {
+            $rawDeviceId = $validated['device_id'] ?? null;
+            $deviceId = $this->whatsappGatewayDeviceService->sanitizeDeviceId($rawDeviceId);
+
+            if (trim((string) $rawDeviceId) !== '' && $deviceId === null) {
+                return redirect()
+                    ->route('finance.tunggakan.index')
+                    ->with('error', 'Device WhatsApp tidak valid.');
+            }
+
             $blastMode = (string) ($validated['blast_mode'] ?? 'all');
             $selectedIds = $blastMode === 'selected'
                 ? array_values(array_filter($validated['selected_ids'] ?? []))
@@ -183,7 +232,8 @@ class FinanceTunggakanController extends Controller
             $summary = $this->tunggakanService->blastWhatsappFromTunggakan(
                 templateId: $validated['template_id'] ?? null,
                 actorId: auth()->id() ? (string) auth()->id() : null,
-                recordIds: $selectedIds !== [] ? $selectedIds : null
+                recordIds: $selectedIds !== [] ? $selectedIds : null,
+                deviceId: $deviceId
             );
 
             if ((int) ($summary['candidate_records'] ?? 0) === 0) {
@@ -200,6 +250,9 @@ class FinanceTunggakanController extends Controller
             $selectedMessage = $blastMode === 'selected'
                 ? 'Data terpilih: ' . count($selectedIds) . '. '
                 : '';
+            $deviceMessage = $deviceId !== null
+                ? ' Device: ' . $deviceId . '.'
+                : '';
 
             return redirect()
                 ->route('finance.tunggakan.index')
@@ -214,6 +267,7 @@ class FinanceTunggakanController extends Controller
                     . ', Target terkirim: ' . $summary['sent_targets']
                     . ', Target gagal: ' . $summary['failed_targets']
                     . '.'
+                    . $deviceMessage
                 );
         } catch (Throwable $exception) {
             report($exception);

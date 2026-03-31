@@ -304,12 +304,16 @@ class TunggakanService
     public function blastWhatsappFromTunggakan(
         ?string $templateId,
         ?string $actorId,
-        ?array $recordIds = null
+        ?array $recordIds = null,
+        ?string $deviceId = null
     ): array {
         $actorId = trim((string) $actorId);
         if ($actorId === '') {
             throw new RuntimeException('User login tidak ditemukan untuk proses blasting.');
         }
+
+        $deviceId = trim((string) $deviceId);
+        $deviceId = $deviceId !== '' ? $deviceId : null;
 
         $templateContent = $this->resolveWhatsappTemplateContent($templateId);
 
@@ -497,6 +501,7 @@ class TunggakanService
                     'meta' => [
                         'source' => 'finance.tunggakan',
                         'template_id' => $templateId,
+                        'device_id' => $deviceId,
                         'recipient_scope' => 'siswa+direct_phone',
                         'triggered_at' => now('Asia/Jakarta')->toIso8601String(),
                     ],
@@ -550,6 +555,9 @@ class TunggakanService
                 $payload->setMeta('queue_name', (string) config('blast.queues.whatsapp.normal', 'blast-whatsapp-normal'));
                 $payload->setMeta('retry_attempts', 1);
                 $payload->setMeta('retry_backoff_seconds', (array) config('blast.retry.backoff_seconds', [30, 120, 300]));
+                if ($deviceId !== null) {
+                    $payload->setMeta('device_id', $deviceId);
+                }
 
                 app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync(
                     new QueueBlastDeliveryJob(
@@ -626,6 +634,7 @@ class TunggakanService
             'total_queued_targets' => $summary['queued_targets'],
             'details' => [
                 'source' => 'finance.tunggakan',
+                'device_id' => $deviceId,
                 'group_logs' => $groupLogDetails,
             ],
         ]);

@@ -17,6 +17,7 @@ use App\Models\Announcement;
 use App\Services\Blast\TemplateRenderer;
 use App\Services\Blast\RecipientSelectorService;
 use App\Services\Blast\TunggakanMessageContextService;
+use App\Services\Blast\WhatsAppGatewayDeviceService;
 use App\Services\Blast\WhatsAppProviderSelector;
 use App\Services\Blast\WhatsAppDeviceLabelStore;
 use App\Enums\User\UserRole;
@@ -272,7 +273,7 @@ class BlastController extends Controller
         ]);
     }
 
-    public function whatsappGatewayDevices(WhatsAppDeviceLabelStore $labelStore)
+    public function whatsappGatewayDevices(WhatsAppGatewayDeviceService $deviceService)
     {
         $user = Auth::user();
         if (!$user) {
@@ -286,8 +287,7 @@ class BlastController extends Controller
         $isSuperAdmin = $user->role === UserRole::IT_SUPPORT->value;
 
         try {
-            [$baseUrl, $client] = $this->buildGatewayClient();
-            $response = $client->get($baseUrl . '/devices');
+            $payload = $deviceService->listDevices($isSuperAdmin);
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
@@ -296,46 +296,10 @@ class BlastController extends Controller
             ], 502);
         }
 
-        if (!$response->successful()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gateway merespon error.',
-                'data' => [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ],
-            ], 502);
-        }
-
-        $payload = $response->json();
-        $data = $payload['data'] ?? $payload;
-        $devices = $data['devices'] ?? [];
-        $labels = $labelStore->getLabels();
-
-        if (is_array($devices)) {
-            $devices = array_map(function ($device) use ($labels, $isSuperAdmin) {
-                if (!is_array($device)) {
-                    return $device;
-                }
-
-                $deviceId = (string) ($device['deviceId'] ?? '');
-                $device['label'] = $labels[$deviceId] ?? $deviceId;
-
-                if (!$isSuperAdmin) {
-                    unset($device['qr'], $device['qrDataUrl'], $device['user']);
-                }
-
-                return $device;
-            }, $devices);
-        }
-
-        $data['devices'] = $devices;
-        $data['labels'] = $labels;
-
         return response()->json([
             'success' => (bool) ($payload['success'] ?? true),
             'message' => (string) ($payload['message'] ?? 'OK'),
-            'data' => $data,
+            'data' => $payload['data'] ?? [],
         ]);
     }
 

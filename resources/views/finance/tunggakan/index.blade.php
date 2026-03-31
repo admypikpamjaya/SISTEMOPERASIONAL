@@ -9,8 +9,18 @@
     $editRecord = $editRecord ?? null;
     $whatsappTemplates = $whatsappTemplates ?? collect();
     $kelasOptions = $kelasOptions ?? collect();
+    $whatsappDevices = collect($whatsappDevices ?? []);
+    $activeWhatsappDeviceId = $activeWhatsappDeviceId ?? null;
+    $whatsappDeviceError = $whatsappDeviceError ?? null;
     $defaultSyncMonth = $defaultSyncMonth ?? now()->format('F Y');
     $formatRupiah = static fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
+    $selectedWhatsappDeviceId = old('device_id', '');
+    $activeWhatsappDevice = $activeWhatsappDeviceId
+        ? $whatsappDevices->first(fn ($device) => (string) ($device['deviceId'] ?? '') === (string) $activeWhatsappDeviceId)
+        : null;
+    $activeWhatsappDeviceLabel = is_array($activeWhatsappDevice)
+        ? trim((string) ($activeWhatsappDevice['label'] ?? $activeWhatsappDeviceId))
+        : $activeWhatsappDeviceId;
 
     $sourceLabels = [
         'excel' => 'Excel',
@@ -615,12 +625,54 @@ body.dark-mode .tg-btn.ghost {
                                 @endforeach
                             </select>
                         </div>
+                        <div class="tg-field" style="margin-bottom:10px;">
+                            <select class="tg-select" name="device_id">
+                                <option value="">
+                                    {{ $activeWhatsappDeviceLabel ? 'Ikuti device aktif gateway: ' . $activeWhatsappDeviceLabel : 'Ikuti device aktif gateway' }}
+                                </option>
+                                @foreach($whatsappDevices as $device)
+                                    @php
+                                        $deviceId = trim((string) ($device['deviceId'] ?? ''));
+                                        $deviceLabel = trim((string) ($device['label'] ?? $deviceId));
+                                        $deviceStatus = trim((string) ($device['status'] ?? ''));
+                                        $deviceNotes = [];
+
+                                        if ((bool) ($device['isActive'] ?? false)) {
+                                            $deviceNotes[] = 'aktif';
+                                        }
+
+                                        if ($deviceStatus !== '') {
+                                            $deviceNotes[] = strtolower($deviceStatus);
+                                        }
+
+                                        $deviceText = $deviceLabel !== '' ? $deviceLabel : $deviceId;
+                                        if ($deviceId !== '' && $deviceLabel !== $deviceId) {
+                                            $deviceText .= ' (' . $deviceId . ')';
+                                        }
+
+                                        if ($deviceNotes !== []) {
+                                            $deviceText .= ' - ' . implode(', ', array_unique($deviceNotes));
+                                        }
+                                    @endphp
+                                    @if($deviceId !== '')
+                                        <option value="{{ $deviceId }}" @selected($selectedWhatsappDeviceId === $deviceId)>{{ $deviceText }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="tg-actions">
                             <button type="submit" class="tg-btn primary" name="blast_mode" value="all">Blast Semua Draft/Failed</button>
                             <button type="submit" class="tg-btn ghost" name="blast_mode" value="selected" id="blastSelectedBtn" disabled>Blast Selected</button>
                         </div>
                     </form>
-                    <div class="tg-hint">Diproses: data <strong>matched siswa</strong> atau data dengan <strong>no telepon valid</strong> (status blast draft/failed). Gunakan checkbox di tabel untuk blast manual.</div>
+                    <div class="tg-hint">
+                        Diproses: data <strong>matched siswa</strong> atau data dengan <strong>no telepon valid</strong> (status blast draft/failed). Gunakan checkbox di tabel untuk blast manual.
+                        @if($whatsappDeviceError)
+                            <br>Daftar device belum bisa dimuat: <strong>{{ $whatsappDeviceError }}</strong>. Jika dropdown kosong, blasting akan tetap mengikuti device aktif/default gateway.
+                        @elseif($activeWhatsappDeviceLabel)
+                            <br>Device aktif saat ini: <strong>{{ $activeWhatsappDeviceLabel }}</strong>.
+                        @endif
+                    </div>
                 </div>
 
                 <div class="tg-action-card">
