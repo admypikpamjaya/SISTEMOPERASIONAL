@@ -4,10 +4,31 @@
     $reportDate = $statementFilters['report_date'] ?? null;
     $month = $statementFilters['month'] ?? null;
     $year = $statementFilters['year'] ?? null;
+    $startDate = $statementFilters['start_date'] ?? $reportDate;
+    $endDate = $statementFilters['end_date'] ?? $reportDate;
+    $startMonth = (int) ($statementFilters['start_month'] ?? $month ?? now()->month);
+    $endMonth = (int) ($statementFilters['end_month'] ?? $month ?? now()->month);
+    $startYear = (int) ($statementFilters['start_year'] ?? $year ?? now()->year);
+    $endYear = (int) ($statementFilters['end_year'] ?? $year ?? now()->year);
+    $accountCode = $statementFilters['account_code'] ?? null;
     $perPage = (int) ($statementFilters['per_page'] ?? 10);
     $action = $action ?? url()->current();
     $perPageOptions = $perPageOptions ?? [10, 20, 50, 100];
     $showPerPage = $showPerPage ?? false;
+    $monthOptions = [
+        1 => 'Januari',
+        2 => 'Februari',
+        3 => 'Maret',
+        4 => 'April',
+        5 => 'Mei',
+        6 => 'Juni',
+        7 => 'Juli',
+        8 => 'Agustus',
+        9 => 'September',
+        10 => 'Oktober',
+        11 => 'November',
+        12 => 'Desember',
+    ];
 @endphp
 
 <div class="fs-filter-card">
@@ -19,6 +40,9 @@
     </div>
     <div class="fs-filter-body">
         <form method="GET" action="{{ $action }}">
+            @if(!empty($accountCode))
+                <input type="hidden" name="account_code" value="{{ $accountCode }}">
+            @endif
             <div class="row">
                 <div class="col-md-2 fs-field" id="statement_period_type_group">
                     <label class="fs-label" for="statement_period_type">
@@ -32,44 +56,85 @@
                     </select>
                 </div>
 
-                <div class="col-md-3 fs-field" id="statement_report_date_group">
-                    <label class="fs-label" for="statement_report_date">
-                        <i class="fas fa-calendar-day"></i> Tanggal
+                <div class="col-md-3 fs-field" id="statement_start_date_group">
+                    <label class="fs-label" for="statement_start_date">
+                        <i class="fas fa-calendar-day"></i> Dari Tanggal
                     </label>
                     <input
                         type="date"
-                        name="report_date"
-                        id="statement_report_date"
+                        name="start_date"
+                        id="statement_start_date"
                         class="fs-control"
-                        value="{{ $reportDate }}"
+                        value="{{ $startDate }}"
                     >
                 </div>
 
-                <div class="col-md-2 fs-field" id="statement_month_group">
-                    <label class="fs-label" for="statement_month">
-                        <i class="fas fa-calendar-week"></i> Bulan
+                <div class="col-md-3 fs-field" id="statement_end_date_group">
+                    <label class="fs-label" for="statement_end_date">
+                        <i class="fas fa-calendar-check"></i> Sampai Tanggal
                     </label>
-                    <select name="month" id="statement_month" class="fs-control">
-                        @for($m = 1; $m <= 12; $m++)
-                            <option value="{{ $m }}" {{ (int) $month === $m ? 'selected' : '' }}>
-                                {{ str_pad((string) $m, 2, '0', STR_PAD_LEFT) }}
+                    <input
+                        type="date"
+                        name="end_date"
+                        id="statement_end_date"
+                        class="fs-control"
+                        value="{{ $endDate }}"
+                    >
+                </div>
+
+                <div class="col-md-2 fs-field" id="statement_start_month_group">
+                    <label class="fs-label" for="statement_start_month">
+                        <i class="fas fa-calendar-week"></i> Dari Bulan
+                    </label>
+                    <select name="start_month" id="statement_start_month" class="fs-control">
+                        @foreach($monthOptions as $monthNumber => $monthLabel)
+                            <option value="{{ $monthNumber }}" {{ $startMonth === $monthNumber ? 'selected' : '' }}>
+                                {{ str_pad((string) $monthNumber, 2, '0', STR_PAD_LEFT) }} - {{ $monthLabel }}
                             </option>
-                        @endfor
+                        @endforeach
                     </select>
                 </div>
 
-                <div class="col-md-2 fs-field" id="statement_year_group">
-                    <label class="fs-label" for="statement_year">
-                        <i class="fas fa-calendar-alt"></i> Tahun
+                <div class="col-md-2 fs-field" id="statement_start_year_group">
+                    <label class="fs-label" for="statement_start_year">
+                        <i class="fas fa-calendar-alt"></i> Dari Tahun
                     </label>
                     <input
                         type="number"
-                        name="year"
-                        id="statement_year"
+                        name="start_year"
+                        id="statement_start_year"
                         class="fs-control"
                         min="1900"
                         max="2100"
-                        value="{{ $year }}"
+                        value="{{ $startYear }}"
+                    >
+                </div>
+
+                <div class="col-md-2 fs-field" id="statement_end_month_group">
+                    <label class="fs-label" for="statement_end_month">
+                        <i class="fas fa-calendar-week"></i> Sampai Bulan
+                    </label>
+                    <select name="end_month" id="statement_end_month" class="fs-control">
+                        @foreach($monthOptions as $monthNumber => $monthLabel)
+                            <option value="{{ $monthNumber }}" {{ $endMonth === $monthNumber ? 'selected' : '' }}>
+                                {{ str_pad((string) $monthNumber, 2, '0', STR_PAD_LEFT) }} - {{ $monthLabel }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-2 fs-field" id="statement_end_year_group">
+                    <label class="fs-label" for="statement_end_year">
+                        <i class="fas fa-calendar-alt"></i> Sampai Tahun
+                    </label>
+                    <input
+                        type="number"
+                        name="end_year"
+                        id="statement_end_year"
+                        class="fs-control"
+                        min="1900"
+                        max="2100"
+                        value="{{ $endYear }}"
                     >
                 </div>
 
@@ -88,7 +153,7 @@
                     </div>
                 @endif
 
-                <div class="{{ $showPerPage ? 'col-md-1' : 'col-md-3' }} fs-actions">
+                <div class="{{ $showPerPage ? 'col-md-3' : 'col-md-4' }} fs-actions">
                     <button type="submit" class="fs-btn fs-btn-primary">
                         <i class="fas fa-search"></i>
                         <span>Filter</span>
@@ -108,48 +173,42 @@
         <script>
             (function () {
                 const periodTypeInput = document.getElementById('statement_period_type');
-                const reportDateGroup = document.getElementById('statement_report_date_group');
-                const reportDateInput = document.getElementById('statement_report_date');
-                const monthGroup = document.getElementById('statement_month_group');
-                const monthInput = document.getElementById('statement_month');
-                const yearGroup = document.getElementById('statement_year_group');
-                const yearInput = document.getElementById('statement_year');
+                const fieldGroups = {
+                    startDate: document.getElementById('statement_start_date_group'),
+                    endDate: document.getElementById('statement_end_date_group'),
+                    startMonth: document.getElementById('statement_start_month_group'),
+                    startYear: document.getElementById('statement_start_year_group'),
+                    endMonth: document.getElementById('statement_end_month_group'),
+                    endYear: document.getElementById('statement_end_year_group'),
+                };
 
-                if (!periodTypeInput || !reportDateGroup || !monthGroup || !yearGroup) {
+                if (!periodTypeInput) {
                     return;
+                }
+
+                function setGroupState(group, isVisible) {
+                    if (!group) {
+                        return;
+                    }
+
+                    group.style.display = isVisible ? '' : 'none';
+                    group.querySelectorAll('input, select').forEach(function (input) {
+                        input.disabled = !isVisible;
+                    });
                 }
 
                 function syncStatementPeriodFields() {
                     const periodType = periodTypeInput.value;
-                    const isAll = periodType === 'ALL';
                     const isDaily = periodType === 'DAILY';
                     const isMonthly = periodType === 'MONTHLY';
                     const isYearly = periodType === 'YEARLY';
 
-                    reportDateGroup.style.display = isDaily ? '' : 'none';
-                    monthGroup.style.display = isMonthly ? '' : 'none';
-                    yearGroup.style.display = (isMonthly || isYearly) ? '' : 'none';
-
-                    if (reportDateInput) {
-                        reportDateInput.disabled = !isDaily;
-                    }
-
-                    if (monthInput) {
-                        monthInput.disabled = !isMonthly;
-                    }
-
-                    if (yearInput) {
-                        yearInput.disabled = !(isMonthly || isYearly);
-                    }
-
-                    if (isAll) {
-                        if (reportDateInput) {
-                            reportDateInput.value = '';
-                        }
-                        if (yearInput) {
-                            yearInput.value = '';
-                        }
-                    }
+                    setGroupState(fieldGroups.startDate, isDaily);
+                    setGroupState(fieldGroups.endDate, isDaily);
+                    setGroupState(fieldGroups.startMonth, isMonthly);
+                    setGroupState(fieldGroups.endMonth, isMonthly);
+                    setGroupState(fieldGroups.startYear, isMonthly || isYearly);
+                    setGroupState(fieldGroups.endYear, isMonthly || isYearly);
                 }
 
                 periodTypeInput.addEventListener('change', syncStatementPeriodFields);

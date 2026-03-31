@@ -6,6 +6,7 @@
     $sections = $report['sections'] ?? [];
     $uncategorizedCount = (int) ($report['uncategorized_count'] ?? 0);
     $hasRows = collect($sections)->sum(fn ($section) => count($section['rows'] ?? [])) > 0;
+    $baseFilterQuery = $baseFilterQuery ?? ($filterQuery ?? []);
     $sectionMeta = [
         'liabilitas' => ['icon' => 'fa-landmark', 'badge' => 'fs-danger'],
         'piutang' => ['icon' => 'fa-file-invoice-dollar', 'badge' => 'fs-blue'],
@@ -307,6 +308,56 @@
     .fs-badge.fs-green { background: var(--fs-green-soft); color: var(--fs-green); }
     .fs-badge.fs-danger { background: var(--fs-red-soft); color: var(--fs-red); }
     .fs-badge.fs-amber { background: var(--fs-amber-soft); color: var(--fs-amber); }
+    .fs-account-cell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .fs-account-name {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .fs-row-menu-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--fs-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    .fs-row-menu-btn::after { display: none; }
+    .fs-row-menu-btn:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--fs-blue);
+    }
+    .fs-row-menu {
+        min-width: 180px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+        padding: 0.45rem;
+    }
+    .fs-row-menu .dropdown-item {
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--fs-text);
+        padding: 0.55rem 0.7rem;
+    }
+    .fs-row-menu .dropdown-item:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--fs-blue);
+    }
 
     .fs-empty-card {
         margin-top: 1rem;
@@ -382,6 +433,18 @@
     body.dark-mode .fs-table td strong,
     body.dark-mode .fs-note-card i,
     body.dark-mode .fs-amount {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fs-row-menu {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+    body.dark-mode .fs-row-menu .dropdown-item {
+        color: var(--app-text-soft) !important;
+    }
+    body.dark-mode .fs-row-menu .dropdown-item:hover {
+        background: var(--app-surface-soft) !important;
         color: var(--app-text) !important;
     }
     body.dark-mode .fs-table tbody tr:hover td {
@@ -492,7 +555,21 @@
                             @forelse($section['rows'] as $row)
                                 <tr>
                                     <td><strong>{{ $row['account_code'] }}</strong></td>
-                                    <td>{{ $row['account_name'] }}</td>
+                                    <td>
+                                        <div class="fs-account-cell">
+                                            <span class="fs-account-name">{{ $row['account_name'] }}</span>
+                                            <div class="dropdown">
+                                                <button type="button" class="fs-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <div class="dropdown-menu dropdown-menu-right fs-row-menu">
+                                                    <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
+                                                        <i class="fas fa-book-open"></i> Buku Besar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>
                                         <span class="fs-badge {{ $meta['badge'] }}">
                                             <i class="fas fa-tag"></i>

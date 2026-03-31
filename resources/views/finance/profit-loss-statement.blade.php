@@ -6,6 +6,7 @@
     $expenseRows = $report['expense_rows'] ?? [];
     $totals = $report['totals'] ?? ['income' => 0, 'expense' => 0, 'net_result' => 0];
     $hasRows = count($incomeRows) > 0 || count($expenseRows) > 0;
+    $baseFilterQuery = $baseFilterQuery ?? ($filterQuery ?? []);
 @endphp
 
 <style>
@@ -257,6 +258,56 @@
         font-weight: 800;
         background: rgba(37, 99, 235, 0.04);
     }
+    .pl-account-cell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .pl-account-name {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .pl-row-menu-btn {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--pl-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    .pl-row-menu-btn::after { display: none; }
+    .pl-row-menu-btn:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--pl-blue);
+    }
+    .pl-row-menu {
+        min-width: 180px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+        padding: 0.45rem;
+    }
+    .pl-row-menu .dropdown-item {
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--pl-text);
+        padding: 0.55rem 0.7rem;
+    }
+    .pl-row-menu .dropdown-item:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--pl-blue);
+    }
     .pl-empty-card {
         margin-top: 1rem;
         padding: 2.5rem 1.2rem;
@@ -328,6 +379,18 @@
         background: var(--app-row-hover) !important;
     }
     body.dark-mode .pl-total-row td {
+        background: var(--app-surface-soft) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .pl-row-menu {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
+    body.dark-mode .pl-row-menu .dropdown-item {
+        color: var(--app-text-soft) !important;
+    }
+    body.dark-mode .pl-row-menu .dropdown-item:hover {
         background: var(--app-surface-soft) !important;
         color: var(--app-text) !important;
     }
@@ -408,7 +471,21 @@
                         @forelse($incomeRows as $row)
                             <tr>
                                 <td><strong>{{ $row['account_code'] }}</strong></td>
-                                <td>{{ $row['account_name'] }}</td>
+                                <td>
+                                    <div class="pl-account-cell">
+                                        <span class="pl-account-name">{{ $row['account_name'] }}</span>
+                                        <div class="dropdown">
+                                            <button type="button" class="pl-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-right pl-row-menu">
+                                                <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
+                                                    <i class="fas fa-book-open"></i> Buku Besar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td class="pl-amount income">Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}</td>
                             </tr>
                         @empty
@@ -447,7 +524,21 @@
                         @forelse($expenseRows as $row)
                             <tr>
                                 <td><strong>{{ $row['account_code'] }}</strong></td>
-                                <td>{{ $row['account_name'] }}</td>
+                                <td>
+                                    <div class="pl-account-cell">
+                                        <span class="pl-account-name">{{ $row['account_name'] }}</span>
+                                        <div class="dropdown">
+                                            <button type="button" class="pl-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-right pl-row-menu">
+                                                <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
+                                                    <i class="fas fa-book-open"></i> Buku Besar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td class="pl-amount expense">Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}</td>
                             </tr>
                         @empty

@@ -5,6 +5,11 @@
     $summary = $report['summary'] ?? ['account_count' => 0, 'entry_count' => 0, 'total_debit' => 0, 'total_credit' => 0, 'balance_gap' => 0];
     $groups = $report['groups'] ?? [];
     $accounts = $report['accounts'] ?? null;
+    $baseFilterQuery = $baseFilterQuery ?? ($filterQuery ?? []);
+    $selectedAccountCode = $selectedAccountCode ?? null;
+    $selectedAccountName = $selectedAccountCode !== null && !empty($groups)
+        ? ($groups[0]['account_name'] ?? null)
+        : null;
 @endphp
 
 <style>
@@ -214,6 +219,56 @@
         font-size: 0.75rem;
         font-weight: 500;
     }
+    .gl-filter-note {
+        margin: 1rem 0 0;
+        padding: 0.9rem 1rem;
+        border-radius: 14px;
+        background: rgba(37, 99, 235, 0.07);
+        border: 1px solid rgba(37, 99, 235, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+        color: var(--gl-text);
+    }
+    .gl-filter-note small {
+        display: block;
+        margin-top: 0.18rem;
+        color: var(--gl-muted);
+        font-size: 0.74rem;
+        font-weight: 500;
+    }
+    .gl-filter-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        border-radius: 999px;
+        padding: 0.28rem 0.8rem;
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--gl-blue);
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+    .gl-reset-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.9rem;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid var(--gl-border);
+        color: var(--gl-muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .gl-reset-link:hover {
+        text-decoration: none;
+        color: var(--gl-text);
+        transform: translateY(-1px);
+    }
 
     .gl-ledger-list {
         display: grid;
@@ -319,6 +374,25 @@
         font-size: 0.74rem;
         line-height: 1.45;
     }
+    .gl-journal-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-top: 0.35rem;
+        padding: 0.28rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(37, 99, 235, 0.14);
+        color: var(--gl-blue);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-decoration: none;
+    }
+    .gl-journal-link:hover {
+        background: var(--gl-blue);
+        color: #fff;
+        text-decoration: none;
+    }
     .gl-pagination {
         margin-top: 1rem;
         padding: 0.95rem 1rem;
@@ -380,7 +454,8 @@
     body.dark-mode .fs-control,
     body.dark-mode .gl-nav-link.muted,
     body.dark-mode .fs-btn-muted,
-    body.dark-mode .gl-ledger-total {
+    body.dark-mode .gl-ledger-total,
+    body.dark-mode .gl-reset-link {
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
         color: var(--app-text) !important;
@@ -398,12 +473,26 @@
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
     }
+    body.dark-mode .gl-filter-note {
+        background: var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        box-shadow: var(--app-shadow) !important;
+    }
     body.dark-mode .gl-table td {
         color: var(--app-text-soft) !important;
         border-color: var(--app-border) !important;
     }
     body.dark-mode .gl-table tbody tr:hover td {
         background: var(--app-row-hover) !important;
+    }
+    body.dark-mode .gl-journal-link {
+        background: rgba(96, 165, 250, 0.12) !important;
+        border-color: rgba(96, 165, 250, 0.18) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .gl-journal-link:hover {
+        background: var(--app-accent) !important;
+        color: #fff !important;
     }
     body.dark-mode .gl-pagination .page-link {
         background: var(--app-surface-soft) !important;
@@ -439,10 +528,10 @@
         <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="gl-nav-link primary">
             <i class="fas fa-file-pdf"></i> Download PDF
         </a>
-        <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="gl-nav-link muted">
+        <a href="{{ route('finance.report.balance-sheet', $baseFilterQuery) }}" class="gl-nav-link muted">
             <i class="fas fa-balance-scale"></i> Lembar Saldo
         </a>
-        <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="gl-nav-link muted">
+        <a href="{{ route('finance.report.profit-loss', $baseFilterQuery) }}" class="gl-nav-link muted">
             <i class="fas fa-chart-area"></i> Laba Rugi
         </a>
     </div>
@@ -453,6 +542,21 @@
     'filters' => $filters,
     'showPerPage' => true,
 ])
+
+@if(!empty($selectedAccountCode))
+    <div class="gl-filter-note">
+        <div>
+            <span class="gl-filter-badge">
+                <i class="fas fa-filter"></i>
+                Akun {{ $selectedAccountCode }}{{ $selectedAccountName ? ' - ' . $selectedAccountName : '' }}
+            </span>
+            <small>Tampilan buku besar sedang difokuskan ke satu akun dari lembar saldo atau laba rugi.</small>
+        </div>
+        <a href="{{ route('finance.report.general-ledger', $baseFilterQuery) }}" class="gl-reset-link">
+            <i class="fas fa-times-circle"></i> Lihat Semua Akun
+        </a>
+    </div>
+@endif
 
 <div class="gl-summary-grid">
     <div class="gl-summary-card">
@@ -541,7 +645,14 @@
                             @forelse($group['entries'] as $entry)
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($entry['accounting_date'])->format('d/m/Y') }}</td>
-                                    <td><strong>{{ $entry['invoice_no'] }}</strong></td>
+                                    <td>
+                                        <strong>{{ $entry['invoice_no'] }}</strong>
+                                        @if(!empty($entry['invoice_id']))
+                                            <a href="{{ route('finance.invoice.show', $entry['invoice_id']) }}" class="gl-journal-link">
+                                                <i class="fas fa-folder-open"></i> Item Jurnal
+                                            </a>
+                                        @endif
+                                    </td>
                                     <td>{{ $entry['journal_name'] }}</td>
                                     <td>
                                         <div class="gl-entry-title">{{ $entry['label'] }}</div>

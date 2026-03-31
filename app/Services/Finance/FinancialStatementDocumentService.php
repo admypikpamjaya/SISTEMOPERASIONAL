@@ -613,16 +613,30 @@ class FinancialStatementDocumentService
     {
         $periodType = $filter->periodType ?? 'ALL';
 
-        if ($periodType === 'DAILY' && !empty($filter->reportDate)) {
-            return Carbon::parse($filter->reportDate)->format('d/m/Y');
+        if ($periodType === 'DAILY' && !empty($filter->startDate)) {
+            return $this->formatDateRangeLabel(
+                $filter->startDate,
+                $filter->endDate,
+                'd/m/Y'
+            );
         }
 
-        if ($periodType === 'MONTHLY' && $filter->year !== null && $filter->month !== null) {
-            return sprintf('%02d/%04d', $filter->month, $filter->year);
+        if (
+            $periodType === 'MONTHLY'
+            && $filter->startYear !== null
+            && $filter->startMonth !== null
+        ) {
+            return $this->formatMonthRangeLabel(
+                $filter->startYear,
+                $filter->startMonth,
+                $filter->endYear,
+                $filter->endMonth,
+                'm/Y'
+            );
         }
 
-        if ($periodType === 'YEARLY' && $filter->year !== null) {
-            return (string) $filter->year;
+        if ($periodType === 'YEARLY' && $filter->startYear !== null) {
+            return $this->formatYearRangeLabel($filter->startYear, $filter->endYear);
         }
 
         return 'Semua Periode';
@@ -632,19 +646,80 @@ class FinancialStatementDocumentService
     {
         $periodType = $filter->periodType ?? 'ALL';
 
-        if ($periodType === 'DAILY' && !empty($filter->reportDate)) {
-            return Carbon::parse($filter->reportDate)->format('Y-m-d');
+        if ($periodType === 'DAILY' && !empty($filter->startDate)) {
+            return $this->formatDateRangeLabel(
+                $filter->startDate,
+                $filter->endDate,
+                'Y-m-d',
+                '_sd_'
+            );
         }
 
-        if ($periodType === 'MONTHLY' && $filter->year !== null && $filter->month !== null) {
-            return sprintf('%04d-%02d', $filter->year, $filter->month);
+        if (
+            $periodType === 'MONTHLY'
+            && $filter->startYear !== null
+            && $filter->startMonth !== null
+        ) {
+            return $this->formatMonthRangeLabel(
+                $filter->startYear,
+                $filter->startMonth,
+                $filter->endYear,
+                $filter->endMonth,
+                'Y-m',
+                '_sd_'
+            );
         }
 
-        if ($periodType === 'YEARLY' && $filter->year !== null) {
-            return (string) $filter->year;
+        if ($periodType === 'YEARLY' && $filter->startYear !== null) {
+            return $this->formatYearRangeLabel($filter->startYear, $filter->endYear, '_sd_');
         }
 
         return 'semua-periode';
+    }
+
+    private function formatDateRangeLabel(
+        string $startDate,
+        ?string $endDate,
+        string $format,
+        string $separator = ' s.d. '
+    ): string {
+        $start = Carbon::parse($startDate);
+        $end = !empty($endDate) ? Carbon::parse($endDate) : $start->copy();
+
+        if ($start->equalTo($end)) {
+            return $start->format($format);
+        }
+
+        return $start->format($format) . $separator . $end->format($format);
+    }
+
+    private function formatMonthRangeLabel(
+        int $startYear,
+        int $startMonth,
+        ?int $endYear,
+        ?int $endMonth,
+        string $format,
+        string $separator = ' s.d. '
+    ): string {
+        $start = Carbon::create($startYear, $startMonth, 1);
+        $end = Carbon::create($endYear ?? $startYear, $endMonth ?? $startMonth, 1);
+
+        if ($start->equalTo($end)) {
+            return $start->format($format);
+        }
+
+        return $start->format($format) . $separator . $end->format($format);
+    }
+
+    private function formatYearRangeLabel(int $startYear, ?int $endYear, string $separator = ' s.d. '): string
+    {
+        $resolvedEndYear = $endYear ?? $startYear;
+
+        if ($startYear === $resolvedEndYear) {
+            return (string) $startYear;
+        }
+
+        return $startYear . $separator . $resolvedEndYear;
     }
 
     /**

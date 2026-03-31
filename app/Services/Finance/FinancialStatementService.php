@@ -216,6 +216,7 @@ class FinancialStatementService
                     'fii.id',
                     'fii.account_code',
                     'fi.accounting_date',
+                    'fi.id as invoice_id',
                     'fi.invoice_no',
                     'fi.journal_name',
                     'fi.reference',
@@ -253,6 +254,7 @@ class FinancialStatementService
 
                     $entryRows[] = [
                         'accounting_date' => (string) $entry->accounting_date,
+                        'invoice_id' => (string) $entry->invoice_id,
                         'invoice_no' => (string) $entry->invoice_no,
                         'journal_name' => (string) $entry->journal_name,
                         'reference' => $entry->reference !== null ? (string) $entry->reference : null,
@@ -351,16 +353,30 @@ class FinancialStatementService
 
     private function applyPeriodFilter(Builder $query, StatementFilterDTO $filter): Builder
     {
-        if (!empty($filter->reportDate)) {
-            $query->whereDate('fi.accounting_date', $filter->reportDate);
+        if (!empty($filter->startDate) || !empty($filter->endDate)) {
+            if (!empty($filter->startDate)) {
+                $query->whereDate('fi.accounting_date', '>=', $filter->startDate);
+            }
+
+            if (!empty($filter->endDate)) {
+                $query->whereDate('fi.accounting_date', '<=', $filter->endDate);
+            }
+        } else {
+            if (!empty($filter->reportDate)) {
+                $query->whereDate('fi.accounting_date', $filter->reportDate);
+            }
+
+            if ($filter->year !== null) {
+                $query->whereYear('fi.accounting_date', $filter->year);
+            }
+
+            if ($filter->month !== null) {
+                $query->whereMonth('fi.accounting_date', $filter->month);
+            }
         }
 
-        if ($filter->year !== null) {
-            $query->whereYear('fi.accounting_date', $filter->year);
-        }
-
-        if ($filter->month !== null) {
-            $query->whereMonth('fi.accounting_date', $filter->month);
+        if (!empty($filter->accountCode)) {
+            $query->where('fii.account_code', $filter->accountCode);
         }
 
         return $query;
