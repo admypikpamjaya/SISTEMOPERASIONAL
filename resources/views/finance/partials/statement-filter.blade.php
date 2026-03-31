@@ -17,6 +17,12 @@
     $action = $action ?? url()->current();
     $perPageOptions = $perPageOptions ?? [10, 20, 50, 100];
     $showPerPage = $showPerPage ?? false;
+    $isJournalDetail = request()->routeIs('finance.report.journal-items');
+    $resetQuery = array_filter([
+        'account_code' => $accountCode,
+        'statement_source' => $statementSource,
+        'per_page' => $showPerPage ? $perPage : null,
+    ], static fn ($value): bool => $value !== null && $value !== '');
     $monthOptions = [
         1 => 'Januari',
         2 => 'Februari',
@@ -33,6 +39,96 @@
     ];
 @endphp
 
+<style>
+    .fs-filter-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .fs-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 0.9rem 1rem;
+        align-items: end;
+    }
+    .fs-field[data-span="2"] { grid-column: span 2; }
+    .fs-field[data-span="3"] { grid-column: span 3; }
+    .fs-field[data-span="4"] { grid-column: span 4; }
+    .fs-field[data-span="6"] { grid-column: span 6; }
+    .fs-field[data-span="12"] { grid-column: 1 / -1; }
+    .fs-field-inline {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .fs-helper-text {
+        margin-top: 0.45rem;
+        color: var(--fs-muted, #64748b);
+        font-size: 0.74rem;
+        line-height: 1.45;
+        font-weight: 500;
+    }
+    .fs-mode-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        padding: 0.85rem 1rem;
+        border-radius: 14px;
+        border: 1px dashed rgba(37, 99, 235, 0.18);
+        background: rgba(37, 99, 235, 0.05);
+        color: var(--fs-muted, #64748b);
+        font-size: 0.78rem;
+        font-weight: 500;
+    }
+    .fs-mode-note i {
+        color: var(--fs-blue, #1d4ed8);
+        margin-top: 0.15rem;
+    }
+    .fs-actions {
+        justify-content: flex-start;
+        padding-top: 0.1rem;
+    }
+    .fs-btn-muted.is-link-reset {
+        text-decoration: none;
+    }
+    @media (max-width: 1199px) {
+        .fs-field[data-span="2"],
+        .fs-field[data-span="3"],
+        .fs-field[data-span="4"] {
+            grid-column: span 4;
+        }
+    }
+    @media (max-width: 991px) {
+        .fs-field[data-span="2"],
+        .fs-field[data-span="3"],
+        .fs-field[data-span="4"],
+        .fs-field[data-span="6"] {
+            grid-column: span 6;
+        }
+    }
+    @media (max-width: 767px) {
+        .fs-filter-grid {
+            grid-template-columns: 1fr;
+        }
+        .fs-field[data-span="2"],
+        .fs-field[data-span="3"],
+        .fs-field[data-span="4"],
+        .fs-field[data-span="6"],
+        .fs-field[data-span="12"] {
+            grid-column: auto;
+        }
+    }
+    body.dark-mode .fs-mode-note {
+        background: rgba(96, 165, 250, 0.08);
+        border-color: rgba(96, 165, 250, 0.18);
+        color: var(--app-text-muted, #94a3b8);
+    }
+    body.dark-mode .fs-mode-note i {
+        color: var(--app-accent, #60a5fa);
+    }
+</style>
+
 <div class="fs-filter-card">
     <div class="fs-filter-head">
         <div class="fs-filter-title">
@@ -41,7 +137,7 @@
         </div>
     </div>
     <div class="fs-filter-body">
-        <form method="GET" action="{{ $action }}">
+        <form method="GET" action="{{ $action }}" class="fs-filter-form">
             @if(!empty($accountCode))
                 <input type="hidden" name="account_code" value="{{ $accountCode }}">
             @endif
@@ -51,20 +147,50 @@
             @if(!empty($statementSource))
                 <input type="hidden" name="statement_source" value="{{ $statementSource }}">
             @endif
-            <div class="row">
-                <div class="col-md-2 fs-field" id="statement_period_type_group">
+            <div class="fs-filter-grid">
+                <div class="fs-field" id="statement_period_type_group" data-span="{{ $showPerPage ? '4' : '6' }}">
                     <label class="fs-label" for="statement_period_type">
                         <i class="fas fa-layer-group"></i> Periode
                     </label>
                     <select name="period_type" id="statement_period_type" class="fs-control">
                         <option value="ALL" {{ $periodType === 'ALL' ? 'selected' : '' }}>Semua</option>
-                        <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>Harian</option>
+                        <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>Harian / Tanggal</option>
                         <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
                         <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>Tahunan</option>
                     </select>
+                    <div class="fs-helper-text">
+                        Pilih <strong>Harian / Tanggal</strong> untuk filter detail jurnal berdasarkan rentang tanggal yang lebih spesifik.
+                    </div>
                 </div>
 
-                <div class="col-md-3 fs-field" id="statement_start_date_group">
+                @if($showPerPage)
+                    <div class="fs-field" data-span="2">
+                        <label class="fs-label" for="statement_per_page">
+                            <i class="fas fa-list-ol"></i> Per Halaman
+                        </label>
+                        <select name="per_page" id="statement_per_page" class="fs-control">
+                            @foreach($perPageOptions as $size)
+                                <option value="{{ $size }}" {{ $perPage === (int) $size ? 'selected' : '' }}>
+                                    {{ $size }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                @if($isJournalDetail)
+                    <div class="fs-field" data-span="{{ $showPerPage ? '6' : '6' }}">
+                        <div class="fs-mode-note">
+                            <i class="fas fa-calendar-day"></i>
+                            <div>
+                                Detail jurnal dari laba rugi dan lembar saldo sekarang bisa difilter sampai level tanggal.
+                                Jika ingin lebih presisi dari rentang bulan, ubah periode ke <strong>Harian / Tanggal</strong>.
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="fs-field" id="statement_start_date_group" data-span="3">
                     <label class="fs-label" for="statement_start_date">
                         <i class="fas fa-calendar-day"></i> Dari Tanggal
                     </label>
@@ -77,7 +203,7 @@
                     >
                 </div>
 
-                <div class="col-md-3 fs-field" id="statement_end_date_group">
+                <div class="fs-field" id="statement_end_date_group" data-span="3">
                     <label class="fs-label" for="statement_end_date">
                         <i class="fas fa-calendar-check"></i> Sampai Tanggal
                     </label>
@@ -90,7 +216,7 @@
                     >
                 </div>
 
-                <div class="col-md-2 fs-field" id="statement_start_month_group">
+                <div class="fs-field" id="statement_start_month_group" data-span="3">
                     <label class="fs-label" for="statement_start_month">
                         <i class="fas fa-calendar-week"></i> Dari Bulan
                     </label>
@@ -103,7 +229,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-2 fs-field" id="statement_start_year_group">
+                <div class="fs-field" id="statement_start_year_group" data-span="2">
                     <label class="fs-label" for="statement_start_year">
                         <i class="fas fa-calendar-alt"></i> Dari Tahun
                     </label>
@@ -118,7 +244,7 @@
                     >
                 </div>
 
-                <div class="col-md-2 fs-field" id="statement_end_month_group">
+                <div class="fs-field" id="statement_end_month_group" data-span="3">
                     <label class="fs-label" for="statement_end_month">
                         <i class="fas fa-calendar-week"></i> Sampai Bulan
                     </label>
@@ -131,7 +257,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-2 fs-field" id="statement_end_year_group">
+                <div class="fs-field" id="statement_end_year_group" data-span="2">
                     <label class="fs-label" for="statement_end_year">
                         <i class="fas fa-calendar-alt"></i> Sampai Tahun
                     </label>
@@ -146,27 +272,21 @@
                     >
                 </div>
 
-                @if($showPerPage)
-                    <div class="col-md-2 fs-field">
-                        <label class="fs-label" for="statement_per_page">
-                            <i class="fas fa-list-ol"></i> Per Halaman
-                        </label>
-                        <select name="per_page" id="statement_per_page" class="fs-control">
-                            @foreach($perPageOptions as $size)
-                                <option value="{{ $size }}" {{ $perPage === (int) $size ? 'selected' : '' }}>
-                                    {{ $size }}
-                                </option>
-                            @endforeach
-                        </select>
+                <div class="fs-field" id="statement_all_note_group" data-span="12" style="display: none;">
+                    <div class="fs-mode-note">
+                        <i class="fas fa-infinity"></i>
+                        <div>
+                            Mode <strong>Semua</strong> akan menampilkan seluruh data tanpa batas tanggal, bulan, atau tahun.
+                        </div>
                     </div>
-                @endif
+                </div>
 
-                <div class="{{ $showPerPage ? 'col-md-3' : 'col-md-4' }} fs-actions">
+                <div class="fs-field fs-actions" data-span="12">
                     <button type="submit" class="fs-btn fs-btn-primary">
                         <i class="fas fa-search"></i>
                         <span>Filter</span>
                     </button>
-                    <a href="{{ $action }}" class="fs-btn fs-btn-muted">
+                    <a href="{{ $action }}{{ !empty($resetQuery) ? '?' . http_build_query($resetQuery) : '' }}" class="fs-btn fs-btn-muted is-link-reset">
                         <i class="fas fa-redo"></i>
                         <span>Reset</span>
                     </a>
@@ -188,6 +308,7 @@
                     startYear: document.getElementById('statement_start_year_group'),
                     endMonth: document.getElementById('statement_end_month_group'),
                     endYear: document.getElementById('statement_end_year_group'),
+                    allNote: document.getElementById('statement_all_note_group'),
                 };
 
                 if (!periodTypeInput) {
@@ -217,6 +338,7 @@
                     setGroupState(fieldGroups.endMonth, isMonthly);
                     setGroupState(fieldGroups.startYear, isMonthly || isYearly);
                     setGroupState(fieldGroups.endYear, isMonthly || isYearly);
+                    setGroupState(fieldGroups.allNote, periodType === 'ALL');
                 }
 
                 periodTypeInput.addEventListener('change', syncStatementPeriodFields);
