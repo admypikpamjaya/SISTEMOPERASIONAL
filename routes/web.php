@@ -259,9 +259,29 @@ Route::prefix('finance')
             ->middleware('check_access:finance_general_ledger.read')
             ->name('report.general-ledger');
 
+        Route::get('/report/general-ledger/manage', [FinanceStatementController::class, 'manageGeneralLedger'])
+            ->middleware('check_access:finance_general_ledger.read')
+            ->name('report.general-ledger.manage');
+
         Route::get('/report/general-ledger/download', [FinanceStatementController::class, 'downloadGeneralLedger'])
             ->middleware('check_access:finance_general_ledger.read')
             ->name('report.general-ledger.download');
+
+        Route::post('/report/general-ledger/import', [FinanceStatementController::class, 'importGeneralLedgerExcel'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.general-ledger.import');
+
+        Route::post('/report/general-ledger/entries', [FinanceStatementController::class, 'storeGeneralLedgerEntry'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.general-ledger.entries.store');
+
+        Route::put('/report/general-ledger/entries/{entry}', [FinanceStatementController::class, 'updateGeneralLedgerEntry'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.general-ledger.entries.update');
+
+        Route::delete('/report/general-ledger/entries/{entry}', [FinanceStatementController::class, 'destroyGeneralLedgerEntry'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.general-ledger.entries.destroy');
 
         Route::get('/report/journal-items', [FinanceStatementController::class, 'journalItems'])
             ->middleware('check_access:finance_general_ledger.read')

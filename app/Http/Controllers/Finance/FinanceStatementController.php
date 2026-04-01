@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Finance;
 
 use App\DTOs\Finance\StatementFilterDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\FinanceGeneralLedgerEntryStoreRequest;
+use App\Http\Requests\Finance\FinanceGeneralLedgerEntryUpdateRequest;
+use App\Http\Requests\Finance\FinanceGeneralLedgerImportRequest;
 use App\Http\Requests\Finance\FinanceStatementAccountMappingRequest;
 use App\Http\Requests\Finance\FinanceStatementFilterRequest;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAccountLog;
+use App\Models\FinanceGeneralLedgerEntry;
+use App\Services\Finance\FinanceGeneralLedgerService;
 use App\Services\Finance\FinancialStatementDocumentService;
 use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
@@ -19,6 +24,7 @@ class FinanceStatementController extends Controller
 {
     public function __construct(
         private FinancialStatementService $financialStatementService,
+        private FinanceGeneralLedgerService $financeGeneralLedgerService,
         private FinancialStatementDocumentService $financialStatementDocumentService,
         private FinancialStatementSpreadsheetService $financialStatementSpreadsheetService
     ) {}
@@ -67,16 +73,67 @@ class FinanceStatementController extends Controller
 
     public function generalLedger(FinanceStatementFilterRequest $request)
     {
+        return $this->renderGeneralLedgerPage($request, false);
+    }
+
+    public function manageGeneralLedger(FinanceStatementFilterRequest $request)
+    {
+        return $this->renderGeneralLedgerPage($request, true);
+    }
+
+    private function renderGeneralLedgerPage(FinanceStatementFilterRequest $request, bool $isManageMode)
+    {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            $batchOptions = $this->financeGeneralLedgerService->getBatchOptions();
+            $hasImportedBatches = $batchOptions->isNotEmpty();
+            $hasExplicitSource = $request->query->has('ledger_source') && $request->query('ledger_source') !== '';
+            $ledgerSource = $hasExplicitSource
+                ? ($filter->ledgerSource ?? ($isManageMode ? 'imported' : 'system'))
+                : ($isManageMode ? 'imported' : ($hasImportedBatches ? 'imported' : 'system'));
+
+            $filter->ledgerSource = $ledgerSource;
+            if ($ledgerSource === 'imported' && !$this->hasExplicitGeneralLedgerPeriodInput($request)) {
+                $this->applyAllPeriodToGeneralLedgerFilter($filter);
+            }
+
+            $report = $ledgerSource === 'imported'
+                ? $this->financeGeneralLedgerService->getImportedGeneralLedgerReport($filter, $filter->ledgerBatchId)
+                : $this->financialStatementService->getGeneralLedgerReport($filter);
+            $resolvedBatchId = $filter->ledgerBatchId ?? data_get($report, 'batch.id');
+            $filter->ledgerBatchId = $resolvedBatchId;
+            $editEntry = $ledgerSource === 'imported'
+                ? $this->financeGeneralLedgerService->findEntry((string) $request->query('edit_entry', ''))
+                : null;
+            $filters = array_merge($this->buildFilterPayload($filter), [
+                'ledger_source' => $ledgerSource,
+                'ledger_batch_id' => $resolvedBatchId,
+            ]);
+            $filterQuery = array_filter(array_merge($filter->toQueryArray(), [
+                'ledger_source' => $ledgerSource,
+                'ledger_batch_id' => $resolvedBatchId,
+            ]), static fn ($value): bool => $value !== null && $value !== '');
 
             return view('finance.general-ledger', [
-                'report' => $this->financialStatementService->getGeneralLedgerReport($filter),
-                'filters' => $this->buildFilterPayload($filter),
+                'report' => $report,
+                'filters' => $filters,
                 'periodLabel' => $this->buildPeriodLabel($filter),
-                'filterQuery' => $filter->toQueryArray(),
+                'filterQuery' => $filterQuery,
                 'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
                 'selectedAccountCode' => $filter->accountCode,
+                'ledgerSource' => $ledgerSource,
+                'selectedBatchId' => $resolvedBatchId,
+                'batchOptions' => $ledgerSource === 'imported'
+                    ? ($report['batches'] ?? $batchOptions->all())
+                    : $batchOptions->all(),
+                'selectedBatch' => $report['batch'] ?? null,
+                'editEntry' => $editEntry !== null ? $this->serializeImportedLedgerEntry($editEntry) : null,
+                'isManageMode' => $isManageMode,
+                'pageRouteName' => $isManageMode
+                    ? 'finance.report.general-ledger.manage'
+                    : 'finance.report.general-ledger',
+                'mainLedgerRouteName' => 'finance.report.general-ledger',
+                'manageLedgerRouteName' => 'finance.report.general-ledger.manage',
             ]);
         } catch (Throwable $exception) {
             report($exception);
@@ -133,6 +190,122 @@ class FinanceStatementController extends Controller
     public function downloadJournalItems(FinanceStatementFilterRequest $request)
     {
         return $this->downloadStatementDocument($request, 'journal_items');
+    }
+
+    public function importGeneralLedgerExcel(FinanceGeneralLedgerImportRequest $request)
+    {
+        $uploadedFile = $request->file('file');
+        if ($uploadedFile === null) {
+            return redirect()
+                ->route('finance.report.general-ledger.manage', ['ledger_source' => 'imported'])
+                ->with('error', 'File import buku besar tidak ditemukan.');
+        }
+
+        try {
+            $summary = $this->financeGeneralLedgerService->importFromExcel(
+                $uploadedFile->getPathname(),
+                $uploadedFile->getClientOriginalName(),
+                $request->validated()['batch_name'] ?? null,
+                $request->validated()['notes'] ?? null,
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route('finance.report.general-ledger.manage', [
+                    'ledger_source' => 'imported',
+                    'ledger_batch_id' => (string) $summary['batch']->id,
+                    'period_type' => 'ALL',
+                ])
+                ->with(
+                    'success',
+                    'Import buku besar selesai. '
+                    . $summary['inserted'] . ' baris dan '
+                    . $summary['account_count'] . ' akun berhasil dibaca.'
+                );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Import Excel buku besar gagal: ' . $exception->getMessage());
+        }
+    }
+
+    public function storeGeneralLedgerEntry(FinanceGeneralLedgerEntryStoreRequest $request)
+    {
+        try {
+            $entry = $this->financeGeneralLedgerService->createEntry(
+                $request->validated(),
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route('finance.report.general-ledger.manage', array_merge($this->extractGeneralLedgerRedirectQuery($request), [
+                    'ledger_source' => 'imported',
+                    'ledger_batch_id' => (string) $entry->batch_id,
+                ]))
+                ->with('success', 'Baris buku besar berhasil ditambahkan.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal menambahkan baris buku besar.');
+        }
+    }
+
+    public function updateGeneralLedgerEntry(
+        FinanceGeneralLedgerEntryUpdateRequest $request,
+        FinanceGeneralLedgerEntry $entry
+    ) {
+        try {
+            $updatedEntry = $this->financeGeneralLedgerService->updateEntry(
+                $entry,
+                $request->validated(),
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route('finance.report.general-ledger.manage', array_merge($this->extractGeneralLedgerRedirectQuery($request), [
+                    'ledger_source' => 'imported',
+                    'ledger_batch_id' => (string) $updatedEntry->batch_id,
+                ]))
+                ->with('success', 'Baris buku besar berhasil diperbarui.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui baris buku besar.');
+        }
+    }
+
+    public function destroyGeneralLedgerEntry(FinanceStatementFilterRequest $request, FinanceGeneralLedgerEntry $entry)
+    {
+        try {
+            $batchId = (string) $entry->batch_id;
+            $filter = StatementFilterDTO::fromArray($request->validated());
+            $this->financeGeneralLedgerService->deleteEntry($entry);
+
+            return redirect()
+                ->route('finance.report.general-ledger.manage', array_merge(
+                    $filter->toQueryArray(),
+                    [
+                        'ledger_source' => 'imported',
+                        'ledger_batch_id' => $batchId,
+                    ]
+                ))
+                ->with('success', 'Baris buku besar berhasil dihapus.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menghapus baris buku besar.');
+        }
     }
 
     public function saveAccountMapping(FinanceStatementAccountMappingRequest $request)
@@ -221,6 +394,8 @@ class FinanceStatementController extends Controller
             'account_code' => $filter->accountCode,
             'search' => $filter->search,
             'statement_source' => $filter->statementSource,
+            'ledger_source' => $filter->ledgerSource,
+            'ledger_batch_id' => $filter->ledgerBatchId,
             'per_page' => $filter->perPage,
         ];
     }
@@ -321,6 +496,8 @@ class FinanceStatementController extends Controller
                 accountCode: $filter->accountCode,
                 search: $filter->search,
                 statementSource: $filter->statementSource,
+                ledgerSource: $filter->ledgerSource,
+                ledgerBatchId: $filter->ledgerBatchId,
                 selectedIds: $filter->selectedIds,
                 page: 1,
                 perPage: 5000
@@ -347,11 +524,23 @@ class FinanceStatementController extends Controller
                     ),
                 'general_ledger' => $format === 'excel'
                     ? $this->financialStatementSpreadsheetService->exportGeneralLedger(
-                        $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
+                        ($filter->ledgerSource ?? 'system') === 'imported'
+                            ? $this->financeGeneralLedgerService->getImportedGeneralLedgerReport(
+                                $exportFilter,
+                                $filter->ledgerBatchId,
+                                false
+                            )
+                            : $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
                         $exportFilter
                     )
                     : $this->financialStatementDocumentService->exportGeneralLedger(
-                        $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
+                        ($filter->ledgerSource ?? 'system') === 'imported'
+                            ? $this->financeGeneralLedgerService->getImportedGeneralLedgerReport(
+                                $exportFilter,
+                                $filter->ledgerBatchId,
+                                false
+                            )
+                            : $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
                         $exportFilter
                     ),
                 'journal_items' => $format === 'excel'
@@ -439,5 +628,84 @@ class FinanceStatementController extends Controller
             'class_no' => (int) $account->class_no,
             'is_active' => (bool) $account->is_active,
         ];
+    }
+
+    /**
+     * @return array<string, int|string>
+     */
+    private function extractGeneralLedgerRedirectQuery(
+        FinanceGeneralLedgerEntryStoreRequest|FinanceGeneralLedgerEntryUpdateRequest $request
+    ): array {
+        return array_filter([
+            'period_type' => $request->input('period_type'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'start_month' => $request->input('start_month'),
+            'end_month' => $request->input('end_month'),
+            'start_year' => $request->input('start_year'),
+            'end_year' => $request->input('end_year'),
+            'report_date' => $request->input('report_date'),
+            'month' => $request->input('month'),
+            'year' => $request->input('year'),
+            'account_code' => $request->input('account_code_filter'),
+            'search' => $request->input('search_filter'),
+            'per_page' => $request->input('per_page'),
+        ], static fn ($value): bool => $value !== null && $value !== '');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeImportedLedgerEntry(FinanceGeneralLedgerEntry $entry): array
+    {
+        return [
+            'id' => (string) $entry->id,
+            'batch_id' => (string) $entry->batch_id,
+            'row_type' => (string) $entry->row_type,
+            'entry_date' => $entry->entry_date?->toDateString(),
+            'account_code' => (string) $entry->account_code,
+            'account_name' => (string) $entry->account_name,
+            'transaction_no' => $entry->transaction_no !== null ? (string) $entry->transaction_no : null,
+            'communication' => $entry->communication !== null ? (string) $entry->communication : null,
+            'partner_name' => $entry->partner_name !== null ? (string) $entry->partner_name : null,
+            'currency' => $entry->currency !== null ? (string) $entry->currency : 'IDR',
+            'label' => $entry->label !== null ? (string) $entry->label : null,
+            'reference' => $entry->reference !== null ? (string) $entry->reference : null,
+            'analytic_distribution' => $entry->analytic_distribution !== null
+                ? (string) $entry->analytic_distribution
+                : null,
+            'opening_balance' => round((float) $entry->opening_balance, 2),
+            'debit' => round((float) $entry->debit, 2),
+            'credit' => round((float) $entry->credit, 2),
+            'is_manual' => (bool) $entry->is_manual,
+        ];
+    }
+
+    private function hasExplicitGeneralLedgerPeriodInput(FinanceStatementFilterRequest $request): bool
+    {
+        return $request->filled('period_type')
+            || $request->filled('report_date')
+            || $request->filled('month')
+            || $request->filled('year')
+            || $request->filled('start_date')
+            || $request->filled('end_date')
+            || $request->filled('start_month')
+            || $request->filled('end_month')
+            || $request->filled('start_year')
+            || $request->filled('end_year');
+    }
+
+    private function applyAllPeriodToGeneralLedgerFilter(StatementFilterDTO $filter): void
+    {
+        $filter->periodType = null;
+        $filter->reportDate = null;
+        $filter->year = null;
+        $filter->month = null;
+        $filter->startDate = null;
+        $filter->endDate = null;
+        $filter->startMonth = null;
+        $filter->endMonth = null;
+        $filter->startYear = null;
+        $filter->endYear = null;
     }
 }

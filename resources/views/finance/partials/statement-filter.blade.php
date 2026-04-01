@@ -13,6 +13,8 @@
     $accountCode = $statementFilters['account_code'] ?? null;
     $search = $statementFilters['search'] ?? null;
     $statementSource = $statementFilters['statement_source'] ?? null;
+    $ledgerSource = $statementFilters['ledger_source'] ?? null;
+    $ledgerBatchId = $statementFilters['ledger_batch_id'] ?? null;
     $perPage = (int) ($statementFilters['per_page'] ?? 10);
     $action = $action ?? url()->current();
     $perPageOptions = $perPageOptions ?? [10, 20, 50, 100];
@@ -21,6 +23,8 @@
     $resetQuery = array_filter([
         'account_code' => $accountCode,
         'statement_source' => $statementSource,
+        'ledger_source' => $ledgerSource,
+        'ledger_batch_id' => $ledgerBatchId,
         'per_page' => $showPerPage ? $perPage : null,
     ], static fn ($value): bool => $value !== null && $value !== '');
     $monthOptions = [
@@ -146,6 +150,12 @@
             @endif
             @if(!empty($statementSource))
                 <input type="hidden" name="statement_source" value="{{ $statementSource }}">
+            @endif
+            @if(!empty($ledgerSource))
+                <input type="hidden" name="ledger_source" value="{{ $ledgerSource }}">
+            @endif
+            @if(!empty($ledgerBatchId))
+                <input type="hidden" name="ledger_batch_id" value="{{ $ledgerBatchId }}">
             @endif
             <div class="fs-filter-grid">
                 <div class="fs-field" id="statement_period_type_group" data-span="{{ $showPerPage ? '4' : '6' }}">

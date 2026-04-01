@@ -7,9 +7,77 @@
     $accounts = $report['accounts'] ?? null;
     $baseFilterQuery = $baseFilterQuery ?? ($filterQuery ?? []);
     $selectedAccountCode = $selectedAccountCode ?? null;
+    $isManageMode = $isManageMode ?? false;
+    $pageRouteName = $pageRouteName ?? 'finance.report.general-ledger';
+    $mainLedgerRouteName = $mainLedgerRouteName ?? 'finance.report.general-ledger';
+    $manageLedgerRouteName = $manageLedgerRouteName ?? 'finance.report.general-ledger.manage';
+    $ledgerSource = $ledgerSource ?? 'system';
+    $isImportedSource = $ledgerSource === 'imported';
+    $selectedBatchId = $selectedBatchId ?? null;
+    $batchOptions = $batchOptions ?? [];
+    $selectedBatch = $selectedBatch ?? null;
+    $selectedBatchMeta = collect($batchOptions)->firstWhere('id', $selectedBatchId)
+        ?? $selectedBatch;
+    $editEntry = $editEntry ?? null;
     $selectedAccountName = $selectedAccountCode !== null && !empty($groups)
         ? ($groups[0]['account_name'] ?? null)
         : null;
+    $sourceQueryBase = collect($filterQuery ?? [])
+        ->except(['ledger_source', 'ledger_batch_id', 'page'])
+        ->filter(static fn ($value): bool => $value !== null && $value !== '')
+        ->all();
+    $systemSourceQuery = array_merge($sourceQueryBase, ['ledger_source' => 'system']);
+    $importedSourceQuery = array_merge(
+        $sourceQueryBase,
+        ['ledger_source' => 'imported', 'period_type' => $isImportedSource ? (data_get($filters, 'period_type', 'ALL') ?: 'ALL') : 'ALL'],
+        $selectedBatchId ? ['ledger_batch_id' => $selectedBatchId] : []
+    );
+    $switchPageQuery = array_filter(array_merge($filterQuery ?? [], [
+        'ledger_source' => $ledgerSource,
+        'ledger_batch_id' => $selectedBatchId,
+    ]), static fn ($value): bool => $value !== null && $value !== '');
+    $managePageQuery = array_filter(array_merge($filterQuery ?? [], [
+        'ledger_source' => 'imported',
+        'ledger_batch_id' => $selectedBatchId,
+        'period_type' => $isImportedSource ? (data_get($filters, 'period_type', 'ALL') ?: 'ALL') : 'ALL',
+    ]), static fn ($value): bool => $value !== null && $value !== '');
+    $mainPageQuery = $isImportedSource ? $managePageQuery : $switchPageQuery;
+    $redirectFields = array_filter([
+        'period_type' => data_get($filters, 'period_type'),
+        'start_date' => data_get($filters, 'start_date'),
+        'end_date' => data_get($filters, 'end_date'),
+        'start_month' => data_get($filters, 'start_month'),
+        'end_month' => data_get($filters, 'end_month'),
+        'start_year' => data_get($filters, 'start_year'),
+        'end_year' => data_get($filters, 'end_year'),
+        'report_date' => data_get($filters, 'report_date'),
+        'month' => data_get($filters, 'month'),
+        'year' => data_get($filters, 'year'),
+        'account_code_filter' => $selectedAccountCode,
+        'search_filter' => data_get($filters, 'search'),
+        'per_page' => data_get($filters, 'per_page'),
+    ], static fn ($value): bool => $value !== null && $value !== '');
+    $entryForm = $editEntry ?? [
+        'row_type' => 'ENTRY',
+        'entry_date' => data_get($filters, 'start_date') ?: now()->toDateString(),
+        'account_code' => $selectedAccountCode,
+        'account_name' => $selectedAccountName,
+        'transaction_no' => null,
+        'communication' => null,
+        'partner_name' => null,
+        'currency' => 'IDR',
+        'label' => null,
+        'reference' => null,
+        'analytic_distribution' => null,
+        'opening_balance' => 0,
+        'debit' => 0,
+        'credit' => 0,
+    ];
+    $pageSubtitle = $isManageMode
+        ? 'Kelola import Excel dan edit manual buku besar.'
+        : ($isImportedSource
+            ? 'Hasil import buku besar yang sudah tersedia tampil langsung di halaman utama.'
+            : 'Rincian jurnal keseluruhan per akun untuk periode ' . $periodLabel . '.');
 @endphp
 
 <style>
@@ -269,6 +337,178 @@
         color: var(--gl-text);
         transform: translateY(-1px);
     }
+    .gl-source-grid,
+    .gl-manage-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .gl-source-card,
+    .gl-manage-card {
+        background: var(--gl-card);
+        border: 1px solid var(--gl-border);
+        border-radius: var(--gl-radius);
+        box-shadow: var(--gl-shadow);
+        padding: 1rem 1.1rem;
+    }
+    .gl-source-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    .gl-source-link {
+        display: block;
+        padding: 0.9rem 1rem;
+        border-radius: 14px;
+        border: 1px solid var(--gl-border);
+        background: #f8fbff;
+        color: var(--gl-text);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .gl-source-link:hover {
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    .gl-source-link.is-active {
+        background: linear-gradient(135deg, rgba(29, 78, 216, 0.12), rgba(37, 99, 235, 0.2));
+        border-color: rgba(37, 99, 235, 0.24);
+    }
+    .gl-source-link strong {
+        display: block;
+        font-size: 0.86rem;
+        margin-bottom: 0.2rem;
+    }
+    .gl-source-link span {
+        color: var(--gl-muted);
+        font-size: 0.75rem;
+    }
+    .gl-panel-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        color: var(--gl-text);
+        font-size: 0.92rem;
+        font-weight: 800;
+        margin-bottom: 0.85rem;
+    }
+    .gl-panel-help {
+        color: var(--gl-muted);
+        font-size: 0.76rem;
+        line-height: 1.5;
+        margin-top: 0.35rem;
+    }
+    .gl-batch-form,
+    .gl-manage-form {
+        display: grid;
+        gap: 0.85rem;
+    }
+    .gl-batch-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.7rem;
+        margin-top: 0.8rem;
+    }
+    .gl-batch-stat {
+        background: #f8fbff;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 12px;
+        padding: 0.75rem 0.85rem;
+    }
+    .gl-batch-stat label {
+        display: block;
+        color: var(--gl-muted);
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.2rem;
+    }
+    .gl-batch-stat div {
+        color: var(--gl-text);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+    .gl-form-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 0.8rem;
+    }
+    .gl-form-grid .gl-col-12 { grid-column: span 12; }
+    .gl-form-grid .gl-col-6 { grid-column: span 6; }
+    .gl-form-grid .gl-col-4 { grid-column: span 4; }
+    .gl-form-grid .gl-col-3 { grid-column: span 3; }
+    .gl-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        align-items: center;
+    }
+    .gl-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.28rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.06);
+        color: var(--gl-muted);
+        font-size: 0.7rem;
+        font-weight: 800;
+        margin-top: 0.35rem;
+    }
+    .gl-chip.imported {
+        background: rgba(8, 145, 178, 0.12);
+        color: var(--gl-cyan);
+    }
+    .gl-chip.manual {
+        background: rgba(16, 185, 129, 0.12);
+        color: var(--gl-green);
+    }
+    .gl-row-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+    }
+    .gl-inline-form {
+        margin: 0;
+    }
+    .gl-row-link,
+    .gl-row-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.38rem 0.72rem;
+        border-radius: 10px;
+        border: 1px solid rgba(37, 99, 235, 0.15);
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--gl-blue);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-decoration: none;
+    }
+    .gl-row-btn {
+        cursor: pointer;
+    }
+    .gl-row-link:hover,
+    .gl-row-btn:hover {
+        text-decoration: none;
+        background: var(--gl-blue);
+        color: #fff;
+    }
+    .gl-row-btn.danger {
+        background: rgba(239, 68, 68, 0.08);
+        border-color: rgba(239, 68, 68, 0.15);
+        color: var(--gl-red);
+    }
+    .gl-row-btn.danger:hover {
+        background: var(--gl-red);
+        color: #fff;
+    }
+    .gl-table td.gl-action-cell {
+        width: 170px;
+    }
 
     .gl-ledger-list {
         display: grid;
@@ -428,7 +668,9 @@
     body.dark-mode .gl-summary-card,
     body.dark-mode .gl-ledger-card,
     body.dark-mode .gl-empty-card,
-    body.dark-mode .gl-pagination {
+    body.dark-mode .gl-pagination,
+    body.dark-mode .gl-source-card,
+    body.dark-mode .gl-manage-card {
         background: var(--app-surface) !important;
         border-color: var(--app-border) !important;
         box-shadow: var(--app-shadow) !important;
@@ -448,14 +690,19 @@
     body.dark-mode .gl-table th,
     body.dark-mode .gl-entry-sub,
     body.dark-mode .gl-ledger-sub,
-    body.dark-mode .gl-ledger-total label {
+    body.dark-mode .gl-ledger-total label,
+    body.dark-mode .gl-panel-help,
+    body.dark-mode .gl-source-link span,
+    body.dark-mode .gl-batch-stat label {
         color: var(--app-text-muted) !important;
     }
     body.dark-mode .fs-control,
     body.dark-mode .gl-nav-link.muted,
     body.dark-mode .fs-btn-muted,
     body.dark-mode .gl-ledger-total,
-    body.dark-mode .gl-reset-link {
+    body.dark-mode .gl-reset-link,
+    body.dark-mode .gl-source-link,
+    body.dark-mode .gl-batch-stat {
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
         color: var(--app-text) !important;
@@ -494,6 +741,30 @@
         background: var(--app-accent) !important;
         color: #fff !important;
     }
+    body.dark-mode .gl-source-link.is-active {
+        background: rgba(96, 165, 250, 0.12) !important;
+        border-color: rgba(96, 165, 250, 0.22) !important;
+    }
+    body.dark-mode .gl-row-link,
+    body.dark-mode .gl-row-btn {
+        background: rgba(96, 165, 250, 0.12) !important;
+        border-color: rgba(96, 165, 250, 0.18) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .gl-row-btn.danger {
+        background: rgba(248, 113, 113, 0.12) !important;
+        border-color: rgba(248, 113, 113, 0.18) !important;
+        color: #fecaca !important;
+    }
+    body.dark-mode .gl-row-link:hover,
+    body.dark-mode .gl-row-btn:hover {
+        background: var(--app-accent) !important;
+        color: #fff !important;
+    }
+    body.dark-mode .gl-row-btn.danger:hover {
+        background: #ef4444 !important;
+        color: #fff !important;
+    }
     body.dark-mode .gl-pagination .page-link {
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
@@ -509,6 +780,25 @@
             grid-template-columns: 1fr;
             min-width: 100%;
         }
+        .gl-form-grid .gl-col-6,
+        .gl-form-grid .gl-col-4,
+        .gl-form-grid .gl-col-3 {
+            grid-column: span 6;
+        }
+    }
+    @media (max-width: 767px) {
+        .gl-source-links {
+            grid-template-columns: 1fr;
+        }
+        .gl-form-grid {
+            grid-template-columns: 1fr;
+        }
+        .gl-form-grid .gl-col-12,
+        .gl-form-grid .gl-col-6,
+        .gl-form-grid .gl-col-4,
+        .gl-form-grid .gl-col-3 {
+            grid-column: auto;
+        }
     }
 </style>
 
@@ -517,7 +807,7 @@
         <div class="gl-title-icon"><i class="fas fa-book-open"></i></div>
         <div>
             <h1>Buku Besar</h1>
-            <p>Rincian jurnal keseluruhan per akun untuk periode {{ $periodLabel }}.</p>
+            <p>{{ $pageSubtitle }}</p>
         </div>
     </div>
 
@@ -537,14 +827,266 @@
         <a href="{{ route('finance.report.profit-loss', $baseFilterQuery) }}" class="gl-nav-link muted">
             <i class="fas fa-chart-area"></i> Laba Rugi
         </a>
+        @if($isManageMode)
+            <a href="{{ route($mainLedgerRouteName, $mainPageQuery) }}" class="gl-nav-link muted">
+                <i class="fas fa-book"></i> Halaman Utama
+            </a>
+        @else
+            @permission('finance_report.generate')
+                <a href="{{ route($manageLedgerRouteName, $managePageQuery) }}" class="gl-nav-link muted">
+                    <i class="fas fa-sliders-h"></i> Import & Edit Manual
+                </a>
+            @endpermission
+        @endif
     </div>
 </div>
 
+<div class="gl-source-grid">
+    <div class="gl-source-card">
+        <div class="gl-panel-title">
+            <i class="fas fa-database"></i>
+            <span>Sumber Data Buku Besar</span>
+        </div>
+        <div class="gl-source-links">
+            <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="gl-source-link {{ !$isImportedSource ? 'is-active' : '' }}">
+                <strong>Jurnal Sistem</strong>
+                <span>Membaca buku besar dari invoice/jurnal finance yang sudah `POSTED`.</span>
+            </a>
+            <a href="{{ route($pageRouteName, $importedSourceQuery) }}" class="gl-source-link {{ $isImportedSource ? 'is-active' : '' }}">
+                <strong>{{ $isManageMode ? 'Import & Manual' : 'Hasil Import' }}</strong>
+                <span>{{ $isManageMode ? 'Membaca batch Excel buku besar dan baris yang diedit manual.' : 'Menampilkan hasil batch import buku besar langsung dari halaman utama.' }}</span>
+            </a>
+        </div>
+    </div>
+
+    @if($isImportedSource)
+        <div class="gl-source-card">
+            <div class="gl-panel-title">
+                <i class="fas fa-layer-group"></i>
+                <span>{{ $isManageMode ? 'Pilih Batch Import' : 'Pilih Hasil Import' }}</span>
+            </div>
+            <form method="GET" action="{{ route($pageRouteName) }}" class="gl-batch-form">
+                <input type="hidden" name="ledger_source" value="imported">
+                @foreach($sourceQueryBase as $queryKey => $queryValue)
+                    <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                @endforeach
+                <div class="fs-field" style="margin-bottom:0;">
+                    <label class="fs-label" for="ledger_batch_id">
+                        <i class="fas fa-box-open"></i> Batch Buku Besar
+                    </label>
+                    <select name="ledger_batch_id" id="ledger_batch_id" class="fs-control" onchange="this.form.submit()">
+                        <option value="">Pilih batch import...</option>
+                        @foreach($batchOptions as $batchOption)
+                            <option value="{{ $batchOption['id'] }}" {{ $selectedBatchId === $batchOption['id'] ? 'selected' : '' }}>
+                                {{ $batchOption['batch_name'] }}
+                                @if(!empty($batchOption['imported_year']))
+                                    | {{ $batchOption['imported_year'] }}
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="gl-panel-help">
+                    {{ $isManageMode
+                        ? 'Ganti batch untuk mengelola hasil import Excel yang berbeda tanpa keluar dari halaman kelola.'
+                        : 'Ganti batch untuk melihat hasil import Excel yang berbeda langsung dari halaman utama buku besar.' }}
+                </div>
+            </form>
+
+            @if(!empty($selectedBatchMeta))
+                <div class="gl-batch-meta">
+                    <div class="gl-batch-stat">
+                        <label>Batch</label>
+                        <div>{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
+                    </div>
+                    <div class="gl-batch-stat">
+                        <label>File Sumber</label>
+                        <div>{{ data_get($selectedBatchMeta, 'source_filename', 'Manual / Tidak ada file') }}</div>
+                    </div>
+                    <div class="gl-batch-stat">
+                        <label>Jumlah Akun</label>
+                        <div>{{ number_format((int) data_get($selectedBatchMeta, 'account_count', 0), 0, ',', '.') }}</div>
+                    </div>
+                    <div class="gl-batch-stat">
+                        <label>Baris Manual</label>
+                        <div>{{ number_format((int) data_get($selectedBatchMeta, 'manual_count', 0), 0, ',', '.') }}</div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
+</div>
+
 @include('finance.partials.statement-filter', [
-    'action' => route('finance.report.general-ledger'),
+    'action' => route($pageRouteName),
     'filters' => $filters,
     'showPerPage' => true,
 ])
+
+@if($isManageMode && $isImportedSource)
+    @permission('finance_report.generate')
+        <div class="gl-manage-grid">
+            <div class="gl-manage-card">
+                <div class="gl-panel-title">
+                    <i class="fas fa-file-import"></i>
+                    <span>Import Excel Buku Besar</span>
+                </div>
+                <form method="POST" action="{{ route('finance.report.general-ledger.import') }}" enctype="multipart/form-data" class="gl-manage-form">
+                    @csrf
+                    <div class="fs-field" style="margin-bottom:0;">
+                        <label class="fs-label" for="gl_import_file">
+                            <i class="fas fa-file-excel"></i> File Excel
+                        </label>
+                        <input type="file" name="file" id="gl_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
+                    </div>
+                    <div class="gl-form-grid">
+                        <div class="fs-field gl-col-6" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_import_batch_name">
+                                <i class="fas fa-signature"></i> Nama Batch
+                            </label>
+                            <input type="text" name="batch_name" id="gl_import_batch_name" class="fs-control" placeholder="Contoh: Rincian Buku Besar 2025">
+                        </div>
+                        <div class="fs-field gl-col-6" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_import_notes">
+                                <i class="fas fa-sticky-note"></i> Catatan
+                            </label>
+                            <input type="text" name="notes" id="gl_import_notes" class="fs-control" placeholder="Opsional">
+                        </div>
+                    </div>
+                    <button type="submit" class="fs-btn fs-btn-primary">
+                        <i class="fas fa-upload"></i>
+                        <span>Import Sekarang</span>
+                    </button>
+                    <div class="gl-panel-help">
+                        Parser akan membaca format header akun, saldo awal, debit, kredit, dan saldo berjalan seperti file contoh buku besar.
+                    </div>
+                </form>
+            </div>
+
+            <div class="gl-manage-card">
+                <div class="gl-panel-title">
+                    <i class="fas fa-pen-to-square"></i>
+                    <span>{{ $editEntry ? 'Edit Baris Buku Besar' : 'Tambah Baris Buku Besar' }}</span>
+                </div>
+                <form
+                    method="POST"
+                    action="{{ $editEntry ? route('finance.report.general-ledger.entries.update', $editEntry['id']) : route('finance.report.general-ledger.entries.store') }}"
+                    class="gl-manage-form"
+                >
+                    @csrf
+                    @if($editEntry)
+                        @method('PUT')
+                    @endif
+                    <input type="hidden" name="batch_id" value="{{ old('batch_id', $editEntry['batch_id'] ?? $selectedBatchId) }}">
+                    @foreach($redirectFields as $queryKey => $queryValue)
+                        <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                    @endforeach
+                    <div class="gl-form-grid">
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_row_type">
+                                <i class="fas fa-stream"></i> Jenis Baris
+                            </label>
+                            <select name="row_type" id="gl_row_type" class="fs-control">
+                                <option value="ENTRY" {{ old('row_type', $entryForm['row_type']) === 'ENTRY' ? 'selected' : '' }}>Transaksi</option>
+                                <option value="OPENING" {{ old('row_type', $entryForm['row_type']) === 'OPENING' ? 'selected' : '' }}>Saldo Awal</option>
+                            </select>
+                        </div>
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_entry_date">
+                                <i class="fas fa-calendar-day"></i> Tanggal
+                            </label>
+                            <input type="date" name="entry_date" id="gl_entry_date" class="fs-control" value="{{ old('entry_date', $entryForm['entry_date']) }}">
+                        </div>
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_account_code">
+                                <i class="fas fa-hashtag"></i> Kode Akun
+                            </label>
+                            <input type="text" name="account_code" id="gl_account_code" class="fs-control" value="{{ old('account_code', $entryForm['account_code']) }}" placeholder="100.02.01">
+                        </div>
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_currency">
+                                <i class="fas fa-coins"></i> Mata Uang
+                            </label>
+                            <input type="text" name="currency" id="gl_currency" class="fs-control" value="{{ old('currency', $entryForm['currency']) }}" placeholder="IDR">
+                        </div>
+                        <div class="fs-field gl-col-12" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_account_name">
+                                <i class="fas fa-font"></i> Nama Akun
+                            </label>
+                            <input type="text" name="account_name" id="gl_account_name" class="fs-control" value="{{ old('account_name', $entryForm['account_name']) }}" placeholder="Nama akun buku besar">
+                        </div>
+                        <div class="fs-field gl-col-4" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_transaction_no">
+                                <i class="fas fa-receipt"></i> No Transaksi
+                            </label>
+                            <input type="text" name="transaction_no" id="gl_transaction_no" class="fs-control" value="{{ old('transaction_no', $entryForm['transaction_no']) }}">
+                        </div>
+                        <div class="fs-field gl-col-4" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_communication">
+                                <i class="fas fa-comments"></i> Komunikasi
+                            </label>
+                            <input type="text" name="communication" id="gl_communication" class="fs-control" value="{{ old('communication', $entryForm['communication']) }}">
+                        </div>
+                        <div class="fs-field gl-col-4" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_partner_name">
+                                <i class="fas fa-handshake"></i> Rekanan
+                            </label>
+                            <input type="text" name="partner_name" id="gl_partner_name" class="fs-control" value="{{ old('partner_name', $entryForm['partner_name']) }}">
+                        </div>
+                        <div class="fs-field gl-col-6" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_label">
+                                <i class="fas fa-align-left"></i> Uraian
+                            </label>
+                            <input type="text" name="label" id="gl_label" class="fs-control" value="{{ old('label', $entryForm['label']) }}">
+                        </div>
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_reference">
+                                <i class="fas fa-link"></i> Referensi
+                            </label>
+                            <input type="text" name="reference" id="gl_reference" class="fs-control" value="{{ old('reference', $entryForm['reference']) }}">
+                        </div>
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_analytic_distribution">
+                                <i class="fas fa-project-diagram"></i> Analitik
+                            </label>
+                            <input type="text" name="analytic_distribution" id="gl_analytic_distribution" class="fs-control" value="{{ old('analytic_distribution', $entryForm['analytic_distribution']) }}">
+                        </div>
+                        <div class="fs-field gl-col-4" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_opening_balance">
+                                <i class="fas fa-wallet"></i> Opening Balance
+                            </label>
+                            <input type="number" step="0.01" name="opening_balance" id="gl_opening_balance" class="fs-control" value="{{ old('opening_balance', $entryForm['opening_balance']) }}">
+                        </div>
+                        <div class="fs-field gl-col-4" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_debit">
+                                <i class="fas fa-arrow-up"></i> Debit
+                            </label>
+                            <input type="number" step="0.01" name="debit" id="gl_debit" class="fs-control" value="{{ old('debit', $entryForm['debit']) }}">
+                        </div>
+                        <div class="fs-field gl-col-4" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_credit">
+                                <i class="fas fa-arrow-down"></i> Kredit
+                            </label>
+                            <input type="number" step="0.01" name="credit" id="gl_credit" class="fs-control" value="{{ old('credit', $entryForm['credit']) }}">
+                        </div>
+                    </div>
+                    <div class="gl-form-actions">
+                        <button type="submit" class="fs-btn fs-btn-primary">
+                            <i class="fas fa-save"></i>
+                            <span>{{ $editEntry ? 'Update Baris' : 'Tambah Baris' }}</span>
+                        </button>
+                        @if($editEntry)
+                            <a href="{{ route($pageRouteName, array_merge($filterQuery, ['ledger_source' => 'imported', 'ledger_batch_id' => $selectedBatchId])) }}" class="fs-btn fs-btn-muted">
+                                <i class="fas fa-times-circle"></i>
+                                <span>Batal Edit</span>
+                            </a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endpermission
+@endif
 
 @if(!empty($selectedAccountCode))
     <div class="gl-filter-note">
@@ -555,7 +1097,7 @@
             </span>
             <small>Tampilan buku besar sedang difokuskan ke satu akun dari lembar saldo atau laba rugi.</small>
         </div>
-        <a href="{{ route('finance.report.general-ledger', $baseFilterQuery) }}" class="gl-reset-link">
+        <a href="{{ route($pageRouteName, array_merge($baseFilterQuery, ['ledger_source' => $ledgerSource], $selectedBatchId ? ['ledger_batch_id' => $selectedBatchId] : [])) }}" class="gl-reset-link">
             <i class="fas fa-times-circle"></i> Lihat Semua Akun
         </a>
     </div>
@@ -565,12 +1107,12 @@
     <div class="gl-summary-card">
         <div class="gl-summary-label"><i class="fas fa-sitemap"></i> Jumlah Akun</div>
         <div class="gl-summary-value">{{ number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.') }}</div>
-        <div class="gl-summary-help">Akun unik yang muncul dalam jurnal sesuai filter aktif.</div>
+        <div class="gl-summary-help">{{ $isImportedSource ? 'Akun unik yang terbaca dari batch import/manual aktif.' : 'Akun unik yang muncul dalam jurnal sesuai filter aktif.' }}</div>
     </div>
     <div class="gl-summary-card">
         <div class="gl-summary-label"><i class="fas fa-list-ul"></i> Baris Jurnal</div>
         <div class="gl-summary-value">{{ number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.') }}</div>
-        <div class="gl-summary-help">Total baris debit dan kredit yang masuk ke buku besar.</div>
+        <div class="gl-summary-help">{{ $isImportedSource ? 'Baris transaksi pada batch import/manual yang aktif.' : 'Total baris debit dan kredit yang masuk ke buku besar.' }}</div>
     </div>
     <div class="gl-summary-card">
         <div class="gl-summary-label"><i class="fas fa-arrow-up"></i> Total Debit</div>
@@ -587,8 +1129,15 @@
         <div class="gl-summary-value" style="color: {{ (float) ($summary['balance_gap'] ?? 0) === 0.0 ? 'var(--gl-green)' : 'var(--gl-red)' }};">
             Rp {{ number_format((float) ($summary['balance_gap'] ?? 0), 2, ',', '.') }}
         </div>
-        <div class="gl-summary-help">Idealnya bernilai 0 jika jurnal seimbang.</div>
+        <div class="gl-summary-help">Idealnya bernilai 0 jika buku besar seimbang.</div>
     </div>
+    @if($isImportedSource && !empty($selectedBatchMeta))
+        <div class="gl-summary-card">
+            <div class="gl-summary-label"><i class="fas fa-database"></i> Batch Aktif</div>
+            <div class="gl-summary-value" style="font-size:1rem;">{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
+            <div class="gl-summary-help">{{ data_get($selectedBatchMeta, 'source_filename', 'Manual / tidak ada file') }}</div>
+        </div>
+    @endif
 </div>
 
 @if(!empty($groups))
@@ -636,24 +1185,41 @@
                         <thead>
                             <tr>
                                 <th style="width:120px;">Tanggal</th>
-                                <th style="width:150px;">No Jurnal</th>
-                                <th style="width:180px;">Nama Jurnal</th>
+                                <th style="width:160px;">{{ $isImportedSource ? 'No Transaksi' : 'No Jurnal' }}</th>
+                                <th style="width:190px;">{{ $isImportedSource ? 'Komunikasi' : 'Nama Jurnal' }}</th>
                                 <th>Uraian</th>
                                 <th style="width:150px; text-align:right;">Debit</th>
                                 <th style="width:150px; text-align:right;">Kredit</th>
                                 <th style="width:160px; text-align:right;">Saldo</th>
+                                @if($isImportedSource && $isManageMode)
+                                    @permission('finance_report.generate')
+                                        <th style="width:170px; text-align:right;">Aksi</th>
+                                    @endpermission
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($group['entries'] as $entry)
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($entry['accounting_date'])->format('d/m/Y') }}</td>
+                                    <td>
+                                        @if(!empty($entry['accounting_date']))
+                                            {{ \Carbon\Carbon::parse($entry['accounting_date'])->format('d/m/Y') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                     <td>
                                         <strong>{{ $entry['invoice_no'] }}</strong>
-                                        @if(!empty($entry['invoice_id']))
+                                        @if(!$isImportedSource && !empty($entry['invoice_id']))
                                             <a href="{{ route('finance.invoice.show', $entry['invoice_id']) }}" class="gl-journal-link">
                                                 <i class="fas fa-folder-open"></i> Item Jurnal
                                             </a>
+                                        @endif
+                                        @if($isImportedSource)
+                                            <div class="gl-chip {{ !empty($entry['is_manual']) ? 'manual' : 'imported' }}">
+                                                <i class="fas {{ !empty($entry['is_manual']) ? 'fa-pen' : 'fa-file-import' }}"></i>
+                                                {{ !empty($entry['is_manual']) ? 'Manual' : 'Import' }}
+                                            </div>
                                         @endif
                                     </td>
                                     <td>{{ $entry['journal_name'] }}</td>
@@ -667,17 +1233,48 @@
                                                 Ref: {{ $entry['reference'] }}<br>
                                             @endif
                                             @if(!empty($entry['analytic_distribution']))
-                                                Analitik: {{ $entry['analytic_distribution'] }}
+                                                Analitik: {{ $entry['analytic_distribution'] }}<br>
+                                            @endif
+                                            @if($isImportedSource && !empty($entry['currency']))
+                                                Mata Uang: {{ $entry['currency'] }}
                                             @endif
                                         </div>
                                     </td>
                                     <td class="gl-amount debit">Rp {{ number_format((float) $entry['debit'], 2, ',', '.') }}</td>
                                     <td class="gl-amount credit">Rp {{ number_format((float) $entry['credit'], 2, ',', '.') }}</td>
                                     <td class="gl-amount balance">Rp {{ number_format((float) $entry['running_balance'], 2, ',', '.') }}</td>
+                                    @if($isImportedSource && $isManageMode)
+                                        @permission('finance_report.generate')
+                                            <td class="gl-action-cell">
+                                                @if(!empty($entry['can_edit']) && !empty($entry['entry_id']))
+                                                    <div class="gl-row-actions">
+                                                        <a
+                                                            href="{{ route($pageRouteName, array_merge($filterQuery, ['ledger_source' => 'imported', 'ledger_batch_id' => $selectedBatchId, 'edit_entry' => $entry['entry_id']])) }}"
+                                                            class="gl-row-link"
+                                                        >
+                                                            <i class="fas fa-pen"></i> Edit
+                                                        </a>
+                                                        <form method="POST" action="{{ route('finance.report.general-ledger.entries.destroy', $entry['entry_id']) }}" class="gl-inline-form" onsubmit="return confirm('Hapus baris buku besar ini?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            @foreach($filterQuery as $queryKey => $queryValue)
+                                                                @if($queryValue !== null && $queryValue !== '')
+                                                                    <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                                                                @endif
+                                                            @endforeach
+                                                            <button type="submit" class="gl-row-btn danger">
+                                                                <i class="fas fa-trash"></i> Hapus
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                        @endpermission
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" style="text-align:center; color:var(--gl-muted);">Belum ada baris jurnal untuk akun ini.</td>
+                                    <td colspan="{{ $isImportedSource && $isManageMode ? 8 : 7 }}" style="text-align:center; color:var(--gl-muted);">Belum ada baris jurnal untuk akun ini.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -696,7 +1293,13 @@
     <div class="gl-empty-card">
         <i class="fas fa-book-dead"></i>
         <h4>Belum ada data buku besar</h4>
-        <div>Pastikan jurnal finance sudah <strong>POSTED</strong> agar muncul di buku besar.</div>
+        <div>
+            {!! $isImportedSource
+                ? ($isManageMode
+                    ? 'Belum ada batch atau baris buku besar manual. Mulai dari <strong>Import Excel</strong> atau tambahkan baris manual di panel atas.'
+                    : 'Belum ada hasil import yang bisa ditampilkan di halaman utama. Buka menu <strong>Import & Edit Manual</strong> untuk menambahkan data buku besar.')
+                : 'Pastikan jurnal finance sudah <strong>POSTED</strong> agar muncul di buku besar.' !!}
+        </div>
     </div>
 @endif
 @endsection

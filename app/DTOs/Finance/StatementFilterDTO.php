@@ -18,6 +18,8 @@ class StatementFilterDTO
         public ?string $accountCode = null,
         public ?string $search = null,
         public ?string $statementSource = null,
+        public ?string $ledgerSource = null,
+        public ?string $ledgerBatchId = null,
         /** @var array<int, int> */
         public array $selectedIds = [],
         public int $page = 1,
@@ -51,6 +53,12 @@ class StatementFilterDTO
             statementSource: isset($data['statement_source']) && trim((string) $data['statement_source']) !== ''
                 ? strtolower(trim((string) $data['statement_source']))
                 : null,
+            ledgerSource: isset($data['ledger_source']) && trim((string) $data['ledger_source']) !== ''
+                ? strtolower(trim((string) $data['ledger_source']))
+                : null,
+            ledgerBatchId: isset($data['ledger_batch_id']) && trim((string) $data['ledger_batch_id']) !== ''
+                ? trim((string) $data['ledger_batch_id'])
+                : null,
             selectedIds: collect($data['selected_ids'] ?? [])
                 ->map(static fn ($id): int => (int) $id)
                 ->filter(static fn (int $id): bool => $id > 0)
@@ -80,6 +88,8 @@ class StatementFilterDTO
             'account_code' => $this->accountCode,
             'search' => $this->search,
             'statement_source' => $this->statementSource,
+            'ledger_source' => $this->ledgerSource,
+            'ledger_batch_id' => $this->ledgerBatchId,
             'per_page' => $this->perPage,
         ];
 

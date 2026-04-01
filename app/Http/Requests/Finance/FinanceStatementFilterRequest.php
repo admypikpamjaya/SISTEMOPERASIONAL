@@ -29,6 +29,8 @@ class FinanceStatementFilterRequest extends FormRequest
             'account_code' => 'nullable|string|max:100',
             'search' => 'nullable|string|max:255',
             'statement_source' => 'nullable|string|in:balance_sheet,profit_loss,general_ledger',
+            'ledger_source' => 'nullable|string|in:system,imported',
+            'ledger_batch_id' => 'nullable|uuid',
             'selected_ids' => 'nullable|array',
             'selected_ids.*' => 'integer|min:1',
             'page' => 'nullable|integer|min:1',
@@ -38,7 +40,23 @@ class FinanceStatementFilterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $periodType = strtoupper((string) $this->input('period_type', 'MONTHLY'));
+        $ledgerSource = strtolower(trim((string) $this->input('ledger_source', 'system')));
+        $hasExplicitPeriodInput = $this->filled('period_type')
+            || $this->filled('report_date')
+            || $this->filled('month')
+            || $this->filled('year')
+            || $this->filled('start_date')
+            || $this->filled('end_date')
+            || $this->filled('start_month')
+            || $this->filled('end_month')
+            || $this->filled('start_year')
+            || $this->filled('end_year');
+
+        $defaultPeriodType = $ledgerSource === 'imported' && !$hasExplicitPeriodInput
+            ? 'ALL'
+            : 'MONTHLY';
+
+        $periodType = strtoupper((string) $this->input('period_type', $defaultPeriodType));
         $referenceDate = $this->resolveDefaultStatementDate();
         $currentYear = (int) $referenceDate->year;
         $currentMonth = (int) $referenceDate->month;
@@ -58,6 +76,10 @@ class FinanceStatementFilterRequest extends FormRequest
             'search' => $this->filled('search') ? trim((string) $this->input('search')) : null,
             'statement_source' => $this->filled('statement_source')
                 ? strtolower(trim((string) $this->input('statement_source')))
+                : null,
+            'ledger_source' => $ledgerSource,
+            'ledger_batch_id' => $this->filled('ledger_batch_id')
+                ? trim((string) $this->input('ledger_batch_id'))
                 : null,
         ];
 
@@ -184,6 +206,8 @@ class FinanceStatementFilterRequest extends FormRequest
             'account_code.max' => 'Kode akun maksimal 100 karakter.',
             'search.max' => 'Pencarian maksimal 255 karakter.',
             'statement_source.in' => 'Sumber laporan tidak valid.',
+            'ledger_source.in' => 'Sumber buku besar tidak valid.',
+            'ledger_batch_id.uuid' => 'Batch buku besar tidak valid.',
             'selected_ids.array' => 'Daftar item terpilih tidak valid.',
             'selected_ids.*.integer' => 'Item terpilih tidak valid.',
         ];
