@@ -4,6 +4,7 @@ namespace App\Http\Requests\Finance;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 
 class FinanceStatementFilterRequest extends FormRequest
 {
@@ -38,8 +39,9 @@ class FinanceStatementFilterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $periodType = strtoupper((string) $this->input('period_type', 'MONTHLY'));
-        $currentYear = (int) now()->year;
-        $currentMonth = (int) now()->month;
+        $referenceDate = $this->resolveDefaultStatementDate();
+        $currentYear = (int) $referenceDate->year;
+        $currentMonth = (int) $referenceDate->month;
         $legacyReportDate = $this->input('report_date');
         $legacyMonth = $this->input('month');
         $legacyYear = $this->input('year');
@@ -62,7 +64,7 @@ class FinanceStatementFilterRequest extends FormRequest
         if ($periodType === 'DAILY') {
             $startDate = !empty($startDateInput)
                 ? Carbon::parse((string) $startDateInput)->startOfDay()
-                : now()->startOfDay();
+                : $referenceDate->copy()->startOfDay();
             $endDate = !empty($endDateInput)
                 ? Carbon::parse((string) $endDateInput)->startOfDay()
                 : $startDate->copy();
@@ -148,6 +150,19 @@ class FinanceStatementFilterRequest extends FormRequest
         }
 
         $this->merge($payload);
+    }
+
+    private function resolveDefaultStatementDate(): Carbon
+    {
+        $latestPostedAccountingDate = DB::table('finance_invoices')
+            ->where('status', 'POSTED')
+            ->max('accounting_date');
+
+        if (!empty($latestPostedAccountingDate)) {
+            return Carbon::parse((string) $latestPostedAccountingDate)->startOfDay();
+        }
+
+        return now()->startOfDay();
     }
 
     public function messages(): array

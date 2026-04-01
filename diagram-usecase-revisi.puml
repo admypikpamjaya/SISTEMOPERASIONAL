@@ -1,0 +1,226 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Guest / Teknisi" as Guest
+actor "Pengguna Internal" as Internal
+actor "User" as User
+actor "Admin" as Admin
+actor "IT Support" as IT
+actor "Asset Manager" as AssetMgr
+actor "Finance" as Finance
+actor "Pembina" as Pembina
+actor "Blasting" as Blasting
+actor "QC" as QC
+
+Internal <|-- User
+Internal <|-- Admin
+Internal <|-- IT
+Internal <|-- AssetMgr
+Internal <|-- Finance
+Internal <|-- Pembina
+Internal <|-- Blasting
+Internal <|-- QC
+
+rectangle "Sistem Operasional Yayasan YPIK" {
+  package "Autentikasi & Kolaborasi" {
+    usecase "Login" as UC_Login
+    usecase "Logout" as UC_Logout
+    usecase "Lihat Dashboard" as UC_Dashboard
+    usecase "Akses Diskusi" as UC_Discuss
+    usecase "Kirim / Reply Pesan" as UC_Send
+    usecase "Pin / Unpin Pesan" as UC_Pin
+    usecase "Hapus Pesan Sendiri" as UC_DeleteOwn
+  }
+
+  package "User & Sistem" {
+    usecase "Lihat User Database" as UC_UserView
+    usecase "Kelola User" as UC_UserManage
+    usecase "Assign / Ubah Role User" as UC_Role
+    usecase "Kirim Link Reset Password" as UC_ResetLink
+    usecase "Kelola Provider WhatsApp" as UC_Provider
+    usecase "Kelola Device WhatsApp" as UC_Device
+  }
+
+  package "Manajemen Aset & Maintenance" {
+    usecase "Lihat Detail Aset Publik" as UC_PublicAsset
+    usecase "Submit Maintenance Report" as UC_PublicMaint
+    usecase "Lihat Data Aset" as UC_AssetRead
+    usecase "Kelola Aset" as UC_AssetManage
+    usecase "Generate QR Code Aset" as UC_QR
+    usecase "Lihat Maintenance Report" as UC_MaintRead
+    usecase "Kelola Maintenance Report" as UC_MaintManage
+  }
+
+  package "Komunikasi & Notifikasi" {
+    usecase "Kelola Announcement" as UC_Ann
+    usecase "Kelola Reminder" as UC_Rem
+    usecase "Kirim WhatsApp Blast" as UC_WA
+    usecase "Kirim Email Blast" as UC_Email
+    usecase "Kelola Recipient Blast" as UC_Recipient
+    usecase "Kelola Template Blast" as UC_Template
+    usecase "Monitor Activity Log & Campaign" as UC_BlastMonitor
+    usecase "Monitor Status Gateway WA" as UC_GatewayStatus
+  }
+
+  package "Manajemen Keuangan" {
+    usecase "Lihat Dashboard Finance" as UC_FinDash
+    usecase "Lihat Depresiasi Aset" as UC_DepRead
+    usecase "Hitung Depresiasi" as UC_DepCalc
+    usecase "Kelola Laporan Keuangan" as UC_FinReport
+    usecase "Lihat Snapshot Laporan" as UC_Snapshot
+    usecase "Lihat Lembar Saldo" as UC_Balance
+    usecase "Lihat Laba Rugi" as UC_PL
+    usecase "Lihat Buku Besar" as UC_GL
+    usecase "Lihat Invoice" as UC_InvRead
+    usecase "Kelola Invoice" as UC_InvManage
+    usecase "Tambah Catatan Invoice" as UC_InvNote
+    usecase "Kelola Akun Keuangan" as UC_AccManage
+    usecase "Kelola Tunggakan" as UC_Arrears
+    usecase "Blast WhatsApp Tunggakan" as UC_ArrearsBlast
+  }
+}
+
+Guest --> UC_PublicAsset
+Guest --> UC_PublicMaint
+
+Internal --> UC_Login
+Internal --> UC_Logout
+Internal --> UC_Dashboard
+Internal --> UC_Discuss
+Internal --> UC_Send
+Internal --> UC_Pin
+Internal --> UC_DeleteOwn
+
+Admin --> UC_Ann
+Admin --> UC_Rem
+Admin --> UC_WA
+Admin --> UC_Email
+Admin --> UC_Recipient
+Admin --> UC_Template
+Admin --> UC_BlastMonitor
+Admin --> UC_GatewayStatus
+
+IT --> UC_UserView
+IT --> UC_UserManage
+IT --> UC_Role
+IT --> UC_ResetLink
+IT --> UC_Provider
+IT --> UC_Device
+IT --> UC_AssetRead
+IT --> UC_AssetManage
+IT --> UC_QR
+IT --> UC_MaintRead
+IT --> UC_MaintManage
+IT --> UC_Ann
+IT --> UC_Rem
+IT --> UC_WA
+IT --> UC_Email
+IT --> UC_Recipient
+IT --> UC_Template
+IT --> UC_BlastMonitor
+IT --> UC_GatewayStatus
+IT --> UC_FinDash
+IT --> UC_DepRead
+IT --> UC_DepCalc
+IT --> UC_FinReport
+IT --> UC_Snapshot
+IT --> UC_Balance
+IT --> UC_PL
+IT --> UC_GL
+IT --> UC_InvRead
+IT --> UC_InvManage
+IT --> UC_InvNote
+IT --> UC_AccManage
+IT --> UC_Arrears
+IT --> UC_ArrearsBlast
+
+AssetMgr --> UC_AssetRead
+AssetMgr --> UC_AssetManage
+AssetMgr --> UC_QR
+AssetMgr --> UC_MaintRead
+AssetMgr --> UC_MaintManage
+
+Finance --> UC_FinDash
+Finance --> UC_DepRead
+Finance --> UC_DepCalc
+Finance --> UC_FinReport
+Finance --> UC_Snapshot
+Finance --> UC_Balance
+Finance --> UC_PL
+Finance --> UC_GL
+Finance --> UC_InvRead
+Finance --> UC_InvManage
+Finance --> UC_InvNote
+Finance --> UC_AccManage
+Finance --> UC_Arrears
+Finance --> UC_ArrearsBlast
+
+Pembina --> UC_AssetRead
+Pembina --> UC_MaintRead
+Pembina --> UC_UserView
+Pembina --> UC_GatewayStatus
+Pembina --> UC_FinDash
+Pembina --> UC_DepRead
+Pembina --> UC_Snapshot
+Pembina --> UC_Balance
+Pembina --> UC_PL
+Pembina --> UC_GL
+Pembina --> UC_InvRead
+
+Blasting --> UC_WA
+Blasting --> UC_Email
+Blasting --> UC_Recipient
+Blasting --> UC_Template
+Blasting --> UC_BlastMonitor
+Blasting --> UC_GatewayStatus
+
+QC --> UC_AssetRead
+QC --> UC_MaintRead
+
+UC_Send .> UC_Discuss : <<include>>
+UC_Pin .> UC_Discuss : <<include>>
+UC_DeleteOwn .> UC_Discuss : <<include>>
+UC_AssetManage .> UC_AssetRead : <<include>>
+UC_MaintManage .> UC_MaintRead : <<include>>
+UC_InvManage .> UC_InvRead : <<include>>
+UC_ArrearsBlast .> UC_Arrears : <<extend>>
+
+note right of Admin
+Fokus pada modul komunikasi:
+announcement, reminder, blast,
+recipient, dan template.
+end note
+
+note right of Blasting
+Fokus pada blasting umum.
+Tidak punya akses finance,
+announcement, atau reminder.
+end note
+
+note right of Pembina
+Read-only lintas modul.
+Tidak punya aksi create,
+update, atau delete.
+end note
+
+note bottom of UC_GatewayStatus
+Role non-IT hanya melihat
+status non-sensitif.
+Kelola provider dan device
+khusus IT Support.
+end note
+
+note bottom of UC_PublicMaint
+Diakses tanpa login dari
+halaman detail aset publik.
+end note
+
+note bottom of UC_ArrearsBlast
+Bagian dari modul Finance,
+bukan milik role Blasting.
+end note
+
+@enduml
