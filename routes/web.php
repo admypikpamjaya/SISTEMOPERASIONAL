@@ -271,6 +271,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_general_ledger.read')
             ->name('report.journal-items.download');
 
+        Route::post('/report/account-mapping', [FinanceStatementController::class, 'saveAccountMapping'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.account-mapping');
+
         Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
             ->middleware('check_access:finance_report.read')
             ->name('report.download');

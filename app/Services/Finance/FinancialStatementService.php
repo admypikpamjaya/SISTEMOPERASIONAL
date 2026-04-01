@@ -13,7 +13,9 @@ class FinancialStatementService
      * @return array{
      *   sections: array<int, array{key:string,label:string,rows:array<int, array<string, mixed>>,total:float}>,
      *   summary: array<string, float|int>,
-     *   uncategorized_count: int
+     *   uncategorized_count: int,
+     *   uncategorized_rows: array<int, array<string, mixed>>,
+     *   uncategorized_summary: array<string, int>
      * }
      */
     public function getBalanceSheetReport(StatementFilterDTO $filter): array
@@ -23,6 +25,7 @@ class FinancialStatementService
             ->selectRaw("COALESCE(MAX(fa.name), MAX(fii.label), fii.account_code) as account_name")
             ->selectRaw("UPPER(COALESCE(MAX(fa.type), '')) as finance_type")
             ->selectRaw('MAX(a.account_code) as asset_account_code')
+            ->selectRaw('COUNT(fii.id) as entry_count')
             ->selectRaw('SUM(fii.debit) as total_debit')
             ->selectRaw('SUM(fii.credit) as total_credit')
             ->groupBy('fii.account_code')
@@ -57,15 +60,37 @@ class FinancialStatementService
         ];
 
         $uncategorizedCount = 0;
+        $uncategorizedRows = [];
+        $uncategorizedSummary = [
+            'profit_loss_count' => 0,
+            'other_count' => 0,
+            'unmapped_count' => 0,
+        ];
 
         foreach ($rows as $row) {
+            $financeType = (string) ($row->finance_type ?? '');
+            $hasAssetRecord = $row->asset_account_code !== null;
             $sectionKey = $this->resolveBalanceSheetSection(
-                (string) ($row->finance_type ?? ''),
-                $row->asset_account_code !== null
+                $financeType,
+                $hasAssetRecord
             );
 
             if ($sectionKey === null) {
                 $uncategorizedCount++;
+                $statementPlacement = $this->describeStatementPlacement($financeType, $hasAssetRecord);
+                $uncategorizedSummary[$statementPlacement['summary_key']]++;
+                $uncategorizedRows[] = [
+                    'account_code' => (string) $row->account_code,
+                    'account_name' => (string) $row->account_name,
+                    'finance_type' => $financeType,
+                    'entry_count' => (int) ($row->entry_count ?? 0),
+                    'total_debit' => round((float) ($row->total_debit ?? 0), 2),
+                    'total_credit' => round((float) ($row->total_credit ?? 0), 2),
+                    'current_statement' => $statementPlacement['statement_label'],
+                    'current_section' => $statementPlacement['section_label'],
+                    'summary_key' => $statementPlacement['summary_key'],
+                    'reason' => $statementPlacement['reason'],
+                ];
                 continue;
             }
 
@@ -104,6 +129,8 @@ class FinancialStatementService
                 ),
             ],
             'uncategorized_count' => $uncategorizedCount,
+            'uncategorized_rows' => $uncategorizedRows,
+            'uncategorized_summary' => $uncategorizedSummary,
         ];
     }
 
@@ -582,6 +609,78 @@ class FinancialStatementService
         }
 
         return null;
+    }
+
+    private function resolveProfitLossSection(string $financeType): ?string
+    {
+        $normalizedType = strtoupper(trim($financeType));
+
+        if (in_array($normalizedType, FinanceAccount::incomeTypes(), true)) {
+            return 'income';
+        }
+
+        if ($normalizedType === FinanceAccount::TYPE_PENGELUARAN) {
+            return 'expense';
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{
+     *   statement_label:string,
+     *   section_label:string,
+     *   summary_key:string,
+     *   reason:string
+     * }
+     */
+    private function describeStatementPlacement(string $financeType, bool $hasAssetRecord): array
+    {
+        $normalizedType = strtoupper(trim($financeType));
+        $profitLossSection = $this->resolveProfitLossSection($normalizedType);
+
+        if ($profitLossSection !== null) {
+            return [
+                'statement_label' => 'Laba Rugi',
+                'section_label' => $profitLossSection === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                'summary_key' => 'profit_loss_count',
+                'reason' => 'Akun ini saat ini sudah dibaca sebagai akun laporan laba rugi.',
+            ];
+        }
+
+        if ($normalizedType === FinanceAccount::TYPE_EKUITAS) {
+            return [
+                'statement_label' => 'Di Luar Lembar Saldo & Laba Rugi',
+                'section_label' => 'Ekuitas',
+                'summary_key' => 'other_count',
+                'reason' => 'Tipe akun ekuitas belum dimasukkan ke lembar saldo maupun laba rugi.',
+            ];
+        }
+
+        if ($normalizedType === '' && $hasAssetRecord) {
+            return [
+                'statement_label' => 'Lembar Saldo',
+                'section_label' => 'Aset',
+                'summary_key' => 'other_count',
+                'reason' => 'Akun terhubung ke aset, tetapi belum memiliki tipe akun finance yang jelas.',
+            ];
+        }
+
+        if ($normalizedType === '') {
+            return [
+                'statement_label' => 'Belum Terpetakan',
+                'section_label' => 'Perlu dipilih manual',
+                'summary_key' => 'unmapped_count',
+                'reason' => 'Akun belum punya tipe finance sehingga belum bisa diarahkan ke lembar saldo atau laba rugi.',
+            ];
+        }
+
+        return [
+            'statement_label' => 'Belum Terpetakan',
+            'section_label' => str_replace('_', ' ', $normalizedType),
+            'summary_key' => 'unmapped_count',
+            'reason' => 'Tipe akun saat ini belum dipakai oleh logika lembar saldo atau laba rugi.',
+        ];
     }
 
     private function resolveNormalSide(string $financeType): string

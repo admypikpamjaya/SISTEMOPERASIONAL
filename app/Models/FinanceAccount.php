@@ -104,6 +104,51 @@ class FinanceAccount extends Model
         ];
     }
 
+    public static function balanceSheetTypes(): array
+    {
+        return [
+            self::TYPE_KAS,
+            self::TYPE_PIUTANG,
+            self::TYPE_ASET,
+            self::TYPE_PASIVA_TERKINI,
+            self::TYPE_HUTANG,
+            self::TYPE_HUTANG_TIDAK_LANCAR,
+        ];
+    }
+
+    public static function profitLossTypes(): array
+    {
+        return [
+            self::TYPE_PENGHASILAN,
+            self::TYPE_PENGHASILAN_LAINNYA,
+            self::TYPE_PENGHASILAN_TAHUN_TERKINI,
+            self::TYPE_PENGELUARAN,
+        ];
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    public static function manualStatementTypeOptions(): array
+    {
+        return [
+            'Lembar Saldo' => [
+                self::TYPE_KAS => 'Lembar Saldo · Kas',
+                self::TYPE_PIUTANG => 'Lembar Saldo · Piutang',
+                self::TYPE_ASET => 'Lembar Saldo · Aset',
+                self::TYPE_PASIVA_TERKINI => 'Lembar Saldo · Liabilitas Lancar',
+                self::TYPE_HUTANG => 'Lembar Saldo · Hutang',
+                self::TYPE_HUTANG_TIDAK_LANCAR => 'Lembar Saldo · Hutang Tidak Lancar',
+            ],
+            'Laba Rugi' => [
+                self::TYPE_PENGHASILAN => 'Laba Rugi · Penghasilan',
+                self::TYPE_PENGHASILAN_LAINNYA => 'Laba Rugi · Penghasilan Lainnya',
+                self::TYPE_PENGHASILAN_TAHUN_TERKINI => 'Laba Rugi · Penghasilan Tahun Terkini',
+                self::TYPE_PENGELUARAN => 'Laba Rugi · Pengeluaran',
+            ],
+        ];
+    }
+
     public static function liabilityTypes(): array
     {
         return [

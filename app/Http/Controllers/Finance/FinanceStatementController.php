@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Finance;
 
 use App\DTOs\Finance\StatementFilterDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\FinanceStatementAccountMappingRequest;
 use App\Http\Requests\Finance\FinanceStatementFilterRequest;
+use App\Models\FinanceAccount;
+use App\Models\FinanceAccountLog;
 use App\Services\Finance\FinancialStatementDocumentService;
 use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class FinanceStatementController extends Controller
@@ -129,6 +133,73 @@ class FinanceStatementController extends Controller
     public function downloadJournalItems(FinanceStatementFilterRequest $request)
     {
         return $this->downloadStatementDocument($request, 'journal_items');
+    }
+
+    public function saveAccountMapping(FinanceStatementAccountMappingRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+            $actorId = auth()->id() ? (string) auth()->id() : null;
+            $type = (string) $validated['statement_type'];
+            $classNo = FinanceAccount::classForType($type);
+
+            $account = FinanceAccount::query()
+                ->where('code', (string) $validated['account_code'])
+                ->first();
+
+            $beforeData = $account?->exists ? $this->serializeAccount($account) : null;
+
+            if ($account === null) {
+                $account = FinanceAccount::query()->create([
+                    'code' => (string) $validated['account_code'],
+                    'name' => (string) ($validated['account_name'] !== '' ? $validated['account_name'] : $validated['account_code']),
+                    'type' => $type,
+                    'class_no' => $classNo,
+                    'is_active' => true,
+                    'created_by' => $actorId,
+                    'updated_by' => $actorId,
+                ]);
+
+                $this->writeAccountLog(
+                    account: $account,
+                    action: FinanceAccountLog::ACTION_CREATED,
+                    actorId: $actorId,
+                    beforeData: null,
+                    afterData: $this->serializeAccount($account)
+                );
+            } else {
+                $account->update([
+                    'name' => (string) ($validated['account_name'] !== '' ? $validated['account_name'] : $account->name),
+                    'type' => $type,
+                    'class_no' => $classNo,
+                    'is_active' => true,
+                    'updated_by' => $actorId,
+                ]);
+
+                $account->refresh();
+
+                $this->writeAccountLog(
+                    account: $account,
+                    action: FinanceAccountLog::ACTION_UPDATED,
+                    actorId: $actorId,
+                    beforeData: $beforeData,
+                    afterData: $this->serializeAccount($account)
+                );
+            }
+
+            $targetLabel = FinanceAccount::TYPE_LABELS[$type] ?? $type;
+
+            return redirect()
+                ->back()
+                ->with('success', 'Akun ' . $account->code . ' berhasil dipetakan ke kategori ' . $targetLabel . '.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal menyimpan pemetaan akun laporan.');
+        }
     }
 
     /**
@@ -332,5 +403,41 @@ class FinanceStatementController extends Controller
             'profit_loss' => 'finance.report.profit-loss',
             default => 'finance.report.general-ledger',
         };
+    }
+
+    private function writeAccountLog(
+        FinanceAccount $account,
+        string $action,
+        ?string $actorId,
+        ?array $beforeData,
+        ?array $afterData
+    ): void {
+        if (!Schema::hasTable('finance_account_logs')) {
+            return;
+        }
+
+        FinanceAccountLog::query()->create([
+            'finance_account_id' => (string) $account->id,
+            'action' => $action,
+            'before_data' => $beforeData,
+            'after_data' => $afterData,
+            'actor_id' => $actorId,
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeAccount(FinanceAccount $account): array
+    {
+        return [
+            'id' => (string) $account->id,
+            'code' => (string) $account->code,
+            'name' => (string) $account->name,
+            'type' => (string) $account->type,
+            'type_label' => (string) $account->type_label,
+            'class_no' => (int) $account->class_no,
+            'is_active' => (bool) $account->is_active,
+        ];
     }
 }

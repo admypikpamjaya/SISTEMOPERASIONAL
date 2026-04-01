@@ -5,8 +5,21 @@
     $summary = $report['summary'] ?? [];
     $sections = $report['sections'] ?? [];
     $uncategorizedCount = (int) ($report['uncategorized_count'] ?? 0);
+    $uncategorizedRows = $report['uncategorized_rows'] ?? [];
+    $uncategorizedSummary = $report['uncategorized_summary'] ?? [
+        'profit_loss_count' => 0,
+        'other_count' => 0,
+        'unmapped_count' => 0,
+    ];
     $hasRows = collect($sections)->sum(fn ($section) => count($section['rows'] ?? [])) > 0;
     $baseFilterQuery = $baseFilterQuery ?? ($filterQuery ?? []);
+    $statementTypeOptions = \App\Models\FinanceAccount::manualStatementTypeOptions();
+    $permissionService = app(\App\Services\AccessControl\PermissionService::class);
+    $canManageStatementMapping = auth()->check()
+        && $permissionService->checkAccess(
+            auth()->user(),
+            \App\Enums\Portal\PortalPermission::FINANCE_REPORT_GENERATE->value
+        );
     $sectionMeta = [
         'liabilitas' => ['icon' => 'fa-landmark', 'badge' => 'fs-danger'],
         'piutang' => ['icon' => 'fa-file-invoice-dollar', 'badge' => 'fs-blue'],
@@ -249,6 +262,73 @@
         background: rgba(245, 158, 11, 0.08);
         border-color: rgba(245, 158, 11, 0.16);
     }
+    .fs-note-copy {
+        display: grid;
+        gap: 0.35rem;
+    }
+    .fs-note-copy strong {
+        color: var(--fs-text);
+    }
+    .fs-note-breakdown {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 0.15rem;
+    }
+    .fs-uncat-card {
+        margin-bottom: 1rem;
+    }
+    .fs-uncat-status {
+        display: grid;
+        gap: 0.15rem;
+    }
+    .fs-uncat-status strong {
+        color: var(--fs-text);
+        font-size: 0.8rem;
+    }
+    .fs-uncat-status span {
+        color: var(--fs-muted);
+        font-size: 0.74rem;
+        line-height: 1.45;
+    }
+    .fs-uncat-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+    }
+    .fs-inline-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid rgba(37, 99, 235, 0.12);
+        background: rgba(37, 99, 235, 0.05);
+        color: var(--fs-blue);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-decoration: none;
+    }
+    .fs-inline-link:hover {
+        text-decoration: none;
+        color: #fff;
+        background: var(--fs-blue);
+        border-color: var(--fs-blue);
+    }
+    .fs-map-form {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .fs-map-form .fs-control {
+        min-width: 220px;
+    }
+    .fs-map-help {
+        color: var(--fs-muted);
+        font-size: 0.74rem;
+        line-height: 1.45;
+    }
 
     .fs-section-grid {
         display: grid;
@@ -454,6 +534,14 @@
     body.dark-mode .fs-amount {
         color: var(--app-text) !important;
     }
+    body.dark-mode .fs-note-copy strong,
+    body.dark-mode .fs-uncat-status strong {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fs-uncat-status span,
+    body.dark-mode .fs-map-help {
+        color: var(--app-text-muted) !important;
+    }
     body.dark-mode .fs-account-link,
     body.dark-mode .fs-amount-link {
         color: inherit !important;
@@ -481,6 +569,16 @@
         background: rgba(96, 165, 250, 0.12) !important;
         color: var(--app-accent) !important;
     }
+    body.dark-mode .fs-inline-link {
+        background: rgba(96, 165, 250, 0.12) !important;
+        border-color: rgba(96, 165, 250, 0.18) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .fs-inline-link:hover {
+        background: var(--app-accent) !important;
+        border-color: var(--app-accent) !important;
+        color: #fff !important;
+    }
     @media (min-width: 1200px) {
         .fs-section-grid {
             gap: 1.15rem;
@@ -489,6 +587,14 @@
         .fs-table td {
             padding-left: 1.1rem;
             padding-right: 1.1rem;
+        }
+    }
+    @media (max-width: 991px) {
+        .fs-map-form {
+            grid-template-columns: 1fr;
+        }
+        .fs-map-form .fs-control {
+            min-width: 100%;
         }
     }
 </style>
@@ -558,7 +664,144 @@
 @if($uncategorizedCount > 0)
     <div class="fs-note-card">
         <i class="fas fa-exclamation-triangle"></i>
-        <div>{{ number_format($uncategorizedCount, 0, ',', '.') }} akun jurnal tidak masuk ke kategori liabilitas, piutang, kas, atau aset sehingga tidak ditampilkan di lembar saldo.</div>
+        <div class="fs-note-copy">
+            <strong>{{ number_format($uncategorizedCount, 0, ',', '.') }} akun tidak tampil di lembar saldo untuk periode ini.</strong>
+            <span>
+                Daftar ini berisi akun yang saat ini terbaca sebagai akun laba rugi atau belum punya klasifikasi yang cocok untuk lembar saldo.
+                Kamu bisa lihat item jurnalnya lalu atur manual kategorinya dari tabel di bawah.
+            </span>
+            <div class="fs-note-breakdown">
+                @if(($uncategorizedSummary['profit_loss_count'] ?? 0) > 0)
+                    <span class="fs-badge fs-blue">
+                        <i class="fas fa-chart-line"></i>
+                        {{ number_format((int) $uncategorizedSummary['profit_loss_count'], 0, ',', '.') }} sudah masuk laba rugi
+                    </span>
+                @endif
+                @if(($uncategorizedSummary['unmapped_count'] ?? 0) > 0)
+                    <span class="fs-badge fs-amber">
+                        <i class="fas fa-question-circle"></i>
+                        {{ number_format((int) $uncategorizedSummary['unmapped_count'], 0, ',', '.') }} belum terpetakan
+                    </span>
+                @endif
+                @if(($uncategorizedSummary['other_count'] ?? 0) > 0)
+                    <span class="fs-badge fs-danger">
+                        <i class="fas fa-layer-group"></i>
+                        {{ number_format((int) $uncategorizedSummary['other_count'], 0, ',', '.') }} di luar 2 laporan ini
+                    </span>
+                @endif
+            </div>
+        </div>
+    </div>
+@endif
+
+@if(!empty($uncategorizedRows))
+    <div class="fs-section-card fs-uncat-card">
+        <div class="fs-section-head d-flex justify-content-between align-items-center flex-wrap" style="gap:.8rem;">
+            <div class="fs-section-title">
+                <span class="fs-section-icon"><i class="fas fa-map-signs"></i></span>
+                <span>Akun Yang Belum Tampil di Lembar Saldo</span>
+            </div>
+            <div class="fs-section-total">
+                <span class="fs-badge fs-amber">
+                    <i class="fas fa-list"></i>
+                    {{ number_format(count($uncategorizedRows), 0, ',', '.') }} akun
+                </span>
+            </div>
+        </div>
+        <div class="fs-table-wrap">
+            <table class="fs-table">
+                <thead>
+                    <tr>
+                        <th style="width:130px;">Kode</th>
+                        <th>Nama Akun</th>
+                        <th style="width:210px;">Posisi Saat Ini</th>
+                        <th style="width:100px; text-align:center;">Item</th>
+                        <th style="width:160px; text-align:right;">Debit</th>
+                        <th style="width:160px; text-align:right;">Kredit</th>
+                        <th style="width:360px;">Pilih Kategori</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($uncategorizedRows as $row)
+                        @php
+                            $journalItemsRoute = route('finance.report.journal-items', array_merge($baseFilterQuery, [
+                                'account_code' => $row['account_code'],
+                                'statement_source' => 'balance_sheet',
+                            ]));
+                            $generalLedgerRoute = route('finance.report.general-ledger', array_merge($baseFilterQuery, [
+                                'account_code' => $row['account_code'],
+                            ]));
+                            $statusBadgeClass = match ($row['summary_key'] ?? '') {
+                                'profit_loss_count' => 'fs-blue',
+                                'other_count' => 'fs-danger',
+                                default => 'fs-amber',
+                            };
+                        @endphp
+                        <tr>
+                            <td><strong>{{ $row['account_code'] }}</strong></td>
+                            <td>
+                                <div class="fs-account-name">{{ $row['account_name'] }}</div>
+                                <div class="fs-map-help">
+                                    Tipe saat ini: {{ $row['finance_type'] !== '' ? str_replace('_', ' ', $row['finance_type']) : 'Belum ada tipe akun' }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fs-uncat-status">
+                                    <strong>
+                                        <span class="fs-badge {{ $statusBadgeClass }}">
+                                            <i class="fas fa-tag"></i>
+                                            {{ $row['current_statement'] }}
+                                        </span>
+                                    </strong>
+                                    <span>{{ $row['current_section'] }}. {{ $row['reason'] }}</span>
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                <div style="font-weight:800;">{{ number_format((int) ($row['entry_count'] ?? 0), 0, ',', '.') }}</div>
+                                <div class="fs-uncat-actions mt-2">
+                                    <a href="{{ $journalItemsRoute }}" class="fs-inline-link">
+                                        <i class="fas fa-table"></i> Item
+                                    </a>
+                                    <a href="{{ $generalLedgerRoute }}" class="fs-inline-link">
+                                        <i class="fas fa-book-open"></i> Buku Besar
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="fs-amount">Rp {{ number_format((float) ($row['total_debit'] ?? 0), 2, ',', '.') }}</td>
+                            <td class="fs-amount">Rp {{ number_format((float) ($row['total_credit'] ?? 0), 2, ',', '.') }}</td>
+                            <td>
+                                @if($canManageStatementMapping)
+                                    <form method="POST" action="{{ route('finance.report.account-mapping') }}" class="fs-map-form">
+                                        @csrf
+                                        <input type="hidden" name="account_code" value="{{ $row['account_code'] }}">
+                                        <input type="hidden" name="account_name" value="{{ $row['account_name'] }}">
+                                        <select name="statement_type" class="fs-control" required>
+                                            <option value="">Pilih kategori tujuan...</option>
+                                            @foreach($statementTypeOptions as $groupLabel => $options)
+                                                <optgroup label="{{ $groupLabel }}">
+                                                    @foreach($options as $type => $optionLabel)
+                                                        <option value="{{ $type }}" {{ ($row['finance_type'] ?? '') === $type ? 'selected' : '' }}>
+                                                            {{ $optionLabel }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="fs-btn fs-btn-primary">
+                                            <i class="fas fa-save"></i> Simpan
+                                        </button>
+                                    </form>
+                                @else
+                                    <div class="fs-map-help">
+                                        Kamu bisa lihat detail item jurnal dari akun ini. Untuk ubah kategori laporan, dibutuhkan akses kelola finance report.
+                                    </div>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 @endif
 
