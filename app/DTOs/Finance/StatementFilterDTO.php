@@ -18,6 +18,8 @@ class StatementFilterDTO
         public ?string $accountCode = null,
         public ?string $search = null,
         public ?string $statementSource = null,
+        public ?string $statementDataSource = null,
+        public ?string $statementBatchId = null,
         public ?string $ledgerSource = null,
         public ?string $ledgerBatchId = null,
         /** @var array<int, int> */
@@ -52,6 +54,12 @@ class StatementFilterDTO
                 : null,
             statementSource: isset($data['statement_source']) && trim((string) $data['statement_source']) !== ''
                 ? strtolower(trim((string) $data['statement_source']))
+                : null,
+            statementDataSource: isset($data['statement_data_source']) && trim((string) $data['statement_data_source']) !== ''
+                ? strtolower(trim((string) $data['statement_data_source']))
+                : null,
+            statementBatchId: isset($data['statement_batch_id']) && trim((string) $data['statement_batch_id']) !== ''
+                ? trim((string) $data['statement_batch_id'])
                 : null,
             ledgerSource: isset($data['ledger_source']) && trim((string) $data['ledger_source']) !== ''
                 ? strtolower(trim((string) $data['ledger_source']))
@@ -88,6 +96,8 @@ class StatementFilterDTO
             'account_code' => $this->accountCode,
             'search' => $this->search,
             'statement_source' => $this->statementSource,
+            'statement_data_source' => $this->statementDataSource,
+            'statement_batch_id' => $this->statementBatchId,
             'ledger_source' => $this->ledgerSource,
             'ledger_batch_id' => $this->ledgerBatchId,
             'per_page' => $this->perPage,

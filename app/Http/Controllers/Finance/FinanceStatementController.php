@@ -9,10 +9,16 @@ use App\Http\Requests\Finance\FinanceGeneralLedgerEntryUpdateRequest;
 use App\Http\Requests\Finance\FinanceGeneralLedgerImportRequest;
 use App\Http\Requests\Finance\FinanceStatementAccountMappingRequest;
 use App\Http\Requests\Finance\FinanceStatementFilterRequest;
+use App\Http\Requests\Finance\FinanceStatementImportRequest;
+use App\Http\Requests\Finance\FinanceStatementRowStoreRequest;
+use App\Http\Requests\Finance\FinanceStatementRowUpdateRequest;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAccountLog;
 use App\Models\FinanceGeneralLedgerEntry;
+use App\Models\FinanceStatementBatch;
+use App\Models\FinanceStatementRow;
 use App\Services\Finance\FinanceGeneralLedgerService;
+use App\Services\Finance\FinanceImportedStatementService;
 use App\Services\Finance\FinancialStatementDocumentService;
 use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
@@ -25,21 +31,81 @@ class FinanceStatementController extends Controller
     public function __construct(
         private FinancialStatementService $financialStatementService,
         private FinanceGeneralLedgerService $financeGeneralLedgerService,
+        private FinanceImportedStatementService $financeImportedStatementService,
         private FinancialStatementDocumentService $financialStatementDocumentService,
         private FinancialStatementSpreadsheetService $financialStatementSpreadsheetService
     ) {}
 
     public function balanceSheet(FinanceStatementFilterRequest $request)
     {
+        return $this->renderBalanceSheetPage($request, false);
+    }
+
+    public function profitLoss(FinanceStatementFilterRequest $request)
+    {
+        return $this->renderProfitLossPage($request, false);
+    }
+
+    public function manageBalanceSheet(FinanceStatementFilterRequest $request)
+    {
+        return $this->renderBalanceSheetPage($request, true);
+    }
+
+    public function manageProfitLoss(FinanceStatementFilterRequest $request)
+    {
+        return $this->renderProfitLossPage($request, true);
+    }
+
+    private function renderBalanceSheetPage(FinanceStatementFilterRequest $request, bool $isManageMode)
+    {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            [$statementDataSource, $resolvedBatchId, $batchOptions] = $this->resolveStatementDataContext(
+                $request,
+                $filter,
+                FinanceStatementBatch::TYPE_BALANCE_SHEET,
+                $isManageMode
+            );
+
+            $filter->statementDataSource = $statementDataSource;
+            $filter->statementBatchId = $resolvedBatchId;
+
+            $report = $statementDataSource === 'imported'
+                ? $this->financeImportedStatementService->getImportedBalanceSheetReport($filter, $resolvedBatchId)
+                : $this->financialStatementService->getBalanceSheetReport($filter);
+
+            $resolvedBatchId = $resolvedBatchId ?? data_get($report, 'batch.id');
+            $filter->statementBatchId = $resolvedBatchId;
+            $editRow = $statementDataSource === 'imported'
+                ? $this->financeImportedStatementService->findRow((string) $request->query('edit_row', ''))
+                : null;
 
             return view('finance.balance-sheet', [
-                'report' => $this->financialStatementService->getBalanceSheetReport($filter),
-                'filters' => $this->buildFilterPayload($filter),
+                'report' => $report,
+                'filters' => array_merge($this->buildFilterPayload($filter), [
+                    'statement_data_source' => $statementDataSource,
+                    'statement_batch_id' => $resolvedBatchId,
+                ]),
                 'periodLabel' => $this->buildPeriodLabel($filter),
-                'filterQuery' => $filter->toQueryArray(),
+                'filterQuery' => array_filter(array_merge($filter->toQueryArray(), [
+                    'statement_data_source' => $statementDataSource,
+                    'statement_batch_id' => $resolvedBatchId,
+                ]), static fn ($value): bool => $value !== null && $value !== ''),
                 'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
+                'statementDataSource' => $statementDataSource,
+                'selectedBatchId' => $resolvedBatchId,
+                'batchOptions' => $statementDataSource === 'imported'
+                    ? ($report['batches'] ?? $batchOptions->all())
+                    : $batchOptions->all(),
+                'selectedBatch' => $report['batch'] ?? null,
+                'importedRows' => $report['imported_rows'] ?? [],
+                'editImportedRow' => $editRow !== null ? $this->serializeImportedStatementRow($editRow) : null,
+                'isManageMode' => $isManageMode,
+                'pageRouteName' => $isManageMode
+                    ? 'finance.report.balance-sheet.manage'
+                    : 'finance.report.balance-sheet',
+                'mainStatementRouteName' => 'finance.report.balance-sheet',
+                'manageStatementRouteName' => 'finance.report.balance-sheet.manage',
             ]);
         } catch (Throwable $exception) {
             report($exception);
@@ -50,17 +116,56 @@ class FinanceStatementController extends Controller
         }
     }
 
-    public function profitLoss(FinanceStatementFilterRequest $request)
+    private function renderProfitLossPage(FinanceStatementFilterRequest $request, bool $isManageMode)
     {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            [$statementDataSource, $resolvedBatchId, $batchOptions] = $this->resolveStatementDataContext(
+                $request,
+                $filter,
+                FinanceStatementBatch::TYPE_PROFIT_LOSS,
+                $isManageMode
+            );
+
+            $filter->statementDataSource = $statementDataSource;
+            $filter->statementBatchId = $resolvedBatchId;
+
+            $report = $statementDataSource === 'imported'
+                ? $this->financeImportedStatementService->getImportedProfitLossReport($filter, $resolvedBatchId)
+                : $this->financialStatementService->getProfitLossReport($filter);
+
+            $resolvedBatchId = $resolvedBatchId ?? data_get($report, 'batch.id');
+            $filter->statementBatchId = $resolvedBatchId;
+            $editRow = $statementDataSource === 'imported'
+                ? $this->financeImportedStatementService->findRow((string) $request->query('edit_row', ''))
+                : null;
 
             return view('finance.profit-loss-statement', [
-                'report' => $this->financialStatementService->getProfitLossReport($filter),
-                'filters' => $this->buildFilterPayload($filter),
+                'report' => $report,
+                'filters' => array_merge($this->buildFilterPayload($filter), [
+                    'statement_data_source' => $statementDataSource,
+                    'statement_batch_id' => $resolvedBatchId,
+                ]),
                 'periodLabel' => $this->buildPeriodLabel($filter),
-                'filterQuery' => $filter->toQueryArray(),
+                'filterQuery' => array_filter(array_merge($filter->toQueryArray(), [
+                    'statement_data_source' => $statementDataSource,
+                    'statement_batch_id' => $resolvedBatchId,
+                ]), static fn ($value): bool => $value !== null && $value !== ''),
                 'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
+                'statementDataSource' => $statementDataSource,
+                'selectedBatchId' => $resolvedBatchId,
+                'batchOptions' => $statementDataSource === 'imported'
+                    ? ($report['batches'] ?? $batchOptions->all())
+                    : $batchOptions->all(),
+                'selectedBatch' => $report['batch'] ?? null,
+                'importedRows' => $report['imported_rows'] ?? [],
+                'editImportedRow' => $editRow !== null ? $this->serializeImportedStatementRow($editRow) : null,
+                'isManageMode' => $isManageMode,
+                'pageRouteName' => $isManageMode
+                    ? 'finance.report.profit-loss.manage'
+                    : 'finance.report.profit-loss',
+                'mainStatementRouteName' => 'finance.report.profit-loss',
+                'manageStatementRouteName' => 'finance.report.profit-loss.manage',
             ]);
         } catch (Throwable $exception) {
             report($exception);
@@ -157,6 +262,16 @@ class FinanceStatementController extends Controller
     public function downloadGeneralLedger(FinanceStatementFilterRequest $request)
     {
         return $this->downloadStatementDocument($request, 'general_ledger');
+    }
+
+    public function importBalanceSheetExcel(FinanceStatementImportRequest $request)
+    {
+        return $this->importStatementExcel($request, FinanceStatementBatch::TYPE_BALANCE_SHEET);
+    }
+
+    public function importProfitLossExcel(FinanceStatementImportRequest $request)
+    {
+        return $this->importStatementExcel($request, FinanceStatementBatch::TYPE_PROFIT_LOSS);
     }
 
     public function journalItems(FinanceStatementFilterRequest $request)
@@ -308,6 +423,36 @@ class FinanceStatementController extends Controller
         }
     }
 
+    public function storeBalanceSheetRow(FinanceStatementRowStoreRequest $request)
+    {
+        return $this->storeStatementRow($request, FinanceStatementBatch::TYPE_BALANCE_SHEET);
+    }
+
+    public function updateBalanceSheetRow(FinanceStatementRowUpdateRequest $request, FinanceStatementRow $row)
+    {
+        return $this->updateStatementRow($request, $row, FinanceStatementBatch::TYPE_BALANCE_SHEET);
+    }
+
+    public function destroyBalanceSheetRow(FinanceStatementFilterRequest $request, FinanceStatementRow $row)
+    {
+        return $this->destroyStatementRow($request, $row, FinanceStatementBatch::TYPE_BALANCE_SHEET);
+    }
+
+    public function storeProfitLossRow(FinanceStatementRowStoreRequest $request)
+    {
+        return $this->storeStatementRow($request, FinanceStatementBatch::TYPE_PROFIT_LOSS);
+    }
+
+    public function updateProfitLossRow(FinanceStatementRowUpdateRequest $request, FinanceStatementRow $row)
+    {
+        return $this->updateStatementRow($request, $row, FinanceStatementBatch::TYPE_PROFIT_LOSS);
+    }
+
+    public function destroyProfitLossRow(FinanceStatementFilterRequest $request, FinanceStatementRow $row)
+    {
+        return $this->destroyStatementRow($request, $row, FinanceStatementBatch::TYPE_PROFIT_LOSS);
+    }
+
     public function saveAccountMapping(FinanceStatementAccountMappingRequest $request)
     {
         try {
@@ -375,6 +520,142 @@ class FinanceStatementController extends Controller
         }
     }
 
+    private function importStatementExcel(FinanceStatementImportRequest $request, string $statementType)
+    {
+        $uploadedFile = $request->file('file');
+        $routeName = $statementType === FinanceStatementBatch::TYPE_BALANCE_SHEET
+            ? 'finance.report.balance-sheet.manage'
+            : 'finance.report.profit-loss.manage';
+
+        if ($uploadedFile === null) {
+            return redirect()
+                ->route($routeName, ['statement_data_source' => 'imported'])
+                ->with('error', 'File import laporan tidak ditemukan.');
+        }
+
+        try {
+            $summary = $this->financeImportedStatementService->importFromExcel(
+                $statementType,
+                $uploadedFile->getPathname(),
+                $uploadedFile->getClientOriginalName(),
+                $request->validated()['batch_name'] ?? null,
+                $request->validated()['notes'] ?? null,
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route($routeName, [
+                    'statement_data_source' => 'imported',
+                    'statement_batch_id' => (string) $summary['batch']->id,
+                    'period_type' => 'ALL',
+                ])
+                ->with('success', 'Import laporan selesai. ' . $summary['row_count'] . ' baris berhasil dibaca.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Import Excel laporan gagal: ' . $exception->getMessage());
+        }
+    }
+
+    private function storeStatementRow(FinanceStatementRowStoreRequest $request, string $statementType)
+    {
+        try {
+            $row = $this->financeImportedStatementService->createRow(
+                $statementType,
+                $request->validated(),
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route($this->statementManageRoute($statementType), array_merge(
+                    $this->extractStatementRedirectQuery($request),
+                    [
+                        'statement_data_source' => 'imported',
+                        'statement_batch_id' => (string) $row->batch_id,
+                    ]
+                ))
+                ->with('success', 'Baris laporan berhasil ditambahkan.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal menambahkan baris laporan.');
+        }
+    }
+
+    private function updateStatementRow(
+        FinanceStatementRowUpdateRequest $request,
+        FinanceStatementRow $row,
+        string $statementType
+    ) {
+        try {
+            if ((string) $row->batch?->statement_type !== $statementType) {
+                throw new \RuntimeException('Baris laporan tidak cocok dengan jenis laporan.');
+            }
+
+            $updatedRow = $this->financeImportedStatementService->updateRow(
+                $row,
+                $statementType,
+                $request->validated(),
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return redirect()
+                ->route($this->statementManageRoute($statementType), array_merge(
+                    $this->extractStatementRedirectQuery($request),
+                    [
+                        'statement_data_source' => 'imported',
+                        'statement_batch_id' => (string) $updatedRow->batch_id,
+                    ]
+                ))
+                ->with('success', 'Baris laporan berhasil diperbarui.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui baris laporan.');
+        }
+    }
+
+    private function destroyStatementRow(
+        FinanceStatementFilterRequest $request,
+        FinanceStatementRow $row,
+        string $statementType
+    ) {
+        try {
+            if ((string) $row->batch?->statement_type !== $statementType) {
+                throw new \RuntimeException('Baris laporan tidak cocok dengan jenis laporan.');
+            }
+
+            $batchId = (string) $row->batch_id;
+            $filter = StatementFilterDTO::fromArray($request->validated());
+            $this->financeImportedStatementService->deleteRow($row);
+
+            return redirect()
+                ->route($this->statementManageRoute($statementType), array_merge(
+                    $filter->toQueryArray(),
+                    [
+                        'statement_data_source' => 'imported',
+                        'statement_batch_id' => $batchId,
+                    ]
+                ))
+                ->with('success', 'Baris laporan berhasil dihapus.');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menghapus baris laporan.');
+        }
+    }
+
     /**
      * @return array<string, int|string|null>
      */
@@ -394,6 +675,8 @@ class FinanceStatementController extends Controller
             'account_code' => $filter->accountCode,
             'search' => $filter->search,
             'statement_source' => $filter->statementSource,
+            'statement_data_source' => $filter->statementDataSource,
+            'statement_batch_id' => $filter->statementBatchId,
             'ledger_source' => $filter->ledgerSource,
             'ledger_batch_id' => $filter->ledgerBatchId,
             'per_page' => $filter->perPage,
@@ -496,6 +779,8 @@ class FinanceStatementController extends Controller
                 accountCode: $filter->accountCode,
                 search: $filter->search,
                 statementSource: $filter->statementSource,
+                statementDataSource: $filter->statementDataSource,
+                statementBatchId: $filter->statementBatchId,
                 ledgerSource: $filter->ledgerSource,
                 ledgerBatchId: $filter->ledgerBatchId,
                 selectedIds: $filter->selectedIds,
@@ -506,20 +791,40 @@ class FinanceStatementController extends Controller
             $exported = match ($statementType) {
                 'balance_sheet' => $format === 'excel'
                     ? $this->financialStatementSpreadsheetService->exportBalanceSheet(
-                        $this->financialStatementService->getBalanceSheetReport($exportFilter),
+                        ($filter->statementDataSource ?? 'system') === 'imported'
+                            ? $this->financeImportedStatementService->getImportedBalanceSheetReport(
+                                $exportFilter,
+                                $filter->statementBatchId
+                            )
+                            : $this->financialStatementService->getBalanceSheetReport($exportFilter),
                         $exportFilter
                     )
                     : $this->financialStatementDocumentService->exportBalanceSheet(
-                        $this->financialStatementService->getBalanceSheetReport($exportFilter),
+                        ($filter->statementDataSource ?? 'system') === 'imported'
+                            ? $this->financeImportedStatementService->getImportedBalanceSheetReport(
+                                $exportFilter,
+                                $filter->statementBatchId
+                            )
+                            : $this->financialStatementService->getBalanceSheetReport($exportFilter),
                         $exportFilter
                     ),
                 'profit_loss' => $format === 'excel'
                     ? $this->financialStatementSpreadsheetService->exportProfitLoss(
-                        $this->financialStatementService->getProfitLossReport($exportFilter),
+                        ($filter->statementDataSource ?? 'system') === 'imported'
+                            ? $this->financeImportedStatementService->getImportedProfitLossReport(
+                                $exportFilter,
+                                $filter->statementBatchId
+                            )
+                            : $this->financialStatementService->getProfitLossReport($exportFilter),
                         $exportFilter
                     )
                     : $this->financialStatementDocumentService->exportProfitLoss(
-                        $this->financialStatementService->getProfitLossReport($exportFilter),
+                        ($filter->statementDataSource ?? 'system') === 'imported'
+                            ? $this->financeImportedStatementService->getImportedProfitLossReport(
+                                $exportFilter,
+                                $filter->statementBatchId
+                            )
+                            : $this->financialStatementService->getProfitLossReport($exportFilter),
                         $exportFilter
                     ),
                 'general_ledger' => $format === 'excel'
@@ -573,6 +878,32 @@ class FinanceStatementController extends Controller
                 ->back()
                 ->with('error', 'Gagal mengunduh dokumen laporan finance.');
         }
+    }
+
+    /**
+     * @return array{0:string,1:?string,2:\Illuminate\Support\Collection<int, array<string, mixed>>}
+     */
+    private function resolveStatementDataContext(
+        FinanceStatementFilterRequest $request,
+        StatementFilterDTO $filter,
+        string $statementType,
+        bool $isManageMode
+    ): array {
+        $batchOptions = $this->financeImportedStatementService->getBatchOptions($statementType);
+        $hasImportedBatches = $batchOptions->isNotEmpty();
+        $hasExplicitSource = $request->query->has('statement_data_source')
+            && $request->query('statement_data_source') !== '';
+        $statementDataSource = $hasExplicitSource
+            ? ($filter->statementDataSource ?? ($isManageMode ? 'imported' : 'system'))
+            : ($isManageMode ? 'imported' : ($hasImportedBatches ? 'imported' : 'system'));
+
+        $resolvedBatchId = $filter->statementBatchId;
+
+        if ($statementDataSource === 'imported' && !$this->hasExplicitStatementPeriodInput($request)) {
+            $this->applyAllPeriodToStatementFilter($filter);
+        }
+
+        return [$statementDataSource, $resolvedBatchId, $batchOptions];
     }
 
     private function resolveStatementSourceLabel(?string $statementSource): string
@@ -696,6 +1027,84 @@ class FinanceStatementController extends Controller
     }
 
     private function applyAllPeriodToGeneralLedgerFilter(StatementFilterDTO $filter): void
+    {
+        $filter->periodType = null;
+        $filter->reportDate = null;
+        $filter->year = null;
+        $filter->month = null;
+        $filter->startDate = null;
+        $filter->endDate = null;
+        $filter->startMonth = null;
+        $filter->endMonth = null;
+        $filter->startYear = null;
+        $filter->endYear = null;
+    }
+
+    /**
+     * @return array<string, int|string>
+     */
+    private function extractStatementRedirectQuery(
+        FinanceStatementRowStoreRequest|FinanceStatementRowUpdateRequest $request
+    ): array {
+        return array_filter([
+            'period_type' => $request->input('period_type'),
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'start_month' => $request->input('start_month'),
+            'end_month' => $request->input('end_month'),
+            'start_year' => $request->input('start_year'),
+            'end_year' => $request->input('end_year'),
+            'report_date' => $request->input('report_date'),
+            'month' => $request->input('month'),
+            'year' => $request->input('year'),
+            'account_code' => $request->input('account_code_filter'),
+            'search' => $request->input('search_filter'),
+        ], static fn ($value): bool => $value !== null && $value !== '');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeImportedStatementRow(FinanceStatementRow $row): array
+    {
+        return [
+            'id' => (string) $row->id,
+            'batch_id' => (string) $row->batch_id,
+            'section_key' => $row->section_key !== null ? (string) $row->section_key : null,
+            'section_label' => $row->section_label !== null ? (string) $row->section_label : null,
+            'group_label' => $row->group_label !== null ? (string) $row->group_label : null,
+            'account_code' => $row->account_code !== null ? (string) $row->account_code : null,
+            'account_name' => (string) $row->account_name,
+            'finance_type' => $row->finance_type !== null ? (string) $row->finance_type : null,
+            'amount' => round((float) $row->amount, 2),
+            'is_manual' => (bool) $row->is_manual,
+        ];
+    }
+
+    private function statementManageRoute(string $statementType): string
+    {
+        return match ($statementType) {
+            FinanceStatementBatch::TYPE_BALANCE_SHEET => 'finance.report.balance-sheet.manage',
+            FinanceStatementBatch::TYPE_PROFIT_LOSS => 'finance.report.profit-loss.manage',
+            default => 'finance.dashboard',
+        };
+    }
+
+    private function hasExplicitStatementPeriodInput(FinanceStatementFilterRequest $request): bool
+    {
+        return $request->filled('period_type')
+            || $request->filled('report_date')
+            || $request->filled('month')
+            || $request->filled('year')
+            || $request->filled('start_date')
+            || $request->filled('end_date')
+            || $request->filled('start_month')
+            || $request->filled('end_month')
+            || $request->filled('start_year')
+            || $request->filled('end_year');
+    }
+
+    private function applyAllPeriodToStatementFilter(StatementFilterDTO $filter): void
     {
         $filter->periodType = null;
         $filter->reportDate = null;

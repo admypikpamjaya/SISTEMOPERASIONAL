@@ -32,22 +32,19 @@ class TemplateRenderer
 
         $payload = array_merge($baseData, $this->normalizeContext($context));
 
-        $search = [];
-        $replace = [];
-        foreach ($payload as $key => $value) {
-            $token = trim((string) $key);
-            if ($token === '') {
-                continue;
-            }
+        return preg_replace_callback(
+            '/\{\{\s*([\w.]+)\s*\}\}|\{\s*([\w.]+)\s*\}/',
+            static function (array $matches) use ($payload): string {
+                $token = trim((string) ($matches[1] ?: $matches[2] ?: ''));
 
-            $stringValue = (string) ($value ?? '');
-            $search[] = '{' . $token . '}';
-            $replace[] = $stringValue;
-            $search[] = '{{' . $token . '}}';
-            $replace[] = $stringValue;
-        }
+                if ($token === '' || !array_key_exists($token, $payload)) {
+                    return $matches[0];
+                }
 
-        return str_replace($search, $replace, $template);
+                return (string) ($payload[$token] ?? '');
+            },
+            $template
+        ) ?? $template;
     }
 
     private function normalizeContext(array $context): array

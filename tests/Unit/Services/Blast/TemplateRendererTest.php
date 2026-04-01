@@ -54,4 +54,27 @@ class TemplateRendererTest extends TestCase
             $rendered
         );
     }
+
+    public function test_render_supports_double_brace_placeholders_without_leaving_extra_braces(): void
+    {
+        $renderer = new TemplateRenderer();
+
+        $recipient = new BlastRecipient([
+            'nama_siswa' => 'Christopher Atera Putra',
+            'kelas' => '4 SDIA 23 Jatikramat',
+            'nama_wali' => 'Bapak Christopher',
+            'wa_wali' => '6281234500000',
+        ]);
+
+        $template = 'SPP ananda {{ nama_siswa }} memiliki tunggakan sebesar {{ nominal_tunggakan_rupiah }}.';
+
+        $rendered = $renderer->render($template, $recipient, [
+            'nominal_tunggakan' => 150000,
+        ]);
+
+        $this->assertSame(
+            'SPP ananda Christopher Atera Putra memiliki tunggakan sebesar Rp 150.000.',
+            $rendered
+        );
+    }
 }

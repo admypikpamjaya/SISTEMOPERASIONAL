@@ -13,6 +13,8 @@
     $accountCode = $statementFilters['account_code'] ?? null;
     $search = $statementFilters['search'] ?? null;
     $statementSource = $statementFilters['statement_source'] ?? null;
+    $statementDataSource = $statementFilters['statement_data_source'] ?? null;
+    $statementBatchId = $statementFilters['statement_batch_id'] ?? null;
     $ledgerSource = $statementFilters['ledger_source'] ?? null;
     $ledgerBatchId = $statementFilters['ledger_batch_id'] ?? null;
     $perPage = (int) ($statementFilters['per_page'] ?? 10);
@@ -23,6 +25,8 @@
     $resetQuery = array_filter([
         'account_code' => $accountCode,
         'statement_source' => $statementSource,
+        'statement_data_source' => $statementDataSource,
+        'statement_batch_id' => $statementBatchId,
         'ledger_source' => $ledgerSource,
         'ledger_batch_id' => $ledgerBatchId,
         'per_page' => $showPerPage ? $perPage : null,
@@ -150,6 +154,12 @@
             @endif
             @if(!empty($statementSource))
                 <input type="hidden" name="statement_source" value="{{ $statementSource }}">
+            @endif
+            @if(!empty($statementDataSource))
+                <input type="hidden" name="statement_data_source" value="{{ $statementDataSource }}">
+            @endif
+            @if(!empty($statementBatchId))
+                <input type="hidden" name="statement_batch_id" value="{{ $statementBatchId }}">
             @endif
             @if(!empty($ledgerSource))
                 <input type="hidden" name="ledger_source" value="{{ $ledgerSource }}">

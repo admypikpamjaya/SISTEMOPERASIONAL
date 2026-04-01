@@ -681,7 +681,7 @@ body.dark-mode .tg-btn.ghost {
                         @csrf
                         <button type="submit" class="tg-btn ghost">Generate Template Default</button>
                     </form>
-                    <div class="tg-hint">Placeholder: <strong>{bulan_tunggakan}</strong>, <strong>{nilai_tunggakan_rupiah}</strong>, <strong>{total_tunggakan_rupiah}</strong>, <strong>{tagihan_rupiah}</strong>.</div>
+                    <div class="tg-hint">Placeholder: <strong>{bulan_tunggakan}</strong>, <strong>{nilai_tunggakan_rupiah}</strong>, <strong>{nominal_tunggakan_rupiah}</strong>, <strong>{total_tunggakan_rupiah}</strong>, <strong>{tagihan_rupiah}</strong>.</div>
                 </div>
             </div>
         </div>

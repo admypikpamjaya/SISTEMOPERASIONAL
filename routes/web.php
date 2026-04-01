@@ -243,17 +243,57 @@ Route::prefix('finance')
             ->middleware('check_access:finance_balance_sheet.read')
             ->name('report.balance-sheet');
 
+        Route::get('/report/balance-sheet/manage', [FinanceStatementController::class, 'manageBalanceSheet'])
+            ->middleware('check_access:finance_balance_sheet.read')
+            ->name('report.balance-sheet.manage');
+
         Route::get('/report/balance-sheet/download', [FinanceStatementController::class, 'downloadBalanceSheet'])
             ->middleware('check_access:finance_balance_sheet.read')
             ->name('report.balance-sheet.download');
+
+        Route::post('/report/balance-sheet/import', [FinanceStatementController::class, 'importBalanceSheetExcel'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.balance-sheet.import');
+
+        Route::post('/report/balance-sheet/rows', [FinanceStatementController::class, 'storeBalanceSheetRow'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.balance-sheet.rows.store');
+
+        Route::put('/report/balance-sheet/rows/{row}', [FinanceStatementController::class, 'updateBalanceSheetRow'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.balance-sheet.rows.update');
+
+        Route::delete('/report/balance-sheet/rows/{row}', [FinanceStatementController::class, 'destroyBalanceSheetRow'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.balance-sheet.rows.destroy');
 
         Route::get('/report/profit-loss', [FinanceStatementController::class, 'profitLoss'])
             ->middleware('check_access:finance_profit_loss.read')
             ->name('report.profit-loss');
 
+        Route::get('/report/profit-loss/manage', [FinanceStatementController::class, 'manageProfitLoss'])
+            ->middleware('check_access:finance_profit_loss.read')
+            ->name('report.profit-loss.manage');
+
         Route::get('/report/profit-loss/download', [FinanceStatementController::class, 'downloadProfitLoss'])
             ->middleware('check_access:finance_profit_loss.read')
             ->name('report.profit-loss.download');
+
+        Route::post('/report/profit-loss/import', [FinanceStatementController::class, 'importProfitLossExcel'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.profit-loss.import');
+
+        Route::post('/report/profit-loss/rows', [FinanceStatementController::class, 'storeProfitLossRow'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.profit-loss.rows.store');
+
+        Route::put('/report/profit-loss/rows/{row}', [FinanceStatementController::class, 'updateProfitLossRow'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.profit-loss.rows.update');
+
+        Route::delete('/report/profit-loss/rows/{row}', [FinanceStatementController::class, 'destroyProfitLossRow'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.profit-loss.rows.destroy');
 
         Route::get('/report/general-ledger', [FinanceStatementController::class, 'generalLedger'])
             ->middleware('check_access:finance_general_ledger.read')

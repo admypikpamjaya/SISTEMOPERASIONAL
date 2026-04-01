@@ -62,6 +62,8 @@ class TunggakanMessageContextService
             'bulan_tunggakan' => $bulanTunggakan !== '' ? $bulanTunggakan : '-',
             'nilai_tunggakan' => $totalNilai,
             'nilai_tunggakan_rupiah' => $this->formatRupiah($totalNilai),
+            'nominal_tunggakan' => $totalNilai,
+            'nominal_tunggakan_rupiah' => $this->formatRupiah($totalNilai),
             'total_tunggakan' => $totalNilai,
             'total_tunggakan_rupiah' => $this->formatRupiah($totalNilai),
             'jumlah_item_tunggakan' => $records->count(),
