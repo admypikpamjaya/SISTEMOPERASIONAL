@@ -13,6 +13,8 @@
     $manageStatementRouteName = $manageStatementRouteName ?? 'finance.report.profit-loss.manage';
     $statementDataSource = $statementDataSource ?? 'system';
     $isImportedSource = $statementDataSource === 'imported';
+    $isCombinedSource = $statementDataSource === 'combined';
+    $usesImportedData = in_array($statementDataSource, ['imported', 'combined'], true);
     $selectedBatchId = $selectedBatchId ?? null;
     $batchOptions = $batchOptions ?? [];
     $selectedBatch = $selectedBatch ?? null;
@@ -23,6 +25,11 @@
         ->except(['statement_data_source', 'statement_batch_id', 'page'])
         ->filter(static fn ($value): bool => $value !== null && $value !== '')
         ->all();
+    $combinedSourceQuery = array_merge(
+        $sourceQueryBase,
+        ['statement_data_source' => 'combined'],
+        $selectedBatchId ? ['statement_batch_id' => $selectedBatchId] : []
+    );
     $systemSourceQuery = array_merge($sourceQueryBase, ['statement_data_source' => 'system']);
     $importedSourceQuery = array_merge(
         $sourceQueryBase,
@@ -31,9 +38,11 @@
     );
     $pageSubtitle = $isManageMode
         ? 'Kelola import Excel dan edit manual laba rugi.'
-        : ($isImportedSource
+        : ($isCombinedSource
+            ? 'Hasil import dan data jurnal tampil dalam satu laporan laba rugi untuk periode ' . $periodLabel . '.'
+            : ($isImportedSource
             ? 'Hasil import laba rugi tampil langsung di halaman utama.'
-            : 'Ringkasan pemasukan dan pengeluaran pada periode ' . $periodLabel . '.');
+            : 'Ringkasan pemasukan dan pengeluaran pada periode ' . $periodLabel . '.'));
 @endphp
 
 <style>
@@ -574,7 +583,7 @@
             <span class="pl-section-icon"><i class="fas fa-database"></i></span>
             <span>{{ $isManageMode ? 'Import & Manual' : 'Sumber Data Laporan' }}</span>
         </div>
-        @if($isImportedSource && $selectedBatchMeta)
+        @if($usesImportedData && $selectedBatchMeta)
             <span class="pl-pill">
                 <i class="fas fa-layer-group"></i> {{ $selectedBatchMeta['batch_name'] ?? 'Batch Import' }}
             </span>
@@ -582,26 +591,38 @@
     </div>
     <div class="p-3">
         <div class="pl-soft-copy">
-            {{ $isImportedSource
+            {{ $isCombinedSource
+                ? 'Halaman utama sedang menggabungkan data jurnal sistem dengan hasil import laba rugi.'
+                : ($isImportedSource
                 ? ($isManageMode
                     ? 'Kelola batch hasil import dan baris manual untuk laba rugi.'
                     : 'Halaman utama sedang membaca hasil import laba rugi.')
-                : 'Halaman ini sedang membaca data jurnal sistem yang sudah diposting.' }}
+                : 'Halaman ini sedang membaca data jurnal sistem yang sudah diposting.') }}
         </div>
-        <div class="pl-source-switch mt-3">
-            <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="pl-switch-link {{ !$isImportedSource ? 'active' : '' }}">
-                <i class="fas fa-server"></i> Data Sistem
-            </a>
-            <a href="{{ route($pageRouteName, $importedSourceQuery) }}" class="pl-switch-link {{ $isImportedSource ? 'active' : '' }}">
-                <i class="fas fa-file-import"></i> Hasil Import
-            </a>
-        </div>
-        @if($isImportedSource)
+        @unless($isManageMode)
+            <div class="pl-source-switch mt-3">
+                <a href="{{ route($pageRouteName, $combinedSourceQuery) }}" class="pl-switch-link {{ $isCombinedSource ? 'active' : '' }}">
+                    <i class="fas fa-layer-group"></i> Data Gabungan
+                </a>
+                <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="pl-switch-link {{ !$isImportedSource && !$isCombinedSource ? 'active' : '' }}">
+                    <i class="fas fa-server"></i> Data Sistem
+                </a>
+                <a href="{{ route($pageRouteName, $importedSourceQuery) }}" class="pl-switch-link {{ $isImportedSource ? 'active' : '' }}">
+                    <i class="fas fa-file-import"></i> Hasil Import
+                </a>
+            </div>
+        @endunless
+        @if($usesImportedData)
             <form method="GET" action="{{ route($pageRouteName) }}" class="mt-3">
-                <input type="hidden" name="statement_data_source" value="imported">
-                <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
+                <input type="hidden" name="statement_data_source" value="{{ $statementDataSource }}">
+                @if($isImportedSource)
+                    <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
+                @endif
                 @foreach(($baseFilterQuery ?? []) as $queryKey => $queryValue)
-                    @if(!in_array($queryKey, ['statement_data_source', 'statement_batch_id', 'period_type'], true))
+                    @if(
+                        !in_array($queryKey, ['statement_data_source', 'statement_batch_id'], true)
+                        && !($isImportedSource && $queryKey === 'period_type')
+                    )
                         <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
                     @endif
                 @endforeach
@@ -841,46 +862,48 @@
                         <tbody>
                             @forelse($incomeRows as $row)
                                 @php
+                                    $rowHasJournalSource = (bool) ($row['has_journal_source'] ?? !$isImportedSource);
+                                    $rowHasImportedSource = (bool) ($row['has_imported_source'] ?? $isImportedSource);
+                                    $canOpenJournalDetail = $rowHasJournalSource
+                                        && !empty($row['account_code'])
+                                        && $row['account_code'] !== '-';
                                     $journalItemsRoute = route('finance.report.journal-items', array_merge($baseFilterQuery, [
                                         'account_code' => $row['account_code'],
                                         'statement_source' => 'profit_loss',
                                     ]));
-                                    $manageIncomeRowRoute = route($manageStatementRouteName, array_filter(array_merge($filterQuery ?? [], [
+                                    $manageIncomeRowRoute = route($manageStatementRouteName, array_filter(array_merge($baseFilterQuery ?? [], [
                                         'statement_data_source' => 'imported',
-                                        'statement_batch_id' => $selectedBatchId,
-                                        'edit_row' => $row['id'] ?? null,
+                                        'statement_batch_id' => $row['imported_batch_id'] ?? $selectedBatchId,
+                                        'account_code' => $row['account_code'] ?? null,
+                                        'edit_row' => $isImportedSource ? ($row['id'] ?? null) : null,
                                     ]), static fn ($value): bool => $value !== null && $value !== ''));
                                 @endphp
                             <tr>
                                 <td>
-                                    @if($isImportedSource)
-                                        <strong>{{ $row['account_code'] }}</strong>
-                                    @else
+                                    @if($canOpenJournalDetail)
                                         <a href="{{ $journalItemsRoute }}" class="pl-account-link">
                                             <strong>{{ $row['account_code'] }}</strong>
                                         </a>
+                                    @else
+                                        <strong>{{ $row['account_code'] }}</strong>
                                     @endif
                                 </td>
                                 <td>
                                     <div class="pl-account-cell">
-                                        @if($isImportedSource)
-                                            <div class="pl-account-name">{{ $row['account_name'] }}</div>
-                                            @if(!empty($row['group_label']))
-                                                <div class="pl-soft-copy">{{ $row['group_label'] }}</div>
-                                            @endif
-                                        @else
+                                        @if($canOpenJournalDetail)
                                             <a href="{{ $journalItemsRoute }}" class="pl-account-name pl-account-link">{{ $row['account_name'] }}</a>
+                                        @else
+                                            <div class="pl-account-name">{{ $row['account_name'] }}</div>
+                                        @endif
+                                        @if(!empty($row['group_label']))
+                                            <div class="pl-soft-copy">{{ $row['group_label'] }}</div>
                                         @endif
                                         <div class="dropdown">
                                             <button type="button" class="pl-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right pl-row-menu">
-                                                @if($isImportedSource)
-                                                    <a class="dropdown-item" href="{{ $manageIncomeRowRoute }}">
-                                                        <i class="fas fa-pen"></i> Edit Baris
-                                                    </a>
-                                                @else
+                                                @if($canOpenJournalDetail)
                                                     <a class="dropdown-item" href="{{ $journalItemsRoute }}">
                                                         <i class="fas fa-table"></i> Item Jurnal
                                                     </a>
@@ -888,17 +911,22 @@
                                                         <i class="fas fa-book-open"></i> Buku Besar
                                                     </a>
                                                 @endif
+                                                @if($rowHasImportedSource)
+                                                    <a class="dropdown-item" href="{{ $manageIncomeRowRoute }}">
+                                                        <i class="fas fa-pen"></i> {{ $isImportedSource ? 'Edit Baris' : 'Kelola Import' }}
+                                                    </a>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="pl-amount income">
-                                    @if($isImportedSource)
-                                        Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
-                                    @else
+                                    @if($canOpenJournalDetail)
                                         <a href="{{ $journalItemsRoute }}" class="pl-amount-link">
                                             Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
                                         </a>
+                                    @else
+                                        Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
                                     @endif
                                 </td>
                             </tr>
@@ -937,46 +965,48 @@
                         <tbody>
                             @forelse($expenseRows as $row)
                                 @php
+                                    $rowHasJournalSource = (bool) ($row['has_journal_source'] ?? !$isImportedSource);
+                                    $rowHasImportedSource = (bool) ($row['has_imported_source'] ?? $isImportedSource);
+                                    $canOpenJournalDetail = $rowHasJournalSource
+                                        && !empty($row['account_code'])
+                                        && $row['account_code'] !== '-';
                                     $journalItemsRoute = route('finance.report.journal-items', array_merge($baseFilterQuery, [
                                         'account_code' => $row['account_code'],
                                         'statement_source' => 'profit_loss',
                                     ]));
-                                    $manageExpenseRowRoute = route($manageStatementRouteName, array_filter(array_merge($filterQuery ?? [], [
+                                    $manageExpenseRowRoute = route($manageStatementRouteName, array_filter(array_merge($baseFilterQuery ?? [], [
                                         'statement_data_source' => 'imported',
-                                        'statement_batch_id' => $selectedBatchId,
-                                        'edit_row' => $row['id'] ?? null,
+                                        'statement_batch_id' => $row['imported_batch_id'] ?? $selectedBatchId,
+                                        'account_code' => $row['account_code'] ?? null,
+                                        'edit_row' => $isImportedSource ? ($row['id'] ?? null) : null,
                                     ]), static fn ($value): bool => $value !== null && $value !== ''));
                                 @endphp
                             <tr>
                                 <td>
-                                    @if($isImportedSource)
-                                        <strong>{{ $row['account_code'] }}</strong>
-                                    @else
+                                    @if($canOpenJournalDetail)
                                         <a href="{{ $journalItemsRoute }}" class="pl-account-link">
                                             <strong>{{ $row['account_code'] }}</strong>
                                         </a>
+                                    @else
+                                        <strong>{{ $row['account_code'] }}</strong>
                                     @endif
                                 </td>
                                 <td>
                                     <div class="pl-account-cell">
-                                        @if($isImportedSource)
-                                            <div class="pl-account-name">{{ $row['account_name'] }}</div>
-                                            @if(!empty($row['group_label']))
-                                                <div class="pl-soft-copy">{{ $row['group_label'] }}</div>
-                                            @endif
-                                        @else
+                                        @if($canOpenJournalDetail)
                                             <a href="{{ $journalItemsRoute }}" class="pl-account-name pl-account-link">{{ $row['account_name'] }}</a>
+                                        @else
+                                            <div class="pl-account-name">{{ $row['account_name'] }}</div>
+                                        @endif
+                                        @if(!empty($row['group_label']))
+                                            <div class="pl-soft-copy">{{ $row['group_label'] }}</div>
                                         @endif
                                         <div class="dropdown">
                                             <button type="button" class="pl-row-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right pl-row-menu">
-                                                @if($isImportedSource)
-                                                    <a class="dropdown-item" href="{{ $manageExpenseRowRoute }}">
-                                                        <i class="fas fa-pen"></i> Edit Baris
-                                                    </a>
-                                                @else
+                                                @if($canOpenJournalDetail)
                                                     <a class="dropdown-item" href="{{ $journalItemsRoute }}">
                                                         <i class="fas fa-table"></i> Item Jurnal
                                                     </a>
@@ -984,17 +1014,22 @@
                                                         <i class="fas fa-book-open"></i> Buku Besar
                                                     </a>
                                                 @endif
+                                                @if($rowHasImportedSource)
+                                                    <a class="dropdown-item" href="{{ $manageExpenseRowRoute }}">
+                                                        <i class="fas fa-pen"></i> {{ $isImportedSource ? 'Edit Baris' : 'Kelola Import' }}
+                                                    </a>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="pl-amount expense">
-                                    @if($isImportedSource)
-                                        Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
-                                    @else
+                                    @if($canOpenJournalDetail)
                                         <a href="{{ $journalItemsRoute }}" class="pl-amount-link">
                                             Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
                                         </a>
+                                    @else
+                                        Rp {{ number_format((float) $row['amount'], 2, ',', '.') }}
                                     @endif
                                 </td>
                             </tr>

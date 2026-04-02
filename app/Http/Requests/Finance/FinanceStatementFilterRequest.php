@@ -29,7 +29,7 @@ class FinanceStatementFilterRequest extends FormRequest
             'account_code' => 'nullable|string|max:100',
             'search' => 'nullable|string|max:255',
             'statement_source' => 'nullable|string|in:balance_sheet,profit_loss,general_ledger',
-            'statement_data_source' => 'nullable|string|in:system,imported',
+            'statement_data_source' => 'nullable|string|in:system,imported,combined',
             'statement_batch_id' => 'nullable|uuid',
             'ledger_source' => 'nullable|string|in:system,imported',
             'ledger_batch_id' => 'nullable|uuid',
@@ -42,7 +42,7 @@ class FinanceStatementFilterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $statementDataSource = strtolower(trim((string) $this->input('statement_data_source', 'system')));
+        $statementDataSource = strtolower(trim((string) $this->input('statement_data_source', 'combined')));
         $ledgerSource = strtolower(trim((string) $this->input('ledger_source', 'system')));
         $hasExplicitPeriodInput = $this->filled('period_type')
             || $this->filled('report_date')
@@ -55,9 +55,9 @@ class FinanceStatementFilterRequest extends FormRequest
             || $this->filled('start_year')
             || $this->filled('end_year');
 
-        $hasImportedSource = $statementDataSource === 'imported' || $ledgerSource === 'imported';
+        $hasImportedOnlySource = $statementDataSource === 'imported' || $ledgerSource === 'imported';
 
-        $defaultPeriodType = $hasImportedSource && !$hasExplicitPeriodInput
+        $defaultPeriodType = $hasImportedOnlySource && !$hasExplicitPeriodInput
             ? 'ALL'
             : 'MONTHLY';
 
@@ -215,7 +215,7 @@ class FinanceStatementFilterRequest extends FormRequest
             'account_code.max' => 'Kode akun maksimal 100 karakter.',
             'search.max' => 'Pencarian maksimal 255 karakter.',
             'statement_source.in' => 'Sumber laporan tidak valid.',
-            'statement_data_source.in' => 'Sumber data laporan tidak valid.',
+            'statement_data_source.in' => 'Sumber data laporan harus system, imported, atau combined.',
             'statement_batch_id.uuid' => 'Batch laporan tidak valid.',
             'ledger_source.in' => 'Sumber buku besar tidak valid.',
             'ledger_batch_id.uuid' => 'Batch buku besar tidak valid.',

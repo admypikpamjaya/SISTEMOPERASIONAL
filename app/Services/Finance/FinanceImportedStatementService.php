@@ -442,20 +442,33 @@ class FinanceImportedStatementService
         ?string $batchId,
         StatementFilterDTO $filter
     ): ?FinanceStatementBatch {
-        $query = FinanceStatementBatch::query()
+        if (!empty($batchId)) {
+            return FinanceStatementBatch::query()
+                ->where('statement_type', $statementType)
+                ->find($batchId);
+        }
+
+        $preferredQuery = FinanceStatementBatch::query()
             ->where('statement_type', $statementType);
 
-        if (!empty($batchId)) {
-            return $query->find($batchId);
-        }
-
         if ($filter->startYear !== null && $filter->endYear !== null) {
-            $query->whereBetween('imported_year', [$filter->startYear, $filter->endYear]);
+            $preferredQuery->whereBetween('imported_year', [$filter->startYear, $filter->endYear]);
         } elseif ($filter->startYear !== null) {
-            $query->where('imported_year', $filter->startYear);
+            $preferredQuery->where('imported_year', $filter->startYear);
         }
 
-        return $query
+        $selectedBatch = $preferredQuery
+            ->orderByDesc('imported_year')
+            ->orderByDesc('imported_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($selectedBatch !== null) {
+            return $selectedBatch;
+        }
+
+        return FinanceStatementBatch::query()
+            ->where('statement_type', $statementType)
             ->orderByDesc('imported_year')
             ->orderByDesc('imported_at')
             ->orderByDesc('created_at')

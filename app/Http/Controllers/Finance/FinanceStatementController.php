@@ -24,6 +24,7 @@ use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Throwable;
 
 class FinanceStatementController extends Controller
@@ -70,9 +71,7 @@ class FinanceStatementController extends Controller
             $filter->statementDataSource = $statementDataSource;
             $filter->statementBatchId = $resolvedBatchId;
 
-            $report = $statementDataSource === 'imported'
-                ? $this->financeImportedStatementService->getImportedBalanceSheetReport($filter, $resolvedBatchId)
-                : $this->financialStatementService->getBalanceSheetReport($filter);
+            $report = $this->resolveBalanceSheetReportData($filter, $resolvedBatchId);
 
             $resolvedBatchId = $resolvedBatchId ?? data_get($report, 'batch.id');
             $filter->statementBatchId = $resolvedBatchId;
@@ -94,9 +93,7 @@ class FinanceStatementController extends Controller
                 'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
                 'statementDataSource' => $statementDataSource,
                 'selectedBatchId' => $resolvedBatchId,
-                'batchOptions' => $statementDataSource === 'imported'
-                    ? ($report['batches'] ?? $batchOptions->all())
-                    : $batchOptions->all(),
+                'batchOptions' => $report['batches'] ?? $batchOptions->all(),
                 'selectedBatch' => $report['batch'] ?? null,
                 'importedRows' => $report['imported_rows'] ?? [],
                 'editImportedRow' => $editRow !== null ? $this->serializeImportedStatementRow($editRow) : null,
@@ -130,9 +127,7 @@ class FinanceStatementController extends Controller
             $filter->statementDataSource = $statementDataSource;
             $filter->statementBatchId = $resolvedBatchId;
 
-            $report = $statementDataSource === 'imported'
-                ? $this->financeImportedStatementService->getImportedProfitLossReport($filter, $resolvedBatchId)
-                : $this->financialStatementService->getProfitLossReport($filter);
+            $report = $this->resolveProfitLossReportData($filter, $resolvedBatchId);
 
             $resolvedBatchId = $resolvedBatchId ?? data_get($report, 'batch.id');
             $filter->statementBatchId = $resolvedBatchId;
@@ -154,9 +149,7 @@ class FinanceStatementController extends Controller
                 'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
                 'statementDataSource' => $statementDataSource,
                 'selectedBatchId' => $resolvedBatchId,
-                'batchOptions' => $statementDataSource === 'imported'
-                    ? ($report['batches'] ?? $batchOptions->all())
-                    : $batchOptions->all(),
+                'batchOptions' => $report['batches'] ?? $batchOptions->all(),
                 'selectedBatch' => $report['batch'] ?? null,
                 'importedRows' => $report['imported_rows'] ?? [],
                 'editImportedRow' => $editRow !== null ? $this->serializeImportedStatementRow($editRow) : null,
@@ -791,40 +784,20 @@ class FinanceStatementController extends Controller
             $exported = match ($statementType) {
                 'balance_sheet' => $format === 'excel'
                     ? $this->financialStatementSpreadsheetService->exportBalanceSheet(
-                        ($filter->statementDataSource ?? 'system') === 'imported'
-                            ? $this->financeImportedStatementService->getImportedBalanceSheetReport(
-                                $exportFilter,
-                                $filter->statementBatchId
-                            )
-                            : $this->financialStatementService->getBalanceSheetReport($exportFilter),
+                        $this->resolveBalanceSheetReportData($exportFilter, $filter->statementBatchId),
                         $exportFilter
                     )
                     : $this->financialStatementDocumentService->exportBalanceSheet(
-                        ($filter->statementDataSource ?? 'system') === 'imported'
-                            ? $this->financeImportedStatementService->getImportedBalanceSheetReport(
-                                $exportFilter,
-                                $filter->statementBatchId
-                            )
-                            : $this->financialStatementService->getBalanceSheetReport($exportFilter),
+                        $this->resolveBalanceSheetReportData($exportFilter, $filter->statementBatchId),
                         $exportFilter
                     ),
                 'profit_loss' => $format === 'excel'
                     ? $this->financialStatementSpreadsheetService->exportProfitLoss(
-                        ($filter->statementDataSource ?? 'system') === 'imported'
-                            ? $this->financeImportedStatementService->getImportedProfitLossReport(
-                                $exportFilter,
-                                $filter->statementBatchId
-                            )
-                            : $this->financialStatementService->getProfitLossReport($exportFilter),
+                        $this->resolveProfitLossReportData($exportFilter, $filter->statementBatchId),
                         $exportFilter
                     )
                     : $this->financialStatementDocumentService->exportProfitLoss(
-                        ($filter->statementDataSource ?? 'system') === 'imported'
-                            ? $this->financeImportedStatementService->getImportedProfitLossReport(
-                                $exportFilter,
-                                $filter->statementBatchId
-                            )
-                            : $this->financialStatementService->getProfitLossReport($exportFilter),
+                        $this->resolveProfitLossReportData($exportFilter, $filter->statementBatchId),
                         $exportFilter
                     ),
                 'general_ledger' => $format === 'excel'
@@ -893,9 +866,16 @@ class FinanceStatementController extends Controller
         $hasImportedBatches = $batchOptions->isNotEmpty();
         $hasExplicitSource = $request->query->has('statement_data_source')
             && $request->query('statement_data_source') !== '';
+        $defaultSource = $isManageMode
+            ? 'imported'
+            : ($hasImportedBatches ? 'combined' : 'system');
         $statementDataSource = $hasExplicitSource
-            ? ($filter->statementDataSource ?? ($isManageMode ? 'imported' : 'system'))
-            : ($isManageMode ? 'imported' : ($hasImportedBatches ? 'imported' : 'system'));
+            ? ($filter->statementDataSource ?? $defaultSource)
+            : $defaultSource;
+
+        if ($statementDataSource === 'combined' && !$hasImportedBatches) {
+            $statementDataSource = 'system';
+        }
 
         $resolvedBatchId = $filter->statementBatchId;
 
@@ -904,6 +884,328 @@ class FinanceStatementController extends Controller
         }
 
         return [$statementDataSource, $resolvedBatchId, $batchOptions];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveBalanceSheetReportData(StatementFilterDTO $filter, ?string $batchId): array
+    {
+        $statementDataSource = $filter->statementDataSource ?? 'system';
+
+        if ($statementDataSource === 'imported') {
+            return $this->financeImportedStatementService->getImportedBalanceSheetReport($filter, $batchId);
+        }
+
+        $systemReport = $this->financialStatementService->getBalanceSheetReport($filter);
+
+        if ($statementDataSource === 'combined') {
+            return $this->mergeBalanceSheetReports(
+                $systemReport,
+                $this->financeImportedStatementService->getImportedBalanceSheetReport($filter, $batchId),
+                $batchId
+            );
+        }
+
+        return $systemReport;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveProfitLossReportData(StatementFilterDTO $filter, ?string $batchId): array
+    {
+        $statementDataSource = $filter->statementDataSource ?? 'system';
+
+        if ($statementDataSource === 'imported') {
+            return $this->financeImportedStatementService->getImportedProfitLossReport($filter, $batchId);
+        }
+
+        $systemReport = $this->financialStatementService->getProfitLossReport($filter);
+
+        if ($statementDataSource === 'combined') {
+            return $this->mergeProfitLossReports(
+                $systemReport,
+                $this->financeImportedStatementService->getImportedProfitLossReport($filter, $batchId),
+                $batchId
+            );
+        }
+
+        return $systemReport;
+    }
+
+    /**
+     * @param array<string, mixed> $systemReport
+     * @param array<string, mixed> $importedReport
+     * @return array<string, mixed>
+     */
+    private function mergeBalanceSheetReports(array $systemReport, array $importedReport, ?string $selectedBatchId): array
+    {
+        $resolvedBatchId = $selectedBatchId ?? data_get($importedReport, 'batch.id');
+        $sectionOrder = ['liabilitas', 'piutang', 'kas', 'aset'];
+        $sections = [];
+
+        foreach ($sectionOrder as $sectionKey) {
+            $sections[$sectionKey] = [
+                'key' => $sectionKey,
+                'label' => $this->resolveMergedSectionLabel(
+                    $systemReport['sections'] ?? [],
+                    $importedReport['sections'] ?? [],
+                    $sectionKey
+                ),
+                'rows' => [],
+                'total' => 0.0,
+            ];
+        }
+
+        foreach ($sectionOrder as $sectionKey) {
+            $systemSection = collect($systemReport['sections'] ?? [])->firstWhere('key', $sectionKey) ?? [];
+            $importedSection = collect($importedReport['sections'] ?? [])->firstWhere('key', $sectionKey) ?? [];
+            $sections[$sectionKey]['rows'] = $this->mergeStatementRows(
+                $systemSection['rows'] ?? [],
+                $importedSection['rows'] ?? [],
+                'balance',
+                $resolvedBatchId
+            );
+            $sections[$sectionKey]['total'] = round(
+                collect($sections[$sectionKey]['rows'])->sum(
+                    static fn (array $row): float => (float) ($row['balance'] ?? 0)
+                ),
+                2
+            );
+        }
+
+        $uncategorizedRows = array_merge(
+            $this->decorateUncategorizedRows($systemReport['uncategorized_rows'] ?? [], true, null),
+            $this->decorateUncategorizedRows($importedReport['uncategorized_rows'] ?? [], false, $resolvedBatchId)
+        );
+        $uncategorizedRows = $this->sortMergedStatementRows($uncategorizedRows);
+
+        $kasTotal = (float) ($sections['kas']['total'] ?? 0);
+        $piutangTotal = (float) ($sections['piutang']['total'] ?? 0);
+        $asetTotal = (float) ($sections['aset']['total'] ?? 0);
+        $liabilitasTotal = (float) ($sections['liabilitas']['total'] ?? 0);
+
+        return [
+            'sections' => array_values($sections),
+            'summary' => [
+                'kas_total' => $kasTotal,
+                'piutang_total' => $piutangTotal,
+                'aset_total' => $asetTotal,
+                'liabilitas_total' => $liabilitasTotal,
+                'asset_side_total' => round($kasTotal + $piutangTotal + $asetTotal, 2),
+                'account_count' => collect($sections)->sum(
+                    static fn (array $section): int => count($section['rows'] ?? [])
+                ),
+            ],
+            'uncategorized_count' => count($uncategorizedRows),
+            'uncategorized_rows' => $uncategorizedRows,
+            'uncategorized_summary' => [
+                'profit_loss_count' => (int) data_get($systemReport, 'uncategorized_summary.profit_loss_count', 0)
+                    + (int) data_get($importedReport, 'uncategorized_summary.profit_loss_count', 0),
+                'other_count' => (int) data_get($systemReport, 'uncategorized_summary.other_count', 0)
+                    + (int) data_get($importedReport, 'uncategorized_summary.other_count', 0),
+                'unmapped_count' => (int) data_get($systemReport, 'uncategorized_summary.unmapped_count', 0)
+                    + (int) data_get($importedReport, 'uncategorized_summary.unmapped_count', 0),
+            ],
+            'batch' => $importedReport['batch'] ?? null,
+            'batches' => $importedReport['batches'] ?? [],
+            'imported_rows' => $importedReport['imported_rows'] ?? [],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $systemReport
+     * @param array<string, mixed> $importedReport
+     * @return array<string, mixed>
+     */
+    private function mergeProfitLossReports(array $systemReport, array $importedReport, ?string $selectedBatchId): array
+    {
+        $resolvedBatchId = $selectedBatchId ?? data_get($importedReport, 'batch.id');
+        $incomeRows = $this->mergeStatementRows(
+            $systemReport['income_rows'] ?? [],
+            $importedReport['income_rows'] ?? [],
+            'amount',
+            $resolvedBatchId
+        );
+        $expenseRows = $this->mergeStatementRows(
+            $systemReport['expense_rows'] ?? [],
+            $importedReport['expense_rows'] ?? [],
+            'amount',
+            $resolvedBatchId
+        );
+
+        $totalIncome = round(
+            collect($incomeRows)->sum(static fn (array $row): float => (float) ($row['amount'] ?? 0)),
+            2
+        );
+        $totalExpense = round(
+            collect($expenseRows)->sum(static fn (array $row): float => (float) ($row['amount'] ?? 0)),
+            2
+        );
+
+        return [
+            'income_rows' => $incomeRows,
+            'expense_rows' => $expenseRows,
+            'totals' => [
+                'income' => $totalIncome,
+                'expense' => $totalExpense,
+                'net_result' => round($totalIncome - $totalExpense, 2),
+            ],
+            'batch' => $importedReport['batch'] ?? null,
+            'batches' => $importedReport['batches'] ?? [],
+            'imported_rows' => $importedReport['imported_rows'] ?? [],
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $systemRows
+     * @param array<int, array<string, mixed>> $importedRows
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeStatementRows(
+        array $systemRows,
+        array $importedRows,
+        string $valueKey,
+        ?string $selectedBatchId
+    ): array {
+        $mergedRows = [];
+
+        foreach ([['rows' => $systemRows, 'is_system' => true], ['rows' => $importedRows, 'is_system' => false]] as $sourceSet) {
+            foreach ($sourceSet['rows'] as $row) {
+                $mergeKey = $this->buildStatementMergeKey($row);
+                $existingRow = $mergedRows[$mergeKey] ?? [
+                    'id' => $row['id'] ?? null,
+                    'account_code' => (string) ($row['account_code'] ?? '-'),
+                    'account_name' => (string) ($row['account_name'] ?? '-'),
+                    'finance_type' => (string) ($row['finance_type'] ?? ''),
+                    'group_label' => $row['group_label'] ?? null,
+                    'is_manual' => (bool) ($row['is_manual'] ?? false),
+                    $valueKey => 0.0,
+                    'has_journal_source' => false,
+                    'has_imported_source' => false,
+                    'imported_batch_id' => null,
+                ];
+
+                if (empty($existingRow['id']) && !empty($row['id'])) {
+                    $existingRow['id'] = $row['id'];
+                }
+
+                if (
+                    (($existingRow['account_name'] ?? '') === '-' || trim((string) ($existingRow['account_name'] ?? '')) === '')
+                    && !empty($row['account_name'])
+                ) {
+                    $existingRow['account_name'] = (string) $row['account_name'];
+                }
+
+                if (empty($existingRow['finance_type']) && !empty($row['finance_type'])) {
+                    $existingRow['finance_type'] = (string) $row['finance_type'];
+                }
+
+                if (empty($existingRow['group_label']) && !empty($row['group_label'])) {
+                    $existingRow['group_label'] = (string) $row['group_label'];
+                }
+
+                $existingRow[$valueKey] = round(
+                    (float) ($existingRow[$valueKey] ?? 0) + (float) ($row[$valueKey] ?? 0),
+                    2
+                );
+                $existingRow['is_manual'] = (bool) ($existingRow['is_manual'] ?? false)
+                    || (bool) ($row['is_manual'] ?? false);
+
+                if ($sourceSet['is_system']) {
+                    $existingRow['has_journal_source'] = true;
+                } else {
+                    $existingRow['has_imported_source'] = true;
+                    $existingRow['imported_batch_id'] = $selectedBatchId ?? ($existingRow['imported_batch_id'] ?? null);
+                }
+
+                $mergedRows[$mergeKey] = $existingRow;
+            }
+        }
+
+        return $this->sortMergedStatementRows(array_values($mergedRows));
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function decorateUncategorizedRows(array $rows, bool $isSystemSource, ?string $selectedBatchId): array
+    {
+        return array_map(
+            function (array $row) use ($isSystemSource, $selectedBatchId): array {
+                return array_merge($row, [
+                    'has_journal_source' => $isSystemSource,
+                    'has_imported_source' => !$isSystemSource,
+                    'source_label' => $isSystemSource ? 'Jurnal' : 'Import',
+                    'imported_batch_id' => $isSystemSource ? null : $selectedBatchId,
+                    'is_manual' => (bool) ($row['is_manual'] ?? false),
+                ]);
+            },
+            $rows
+        );
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $systemSections
+     * @param array<int, array<string, mixed>> $importedSections
+     */
+    private function resolveMergedSectionLabel(array $systemSections, array $importedSections, string $sectionKey): string
+    {
+        $label = data_get(collect($systemSections)->firstWhere('key', $sectionKey), 'label')
+            ?? data_get(collect($importedSections)->firstWhere('key', $sectionKey), 'label');
+
+        if (is_string($label) && $label !== '') {
+            return $label;
+        }
+
+        return Str::headline(str_replace('_', ' ', $sectionKey));
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function buildStatementMergeKey(array $row): string
+    {
+        $accountCode = strtoupper(trim((string) ($row['account_code'] ?? '')));
+        if ($accountCode !== '' && $accountCode !== '-') {
+            return 'code:' . $accountCode;
+        }
+
+        return 'name:' . strtoupper(trim((string) ($row['account_name'] ?? '-')))
+            . '|group:' . strtoupper(trim((string) ($row['group_label'] ?? '')));
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function sortMergedStatementRows(array $rows): array
+    {
+        usort($rows, function (array $left, array $right): int {
+            $leftCode = strtoupper(trim((string) ($left['account_code'] ?? '')));
+            $rightCode = strtoupper(trim((string) ($right['account_code'] ?? '')));
+
+            if ($leftCode === '' || $leftCode === '-') {
+                return ($rightCode === '' || $rightCode === '-')
+                    ? strcasecmp((string) ($left['account_name'] ?? ''), (string) ($right['account_name'] ?? ''))
+                    : 1;
+            }
+
+            if ($rightCode === '' || $rightCode === '-') {
+                return -1;
+            }
+
+            $codeComparison = strcasecmp($leftCode, $rightCode);
+            if ($codeComparison !== 0) {
+                return $codeComparison;
+            }
+
+            return strcasecmp((string) ($left['account_name'] ?? ''), (string) ($right['account_name'] ?? ''));
+        });
+
+        return $rows;
     }
 
     private function resolveStatementSourceLabel(?string $statementSource): string
