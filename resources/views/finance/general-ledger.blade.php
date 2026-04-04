@@ -13,6 +13,8 @@
     $manageLedgerRouteName = $manageLedgerRouteName ?? 'finance.report.general-ledger.manage';
     $ledgerSource = $ledgerSource ?? 'system';
     $isImportedSource = $ledgerSource === 'imported';
+    $isCombinedSource = $ledgerSource === 'combined';
+    $usesImportedData = in_array($ledgerSource, ['imported', 'combined'], true);
     $selectedBatchId = $selectedBatchId ?? null;
     $batchOptions = $batchOptions ?? [];
     $selectedBatch = $selectedBatch ?? null;
@@ -26,6 +28,11 @@
         ->except(['ledger_source', 'ledger_batch_id', 'page'])
         ->filter(static fn ($value): bool => $value !== null && $value !== '')
         ->all();
+    $combinedSourceQuery = array_merge(
+        $sourceQueryBase,
+        ['ledger_source' => 'combined'],
+        $selectedBatchId ? ['ledger_batch_id' => $selectedBatchId] : []
+    );
     $systemSourceQuery = array_merge($sourceQueryBase, ['ledger_source' => 'system']);
     $importedSourceQuery = array_merge(
         $sourceQueryBase,
@@ -41,7 +48,10 @@
         'ledger_batch_id' => $selectedBatchId,
         'period_type' => $isImportedSource ? (data_get($filters, 'period_type', 'ALL') ?: 'ALL') : 'ALL',
     ]), static fn ($value): bool => $value !== null && $value !== '');
-    $mainPageQuery = $isImportedSource ? $managePageQuery : $switchPageQuery;
+    $mainPageQuery = array_filter(array_merge($baseFilterQuery ?? [], [
+        'ledger_source' => $usesImportedData ? 'combined' : 'system',
+        'ledger_batch_id' => $selectedBatchId,
+    ]), static fn ($value): bool => $value !== null && $value !== '');
     $redirectFields = array_filter([
         'period_type' => data_get($filters, 'period_type'),
         'start_date' => data_get($filters, 'start_date'),
@@ -75,9 +85,11 @@
     ];
     $pageSubtitle = $isManageMode
         ? 'Kelola import Excel dan edit manual buku besar.'
-        : ($isImportedSource
+        : ($isCombinedSource
+            ? 'Rincian buku besar gabungan dari jurnal sistem dan hasil import untuk periode ' . $periodLabel . '.'
+            : ($isImportedSource
             ? 'Hasil import buku besar yang sudah tersedia tampil langsung di halaman utama.'
-            : 'Rincian jurnal keseluruhan per akun untuk periode ' . $periodLabel . '.');
+            : 'Rincian jurnal keseluruhan per akun untuk periode ' . $periodLabel . '.'));
 @endphp
 
 <style>
@@ -354,7 +366,7 @@
     }
     .gl-source-links {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 0.75rem;
     }
     .gl-source-link {
@@ -848,7 +860,13 @@
             <span>Sumber Data Buku Besar</span>
         </div>
         <div class="gl-source-links">
-            <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="gl-source-link {{ !$isImportedSource ? 'is-active' : '' }}">
+            @unless($isManageMode)
+                <a href="{{ route($pageRouteName, $combinedSourceQuery) }}" class="gl-source-link {{ $isCombinedSource ? 'is-active' : '' }}">
+                    <strong>Data Gabungan</strong>
+                    <span>Menampilkan jurnal sistem dan hasil import dalam satu buku besar.</span>
+                </a>
+            @endunless
+            <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="gl-source-link {{ !$isImportedSource && !$isCombinedSource ? 'is-active' : '' }}">
                 <strong>Jurnal Sistem</strong>
                 <span>Membaca buku besar dari invoice/jurnal finance yang sudah `POSTED`.</span>
             </a>
@@ -859,16 +877,21 @@
         </div>
     </div>
 
-    @if($isImportedSource)
+    @if($usesImportedData)
         <div class="gl-source-card">
             <div class="gl-panel-title">
                 <i class="fas fa-layer-group"></i>
                 <span>{{ $isManageMode ? 'Pilih Batch Import' : 'Pilih Hasil Import' }}</span>
             </div>
             <form method="GET" action="{{ route($pageRouteName) }}" class="gl-batch-form">
-                <input type="hidden" name="ledger_source" value="imported">
+                <input type="hidden" name="ledger_source" value="{{ $ledgerSource }}">
+                @if($isImportedSource)
+                    <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
+                @endif
                 @foreach($sourceQueryBase as $queryKey => $queryValue)
-                    <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                    @if($queryKey !== 'period_type' || !$isImportedSource)
+                        <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                    @endif
                 @endforeach
                 <div class="fs-field" style="margin-bottom:0;">
                     <label class="fs-label" for="ledger_batch_id">
@@ -889,7 +912,9 @@
                 <div class="gl-panel-help">
                     {{ $isManageMode
                         ? 'Ganti batch untuk mengelola hasil import Excel yang berbeda tanpa keluar dari halaman kelola.'
-                        : 'Ganti batch untuk melihat hasil import Excel yang berbeda langsung dari halaman utama buku besar.' }}
+                        : ($isCombinedSource
+                            ? 'Ganti batch untuk menentukan data import mana yang digabungkan ke buku besar utama.'
+                            : 'Ganti batch untuk melihat hasil import Excel yang berbeda langsung dari halaman utama buku besar.') }}
                 </div>
             </form>
 
@@ -1107,12 +1132,12 @@
     <div class="gl-summary-card">
         <div class="gl-summary-label"><i class="fas fa-sitemap"></i> Jumlah Akun</div>
         <div class="gl-summary-value">{{ number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.') }}</div>
-        <div class="gl-summary-help">{{ $isImportedSource ? 'Akun unik yang terbaca dari batch import/manual aktif.' : 'Akun unik yang muncul dalam jurnal sesuai filter aktif.' }}</div>
+        <div class="gl-summary-help">{{ $isCombinedSource ? 'Akun unik yang muncul dari jurnal sistem dan batch import aktif.' : ($isImportedSource ? 'Akun unik yang terbaca dari batch import/manual aktif.' : 'Akun unik yang muncul dalam jurnal sesuai filter aktif.') }}</div>
     </div>
     <div class="gl-summary-card">
         <div class="gl-summary-label"><i class="fas fa-list-ul"></i> Baris Jurnal</div>
         <div class="gl-summary-value">{{ number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.') }}</div>
-        <div class="gl-summary-help">{{ $isImportedSource ? 'Baris transaksi pada batch import/manual yang aktif.' : 'Total baris debit dan kredit yang masuk ke buku besar.' }}</div>
+        <div class="gl-summary-help">{{ $isCombinedSource ? 'Total baris transaksi setelah jurnal sistem dan import digabungkan.' : ($isImportedSource ? 'Baris transaksi pada batch import/manual yang aktif.' : 'Total baris debit dan kredit yang masuk ke buku besar.') }}</div>
     </div>
     <div class="gl-summary-card">
         <div class="gl-summary-label"><i class="fas fa-arrow-up"></i> Total Debit</div>
@@ -1131,7 +1156,7 @@
         </div>
         <div class="gl-summary-help">Idealnya bernilai 0 jika buku besar seimbang.</div>
     </div>
-    @if($isImportedSource && !empty($selectedBatchMeta))
+    @if($usesImportedData && !empty($selectedBatchMeta))
         <div class="gl-summary-card">
             <div class="gl-summary-label"><i class="fas fa-database"></i> Batch Aktif</div>
             <div class="gl-summary-value" style="font-size:1rem;">{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
@@ -1185,8 +1210,8 @@
                         <thead>
                             <tr>
                                 <th style="width:120px;">Tanggal</th>
-                                <th style="width:160px;">{{ $isImportedSource ? 'No Transaksi' : 'No Jurnal' }}</th>
-                                <th style="width:190px;">{{ $isImportedSource ? 'Komunikasi' : 'Nama Jurnal' }}</th>
+                                <th style="width:160px;">{{ $isCombinedSource ? 'No Dokumen' : ($isImportedSource ? 'No Transaksi' : 'No Jurnal') }}</th>
+                                <th style="width:190px;">{{ $isCombinedSource ? 'Komunikasi / Jurnal' : ($isImportedSource ? 'Komunikasi' : 'Nama Jurnal') }}</th>
                                 <th>Uraian</th>
                                 <th style="width:150px; text-align:right;">Debit</th>
                                 <th style="width:150px; text-align:right;">Kredit</th>
@@ -1200,6 +1225,16 @@
                         </thead>
                         <tbody>
                             @forelse($group['entries'] as $entry)
+                                @php
+                                    $entryHasJournalSource = (bool) ($entry['has_journal_source'] ?? !$isImportedSource);
+                                    $entryHasImportedSource = (bool) ($entry['has_imported_source'] ?? $isImportedSource);
+                                    $entryManageRoute = route($manageLedgerRouteName, array_filter(array_merge($baseFilterQuery ?? [], [
+                                        'ledger_source' => 'imported',
+                                        'ledger_batch_id' => $entry['imported_batch_id'] ?? $selectedBatchId,
+                                        'account_code' => $group['account_code'] ?? null,
+                                        'edit_entry' => ($entryHasImportedSource && !empty($entry['entry_id'])) ? $entry['entry_id'] : null,
+                                    ]), static fn ($value): bool => $value !== null && $value !== ''));
+                                @endphp
                                 <tr>
                                     <td>
                                         @if(!empty($entry['accounting_date']))
@@ -1210,15 +1245,20 @@
                                     </td>
                                     <td>
                                         <strong>{{ $entry['invoice_no'] }}</strong>
-                                        @if(!$isImportedSource && !empty($entry['invoice_id']))
+                                        @if($entryHasJournalSource && !empty($entry['invoice_id']))
                                             <a href="{{ route('finance.invoice.show', $entry['invoice_id']) }}" class="gl-journal-link">
                                                 <i class="fas fa-folder-open"></i> Item Jurnal
                                             </a>
                                         @endif
-                                        @if($isImportedSource)
+                                        @if($entryHasImportedSource)
                                             <div class="gl-chip {{ !empty($entry['is_manual']) ? 'manual' : 'imported' }}">
                                                 <i class="fas {{ !empty($entry['is_manual']) ? 'fa-pen' : 'fa-file-import' }}"></i>
                                                 {{ !empty($entry['is_manual']) ? 'Manual' : 'Import' }}
+                                            </div>
+                                        @elseif($isCombinedSource)
+                                            <div class="gl-chip">
+                                                <i class="fas fa-server"></i>
+                                                Jurnal
                                             </div>
                                         @endif
                                     </td>
@@ -1235,10 +1275,17 @@
                                             @if(!empty($entry['analytic_distribution']))
                                                 Analitik: {{ $entry['analytic_distribution'] }}<br>
                                             @endif
-                                            @if($isImportedSource && !empty($entry['currency']))
+                                            @if($entryHasImportedSource && !empty($entry['currency']))
                                                 Mata Uang: {{ $entry['currency'] }}
                                             @endif
                                         </div>
+                                        @if($isCombinedSource && $entryHasImportedSource)
+                                            <div class="mt-2">
+                                                <a href="{{ $entryManageRoute }}" class="gl-row-link">
+                                                    <i class="fas fa-file-import"></i> Kelola Import
+                                                </a>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="gl-amount debit">Rp {{ number_format((float) $entry['debit'], 2, ',', '.') }}</td>
                                     <td class="gl-amount credit">Rp {{ number_format((float) $entry['credit'], 2, ',', '.') }}</td>
@@ -1294,11 +1341,13 @@
         <i class="fas fa-book-dead"></i>
         <h4>Belum ada data buku besar</h4>
         <div>
-            {!! $isImportedSource
+            {!! $isCombinedSource
+                ? 'Belum ada data jurnal atau hasil import yang bisa digabungkan di buku besar ini. Pastikan jurnal finance sudah <strong>POSTED</strong> atau buka menu <strong>Import & Edit Manual</strong> untuk menambahkan batch import.'
+                : ($isImportedSource
                 ? ($isManageMode
                     ? 'Belum ada batch atau baris buku besar manual. Mulai dari <strong>Import Excel</strong> atau tambahkan baris manual di panel atas.'
                     : 'Belum ada hasil import yang bisa ditampilkan di halaman utama. Buka menu <strong>Import & Edit Manual</strong> untuk menambahkan data buku besar.')
-                : 'Pastikan jurnal finance sudah <strong>POSTED</strong> agar muncul di buku besar.' !!}
+                : 'Pastikan jurnal finance sudah <strong>POSTED</strong> agar muncul di buku besar.') !!}
         </div>
     </div>
 @endif

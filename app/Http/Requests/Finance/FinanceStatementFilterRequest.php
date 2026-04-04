@@ -31,7 +31,7 @@ class FinanceStatementFilterRequest extends FormRequest
             'statement_source' => 'nullable|string|in:balance_sheet,profit_loss,general_ledger',
             'statement_data_source' => 'nullable|string|in:system,imported,combined',
             'statement_batch_id' => 'nullable|uuid',
-            'ledger_source' => 'nullable|string|in:system,imported',
+            'ledger_source' => 'nullable|string|in:system,imported,combined',
             'ledger_batch_id' => 'nullable|uuid',
             'selected_ids' => 'nullable|array',
             'selected_ids.*' => 'integer|min:1',
@@ -43,7 +43,7 @@ class FinanceStatementFilterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $statementDataSource = strtolower(trim((string) $this->input('statement_data_source', 'combined')));
-        $ledgerSource = strtolower(trim((string) $this->input('ledger_source', 'system')));
+        $ledgerSource = strtolower(trim((string) $this->input('ledger_source', 'combined')));
         $hasExplicitPeriodInput = $this->filled('period_type')
             || $this->filled('report_date')
             || $this->filled('month')
@@ -217,7 +217,7 @@ class FinanceStatementFilterRequest extends FormRequest
             'statement_source.in' => 'Sumber laporan tidak valid.',
             'statement_data_source.in' => 'Sumber data laporan harus system, imported, atau combined.',
             'statement_batch_id.uuid' => 'Batch laporan tidak valid.',
-            'ledger_source.in' => 'Sumber buku besar tidak valid.',
+            'ledger_source.in' => 'Sumber buku besar harus system, imported, atau combined.',
             'ledger_batch_id.uuid' => 'Batch buku besar tidak valid.',
             'selected_ids.array' => 'Daftar item terpilih tidak valid.',
             'selected_ids.*.integer' => 'Item terpilih tidak valid.',

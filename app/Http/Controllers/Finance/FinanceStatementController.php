@@ -23,6 +23,7 @@ use App\Services\Finance\FinancialStatementDocumentService;
 use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
@@ -186,18 +187,23 @@ class FinanceStatementController extends Controller
             $batchOptions = $this->financeGeneralLedgerService->getBatchOptions();
             $hasImportedBatches = $batchOptions->isNotEmpty();
             $hasExplicitSource = $request->query->has('ledger_source') && $request->query('ledger_source') !== '';
+            $defaultLedgerSource = $isManageMode
+                ? 'imported'
+                : ($hasImportedBatches ? 'combined' : 'system');
             $ledgerSource = $hasExplicitSource
-                ? ($filter->ledgerSource ?? ($isManageMode ? 'imported' : 'system'))
-                : ($isManageMode ? 'imported' : ($hasImportedBatches ? 'imported' : 'system'));
+                ? ($filter->ledgerSource ?? $defaultLedgerSource)
+                : $defaultLedgerSource;
+
+            if ($ledgerSource === 'combined' && !$hasImportedBatches) {
+                $ledgerSource = 'system';
+            }
 
             $filter->ledgerSource = $ledgerSource;
             if ($ledgerSource === 'imported' && !$this->hasExplicitGeneralLedgerPeriodInput($request)) {
                 $this->applyAllPeriodToGeneralLedgerFilter($filter);
             }
 
-            $report = $ledgerSource === 'imported'
-                ? $this->financeGeneralLedgerService->getImportedGeneralLedgerReport($filter, $filter->ledgerBatchId)
-                : $this->financialStatementService->getGeneralLedgerReport($filter);
+            $report = $this->resolveGeneralLedgerReportData($filter, $filter->ledgerBatchId);
             $resolvedBatchId = $filter->ledgerBatchId ?? data_get($report, 'batch.id');
             $filter->ledgerBatchId = $resolvedBatchId;
             $editEntry = $ledgerSource === 'imported'
@@ -221,9 +227,7 @@ class FinanceStatementController extends Controller
                 'selectedAccountCode' => $filter->accountCode,
                 'ledgerSource' => $ledgerSource,
                 'selectedBatchId' => $resolvedBatchId,
-                'batchOptions' => $ledgerSource === 'imported'
-                    ? ($report['batches'] ?? $batchOptions->all())
-                    : $batchOptions->all(),
+                'batchOptions' => $report['batches'] ?? $batchOptions->all(),
                 'selectedBatch' => $report['batch'] ?? null,
                 'editEntry' => $editEntry !== null ? $this->serializeImportedLedgerEntry($editEntry) : null,
                 'isManageMode' => $isManageMode,
@@ -802,23 +806,11 @@ class FinanceStatementController extends Controller
                     ),
                 'general_ledger' => $format === 'excel'
                     ? $this->financialStatementSpreadsheetService->exportGeneralLedger(
-                        ($filter->ledgerSource ?? 'system') === 'imported'
-                            ? $this->financeGeneralLedgerService->getImportedGeneralLedgerReport(
-                                $exportFilter,
-                                $filter->ledgerBatchId,
-                                false
-                            )
-                            : $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
+                        $this->resolveGeneralLedgerReportData($exportFilter, $filter->ledgerBatchId, false),
                         $exportFilter
                     )
                     : $this->financialStatementDocumentService->exportGeneralLedger(
-                        ($filter->ledgerSource ?? 'system') === 'imported'
-                            ? $this->financeGeneralLedgerService->getImportedGeneralLedgerReport(
-                                $exportFilter,
-                                $filter->ledgerBatchId,
-                                false
-                            )
-                            : $this->financialStatementService->getGeneralLedgerReport($exportFilter, false),
+                        $this->resolveGeneralLedgerReportData($exportFilter, $filter->ledgerBatchId, false),
                         $exportFilter
                     ),
                 'journal_items' => $format === 'excel'
@@ -928,6 +920,37 @@ class FinanceStatementController extends Controller
                 $systemReport,
                 $this->financeImportedStatementService->getImportedProfitLossReport($filter, $batchId),
                 $batchId
+            );
+        }
+
+        return $systemReport;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveGeneralLedgerReportData(
+        StatementFilterDTO $filter,
+        ?string $batchId,
+        bool $paginate = true
+    ): array {
+        $ledgerSource = $filter->ledgerSource ?? 'system';
+
+        if ($ledgerSource === 'imported') {
+            return $this->financeGeneralLedgerService->getImportedGeneralLedgerReport($filter, $batchId, $paginate);
+        }
+
+        $systemReport = $this->financialStatementService->getGeneralLedgerReport(
+            $filter,
+            $ledgerSource === 'combined' ? false : $paginate
+        );
+
+        if ($ledgerSource === 'combined') {
+            return $this->mergeGeneralLedgerReports(
+                $systemReport,
+                $this->financeGeneralLedgerService->getImportedGeneralLedgerReport($filter, $batchId, false),
+                $filter,
+                $paginate
             );
         }
 
@@ -1059,6 +1082,105 @@ class FinanceStatementController extends Controller
     }
 
     /**
+     * @param array<string, mixed> $systemReport
+     * @param array<string, mixed> $importedReport
+     * @return array<string, mixed>
+     */
+    private function mergeGeneralLedgerReports(
+        array $systemReport,
+        array $importedReport,
+        StatementFilterDTO $filter,
+        bool $paginate
+    ): array {
+        $resolvedBatchId = data_get($importedReport, 'batch.id');
+        $mergedGroups = [];
+
+        foreach ($systemReport['groups'] ?? [] as $group) {
+            $this->mergeGeneralLedgerGroupIntoCollection($mergedGroups, $group, true, null);
+        }
+
+        foreach ($importedReport['groups'] ?? [] as $group) {
+            $this->mergeGeneralLedgerGroupIntoCollection($mergedGroups, $group, false, $resolvedBatchId);
+        }
+
+        $sortedGroups = array_values($mergedGroups);
+        usort($sortedGroups, function (array $left, array $right): int {
+            $leftCode = strtoupper(trim((string) ($left['account_code'] ?? '')));
+            $rightCode = strtoupper(trim((string) ($right['account_code'] ?? '')));
+
+            if ($leftCode === '' || $leftCode === '-') {
+                return ($rightCode === '' || $rightCode === '-')
+                    ? strcasecmp((string) ($left['account_name'] ?? ''), (string) ($right['account_name'] ?? ''))
+                    : 1;
+            }
+
+            if ($rightCode === '' || $rightCode === '-') {
+                return -1;
+            }
+
+            $codeComparison = strcasecmp($leftCode, $rightCode);
+            if ($codeComparison !== 0) {
+                return $codeComparison;
+            }
+
+            return strcasecmp((string) ($left['account_name'] ?? ''), (string) ($right['account_name'] ?? ''));
+        });
+
+        $accountItems = array_map(static function (array $group): array {
+            return [
+                'account_code' => $group['account_code'],
+                'account_name' => $group['account_name'],
+                'finance_type' => $group['finance_type'],
+                'total_debit' => $group['total_debit'],
+                'total_credit' => $group['total_credit'],
+            ];
+        }, $sortedGroups);
+
+        if ($paginate) {
+            $totalAccounts = count($sortedGroups);
+            $offset = max(0, ($filter->page - 1) * $filter->perPage);
+            $visibleGroups = array_slice($sortedGroups, $offset, $filter->perPage);
+            $accounts = new LengthAwarePaginator(
+                array_slice($accountItems, $offset, $filter->perPage),
+                $totalAccounts,
+                $filter->perPage,
+                $filter->page,
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
+        } else {
+            $visibleGroups = $sortedGroups;
+            $accounts = collect($accountItems);
+        }
+
+        $totalDebit = round(
+            collect($sortedGroups)->sum(static fn (array $group): float => (float) ($group['total_debit'] ?? 0)),
+            2
+        );
+        $totalCredit = round(
+            collect($sortedGroups)->sum(static fn (array $group): float => (float) ($group['total_credit'] ?? 0)),
+            2
+        );
+
+        return [
+            'groups' => $visibleGroups,
+            'accounts' => $accounts,
+            'summary' => [
+                'account_count' => count($sortedGroups),
+                'entry_count' => (int) data_get($systemReport, 'summary.entry_count', 0)
+                    + (int) data_get($importedReport, 'summary.entry_count', 0),
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
+                'balance_gap' => round($totalDebit - $totalCredit, 2),
+            ],
+            'batch' => $importedReport['batch'] ?? null,
+            'batches' => $importedReport['batches'] ?? [],
+        ];
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $systemRows
      * @param array<int, array<string, mixed>> $importedRows
      * @return array<int, array<string, mixed>>
@@ -1125,6 +1247,171 @@ class FinanceStatementController extends Controller
         }
 
         return $this->sortMergedStatementRows(array_values($mergedRows));
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $mergedGroups
+     * @param array<string, mixed> $group
+     */
+    private function mergeGeneralLedgerGroupIntoCollection(
+        array &$mergedGroups,
+        array $group,
+        bool $isJournalSource,
+        ?string $selectedBatchId
+    ): void {
+        $groupKey = $this->buildGeneralLedgerGroupKey($group);
+        $existingGroup = $mergedGroups[$groupKey] ?? [
+            'account_code' => (string) ($group['account_code'] ?? '-'),
+            'account_name' => (string) ($group['account_name'] ?? '-'),
+            'finance_type' => (string) ($group['finance_type'] ?? ''),
+            'normal_side' => (string) ($group['normal_side'] ?? 'DEBIT'),
+            'total_debit' => 0.0,
+            'total_credit' => 0.0,
+            'closing_balance' => 0.0,
+            'entries' => [],
+            'has_journal_source' => false,
+            'has_imported_source' => false,
+            'imported_batch_id' => null,
+        ];
+
+        if (empty($existingGroup['finance_type']) && !empty($group['finance_type'])) {
+            $existingGroup['finance_type'] = (string) $group['finance_type'];
+        }
+
+        if (
+            (($existingGroup['account_name'] ?? '') === '-' || trim((string) ($existingGroup['account_name'] ?? '')) === '')
+            && !empty($group['account_name'])
+        ) {
+            $existingGroup['account_name'] = (string) $group['account_name'];
+        }
+
+        if (empty($existingGroup['normal_side']) && !empty($group['normal_side'])) {
+            $existingGroup['normal_side'] = (string) $group['normal_side'];
+        }
+
+        $existingGroup['total_debit'] = round(
+            (float) ($existingGroup['total_debit'] ?? 0) + (float) ($group['total_debit'] ?? 0),
+            2
+        );
+        $existingGroup['total_credit'] = round(
+            (float) ($existingGroup['total_credit'] ?? 0) + (float) ($group['total_credit'] ?? 0),
+            2
+        );
+
+        if ($isJournalSource) {
+            $existingGroup['has_journal_source'] = true;
+        } else {
+            $existingGroup['has_imported_source'] = true;
+            $existingGroup['imported_batch_id'] = $selectedBatchId ?? ($existingGroup['imported_batch_id'] ?? null);
+        }
+
+        foreach ($group['entries'] ?? [] as $entry) {
+            $existingGroup['entries'][] = $this->decorateMergedGeneralLedgerEntry(
+                $entry,
+                $isJournalSource,
+                $selectedBatchId
+            );
+        }
+
+        $existingGroup['entries'] = $this->recalculateMergedGeneralLedgerEntries(
+            $existingGroup['entries'],
+            (string) ($existingGroup['normal_side'] ?? 'DEBIT')
+        );
+        $existingGroup['closing_balance'] = round(
+            (float) data_get(end($existingGroup['entries']), 'running_balance', 0),
+            2
+        );
+
+        $mergedGroups[$groupKey] = $existingGroup;
+    }
+
+    /**
+     * @param array<string, mixed> $group
+     */
+    private function buildGeneralLedgerGroupKey(array $group): string
+    {
+        $accountCode = strtoupper(trim((string) ($group['account_code'] ?? '')));
+        if ($accountCode !== '' && $accountCode !== '-') {
+            return 'code:' . $accountCode;
+        }
+
+        return 'name:' . strtoupper(trim((string) ($group['account_name'] ?? '-')));
+    }
+
+    /**
+     * @param array<string, mixed> $entry
+     * @return array<string, mixed>
+     */
+    private function decorateMergedGeneralLedgerEntry(
+        array $entry,
+        bool $isJournalSource,
+        ?string $selectedBatchId
+    ): array {
+        return array_merge($entry, [
+            'has_journal_source' => $isJournalSource,
+            'has_imported_source' => !$isJournalSource,
+            'source_label' => $isJournalSource
+                ? 'Jurnal'
+                : (!empty($entry['is_manual']) ? 'Manual' : 'Import'),
+            'imported_batch_id' => $isJournalSource ? null : $selectedBatchId,
+            'can_edit' => !$isJournalSource && !empty($entry['can_edit']),
+            'invoice_id' => $isJournalSource ? ($entry['invoice_id'] ?? null) : null,
+        ]);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $entries
+     * @return array<int, array<string, mixed>>
+     */
+    private function recalculateMergedGeneralLedgerEntries(array $entries, string $normalSide): array
+    {
+        usort($entries, function (array $left, array $right): int {
+            $leftTypeWeight = strtoupper((string) ($left['row_type'] ?? 'ENTRY')) === 'OPENING' ? 0 : 1;
+            $rightTypeWeight = strtoupper((string) ($right['row_type'] ?? 'ENTRY')) === 'OPENING' ? 0 : 1;
+
+            if ($leftTypeWeight !== $rightTypeWeight) {
+                return $leftTypeWeight <=> $rightTypeWeight;
+            }
+
+            $leftDate = !empty($left['accounting_date']) ? (string) $left['accounting_date'] : '9999-12-31';
+            $rightDate = !empty($right['accounting_date']) ? (string) $right['accounting_date'] : '9999-12-31';
+            $dateComparison = strcmp($leftDate, $rightDate);
+            if ($dateComparison !== 0) {
+                return $dateComparison;
+            }
+
+            $leftDocument = strtoupper((string) ($left['invoice_no'] ?? ''));
+            $rightDocument = strtoupper((string) ($right['invoice_no'] ?? ''));
+            $documentComparison = strcmp($leftDocument, $rightDocument);
+            if ($documentComparison !== 0) {
+                return $documentComparison;
+            }
+
+            return strcmp((string) ($left['entry_id'] ?? ''), (string) ($right['entry_id'] ?? ''));
+        });
+
+        $runningBalance = 0.0;
+        $resolvedNormalSide = strtoupper(trim($normalSide)) === 'CREDIT' ? 'CREDIT' : 'DEBIT';
+
+        foreach ($entries as $index => $entry) {
+            if (strtoupper((string) ($entry['row_type'] ?? 'ENTRY')) === 'OPENING') {
+                $runningBalance = round((float) ($entry['running_balance'] ?? 0), 2);
+                $entry['debit'] = 0.0;
+                $entry['credit'] = 0.0;
+                $entry['running_balance'] = $runningBalance;
+                $entries[$index] = $entry;
+                continue;
+            }
+
+            $runningBalance = $resolvedNormalSide === 'CREDIT'
+                ? round($runningBalance + ((float) ($entry['credit'] ?? 0) - (float) ($entry['debit'] ?? 0)), 2)
+                : round($runningBalance + ((float) ($entry['debit'] ?? 0) - (float) ($entry['credit'] ?? 0)), 2);
+
+            $entry['running_balance'] = $runningBalance;
+            $entries[$index] = $entry;
+        }
+
+        return $entries;
     }
 
     /**
