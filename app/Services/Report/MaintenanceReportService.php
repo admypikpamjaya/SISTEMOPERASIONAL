@@ -9,6 +9,7 @@ use App\DTOs\Report\UpdateMaintenanceReportStatusDTO;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 use App\Models\Log\MaintenanceDocumentation;
 use App\Models\Log\MaintenanceLog;
+use App\Services\Asset\AssetFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -64,6 +65,14 @@ class MaintenanceReportService
         $log = MaintenanceLog::with('asset')->find($id);
         if(empty($log))
             throw new \Exception('Laporan tidak ditemukan.', 404);
+
+        $asset = $log->asset;
+        $relation = AssetFactory::createHandler($asset->category)
+            ->getRelationName();
+
+        if ($relation) {
+            $asset->load($relation);
+        }
 
         return MaintenanceReportDataDTO::fromModel($log);
     }

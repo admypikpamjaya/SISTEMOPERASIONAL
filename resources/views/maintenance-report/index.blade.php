@@ -161,9 +161,23 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
         return `
             <form id="maintenance-report">
                 <div class="form-group">
-                    <label for="name">Kode Akun</label>
+                    <label>Kode Akun</label>
                     <input type="text" class="form-control" value="${data.asset.accountCode}" readonly>
                 </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <input type="text" class="form-control" value="${data.asset.category}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi</label>
+                    <input type="text" class="form-control" value="${data.asset.location}" readonly>
+                </div>
+                ${data.asset.category === 'AC' && `
+                    <div class="form-group">
+                        <label>PK</label>
+                        <input type="text" class="form-control" value="${data.asset.detail.dimension} PK" readonly>
+                    </div>
+                `}
                 <div class="form-group">
                     <label for="name">Nama Pekerja</label>
                     <input type="text" name="worker_name" class="form-control" placeholder="Masukkan nama pekerja" value="${data.workerName}" ${!isUserCanUpdate ? 'readonly' : ''} required>
