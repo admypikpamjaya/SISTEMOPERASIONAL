@@ -59,7 +59,7 @@ Route::prefix('login')
         Route::post('/', 'authenticate');
     });
 
-Route::middleware('auth')->get('/logout', function () {
+Route::middleware('auth')->post('/logout', function () {
     Auth::logout();
     return redirect()->route('login');
 })->name('logout');
@@ -152,12 +152,17 @@ Route::prefix('maintenance-report')
             Route::put('/update/status', 'updateStatus')
                 ->middleware('check_access:maintenance_report.update_status')
                 ->name('update-status');
+            Route::post('/{id}/notify', 'sendNotification')
+                ->middleware('check_access:maintenance_report.update')
+                ->name('notify');
             Route::delete('/{id}', 'delete')
                 ->middleware('check_access:maintenance_report.delete')
                 ->name('delete');
         });
 
-        Route::post('/submit', 'store')->name('submit');
+        Route::post('/submit', 'store')
+            ->middleware('throttle:public-maintenance-submission')
+            ->name('submit');
     });
 
 /*

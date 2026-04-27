@@ -17,6 +17,10 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MaintenanceReportService
 {
+    public function __construct(
+        private MaintenanceNotificationService $maintenanceNotificationService
+    ) {}
+
     public function getLogs(
         ?string $keyword = null, 
         ?AssetMaintenanceReportStatus $status = null, 
@@ -62,9 +66,7 @@ class MaintenanceReportService
 
     public function getLog(string $id)
     {
-        $log = MaintenanceLog::with('asset')->find($id);
-        if(empty($log))
-            throw new \Exception('Laporan tidak ditemukan.', 404);
+        $log = $this->findLogOrFail($id, ['asset', 'maintenanceDocumentations']);
 
         $asset = $log->asset;
         $relation = AssetFactory::createHandler($asset->category)
@@ -96,8 +98,18 @@ class MaintenanceReportService
                 'document_path' => $path
             ]);
 
-            return $log->refresh();
+            return $log->refresh()->load(['asset', 'maintenanceDocumentations']);
         });
+
+        try {
+            $this->maintenanceNotificationService->sendForLog($log);
+        } catch (\Throwable $exception) {
+            Log::warning('[MAINTENANCE EMAIL AUTO SEND FAILED]', [
+                'maintenance_log_id' => (string) $log->id,
+                'error' => $exception->getMessage(),
+            ]);
+            report($exception);
+        }
 
         return MaintenanceReportDataDTO::fromModel($log);
     }
@@ -192,5 +204,30 @@ class MaintenanceReportService
 
         $writer = new Xlsx($spreadsheet);
         return $writer;
+    }
+
+    public function sendNotification(string $id, bool $manuallyTriggered = true): string
+    {
+        $log = $this->findLogOrFail($id, ['asset', 'maintenanceDocumentations']);
+
+        $this->maintenanceNotificationService->sendForLog($log, $manuallyTriggered);
+
+        return $this->maintenanceNotificationService->getRecipient();
+    }
+
+    private function findLogOrFail(string $id, array $relations = []): MaintenanceLog
+    {
+        $query = MaintenanceLog::query();
+
+        if ($relations !== []) {
+            $query->with($relations);
+        }
+
+        $log = $query->find($id);
+        if (empty($log)) {
+            throw new \Exception('Laporan tidak ditemukan.', 404);
+        }
+
+        return $log;
     }
 }

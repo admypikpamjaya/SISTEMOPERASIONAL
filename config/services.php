@@ -35,6 +35,10 @@ return [
         'provider' => env('WHATSAPP_PROVIDER', 'wablas'),
     ],
 
+    'maintenance_notification' => [
+        'recipient' => env('MAINTENANCE_NOTIFICATION_EMAIL', 'Ridodwikurniawan@gmail.com'),
+    ],
+
     'wablas' => [
         'token' => env('WABLAS_TOKEN'),
         'secret_key' => env('WABLAS_SECRET_KEY'),

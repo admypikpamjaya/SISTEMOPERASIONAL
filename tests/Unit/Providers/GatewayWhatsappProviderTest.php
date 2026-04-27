@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Tests\Unit\Providers;
 
@@ -26,7 +26,7 @@ class GatewayWhatsappProviderTest extends TestCase
 
             return Http::response([
                 'success' => true,
-                'message' => 'Message queued'
+                'message' => 'Message queued',
             ], 200);
         });
 
@@ -58,7 +58,7 @@ class GatewayWhatsappProviderTest extends TestCase
 
             return Http::response([
                 'success' => true,
-                'message' => 'File queued'
+                'message' => 'File queued',
             ], 200);
         });
 
@@ -87,8 +87,8 @@ class GatewayWhatsappProviderTest extends TestCase
         Http::fake([
             '*' => Http::response([
                 'success' => false,
-                'message' => 'Rejected'
-            ], 200)
+                'message' => 'Rejected',
+            ], 200),
         ]);
 
         $provider = new GatewayWhatsappProvider();

@@ -12,7 +12,6 @@ use App\Http\Requests\Report\UpdateMaintenanceReportRequest;
 use App\Http\Requests\Report\UpdateMaintenanceReportStatusRequest;
 use App\Services\Report\MaintenanceReportService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MaintenanceReportController extends Controller
@@ -169,6 +168,24 @@ class MaintenanceReportController extends Controller
         catch(\Throwable $e)
         {
             return redirect()->route('maintenance-report.index')->with('error', $e->getMessage());
+        }
+    }
+
+    public function sendNotification(string $id)
+    {
+        try
+        {
+            $recipient = $this->service->sendNotification($id, true);
+
+            return response()->json([
+                'message' => 'Notifikasi maintenance berhasil dikirim ke ' . $recipient,
+            ]);
+        }
+        catch(\Throwable $e)
+        {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], $e->getCode() ? $e->getCode() : 500);
         }
     }
 }

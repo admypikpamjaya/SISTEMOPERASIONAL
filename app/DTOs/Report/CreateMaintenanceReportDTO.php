@@ -20,6 +20,10 @@ class CreateMaintenanceReportDTO
 
     public static function fromArray(array $data): self 
     {
+        $cost = array_key_exists('cost', $data) && $data['cost'] !== null && $data['cost'] !== ''
+            ? (float) $data['cost']
+            : 0.0;
+
         return new self(
             $data['asset_id'],
             $data['worker_name'],
@@ -27,7 +31,7 @@ class CreateMaintenanceReportDTO
             $data['issue_description'],
             $data['working_description'],
             $data['pic'],
-            $data['cost'],
+            $cost,
             $data['evidence_photo']
         );
     }

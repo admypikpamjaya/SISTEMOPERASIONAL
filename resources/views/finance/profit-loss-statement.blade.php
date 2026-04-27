@@ -517,6 +517,92 @@
         font-size: 0.72rem;
         font-weight: 700;
     }
+    .pl-batch-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.7rem;
+        margin-top: 0.9rem;
+    }
+    .pl-batch-stat {
+        background: #f8fbff;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 12px;
+        padding: 0.75rem 0.85rem;
+    }
+    .pl-batch-stat label {
+        display: block;
+        color: var(--pl-muted);
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.2rem;
+    }
+    .pl-batch-stat div {
+        color: var(--pl-text);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+    .pl-import-guide {
+        padding: 0.95rem 1rem;
+        border-radius: 16px;
+        border: 1px dashed rgba(37, 99, 235, 0.2);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(14, 165, 233, 0.05));
+        margin-bottom: 1rem;
+    }
+    .pl-import-guide-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        color: var(--pl-blue-dark);
+        font-size: 0.9rem;
+        font-weight: 800;
+        margin-bottom: 0.55rem;
+    }
+    .pl-import-guide-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.85rem;
+    }
+    .pl-import-guide-card {
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 14px;
+        padding: 0.8rem 0.85rem;
+    }
+    .pl-import-guide-card label {
+        display: block;
+        color: var(--pl-blue-dark);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+    .pl-import-guide-card div {
+        color: var(--pl-text);
+        font-size: 0.8rem;
+        line-height: 1.55;
+    }
+    .pl-import-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 0.75rem;
+    }
+    .pl-import-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        color: var(--pl-text);
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
     body.dark-mode .pl-switch-link {
         background: var(--app-surface) !important;
         border-color: var(--app-border) !important;
@@ -526,6 +612,29 @@
         background: linear-gradient(135deg, var(--app-accent), #2563eb) !important;
         color: #fff !important;
         border-color: transparent !important;
+    }
+    body.dark-mode .pl-batch-stat,
+    body.dark-mode .pl-import-guide-card,
+    body.dark-mode .pl-import-chip {
+        background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .pl-batch-stat label,
+    body.dark-mode .pl-import-guide-card label {
+        color: var(--app-text-muted) !important;
+    }
+    body.dark-mode .pl-batch-stat div,
+    body.dark-mode .pl-import-guide-card div,
+    body.dark-mode .pl-import-chip {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .pl-import-guide {
+        background: rgba(96, 165, 250, 0.08) !important;
+        border-color: rgba(96, 165, 250, 0.18) !important;
+    }
+    body.dark-mode .pl-import-guide-title {
+        color: var(--app-text) !important;
     }
     @media (max-width: 991px) {
         .pl-manage-form {
@@ -640,14 +749,27 @@
                     </select>
                 </div>
                 @if($selectedBatchMeta)
-                    <div class="pl-soft-copy mt-2">
-                        {{ number_format((int) ($selectedBatchMeta['row_count'] ?? 0), 0, ',', '.') }} baris
-                        @if(!empty($selectedBatchMeta['manual_count']))
-                            | {{ number_format((int) $selectedBatchMeta['manual_count'], 0, ',', '.') }} manual
-                        @endif
-                        @if(!empty($selectedBatchMeta['imported_year']))
-                            | Tahun {{ $selectedBatchMeta['imported_year'] }}
-                        @endif
+                    <div class="pl-batch-meta">
+                        <div class="pl-batch-stat">
+                            <label>Batch Aktif</label>
+                            <div>{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
+                        </div>
+                        <div class="pl-batch-stat">
+                            <label>File Sumber</label>
+                            <div>{{ data_get($selectedBatchMeta, 'source_filename', 'Manual / Tidak ada file') }}</div>
+                        </div>
+                        <div class="pl-batch-stat">
+                            <label>Total Baris</label>
+                            <div>{{ number_format((int) data_get($selectedBatchMeta, 'row_count', 0), 0, ',', '.') }}</div>
+                        </div>
+                        <div class="pl-batch-stat">
+                            <label>Baris Manual</label>
+                            <div>{{ number_format((int) data_get($selectedBatchMeta, 'manual_count', 0), 0, ',', '.') }}</div>
+                        </div>
+                        <div class="pl-batch-stat">
+                            <label>Tahun Import</label>
+                            <div>{{ data_get($selectedBatchMeta, 'imported_year', '-') }}</div>
+                        </div>
                     </div>
                 @endif
             </form>
@@ -676,19 +798,58 @@
                 </div>
             </div>
             <div class="p-3">
+                <div class="pl-import-guide">
+                    <div class="pl-import-guide-title">
+                        <i class="fas fa-circle-info"></i>
+                        <span>Format file yang dibaca parser laba rugi</span>
+                    </div>
+                    <div class="pl-soft-copy">
+                        Sistem membaca <strong>sheet pertama</strong>. Kolom <strong>A</strong> dipakai untuk label grup dan akun,
+                        kolom <strong>B</strong> untuk nominal. Judul seperti <strong>Laba Rugi</strong>, <strong>Saldo</strong>,
+                        tahun saja, <strong>Laba Bruto</strong>, dan <strong>Surplus (Defisit)</strong> akan dilewati otomatis.
+                    </div>
+                    <div class="pl-import-guide-grid">
+                        <div class="pl-import-guide-card">
+                            <label>Header Bagian</label>
+                            <div>Gunakan label <strong>Penghasilan</strong> atau <strong>Pengeluaran</strong> untuk memulai bagian utama.</div>
+                        </div>
+                        <div class="pl-import-guide-card">
+                            <label>Baris Akun</label>
+                            <div>Isi kolom A dengan format seperti <strong>410.01 Pendapatan SPP</strong> lalu nominalnya di kolom B.</div>
+                        </div>
+                        <div class="pl-import-guide-card">
+                            <label>Grup Tambahan</label>
+                            <div>Baris tanpa nominal akan dianggap sebagai nama grup sampai parser menemukan akun berikutnya.</div>
+                        </div>
+                    </div>
+                    <div class="pl-import-chip-row">
+                        <span class="pl-import-chip"><i class="fas fa-table-columns"></i> Kolom A: label / akun</span>
+                        <span class="pl-import-chip"><i class="fas fa-money-bill-wave"></i> Kolom B: nominal</span>
+                        <span class="pl-import-chip"><i class="fas fa-file-import"></i> Otomatis pilih batch hasil import</span>
+                    </div>
+                </div>
                 <form method="POST" action="{{ route('finance.report.profit-loss.import') }}" enctype="multipart/form-data" class="pl-manage-form">
                     @csrf
                     <div class="fs-field full">
                         <label class="fs-label" for="profit_import_file"><i class="fas fa-file-excel"></i> File Excel</label>
                         <input type="file" name="file" id="profit_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
+                        <div class="fs-helper-text">
+                            Upload file Excel/CSV laba rugi. Parser akan membaca sheet pertama dan fokus pada kolom A-B.
+                        </div>
                     </div>
                     <div class="fs-field">
                         <label class="fs-label" for="profit_import_batch_name"><i class="fas fa-tag"></i> Nama Batch</label>
                         <input type="text" name="batch_name" id="profit_import_batch_name" class="fs-control" value="{{ old('batch_name') }}">
+                        <div class="fs-helper-text">
+                            Kosongkan jika ingin memakai nama file sebagai nama batch import.
+                        </div>
                     </div>
                     <div class="fs-field">
                         <label class="fs-label" for="profit_import_notes"><i class="fas fa-sticky-note"></i> Catatan</label>
                         <input type="text" name="notes" id="profit_import_notes" class="fs-control" value="{{ old('notes') }}">
+                        <div class="fs-helper-text">
+                            Opsional, cocok untuk menandai periode, sumber file, atau revisi data.
+                        </div>
                     </div>
                     <div class="fs-field full pl-manage-actions">
                         <button type="submit" class="fs-btn fs-btn-primary">

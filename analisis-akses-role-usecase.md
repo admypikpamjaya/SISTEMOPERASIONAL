@@ -559,3 +559,277 @@ Fokus revisinya:
 - menambahkan aktor `Guest / Teknisi` untuk detail aset publik dan submit maintenance
 - memisahkan monitoring gateway WhatsApp dengan pengelolaan provider/device
 - memindahkan `Blast WhatsApp Tunggakan` ke aktor `Finance`
+
+## 9. Kekurangan Aplikasi dan Saran Perbaikan
+
+Berikut beberapa kekurangan yang terlihat dari implementasi aplikasi saat ini beserta saran perbaikannya.
+
+### 1. Detail aset publik terlalu terbuka
+
+Kekurangan:
+
+- Halaman detail aset publik memperlihatkan data yang cukup sensitif seperti kode akun, nomor serial, lokasi aset, dan riwayat maintenance.
+
+Dampak:
+
+- Informasi aset internal berisiko tersebar ke pihak yang tidak berkepentingan jika link halaman publik dibagikan atau ditebak.
+
+Saran:
+
+- Gunakan signed URL atau token QR yang memiliki masa berlaku.
+- Pisahkan tampilan publik dan tampilan internal.
+- Batasi data publik hanya pada informasi yang benar-benar dibutuhkan teknisi lapangan.
+
+### 2. Form maintenance publik belum cukup aman dan belum ramah pengguna lapangan
+
+Kekurangan:
+
+- Form maintenance dapat dikirim tanpa login dari halaman publik.
+- Validasi form masih cukup berat karena mewajibkan biaya dan foto bukti.
+- Mekanisme pencegahan spam atau abuse belum terlihat kuat.
+
+Dampak:
+
+- Form berpotensi disalahgunakan untuk spam.
+- Teknisi lapangan bisa kesulitan jika biaya belum diketahui saat awal pelaporan atau jika koneksi internet kurang stabil saat upload foto.
+
+Saran:
+
+- Tambahkan rate limiting, captcha, atau proteksi submit berulang.
+- Jadikan `cost` opsional saat submit awal, lalu dilengkapi saat proses review.
+- Pertimbangkan dukungan multi-foto dan alur submit yang lebih ringan untuk perangkat mobile.
+
+### 3. Navigasi sistem mulai terlalu padat
+
+Kekurangan:
+
+- Aplikasi menggabungkan banyak modul dalam satu sidebar, seperti aset, maintenance, finance, discussion, reminder, announcement, dan blast.
+- Struktur menu berpotensi membingungkan untuk role yang hanya memakai sebagian kecil fitur.
+
+Dampak:
+
+- Pengguna baru membutuhkan waktu lebih lama untuk memahami alur kerja.
+- Risiko salah klik atau salah masuk modul menjadi lebih tinggi, terutama untuk role non-teknis.
+
+Saran:
+
+- Buat landing page atau dashboard khusus per role.
+- Tampilkan quick action sesuai kebutuhan role masing-masing.
+- Sederhanakan sidebar dengan menyembunyikan menu lanjutan ke halaman modul terkait.
+
+### 4. Pengalaman penggunaan tabel dan aksi masih kurang ramah mobile
+
+Kekurangan:
+
+- Banyak halaman utama masih bertumpu pada tabel yang padat.
+- Sebagian aksi ditampilkan hanya dengan ikon tanpa label yang jelas.
+- Tampilan bulk action dan filter masih lebih cocok untuk desktop daripada penggunaan lapangan.
+
+Dampak:
+
+- Pengguna mobile akan lebih sulit membaca data dan memahami fungsi tombol.
+- Aksesibilitas antarmuka menjadi kurang baik untuk pengguna non-teknis.
+
+Saran:
+
+- Tambahkan mode responsif atau card view untuk layar kecil.
+- Beri label teks atau tooltip yang lebih jelas pada tombol aksi.
+- Rapikan area filter dan bulk action agar lebih mudah dipahami saat pertama kali digunakan.
+
+### 5. Kompleksitas implementasi mulai tinggi dan berisiko menyulitkan pengembangan
+
+Kekurangan:
+
+- Beberapa file view dan route sudah cukup besar dan memuat banyak logika antarmuka dalam satu tempat.
+- Pendekatan ini membuat perubahan kecil berpotensi berdampak ke banyak area.
+
+Dampak:
+
+- Proses maintenance kode menjadi lebih lambat.
+- Risiko bug saat menambah fitur baru atau melakukan refactor menjadi lebih tinggi.
+
+Saran:
+
+- Pecah route berdasarkan modul.
+- Pisahkan CSS dan JavaScript besar dari Blade ke file khusus.
+- Ubah komponen UI yang kompleks menjadi partial atau komponen yang lebih kecil agar lebih mudah dirawat.
+
+### 6. Dokumentasi dan automated testing belum cukup matang
+
+Kekurangan:
+
+- Dokumentasi utama belum sepenuhnya menggambarkan aplikasi aktif.
+- Kualitas dokumentasi teknis belum konsisten.
+- Automated test belum cukup kuat sebagai pengaman perubahan.
+
+Dampak:
+
+- Onboarding developer baru menjadi lebih lambat.
+- Perubahan fitur lebih berisiko karena validasi otomatis belum menjadi safety net yang kuat.
+
+Saran:
+
+- Perbarui `README` agar fokus pada gambaran sistem yang benar-benar berjalan.
+- Rapikan dokumentasi teknis menjadi satu sumber acuan utama.
+- Perbaiki test suite yang ada lalu tambahkan test untuk alur penting seperti role access, maintenance report, finance, dan blasting.
+
+## 10. Prioritas Perbaikan
+
+Jika ingin dikerjakan bertahap, urutan prioritas yang disarankan adalah:
+
+### Prioritas 1
+
+- Amankan halaman aset publik dan form maintenance publik.
+- Rapikan validasi dan proteksi submit publik.
+
+### Prioritas 2
+
+- Sederhanakan navigasi sesuai role.
+- Tingkatkan kenyamanan penggunaan pada tampilan tabel dan perangkat mobile.
+
+### Prioritas 3
+
+- Rapikan struktur kode, route, dan Blade.
+- Benahi dokumentasi dan test suite agar pengembangan berikutnya lebih aman.
+
+## 11. Perbaikan Lanjutan yang Layak Dipertimbangkan
+
+Selain perbaikan utama di atas, ada beberapa area lanjutan yang juga layak dimasukkan ke backlog pengembangan.
+
+### 1. Workflow maintenance perlu dibuat lebih operasional
+
+Kekurangan:
+
+- Alur maintenance saat ini sudah mendukung submit, review, approve, dan reject, tetapi belum terlihat kuat pada aspek assignment pekerjaan, target penyelesaian, dan pemantauan progres lapangan.
+
+Dampak:
+
+- Laporan maintenance berisiko berhenti di tahap pencatatan tanpa tindak lanjut yang terukur.
+- Tim akan lebih sulit mengetahui laporan mana yang sedang dikerjakan, terlambat, atau belum memiliki penanggung jawab.
+
+Saran:
+
+- Tambahkan field seperti `assigned_to`, `due_date`, dan status `on_progress`.
+- Sediakan penanda overdue pada laporan maintenance.
+- Tambahkan notifikasi atau reminder internal untuk tindak lanjut laporan yang belum selesai.
+
+### 2. Audit log perlu diperluas ke lebih banyak modul
+
+Kekurangan:
+
+- Audit log sudah bermanfaat untuk sebagian proses, tetapi belum terlihat merata pada semua aksi penting lintas modul.
+
+Dampak:
+
+- Riwayat perubahan data penting bisa sulit ditelusuri.
+- Investigasi kesalahan operasional, perubahan data yang tidak sesuai, atau dispute internal akan lebih sulit dilakukan.
+
+Saran:
+
+- Tambahkan audit log untuk penghapusan aset, perubahan status maintenance, perubahan user dan role, pengiriman blast, serta perubahan provider atau device WhatsApp.
+- Tampilkan riwayat aktivitas penting pada halaman admin atau halaman detail data tertentu.
+
+### 3. Pengelolaan file upload perlu kebijakan retensi
+
+Kekurangan:
+
+- Sistem memiliki beberapa lokasi penyimpanan file runtime seperti lampiran diskusi, voice note, dan upload gateway.
+- Belum terlihat mekanisme cleanup otomatis yang konsisten.
+
+Dampak:
+
+- Storage server dapat cepat penuh.
+- Backup menjadi lebih berat dan biaya infrastruktur dapat meningkat.
+
+Saran:
+
+- Tentukan kebijakan retensi file untuk diskusi, lampiran blast, dan file gateway.
+- Buat job terjadwal untuk membersihkan file sementara atau file lama yang tidak lagi dipakai.
+- Tambahkan monitoring kapasitas penyimpanan agar tim bisa bertindak sebelum storage penuh.
+
+### 4. Mekanisme hapus data penting sebaiknya lebih aman
+
+Kekurangan:
+
+- Beberapa data bisnis penting tampaknya masih lebih dekat ke pola hapus permanen daripada arsip atau soft delete.
+
+Dampak:
+
+- Risiko kehilangan data akibat human error lebih tinggi.
+- Pemulihan data yang terhapus akan lebih sulit jika tidak ada mekanisme restore yang baik.
+
+Saran:
+
+- Terapkan soft delete atau archive untuk aset, laporan maintenance, recipient, dan data pengguna.
+- Pisahkan antara aksi `hapus`, `nonaktifkan`, dan `arsipkan` agar kontrol data lebih aman.
+
+### 5. Monitoring operasional sistem masih bisa diperkuat
+
+Kekurangan:
+
+- Aplikasi ini terdiri dari lebih dari satu komponen operasional, yaitu Laravel app, queue, dan WhatsApp gateway.
+- Belum terlihat satu dashboard ringkas yang memudahkan pemantauan kesehatan sistem secara menyeluruh.
+
+Dampak:
+
+- Gangguan seperti failed job, device gateway putus, atau antrean blast yang macet bisa terlambat diketahui.
+- Respons tim terhadap insiden menjadi lebih lambat.
+
+Saran:
+
+- Buat dashboard kesehatan sistem untuk queue, failed jobs, status device, error gateway, dan penggunaan storage.
+- Tambahkan alert sederhana untuk kondisi kritis seperti gateway disconnect atau job gagal berulang.
+
+### 6. CI dan automated testing perlu dinaikkan levelnya
+
+Kekurangan:
+
+- Automated testing sudah ada, tetapi belum cukup kuat untuk menjadi safety net utama.
+- Proses validasi perubahan belum terlihat terotomasi melalui pipeline CI.
+
+Dampak:
+
+- Risiko bug masuk ke branch utama lebih tinggi.
+- Refactor atau penambahan fitur baru menjadi lebih menegangkan karena validasi otomatis belum kuat.
+
+Saran:
+
+- Perbaiki test suite yang ada sampai stabil dijalankan.
+- Tambahkan pipeline CI minimal untuk menjalankan test, validasi konfigurasi, dan pemeriksaan dasar build.
+- Prioritaskan test untuk alur permission, maintenance report, finance, dan blasting.
+
+### 7. Dokumentasi proyek perlu disatukan dan dibuat lebih konsisten
+
+Kekurangan:
+
+- Dokumen proyek sudah cukup banyak, tetapi belum seluruhnya tersusun sebagai satu sumber referensi utama yang rapi dan konsisten.
+
+Dampak:
+
+- Developer baru membutuhkan waktu lebih lama untuk memahami sistem.
+- Risiko munculnya informasi yang tidak sinkron antar dokumen menjadi lebih tinggi.
+
+Saran:
+
+- Jadikan satu dokumen utama sebagai entry point onboarding proyek.
+- Pisahkan dokumen menjadi kategori yang jelas: produk, arsitektur, operasional, dan pengembangan.
+- Tetapkan format dokumentasi yang konsisten agar mudah dirawat bersama.
+
+## 12. Prioritas Lanjutan
+
+Jika backlog utama sudah mulai tertangani, urutan lanjutan yang disarankan adalah:
+
+### Prioritas Lanjutan 1
+
+- Rapikan workflow maintenance dengan assignment, target waktu, dan reminder.
+- Perluas audit log ke aksi bisnis yang paling sensitif.
+
+### Prioritas Lanjutan 2
+
+- Terapkan cleanup file dan monitoring storage.
+- Perkuat monitoring operasional untuk queue dan gateway.
+
+### Prioritas Lanjutan 3
+
+- Stabilkan test suite dan bangun pipeline CI.
+- Satukan dokumentasi proyek agar onboarding dan maintenance tim lebih mudah.

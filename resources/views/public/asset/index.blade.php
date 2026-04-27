@@ -341,7 +341,10 @@
                 </div>
                 <div class="form-group">
                     <label for="cost">Biaya</label>
-                    <input type="number" name="cost" min="0" step="0.01" class="form-control" placeholder="Masukkan biaya (cth: 50 ribu ditulis 50000)" required>
+                    <input type="number" name="cost" min="0" step="0.01" class="form-control" placeholder="Masukkan biaya jika sudah diketahui (opsional)">
+                    <small class="form-text text-muted">
+                        Boleh dikosongkan jika biaya belum diketahui saat pelaporan awal.
+                    </small>
                 </div>
                 <div class="form-group">
                     <label for="evidence-photo-input" class="font-weight-bold">
@@ -354,11 +357,11 @@
                             id="evidence-photo-input"
                             class="custom-file-input"
                             name="evidence_photo"
-                            accept=".jpg,.jpeg,.png"
+                            accept=".jpg,.jpeg,.png,.webp"
                             required
                         >
                         <label class="custom-file-label" for="evidence-photo-input">
-                            Pilih gambar (JPG / JPEG / PNG, max 5MB)
+                            Pilih gambar (JPG / JPEG / PNG / WEBP, max 5MB)
                         </label>
                     </div>
 

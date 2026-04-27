@@ -442,6 +442,66 @@
         font-size: 0.82rem;
         font-weight: 700;
     }
+    .gl-import-guide {
+        padding: 0.95rem 1rem;
+        border-radius: 16px;
+        border: 1px dashed rgba(8, 145, 178, 0.2);
+        background: linear-gradient(135deg, rgba(8, 145, 178, 0.06), rgba(37, 99, 235, 0.05));
+        margin-bottom: 1rem;
+    }
+    .gl-import-guide-title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        color: var(--gl-blue-dark);
+        font-size: 0.9rem;
+        font-weight: 800;
+        margin-bottom: 0.55rem;
+    }
+    .gl-import-guide-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.85rem;
+    }
+    .gl-import-guide-card {
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        border-radius: 14px;
+        padding: 0.8rem 0.85rem;
+    }
+    .gl-import-guide-card label {
+        display: block;
+        color: var(--gl-blue-dark);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+    .gl-import-guide-card div {
+        color: var(--gl-text);
+        font-size: 0.8rem;
+        line-height: 1.55;
+    }
+    .gl-import-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 0.75rem;
+    }
+    .gl-import-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        color: var(--gl-text);
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
     .gl-form-grid {
         display: grid;
         grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -714,9 +774,25 @@
     body.dark-mode .gl-ledger-total,
     body.dark-mode .gl-reset-link,
     body.dark-mode .gl-source-link,
-    body.dark-mode .gl-batch-stat {
+    body.dark-mode .gl-batch-stat,
+    body.dark-mode .gl-import-guide-card,
+    body.dark-mode .gl-import-chip {
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .gl-import-guide {
+        background: rgba(96, 165, 250, 0.08) !important;
+        border-color: rgba(96, 165, 250, 0.18) !important;
+    }
+    body.dark-mode .gl-import-guide-title {
+        color: var(--app-text) !important;
+    }
+    body.dark-mode .gl-import-guide-card label {
+        color: var(--app-text-muted) !important;
+    }
+    body.dark-mode .gl-import-guide-card div,
+    body.dark-mode .gl-import-chip {
         color: var(--app-text) !important;
     }
     body.dark-mode .fs-control:focus {
@@ -958,11 +1034,44 @@
                 </div>
                 <form method="POST" action="{{ route('finance.report.general-ledger.import') }}" enctype="multipart/form-data" class="gl-manage-form">
                     @csrf
+                    <div class="gl-import-guide">
+                        <div class="gl-import-guide-title">
+                            <i class="fas fa-circle-info"></i>
+                            <span>Format file yang dibaca parser buku besar</span>
+                        </div>
+                        <div class="gl-panel-help" style="margin-top:0;">
+                            Parser membaca <strong>sheet pertama</strong>. Header akun dibaca dari kolom <strong>A</strong>
+                            dengan format <strong>100.01.01 Nama Akun</strong>. Baris transaksi membaca kolom A-H,
+                            dan baris <strong>Saldo Awal</strong> akan dikenali otomatis.
+                        </div>
+                        <div class="gl-import-guide-grid">
+                            <div class="gl-import-guide-card">
+                                <label>Header Akun</label>
+                                <div>Kolom A berisi <strong>kode akun + nama akun</strong> tanpa isi di kolom B dan C.</div>
+                            </div>
+                            <div class="gl-import-guide-card">
+                                <label>Baris Transaksi</label>
+                                <div>Kolom A-H dipakai untuk no transaksi, tanggal, komunikasi, rekanan, mata uang, debit, kredit, dan saldo.</div>
+                            </div>
+                            <div class="gl-import-guide-card">
+                                <label>Saldo Awal</label>
+                                <div>Isi teks <strong>Saldo Awal</strong> di kolom A atau C agar sistem menandainya sebagai opening balance.</div>
+                            </div>
+                        </div>
+                        <div class="gl-import-chip-row">
+                            <span class="gl-import-chip"><i class="fas fa-hashtag"></i> A: no transaksi / header akun</span>
+                            <span class="gl-import-chip"><i class="fas fa-calendar-day"></i> B: tanggal</span>
+                            <span class="gl-import-chip"><i class="fas fa-wallet"></i> F-G-H: debit, kredit, saldo</span>
+                        </div>
+                    </div>
                     <div class="fs-field" style="margin-bottom:0;">
                         <label class="fs-label" for="gl_import_file">
                             <i class="fas fa-file-excel"></i> File Excel
                         </label>
                         <input type="file" name="file" id="gl_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
+                        <div class="fs-helper-text">
+                            Upload file Excel/CSV buku besar. Sistem membaca struktur akun dan transaksi dari sheet pertama.
+                        </div>
                     </div>
                     <div class="gl-form-grid">
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
@@ -970,12 +1079,18 @@
                                 <i class="fas fa-signature"></i> Nama Batch
                             </label>
                             <input type="text" name="batch_name" id="gl_import_batch_name" class="fs-control" placeholder="Contoh: Rincian Buku Besar 2025">
+                            <div class="fs-helper-text">
+                                Kosongkan jika ingin memakai nama file sebagai nama batch import.
+                            </div>
                         </div>
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_import_notes">
                                 <i class="fas fa-sticky-note"></i> Catatan
                             </label>
                             <input type="text" name="notes" id="gl_import_notes" class="fs-control" placeholder="Opsional">
+                            <div class="fs-helper-text">
+                                Cocok untuk menyimpan sumber file, periode, atau catatan revisi operator.
+                            </div>
                         </div>
                     </div>
                     <button type="submit" class="fs-btn fs-btn-primary">

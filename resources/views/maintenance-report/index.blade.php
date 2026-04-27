@@ -11,6 +11,7 @@ $badgeMap = [
 ];
 
 $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), PortalPermission::MAINTENANCE_REPORT_UPDATE->value);
+$maintenanceNotificationRecipient = config('services.maintenance_notification.recipient', 'Ridodwikurniawan@gmail.com');
 @endphp
 
 @extends('layouts.app')
@@ -22,6 +23,10 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
         <div class="row justify-content-between align-items-center">
             <div class="col-md-6">
                 <span class="card-title">Laporan Pemeliharaan</span>
+                <div class="small text-muted mt-2">
+                    Notifikasi email maintenance baru dikirim otomatis ke <strong>{{ $maintenanceNotificationRecipient }}</strong>.
+                    Jika perlu kirim ulang, buka detail laporan lalu klik <strong>Kirim Notifikasi</strong>.
+                </div>
             </div>
             <div class="col-md-6">
                 <div class="row align-items-center">
@@ -138,6 +143,7 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
 @section('js')
 <script>
     const isUserCanUpdate = "{{ $isUserCanUpdate }}";
+    const maintenanceNotificationRecipient = @json($maintenanceNotificationRecipient);
 
     function resetState()
     {
@@ -229,6 +235,13 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                         ${constructEvidencePhoto()}
                     </details>
                 </div>
+                <div class="form-group mb-0">
+                    <label>Email Notifikasi</label>
+                    <input type="text" class="form-control" value="${maintenanceNotificationRecipient}" readonly>
+                    <small class="form-text text-muted">
+                        Sistem akan mengirim otomatis saat laporan dibuat, dan bisa dikirim ulang manual dari tombol aksi.
+                    </small>
+                </div>
             </form>
         `;
     }
@@ -290,6 +303,12 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
                         <button id="delete-maintenance-report-button" type="button" class="btn btn-sm btn-danger" data-id="${data.id}">
                             <i class="fas fa-trash-alt"></i>
                             Hapus
+                        </button>
+                    @endpermission
+                    @permission('maintenance_report.update')
+                        <button id="send-maintenance-report-notification-button" type="button" class="btn btn-sm btn-warning" data-id="${data.id}">
+                            <i class="fas fa-envelope"></i>
+                            Kirim Notifikasi
                         </button>
                     @endpermission
                     @permission('maintenance_report.update')
@@ -367,6 +386,35 @@ $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), Po
 
                 await Http.post("{{ route('maintenance-report.update') }}", formData);
                 refreshUI();
+            }
+            catch(error)
+            {
+                Notification.error(error);
+            }
+            finally
+            {
+                Loading.hide();
+                $(this).prop('disabled', false);
+            }
+        });
+
+        $(document).on('click', '#send-maintenance-report-notification-button', async function() {
+            $(this).prop('disabled', true);
+            try
+            {
+                const confirmation = await Notification.confirmation(
+                    'Kirim ulang notifikasi maintenance ke ' + maintenanceNotificationRecipient + '?'
+                );
+                if(!confirmation.isConfirmed)
+                    return;
+
+                Loading.show();
+
+                const { message } = await Http.post(
+                    "{{ route('maintenance-report.notify', ':id') }}".replace(':id', $(this).data('id'))
+                );
+
+                Notification.success(message);
             }
             catch(error)
             {

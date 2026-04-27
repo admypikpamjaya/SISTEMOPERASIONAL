@@ -205,17 +205,27 @@
 
                             <li class="nav-item {{ $hasChildren ? 'has-treeview' : '' }} {{ $isActiveParent ? 'menu-open' : '' }}">
 
-                                <a href="{{ $hasChildren ? route($menu['route']) : route($menu['route']) }}"
-                                   class="nav-link {{ (!$hasChildren && request()->routeIs($menu['route'])) || $isActiveParent ? 'active' : '' }}">
+                                @if(($menu['route'] ?? null) === 'logout')
+                                    <form method="POST" action="{{ route('logout') }}" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="nav-link text-left w-100 border-0 bg-transparent">
+                                            <i class="nav-icon {{ $menu['icon'] }}"></i>
+                                            <p>{{ $menu['label'] }}</p>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ $hasChildren ? route($menu['route']) : route($menu['route']) }}"
+                                       class="nav-link {{ (!$hasChildren && request()->routeIs($menu['route'])) || $isActiveParent ? 'active' : '' }}">
 
-                                    <i class="nav-icon {{ $menu['icon'] }}"></i>
-                                    <p>
-                                        {{ $menu['label'] }}
-                                        @if($hasChildren)
-                                            <i class="right fas fa-angle-left"></i>
-                                        @endif
-                                    </p>
-                                </a>
+                                        <i class="nav-icon {{ $menu['icon'] }}"></i>
+                                        <p>
+                                            {{ $menu['label'] }}
+                                            @if($hasChildren)
+                                                <i class="right fas fa-angle-left"></i>
+                                            @endif
+                                        </p>
+                                    </a>
+                                @endif
 
                                 {{-- CHILDREN --}}
                                 @if($hasChildren)

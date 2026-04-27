@@ -10,6 +10,7 @@ use App\Providers\Messaging\GatewayWhatsappProvider;
 use App\Providers\Messaging\WablasWhatsappProvider;
 use App\Services\Blast\WhatsAppProviderSelector;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
@@ -75,6 +76,23 @@ class AppServiceProvider extends ServiceProvider
             );
 
             return Limit::perMinute($perMinute)->by('blast-channel-whatsapp');
+        });
+
+        RateLimiter::for('public-maintenance-submission', function (Request $request) {
+            $assetId = (string) $request->input('asset_id', 'unknown-asset');
+            $key = sprintf(
+                'public-maintenance:%s:%s',
+                (string) $request->ip(),
+                $assetId
+            );
+
+            return Limit::perMinute(3)
+                ->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'message' => 'Terlalu banyak pengiriman laporan maintenance. Silakan coba lagi dalam beberapa menit.',
+                    ], 429, $headers);
+                });
         });
 
         Blade::if('permission', function (string $permission) {
