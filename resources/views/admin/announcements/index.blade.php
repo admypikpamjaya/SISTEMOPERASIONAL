@@ -12,6 +12,17 @@
     $focusedAnnouncementId = (int) ($focusedAnnouncementId ?? 0);
     $focusedReminder = $focusedReminder ?? null;
     $pendingAnnouncementReminders = $pendingAnnouncementReminders ?? collect();
+    $pageAnnouncementStats = [
+        'total' => (int) $announcements->getCollection()->sum('logs_total_count'),
+        'sent' => (int) $announcements->getCollection()->sum('logs_sent_count'),
+        'failed' => (int) $announcements->getCollection()->sum('logs_failed_count'),
+        'pending' => (int) $announcements->getCollection()->sum('logs_pending_count'),
+        'email_total' => (int) $announcements->getCollection()->sum('logs_email_total_count'),
+        'email_opened' => (int) $announcements->getCollection()->sum('logs_email_opened_count'),
+    ];
+    $pageAnnouncementStats['open_rate'] = $pageAnnouncementStats['email_total'] > 0
+        ? round(($pageAnnouncementStats['email_opened'] / $pageAnnouncementStats['email_total']) * 100, 1)
+        : 0;
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -260,6 +271,84 @@
     }
     .an-table tbody tr:last-child td { border-bottom: none; }
 
+    .an-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+    .an-kpi {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: var(--shadow);
+    }
+    .an-kpi-label {
+        font-size: .72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .an-kpi-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--text);
+        line-height: 1.1;
+    }
+    .an-kpi-sub {
+        font-size: .75rem;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+    .an-summary-note {
+        margin-bottom: 18px;
+        font-size: .8rem;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .an-summary-meta {
+        font-size: .75rem;
+        color: #94A3B8;
+    }
+    .an-table-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .an-icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform .15s, box-shadow .15s;
+    }
+    .an-icon-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(37,99,235,.16);
+        text-decoration: none;
+    }
+    .an-icon-btn.info { background: var(--info-bg); color: var(--p1); border-color: var(--info-b); }
+    .an-icon-btn.warn { background: var(--w-bg); color: #92400E; border-color: var(--w-b); }
+    .an-icon-btn.danger { background: var(--d-bg); color: var(--danger); border-color: var(--d-b); }
+    .an-icon-btn .fas { font-size: .82rem !important; }
+    .an-log-response {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
     /* Table cell helpers */
     .cell-title  { font-weight: 700; color: var(--text); margin-bottom: 3px; }
     .cell-msg    { color: var(--muted); font-size: .82rem; margin-bottom: 3px; }
@@ -323,6 +412,7 @@
         .an-card-body { padding: 16px; }
         .an-card-header { flex-direction: column; align-items: flex-start; }
         .an-search-input { min-width: 160px; }
+        .an-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 </style>
 
@@ -562,6 +652,52 @@
         ══════════════════════════════ --}}
         <div class="col-lg-8">
 
+            <div class="an-card">
+                <div class="an-card-header">
+                    <div class="an-card-header-left">
+                        <span class="hicon"><i class="fas fa-chart-line"></i></span>
+                        <h3>{{ __('app.announcement.page_summary') }}</h3>
+                    </div>
+                </div>
+                <div class="an-card-body">
+                    <div class="an-summary-note">
+                        <span>{{ __('app.announcement.live_summary') }}</span>
+                        <span class="an-summary-meta">
+                            {{ __('app.announcement.last_updated') }}:
+                            <strong data-summary-updated-at>{{ now()->format('d/m/Y H:i:s') }}</strong>
+                        </span>
+                    </div>
+                    <div class="an-kpi-grid">
+                        <div class="an-kpi">
+                            <div class="an-kpi-label">{{ __('app.announcement.total_log') }}</div>
+                            <div class="an-kpi-value" data-summary-key="total">{{ $pageAnnouncementStats['total'] }}</div>
+                        </div>
+                        <div class="an-kpi">
+                            <div class="an-kpi-label">{{ __('app.announcement.sent_success') }}</div>
+                            <div class="an-kpi-value" data-summary-key="sent">{{ $pageAnnouncementStats['sent'] }}</div>
+                        </div>
+                        <div class="an-kpi">
+                            <div class="an-kpi-label">{{ __('app.announcement.sent_failed') }}</div>
+                            <div class="an-kpi-value" data-summary-key="failed">{{ $pageAnnouncementStats['failed'] }}</div>
+                        </div>
+                        <div class="an-kpi">
+                            <div class="an-kpi-label">{{ __('app.announcement.delivery_queue') }}</div>
+                            <div class="an-kpi-value" data-summary-key="pending">{{ $pageAnnouncementStats['pending'] }}</div>
+                        </div>
+                        <div class="an-kpi">
+                            <div class="an-kpi-label">{{ __('app.announcement.email_opened') }}</div>
+                            <div class="an-kpi-value" data-summary-key="email_opened">{{ $pageAnnouncementStats['email_opened'] }}</div>
+                            <div class="an-kpi-sub">{{ __('app.announcement.email_total') }}: <span data-summary-key="email_total">{{ $pageAnnouncementStats['email_total'] }}</span></div>
+                        </div>
+                        <div class="an-kpi">
+                            <div class="an-kpi-label">{{ __('app.announcement.open_rate') }}</div>
+                            <div class="an-kpi-value" data-summary-key="open_rate">{{ number_format((float) $pageAnnouncementStats['open_rate'], 1) }}%</div>
+                            <div class="an-kpi-sub">{{ __('app.announcement.email_tracking_note') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ── Pending Reminders card ── --}}
             @if ($pendingAnnouncementReminders->isNotEmpty())
                 <div class="an-card">
@@ -578,7 +714,7 @@
                                     <th style="width:46px;"><i class="fas fa-hashtag"></i>ID</th>
                                     <th><i class="fas fa-bell"></i>Reminder</th>
                                     <th style="width:140px;"><i class="far fa-calendar"></i>Jadwal</th>
-                                    <th style="width:160px;"><i class="fas fa-cog"></i>Aksi</th>
+                                    <th style="width:82px; text-align:center;"><i class="fas fa-cog"></i>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -590,14 +726,17 @@
                                             <div class="cell-msg">{{ \Illuminate\Support\Str::limit((string) $pendingReminder->description, 80) ?: '-' }}</div>
                                         </td>
                                         <td style="font-size:.82rem;">{{ $pendingReminder->remind_at?->format('d/m/Y H:i') ?? '-' }}</td>
-                                        <td>
-                                            <a
-                                                href="{{ route('admin.announcements.index', ['focus_reminder' => $pendingReminder->id]) }}"
-                                                class="an-btn an-btn-sm an-btn-warn"
-                                            >
-                                                <i class="fas fa-link"></i>
-                                                <span>Gunakan Reminder Ini</span>
-                                            </a>
+                                        <td style="text-align:center;">
+                                            <div class="an-table-actions">
+                                                <a
+                                                    href="{{ route('admin.announcements.index', ['focus_reminder' => $pendingReminder->id]) }}"
+                                                    class="an-icon-btn warn"
+                                                    title="Gunakan reminder ini"
+                                                    aria-label="Gunakan reminder ini"
+                                                >
+                                                    <i class="fas fa-link"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -642,9 +781,9 @@
                                 <th style="width:46px;"><i class="fas fa-hashtag"></i>ID</th>
                                 <th><i class="fas fa-bullhorn"></i>Judul / Pesan</th>
                                 <th style="width:140px;"><i class="far fa-user"></i>Dibuat Oleh</th>
-                                <th style="width:165px;"><i class="fas fa-paper-plane"></i>Log Blasting</th>
+                                <th style="width:220px;"><i class="fas fa-paper-plane"></i>Log Blasting</th>
                                 <th style="width:190px;"><i class="fas fa-bell"></i>Reminder</th>
-                                <th style="width:130px;"><i class="fas fa-cog"></i>Aksi</th>
+                                <th style="width:92px; text-align:center;"><i class="fas fa-cog"></i>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -656,7 +795,7 @@
                                         ->sortBy('remind_at')
                                         ->first();
                                 @endphp
-                                <tr class="{{ $focusedAnnouncementId === (int) $announcement->id ? 'row-focused' : '' }}">
+                                <tr class="{{ $focusedAnnouncementId === (int) $announcement->id ? 'row-focused' : '' }}" data-announcement-id="{{ $announcement->id }}">
 
                                     {{-- ID --}}
                                     <td style="font-weight:700; color:var(--p1);">#{{ $announcement->id }}</td>
@@ -688,10 +827,14 @@
 
                                     {{-- Log Blasting --}}
                                     <td>
-                                        <span class="an-badge ab-info">Total: {{ $announcement->logs_total_count }}</span>
-                                        <span class="an-badge ab-success">SENT: {{ $announcement->logs_sent_count }}</span>
-                                        <span class="an-badge ab-danger">FAILED: {{ $announcement->logs_failed_count }}</span>
-                                        <span class="an-badge ab-warn">PENDING: {{ $announcement->logs_pending_count }}</span>
+                                        <span class="an-badge ab-info">Total: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="total">{{ $announcement->logs_total_count }}</strong></span>
+                                        <span class="an-badge ab-success">SENT: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="sent">{{ $announcement->logs_sent_count }}</strong></span>
+                                        <span class="an-badge ab-danger">FAILED: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="failed">{{ $announcement->logs_failed_count }}</strong></span>
+                                        <span class="an-badge ab-warn">PENDING: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="pending">{{ $announcement->logs_pending_count }}</strong></span>
+                                        <div style="margin-top:6px;">
+                                            <span class="an-badge ab-info">{{ __('app.announcement.email_opened') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="email_opened">{{ $announcement->logs_email_opened_count ?? 0 }}</strong></span>
+                                            <span class="an-badge ab-gray">{{ __('app.announcement.open_rate') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="open_rate">{{ number_format(($announcement->logs_email_total_count ?? 0) > 0 ? (($announcement->logs_email_opened_count ?? 0) / $announcement->logs_email_total_count) * 100 : 0, 1) }}</strong>%</span>
+                                        </div>
                                     </td>
 
                                     {{-- Reminder Terkait --}}
@@ -724,27 +867,28 @@
                                     </td>
 
                                     {{-- Aksi --}}
-                                    <td>
-                                        <a
-                                            href="{{ route('admin.announcements.edit', $announcement->id) }}"
-                                            class="an-btn an-btn-sm an-btn-edit"
-                                            style="margin-bottom:5px; display:inline-flex;"
-                                        >
-                                            <i class="fas fa-pencil-alt"></i>
-                                            <span>Edit</span>
-                                        </a>
-                                        <form
-                                            action="{{ route('admin.announcements.destroy', $announcement->id) }}"
-                                            method="POST"
-                                            onsubmit="return confirm('Hapus announcement ini?')"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="an-btn an-btn-sm an-btn-danger">
-                                                <i class="fas fa-trash-alt"></i>
-                                                <span>Hapus</span>
-                                            </button>
-                                        </form>
+                                    <td style="text-align:center;">
+                                        <div class="an-table-actions">
+                                            <a
+                                                href="{{ route('admin.announcements.edit', $announcement->id) }}"
+                                                class="an-icon-btn info"
+                                                title="Edit announcement"
+                                                aria-label="Edit announcement"
+                                            >
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </a>
+                                            <form
+                                                action="{{ route('admin.announcements.destroy', $announcement->id) }}"
+                                                method="POST"
+                                                onsubmit="return confirm('Hapus announcement ini?')"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="an-icon-btn danger" title="Hapus announcement" aria-label="Hapus announcement">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -821,7 +965,15 @@
                                     <td style="text-align:center;">
                                         <span class="an-badge {{ $badgeClass }}">{{ $status }}</span>
                                     </td>
-                                    <td style="font-size:.8rem; color:var(--muted);">{{ \Illuminate\Support\Str::limit((string) $log->response, 60) ?: '-' }}</td>
+                                    <td style="font-size:.8rem; color:var(--muted);">
+                                        <div class="an-log-response">
+                                            <span>{{ \Illuminate\Support\Str::limit((string) $log->response, 60) ?: '-' }}</span>
+                                            @if($ch === 'email' && $log->opened_at)
+                                                <span class="an-badge ab-info">{{ __('app.announcement.email_opened') }}: {{ (int) ($log->open_count ?? 1) }}x</span>
+                                                <span style="font-size:.72rem; color:#94A3B8;">{{ $log->opened_at->format('d/m/Y H:i:s') }}</span>
+                                            @endif
+                                        </div>
+                                    </td>
                                     <td style="font-size:.8rem;">{{ $log->sent_at?->format('d/m/Y H:i:s') ?? '-' }}</td>
                                 </tr>
                             @empty
@@ -848,4 +1000,100 @@
         </div>{{-- /col-lg-8 --}}
     </div>{{-- /row --}}
 </div>{{-- /an --}}
+@endsection
+
+@section('js')
+@if(session()->has('success'))
+<script>
+    Notification.success(@json(session()->get('success')));
+</script>
+@endif
+
+@if(session()->has('error'))
+<script>
+    Notification.error(@json(session()->get('error')));
+</script>
+@endif
+
+<script>
+    (function () {
+        const announcementIds = Array.from(document.querySelectorAll('[data-announcement-id]'))
+            .map((element) => Number(element.dataset.announcementId))
+            .filter((id) => Number.isFinite(id) && id > 0);
+
+        if (announcementIds.length === 0) {
+            return;
+        }
+
+        const summaryKeys = ['total', 'sent', 'failed', 'pending', 'email_total', 'email_opened'];
+        const endpoint = @json(route('admin.announcements.stats'));
+
+        function updateSummary(stats) {
+            const totals = summaryKeys.reduce((carry, key) => {
+                carry[key] = 0;
+                return carry;
+            }, {});
+
+            Object.values(stats).forEach((item) => {
+                summaryKeys.forEach((key) => {
+                    totals[key] += Number(item[key] ?? 0);
+                });
+            });
+
+            totals.open_rate = totals.email_total > 0
+                ? ((totals.email_opened / totals.email_total) * 100).toFixed(1)
+                : '0.0';
+
+            Object.entries(totals).forEach(([key, value]) => {
+                document.querySelectorAll(`[data-summary-key="${key}"]`).forEach((element) => {
+                    element.textContent = key === 'open_rate' ? `${value}%` : String(value);
+                });
+            });
+
+            const updatedAtElement = document.querySelector('[data-summary-updated-at]');
+            if (updatedAtElement) {
+                updatedAtElement.textContent = new Date().toLocaleString();
+            }
+        }
+
+        function updateRows(stats) {
+            Object.entries(stats).forEach(([id, item]) => {
+                Object.entries(item).forEach(([key, value]) => {
+                    document.querySelectorAll(`[data-stat-for="${id}"][data-stat-key="${key}"]`).forEach((element) => {
+                        element.textContent = key === 'open_rate'
+                            ? Number(value ?? 0).toFixed(1)
+                            : String(value ?? 0);
+                    });
+                });
+            });
+        }
+
+        async function refreshAnnouncementStats() {
+            const params = new URLSearchParams();
+            announcementIds.forEach((id) => params.append('ids[]', String(id)));
+
+            const response = await fetch(`${endpoint}?${params.toString()}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal memuat statistik announcement.');
+            }
+
+            const payload = await response.json();
+            const stats = payload.stats ?? {};
+
+            updateRows(stats);
+            updateSummary(stats);
+        }
+
+        refreshAnnouncementStats().catch(() => {});
+        window.setInterval(() => {
+            refreshAnnouncementStats().catch(() => {});
+        }, 30000);
+    })();
+</script>
 @endsection

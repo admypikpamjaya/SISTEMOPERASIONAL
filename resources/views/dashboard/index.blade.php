@@ -80,64 +80,6 @@
         margin: 0;
         font-weight: 500;
     }
-    .dash-theme-panel {
-        display: flex;
-        align-items: center;
-        gap: 0.85rem;
-        padding: 0.75rem 0.9rem;
-        background: rgba(255, 255, 255, 0.75);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-sm);
-        backdrop-filter: blur(10px);
-    }
-    .dash-theme-label {
-        font-size: 0.74rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--text-muted);
-    }
-    .dash-theme-switch {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.25rem;
-        background: rgba(37, 99, 235, 0.08);
-        border-radius: 999px;
-    }
-    .dash-theme-btn {
-        border: none;
-        border-radius: 999px;
-        background: transparent;
-        color: var(--text-secondary);
-        font-size: 0.76rem;
-        font-weight: 700;
-        padding: 0.5rem 0.9rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .dash-theme-btn:hover {
-        color: var(--text-primary);
-    }
-    .dash-theme-btn.active {
-        background: var(--surface-card);
-        color: var(--blue-primary);
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-    }
-    body.dark-mode .dash-theme-panel {
-        background: rgba(17, 24, 39, 0.72);
-    }
-    body.dark-mode .dash-theme-switch {
-        background: rgba(148, 163, 184, 0.12);
-    }
-    body.dark-mode .dash-theme-btn.active {
-        box-shadow: 0 10px 24px rgba(2, 6, 23, 0.32);
-    }
-
     /* ─── Welcome Card ────────────────────────── */
     .welcome-card {
         background: linear-gradient(135deg, var(--blue-deeper) 0%, var(--blue-dark) 50%, var(--blue-primary) 100%);
@@ -442,21 +384,8 @@
     <div class="dash-page-header-main">
         <div class="header-icon"><i class="fas fa-tachometer-alt"></i></div>
         <div class="header-text">
-            <h1>Dashboard</h1>
-            <p>Sistem Operasional Yayasan YPIK &mdash; Ringkasan & Monitoring</p>
-        </div>
-    </div>
-    <div class="dash-theme-panel">
-        <span class="dash-theme-label">Tampilan</span>
-        <div class="dash-theme-switch">
-            <button type="button" class="dash-theme-btn" data-theme-value="light" aria-pressed="true">
-                <i class="far fa-sun"></i>
-                Light
-            </button>
-            <button type="button" class="dash-theme-btn" data-theme-value="dark" aria-pressed="false">
-                <i class="far fa-moon"></i>
-                Dark
-            </button>
+            <h1>{{ __('app.dashboard.title') }}</h1>
+            <p>{{ __('app.dashboard.subtitle') }}</p>
         </div>
     </div>
 </div>
@@ -470,20 +399,20 @@
                     <div class="saldo-icon"><i class="fas fa-wallet"></i></div>
                     <div class="saldo-label">
                         <span class="dot"></span>
-                        Saldo Finance (All Report)
+                        {{ __('app.dashboard.finance_balance') }}
                     </div>
                     <div class="saldo-value" id="dashboard-saldo-value">
                         Rp {{ number_format((float) ($saldo ?? 0), 2, ',', '.') }}
                     </div>
                     <div class="saldo-meta">
                         <i class="fas fa-clock" style="font-size:0.65rem;"></i>
-                        Update WIB:&nbsp;<strong><span id="dashboard-saldo-updated">{{ $saldoUpdatedAt ?? '-' }}</span></strong>
+                        {{ __('app.dashboard.updated_at') }}:&nbsp;<strong><span id="dashboard-saldo-updated">{{ $saldoUpdatedAt ?? '-' }}</span></strong>
                     </div>
                 </div>
                 <div class="saldo-footer">
                     <a href="{{ route('finance.report.snapshots') }}">
                         <i class="fas fa-chart-bar"></i>
-                        Lihat Snapshot Finance
+                        {{ __('app.dashboard.view_snapshot') }}
                         <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -497,23 +426,23 @@
                 <div>
                     <div class="welcome-badge">
                         <i class="fas fa-circle" style="font-size:0.45rem;color:#4ade80;"></i>
-                        Sistem Aktif
+                        {{ __('app.dashboard.welcome_badge') }}
                     </div>
-                    <h3>Selamat Datang di Aplikasi<br>Sistem Operasional Yayasan YPIK</h3>
-                    <p>Pantau data keuangan, aset, dan operasional yayasan secara real-time dari satu dashboard terpadu.</p>
+                    <h3>{{ __('app.dashboard.welcome_title') }}</h3>
+                    <p>{{ __('app.dashboard.welcome_desc') }}</p>
                 </div>
                 <div style="display:flex; gap:.6rem; margin-top:1rem; position:relative; z-index:1;">
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
-                        <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">Modul Aktif</div>
+                        <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.active_modules') }}</div>
                         <div style="font-size:1.1rem;font-weight:800;">{{ ($showFinanceWidgets ? 1 : 0) + ($showBlastingWidgets ? 1 : 0) + 3 }}</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
-                        <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">Refresh Data</div>
+                        <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.refresh_data') }}</div>
                         <div style="font-size:1.1rem;font-weight:800;">60 det</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
-                        <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">Status</div>
-                        <div style="font-size:1.1rem;font-weight:800;color:#4ade80;">Online</div>
+                        <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.status') }}</div>
+                        <div style="font-size:1.1rem;font-weight:800;color:#4ade80;">{{ __('app.dashboard.online') }}</div>
                     </div>
                 </div>
             </div>
@@ -522,7 +451,7 @@
 
 <div class="section-label">
     <i class="fas fa-box" style="color:var(--blue-primary);font-size:.7rem;"></i>
-    Statistik Aset Berdasarkan Unit
+    {{ __('app.dashboard.asset_stats') }}
 </div>
 
 <div class="row">
@@ -548,18 +477,18 @@
                     </div>
 
                     <div class="saldo-meta">
-                        Total Aset
+                        {{ __('app.dashboard.total_assets') }}
                     </div>
                 </div>
 
                 <div class="saldo-footer">
                     @if($unitValue)
                         <a href="{{ route('asset-management.index', ['unit' => $unitValue]) }}">
-                            Lihat Aset <i class="fas fa-arrow-right"></i>
+                            {{ __('app.dashboard.view_assets') }} <i class="fas fa-arrow-right"></i>
                         </a>
                     @else
                         <a href="{{ route('asset-management.index') }}">
-                            Lihat Aset <i class="fas fa-arrow-right"></i>
+                            {{ __('app.dashboard.view_assets') }} <i class="fas fa-arrow-right"></i>
                         </a>
                     @endif
                 </div>
@@ -569,23 +498,23 @@
 </div>
 
 @if($showFinanceWidgets)
-    <div class="section-label"><i class="fas fa-chart-line" style="color:var(--blue-primary);font-size:.7rem;"></i> Grafik Keuangan</div>
+    <div class="section-label"><i class="fas fa-chart-line" style="color:var(--blue-primary);font-size:.7rem;"></i> {{ __('app.dashboard.finance_chart') }}</div>
     <div class="row">
         <div class="col-lg-6 col-md-6 col-sm-12">
             <div class="dash-chart-card accent-income dashboard-chart-card anim-delay-1" data-href="{{ data_get($incomeChart, 'url') }}">
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">
                         <span class="title-icon icon-income"><i class="fas fa-arrow-up"></i></span>
-                        Penghasilan
+                        {{ __('app.dashboard.income') }}
                     </h3>
-                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> Buka</span>
+                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> {{ __('app.dashboard.open') }}</span>
                 </div>
                 <div class="chart-card-body">
                     <canvas id="chart-income"></canvas>
                 </div>
                 <div class="chart-card-footer">
                     <i class="fas fa-info-circle" style="font-size:.7rem;"></i>
-                    Klik kartu untuk membuka laporan lengkap
+                    {{ __('app.dashboard.open_report') }}
                 </div>
             </div>
         </div>
@@ -594,16 +523,16 @@
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">
                         <span class="title-icon icon-expense"><i class="fas fa-arrow-down"></i></span>
-                        Penyusutan / Pengeluaran
+                        {{ __('app.dashboard.expense') }}
                     </h3>
-                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> Buka</span>
+                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> {{ __('app.dashboard.open') }}</span>
                 </div>
                 <div class="chart-card-body">
                     <canvas id="chart-expense"></canvas>
                 </div>
                 <div class="chart-card-footer">
                     <i class="fas fa-info-circle" style="font-size:.7rem;"></i>
-                    Klik kartu untuk membuka laporan lengkap
+                    {{ __('app.dashboard.open_report') }}
                 </div>
             </div>
         </div>
@@ -611,23 +540,23 @@
 @endif
 
 @if($showBlastingWidgets)
-    <div class="section-label"><i class="fas fa-paper-plane" style="color:var(--blue-primary);font-size:.7rem;"></i> Grafik Blasting</div>
+    <div class="section-label"><i class="fas fa-paper-plane" style="color:var(--blue-primary);font-size:.7rem;"></i> {{ __('app.dashboard.blast_chart') }}</div>
     <div class="row">
         <div class="col-lg-6 col-md-6 col-sm-12">
             <div class="dash-chart-card accent-email dashboard-chart-card anim-delay-3" data-href="{{ data_get($emailChart, 'url') }}">
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">
                         <span class="title-icon icon-email"><i class="fas fa-envelope"></i></span>
-                        Blasting Email
+                        {{ __('app.dashboard.email_blast') }}
                     </h3>
-                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> Buka</span>
+                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> {{ __('app.dashboard.open') }}</span>
                 </div>
                 <div class="chart-card-body">
                     <canvas id="chart-email"></canvas>
                 </div>
                 <div class="chart-card-footer">
                     <i class="fas fa-info-circle" style="font-size:.7rem;"></i>
-                    Klik kartu untuk membuka laporan lengkap
+                    {{ __('app.dashboard.open_report') }}
                 </div>
             </div>
         </div>
@@ -636,16 +565,16 @@
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">
                         <span class="title-icon icon-wa"><i class="fab fa-whatsapp"></i></span>
-                        Blasting WA
+                        {{ __('app.dashboard.wa_blast') }}
                     </h3>
-                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> Buka</span>
+                    <span class="open-badge"><i class="fas fa-external-link-alt" style="font-size:.6rem;"></i> {{ __('app.dashboard.open') }}</span>
                 </div>
                 <div class="chart-card-body">
                     <canvas id="chart-wa"></canvas>
                 </div>
                 <div class="chart-card-footer">
                     <i class="fas fa-info-circle" style="font-size:.7rem;"></i>
-                    Klik kartu untuk membuka laporan lengkap
+                    {{ __('app.dashboard.open_report') }}
                 </div>
             </div>
         </div>

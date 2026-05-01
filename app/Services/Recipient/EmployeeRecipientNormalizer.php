@@ -6,7 +6,11 @@ use App\DataTransferObjects\Recipient\EmployeeRecipientRowDTO;
 
 class EmployeeRecipientNormalizer
 {
-    public function normalize(array $row): EmployeeRecipientRowDTO
+    public function __construct(
+        private ContactValueNormalizer $contactValueNormalizer
+    ) {}
+
+    public function normalize(array $row, bool $autoCompleteEmailDomain = false): EmployeeRecipientRowDTO
     {
         $errors = [];
 
@@ -27,18 +31,25 @@ class EmployeeRecipientNormalizer
 
         $email = null;
         if ($emailRaw !== '') {
-            if (!filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = 'format email tidak valid';
+            $emailResult = $this->contactValueNormalizer->normalizeEmail(
+                $emailRaw,
+                $autoCompleteEmailDomain
+            );
+
+            if ($emailResult['error'] !== null) {
+                $errors[] = $emailResult['error'];
             } else {
-                $email = $emailRaw;
+                $email = $emailResult['value'];
             }
         }
 
         $wa = null;
         if ($waRaw !== '') {
-            $wa = $this->normalizeWa($waRaw);
-            if ($wa === null) {
-                $errors[] = 'format WhatsApp tidak valid';
+            $waResult = $this->contactValueNormalizer->normalizeWhatsapp($waRaw);
+            $wa = $waResult['value'];
+
+            if ($waResult['error'] !== null) {
+                $errors[] = $waResult['error'];
             }
         }
 
@@ -53,32 +64,4 @@ class EmployeeRecipientNormalizer
             errors: $errors
         );
     }
-
-    private function normalizeWa(string $wa): ?string
-    {
-        $wa = preg_replace('/[^0-9]/', '', $wa) ?? '';
-
-        if ($wa === '') {
-            return null;
-        }
-
-        if (str_starts_with($wa, '0')) {
-            $wa = '62' . substr($wa, 1);
-        }
-
-        if (str_starts_with($wa, '8')) {
-            $wa = '62' . $wa;
-        }
-
-        if (!str_starts_with($wa, '62')) {
-            return null;
-        }
-
-        if (strlen($wa) < 10 || strlen($wa) > 15) {
-            return null;
-        }
-
-        return $wa;
-    }
 }
-

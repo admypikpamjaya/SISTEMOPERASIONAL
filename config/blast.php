@@ -30,6 +30,10 @@ return [
 
     'pause_poll_seconds' => max(5, (int) env('BLAST_PAUSE_POLL_SECONDS', 30)),
 
+    'import' => [
+        'default_email_domain' => env('BLAST_IMPORT_DEFAULT_EMAIL_DOMAIN', 'gmail.com'),
+    ],
+
     'queues' => [
         'email' => [
             'high' => env('BLAST_QUEUE_EMAIL_HIGH', 'blast-email-high'),

@@ -15,11 +15,15 @@ class AnnouncementLog extends Model
         'target',
         'status',
         'response',
+        'track_token',
+        'opened_at',
+        'open_count',
         'sent_at',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'opened_at' => 'datetime',
     ];
 
     public function announcement()

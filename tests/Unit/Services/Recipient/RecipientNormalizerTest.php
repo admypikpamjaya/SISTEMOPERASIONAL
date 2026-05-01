@@ -2,14 +2,15 @@
 
 namespace Tests\Unit\Services\Recipient;
 
+use App\Services\Recipient\ContactValueNormalizer;
 use App\Services\Recipient\RecipientNormalizer;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class RecipientNormalizerTest extends TestCase
 {
     public function test_normalize_valid_data_with_whatsapp_conversion_and_catatan(): void
     {
-        $service = new RecipientNormalizer();
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
 
         $dto = $service->normalize([
             'nama_siswa' => ' Budi ',
@@ -32,7 +33,7 @@ class RecipientNormalizerTest extends TestCase
 
     public function test_normalize_rejects_missing_required_fields_and_contact(): void
     {
-        $service = new RecipientNormalizer();
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
 
         $dto = $service->normalize([
             'nama_siswa' => ' ',
@@ -52,7 +53,7 @@ class RecipientNormalizerTest extends TestCase
 
     public function test_normalize_rejects_invalid_email_and_whatsapp(): void
     {
-        $service = new RecipientNormalizer();
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
 
         $dto = $service->normalize([
             'nama_siswa' => 'Budi',
@@ -69,7 +70,7 @@ class RecipientNormalizerTest extends TestCase
 
     public function test_normalize_accepts_secondary_whatsapp_when_primary_empty(): void
     {
-        $service = new RecipientNormalizer();
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
 
         $dto = $service->normalize([
             'nama_siswa' => 'Siti',
@@ -87,7 +88,7 @@ class RecipientNormalizerTest extends TestCase
 
     public function test_normalize_accepts_valid_email_without_whatsapp(): void
     {
-        $service = new RecipientNormalizer();
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
 
         $dto = $service->normalize([
             'nama_siswa' => 'Siti',
@@ -100,5 +101,52 @@ class RecipientNormalizerTest extends TestCase
         $this->assertTrue($dto->isValid);
         $this->assertSame('wali@example.com', $dto->email);
         $this->assertNull($dto->phone);
+    }
+
+    public function test_normalize_accepts_non_indonesian_whatsapp_number(): void
+    {
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
+
+        $dto = $service->normalize([
+            'nama_siswa' => 'John',
+            'kelas' => '7A',
+            'nama_wali' => 'Jane',
+            'wa' => '+1 (650) 555-1234',
+        ]);
+
+        $this->assertTrue($dto->isValid);
+        $this->assertSame('16505551234', $dto->phone);
+    }
+
+    public function test_normalize_rejects_landline_number_with_021_prefix_for_whatsapp(): void
+    {
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
+
+        $dto = $service->normalize([
+            'nama_siswa' => 'Budi',
+            'kelas' => '5A',
+            'nama_wali' => 'Ibu Ani',
+            'wa' => '021-555-0000',
+        ]);
+
+        $this->assertFalse($dto->isValid);
+        $this->assertContains('nomor telepon rumah tidak bisa digunakan untuk WhatsApp', $dto->errors);
+    }
+
+    public function test_normalize_can_autocomplete_email_domain_on_import(): void
+    {
+        config()->set('blast.import.default_email_domain', 'yayasan.org');
+
+        $service = new RecipientNormalizer(new ContactValueNormalizer());
+
+        $dto = $service->normalize([
+            'nama_siswa' => 'Siti',
+            'kelas' => '6B',
+            'nama_wali' => 'Bapak Ali',
+            'email' => 'wali.siti',
+        ], true);
+
+        $this->assertTrue($dto->isValid);
+        $this->assertSame('wali.siti@yayasan.org', $dto->email);
     }
 }

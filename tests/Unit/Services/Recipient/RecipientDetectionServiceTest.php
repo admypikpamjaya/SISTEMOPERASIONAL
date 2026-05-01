@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\Recipient;
 
 use App\Services\Recipient\RecipientDetectionService;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class RecipientDetectionServiceTest extends TestCase
 {

@@ -8,6 +8,8 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class FinanceInvoiceDocumentService
@@ -53,53 +55,45 @@ class FinanceInvoiceDocumentService
         $sheet->getColumnDimension('G')->setWidth(16);
         $sheet->getColumnDimension('H')->setWidth(16);
 
-        $sheet->mergeCells('A1:H1');
-        $sheet->setCellValue('A1', 'FAKTUR / ENTRI JURNAL');
-        $sheet->getStyle('A1')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '1E3A8A'],
-            ],
-        ]);
-        $sheet->getRowDimension(1)->setRowHeight(26);
+        $this->applySpreadsheetBrandHeader(
+            $sheet,
+            'H',
+            'FAKTUR / ENTRI JURNAL',
+            'Dokumen penarikan / jurnal Yayasan YPIK PAM JAYA'
+        );
 
-        $sheet->setCellValue('A3', 'Nomor Faktur');
-        $sheet->setCellValue('B3', (string) $invoice->invoice_no);
-        $sheet->setCellValue('A4', 'Tanggal Akuntansi');
-        $sheet->setCellValue('B4', optional($invoice->accounting_date)->format('d/m/Y') ?? '-');
-        $sheet->setCellValue('A5', 'Jenis');
-        $sheet->setCellValue('B5', $this->resolveEntryTypeLabel((string) $invoice->entry_type));
-        $sheet->setCellValue('A6', 'Jurnal');
-        $sheet->setCellValue('B6', (string) $invoice->journal_name);
-        $sheet->setCellValue('A7', 'Referensi');
-        $sheet->setCellValue('B7', (string) ($invoice->reference ?? '-'));
-        $sheet->setCellValue('A8', 'Status');
-        $sheet->setCellValue('B8', (string) $invoice->status);
+        $sheet->setCellValue('A6', 'Nomor Faktur');
+        $sheet->setCellValue('B6', (string) $invoice->invoice_no);
+        $sheet->setCellValue('A7', 'Tanggal Akuntansi');
+        $sheet->setCellValue('B7', optional($invoice->accounting_date)->format('d/m/Y') ?? '-');
+        $sheet->setCellValue('A8', 'Jenis');
+        $sheet->setCellValue('B8', $this->resolveEntryTypeLabel((string) $invoice->entry_type));
+        $sheet->setCellValue('A9', 'Jurnal');
+        $sheet->setCellValue('B9', (string) $invoice->journal_name);
+        $sheet->setCellValue('A10', 'Referensi');
+        $sheet->setCellValue('B10', (string) ($invoice->reference ?? '-'));
+        $sheet->setCellValue('A11', 'Status');
+        $sheet->setCellValue('B11', (string) $invoice->status);
 
-        $sheet->setCellValue('E3', 'Total Debit');
-        $sheet->setCellValue('F3', (float) $invoice->total_debit);
-        $sheet->setCellValue('E4', 'Total Kredit');
-        $sheet->setCellValue('F4', (float) $invoice->total_credit);
-        $sheet->setCellValue('E5', 'Dibuat Oleh');
-        $sheet->setCellValue('F5', (string) ($invoice->creator?->name ?? '-'));
-        $sheet->setCellValue('E6', 'Terekam Oleh');
-        $sheet->setCellValue('F6', (string) ($invoice->poster?->name ?? '-'));
-        $sheet->setCellValue('E7', 'Dibuat Pada');
-        $sheet->setCellValue('F7', $invoice->created_at?->format('d/m/Y H:i:s') ?? '-');
-        $sheet->setCellValue('E8', 'Diperbarui Pada');
-        $sheet->setCellValue('F8', $invoice->updated_at?->format('d/m/Y H:i:s') ?? '-');
+        $sheet->setCellValue('E6', 'Total Debit');
+        $sheet->setCellValue('F6', (float) $invoice->total_debit);
+        $sheet->setCellValue('E7', 'Total Kredit');
+        $sheet->setCellValue('F7', (float) $invoice->total_credit);
+        $sheet->setCellValue('E8', 'Dibuat Oleh');
+        $sheet->setCellValue('F8', (string) ($invoice->creator?->name ?? '-'));
+        $sheet->setCellValue('E9', 'Terekam Oleh');
+        $sheet->setCellValue('F9', (string) ($invoice->poster?->name ?? '-'));
+        $sheet->setCellValue('E10', 'Dibuat Pada');
+        $sheet->setCellValue('F10', $invoice->created_at?->format('d/m/Y H:i:s') ?? '-');
+        $sheet->setCellValue('E11', 'Diperbarui Pada');
+        $sheet->setCellValue('F11', $invoice->updated_at?->format('d/m/Y H:i:s') ?? '-');
 
-        $sheet->getStyle('A3:A8')->getFont()->setBold(true);
-        $sheet->getStyle('E3:E8')->getFont()->setBold(true);
-        $sheet->getStyle('F3:F4')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
-        $sheet->getStyle('F3:F4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('A6:A11')->getFont()->setBold(true);
+        $sheet->getStyle('E6:E11')->getFont()->setBold(true);
+        $sheet->getStyle('F6:F7')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
+        $sheet->getStyle('F6:F7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-        $headerRow = 11;
+        $headerRow = 14;
         $sheet->fromArray(
             ['No', 'Asset Category', 'Akun', 'Rekanan', 'Label', 'Analisa Distribusi', 'Debit', 'Kredit'],
             null,
@@ -171,7 +165,7 @@ class FinanceInvoiceDocumentService
             ->getAlignment()
             ->setVertical(Alignment::VERTICAL_TOP);
 
-        $sheet->freezePane('A12');
+        $sheet->freezePane('A15');
 
         $notesSheet = $spreadsheet->createSheet();
         $notesSheet->setTitle('Log Catatan');
@@ -181,22 +175,15 @@ class FinanceInvoiceDocumentService
         $notesSheet->getColumnDimension('D')->setWidth(18);
         $notesSheet->getColumnDimension('E')->setWidth(70);
 
-        $notesSheet->mergeCells('A1:E1');
-        $notesSheet->setCellValue('A1', 'LOG CATATAN FAKTUR');
-        $notesSheet->getStyle('A1')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '0F172A'],
-            ],
-        ]);
-        $notesSheet->getRowDimension(1)->setRowHeight(24);
+        $this->applySpreadsheetBrandHeader(
+            $notesSheet,
+            'E',
+            'LOG CATATAN FAKTUR',
+            'Riwayat tindak lanjut finance Yayasan YPIK PAM JAYA',
+            false
+        );
 
-        $notesHeaderRow = 3;
+        $notesHeaderRow = 6;
         $notesSheet->fromArray(['No', 'Waktu', 'Nama', 'Role', 'Catatan'], null, 'A' . $notesHeaderRow);
         $notesSheet->getStyle('A' . $notesHeaderRow . ':E' . $notesHeaderRow)->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
@@ -239,7 +226,7 @@ class FinanceInvoiceDocumentService
         $notesSheet->getStyle('E' . ($notesHeaderRow + 1) . ':E' . $notesLastDataRow)
             ->getAlignment()
             ->setWrapText(true);
-        $notesSheet->freezePane('A4');
+        $notesSheet->freezePane('A7');
 
         $spreadsheet->setActiveSheetIndex(0);
 
@@ -255,13 +242,14 @@ class FinanceInvoiceDocumentService
         $itemIndex = 0;
         $pageNumber = 1;
         $pages = [];
+        $logoImage = $this->loadPdfFoundationLogo();
 
         while ($itemIndex < $totalItems || ($pageNumber === 1 && $totalItems === 0)) {
             $isFirstPage = $pageNumber === 1;
             $content = '';
-            $top = $this->appendPdfHeader($content, $invoice, $isFirstPage, $pageNumber);
+            $top = $this->appendPdfHeader($content, $invoice, $isFirstPage, $pageNumber, $logoImage !== null);
 
-            $maxRows = $isFirstPage ? 28 : 42;
+            $maxRows = $isFirstPage ? 25 : 38;
             $rowsWritten = 0;
 
             if ($totalItems === 0) {
@@ -344,14 +332,27 @@ class FinanceInvoiceDocumentService
             }
         }
 
-        return $this->buildPdfDocument($pages);
+        return $this->buildPdfDocument($pages, $logoImage);
     }
 
-    private function appendPdfHeader(string &$content, FinanceInvoice $invoice, bool $isFirstPage, int $pageNumber): float
+    private function appendPdfHeader(
+        string &$content,
+        FinanceInvoice $invoice,
+        bool $isFirstPage,
+        int $pageNumber,
+        bool $withLogo
+    ): float
     {
-        $top = 34.0;
-
         if ($isFirstPage) {
+            if ($withLogo) {
+                $content .= $this->pdfDrawImage('Im1', 28.0, 26.0, 44.0, 44.0);
+            }
+
+            $content .= $this->pdfDrawText('YAYASAN YPIK PAM JAYA', 84.0, 28.0, 16, true, [30, 64, 175]);
+            $content .= $this->pdfDrawText('Sistem Operasional Yayasan', 84.0, 46.0, 10, false, [100, 116, 139]);
+            $content .= $this->pdfDrawText('Format Penarikan / Entri Jurnal', 84.0, 60.0, 11, true, [22, 30, 45]);
+
+            $top = 92.0;
             $this->appendPdfLine($content, 'FAKTUR / ENTRI JURNAL', $top, true, 15, 18.0);
             $this->appendPdfLine($content, 'Nomor Faktur : ' . (string) $invoice->invoice_no, $top, false);
             $this->appendPdfLine(
@@ -382,7 +383,14 @@ class FinanceInvoiceDocumentService
                 false
             );
         } else {
-            $this->appendPdfLine($content, 'FAKTUR / ENTRI JURNAL (LANJUTAN)', $top, true, 13, 16.0);
+            if ($withLogo) {
+                $content .= $this->pdfDrawImage('Im1', 28.0, 22.0, 28.0, 28.0);
+            }
+
+            $content .= $this->pdfDrawText('YAYASAN YPIK PAM JAYA', 62.0, 24.0, 10, true, [30, 64, 175]);
+            $content .= $this->pdfDrawText('FAKTUR / ENTRI JURNAL (LANJUTAN)', 62.0, 38.0, 12, true, [22, 30, 45]);
+
+            $top = 60.0;
             $this->appendPdfLine(
                 $content,
                 'Nomor Faktur : ' . (string) $invoice->invoice_no . ' | Halaman: ' . $pageNumber,
@@ -477,8 +485,9 @@ class FinanceInvoiceDocumentService
 
     /**
      * @param array<int, string> $pageStreams
+     * @param array{data:string,width:int,height:int}|null $logoImage
      */
-    private function buildPdfDocument(array $pageStreams): string
+    private function buildPdfDocument(array $pageStreams, ?array $logoImage = null): string
     {
         $objects = [];
         $objectIndex = 2;
@@ -489,6 +498,16 @@ class FinanceInvoiceDocumentService
         $fontBoldId = ++$objectIndex;
         $objects[$fontBoldId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>';
 
+        $logoObjectId = null;
+        if ($logoImage !== null) {
+            $logoObjectId = ++$objectIndex;
+            $objects[$logoObjectId] = "<< /Type /XObject /Subtype /Image /Width {$logoImage['width']} /Height {$logoImage['height']} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "
+                . strlen($logoImage['data'])
+                . " >>\nstream\n"
+                . $logoImage['data']
+                . "\nendstream";
+        }
+
         $pageObjectIds = [];
         foreach ($pageStreams as $stream) {
             $contentObjectId = ++$objectIndex;
@@ -496,7 +515,8 @@ class FinanceInvoiceDocumentService
 
             $pageObjectId = ++$objectIndex;
             $pageObjectIds[] = $pageObjectId;
-            $objects[$pageObjectId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontRegularId} 0 R /F2 {$fontBoldId} 0 R >> >> /Contents {$contentObjectId} 0 R >>";
+            $xObjectResource = $logoObjectId !== null ? " /XObject << /Im1 {$logoObjectId} 0 R >>" : '';
+            $objects[$pageObjectId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontRegularId} 0 R /F2 {$fontBoldId} 0 R >>{$xObjectResource} >> /Contents {$contentObjectId} 0 R >>";
         }
 
         $kids = implode(' ', array_map(static fn (int $id) => $id . ' 0 R', $pageObjectIds));
@@ -602,6 +622,136 @@ class FinanceInvoiceDocumentService
         }
 
         return substr($value, $start, $length);
+    }
+
+    private function applySpreadsheetBrandHeader(
+        Worksheet $sheet,
+        string $lastColumn,
+        string $title,
+        string $subtitle,
+        bool $withLogo = true
+    ): void {
+        if ($withLogo && ($logoPath = $this->resolveFoundationLogoPath()) !== null) {
+            $drawing = new Drawing();
+            $drawing->setName('Logo YPIK');
+            $drawing->setDescription('Logo YPIK');
+            $drawing->setPath($logoPath);
+            $drawing->setHeight(52);
+            $drawing->setCoordinates('A1');
+            $drawing->setWorksheet($sheet);
+        }
+
+        $sheet->mergeCells("B1:{$lastColumn}1");
+        $sheet->mergeCells("B2:{$lastColumn}2");
+        $sheet->mergeCells("B3:{$lastColumn}3");
+        $sheet->mergeCells("B4:{$lastColumn}4");
+
+        $sheet->setCellValue('B1', 'YAYASAN YPIK PAM JAYA');
+        $sheet->setCellValue('B2', 'Sistem Operasional Yayasan');
+        $sheet->setCellValue('B3', $title);
+        $sheet->setCellValue('B4', $subtitle);
+
+        $sheet->getStyle("B1:{$lastColumn}4")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle("B1:{$lastColumn}4")->getAlignment()->setWrapText(true);
+        $sheet->getStyle("B1:{$lastColumn}4")->getFont()->setName('Arial');
+        $sheet->getStyle("B1:{$lastColumn}1")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 15, 'color' => ['rgb' => '1E3A8A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+        ]);
+        $sheet->getStyle("B2:{$lastColumn}2")->applyFromArray([
+            'font' => ['bold' => false, 'size' => 10, 'color' => ['rgb' => '64748B']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+        ]);
+        $sheet->getStyle("B3:{$lastColumn}3")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 13, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1E3A8A'],
+            ],
+        ]);
+        $sheet->getStyle("B4:{$lastColumn}4")->applyFromArray([
+            'font' => ['bold' => false, 'size' => 9, 'color' => ['rgb' => '475569']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+        ]);
+
+        $sheet->getRowDimension(1)->setRowHeight(22);
+        $sheet->getRowDimension(2)->setRowHeight(18);
+        $sheet->getRowDimension(3)->setRowHeight(22);
+        $sheet->getRowDimension(4)->setRowHeight(18);
+    }
+
+    private function resolveFoundationLogoPath(): ?string
+    {
+        $candidates = [
+            public_path('images/logo_ypik.png'),
+            public_path('images/logo_ypik.webp'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{data:string,width:int,height:int}|null
+     */
+    private function loadPdfFoundationLogo(): ?array
+    {
+        $logoPath = $this->resolveFoundationLogoPath();
+        if ($logoPath === null) {
+            return null;
+        }
+
+        $extension = strtolower((string) pathinfo($logoPath, PATHINFO_EXTENSION));
+
+        try {
+            $image = match ($extension) {
+                'png' => @imagecreatefrompng($logoPath),
+                'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($logoPath) : false,
+                'jpg', 'jpeg' => @imagecreatefromjpeg($logoPath),
+                default => false,
+            };
+
+            if ($image === false) {
+                return null;
+            }
+
+            ob_start();
+            imagejpeg($image, null, 90);
+            $jpegData = (string) ob_get_clean();
+
+            $width = imagesx($image);
+            $height = imagesy($image);
+            imagedestroy($image);
+
+            if ($jpegData === '' || $width <= 0 || $height <= 0) {
+                return null;
+            }
+
+            return [
+                'data' => $jpegData,
+                'width' => $width,
+                'height' => $height,
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function pdfDrawImage(string $resourceName, float $x, float $top, float $width, float $height): string
+    {
+        $y = 842.0 - $top - $height;
+
+        return "q\n"
+            . $this->formatPdfNumber($width) . " 0 0 " . $this->formatPdfNumber($height) . ' '
+            . $this->formatPdfNumber($x) . ' ' . $this->formatPdfNumber($y) . " cm\n"
+            . '/' . $resourceName . " Do\n"
+            . "Q\n";
     }
 
     private function resolveEntryTypeLabel(string $entryType): string

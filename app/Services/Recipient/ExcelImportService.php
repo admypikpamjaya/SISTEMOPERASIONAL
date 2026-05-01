@@ -86,7 +86,7 @@ class ExcelImportService
                 'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 5, $usePositionalFallback),
             ];
 
-            $dto = $this->normalizer->normalize($raw);
+            $dto = $this->normalizer->normalize($raw, true);
 
             if ($dto->isValid) {
                 $result->valid[] = $dto;
@@ -130,7 +130,7 @@ class ExcelImportService
                 'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 7, $usePositionalFallback),
             ];
 
-            $dto = $this->employeeNormalizer->normalize($raw);
+            $dto = $this->employeeNormalizer->normalize($raw, true);
 
             if ($dto->isValid) {
                 $result->valid[] = $dto;

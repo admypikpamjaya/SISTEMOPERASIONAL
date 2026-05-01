@@ -113,7 +113,9 @@ const ThemeManager = (function () {
     }
 
     function updateControls(theme) {
-        const label = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+        const lightLabel = window.AppI18n?.themeLight || 'Light Mode';
+        const darkLabel = window.AppI18n?.themeDark || 'Dark Mode';
+        const label = theme === 'dark' ? darkLabel : lightLabel;
         const iconClass = theme === 'dark' ? 'fa-moon' : 'fa-sun';
 
         document.querySelectorAll('[data-theme-label]').forEach((element) => {

@@ -22,6 +22,9 @@ class BlastMail extends Mailable
             ->subject($this->subjectText)
             ->view('emails.blast', [
                 'messageContent' => $this->payload->message,
+                'trackingPixelUrl' => !empty($this->payload->meta['announcement_track_token'])
+                    ? route('announcement.track.open', ['token' => $this->payload->meta['announcement_track_token']])
+                    : null,
             ]);
 
         foreach ($this->payload->attachments as $attachment) {

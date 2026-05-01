@@ -6,6 +6,14 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class AuthenticationRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'email' => strtolower(trim((string) $this->input('email'))),
+            'remember' => $this->boolean('remember'),
+        ]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,7 +32,7 @@ class AuthenticationRequest extends FormRequest
         return [
             'email' => 'required|email',
             'password' => 'required|string',
-            'remember_me' => 'boolean'
+            'remember' => 'boolean',
         ];
     }
 
@@ -37,7 +45,7 @@ class AuthenticationRequest extends FormRequest
             'password.required' => 'Field password wajib diisi.',
             'password.string' => 'Field password harus berupa string.',
 
-            'remember_me.boolean' => 'Field remember me harus berupa boolean.'
+            'remember.boolean' => 'Field remember me harus berupa boolean.'
         ];
     }
 }

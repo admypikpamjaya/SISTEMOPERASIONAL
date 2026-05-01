@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            DB::statement("ALTER TABLE assets CHANGE category category ENUM('AC', 'COMPUTER') NOT NULL");
+            DB::statement("ALTER TABLE assets CHANGE category category ENUM('AC', 'OTHER', 'COMPUTER') NOT NULL");
         });
     }
 
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            DB::statement("ALTER TABLE assets CHANGE category category ENUM('AC') NOT NULL");
+            DB::statement("ALTER TABLE assets CHANGE category category ENUM('AC', 'OTHER') NOT NULL");
         });
     }
 };

@@ -1814,3 +1814,180 @@ body.dark-mode .device-item.active {
 body.dark-mode .wa-qr-img {
     background: #0f172a !important;
 }
+
+.app-table-compact {
+    margin-bottom: 0;
+}
+
+.app-table-compact th,
+.app-table-compact td {
+    vertical-align: middle !important;
+}
+
+.app-table-compact thead th {
+    background: var(--app-surface-soft);
+    color: var(--app-text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--app-border);
+    white-space: nowrap;
+}
+
+.app-table-compact tbody td {
+    border-color: var(--app-border);
+}
+
+.app-table-compact tbody tr:hover td {
+    background: var(--app-row-hover);
+}
+
+.app-table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.app-icon-btn {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.7rem;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    color: var(--app-text-soft);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.app-icon-btn:hover,
+.app-icon-btn:focus {
+    transform: translateY(-1px);
+    text-decoration: none;
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+    color: var(--app-text);
+}
+
+.app-icon-btn.is-info {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.18);
+    color: #1d4ed8;
+}
+
+.app-icon-btn.is-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: #92400e;
+}
+
+.app-icon-btn.is-danger {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.18);
+    color: #b91c1c;
+}
+
+.app-icon-btn.is-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: #047857;
+}
+
+body.dark-mode .app-icon-btn {
+    background: var(--app-surface-soft);
+    border-color: var(--app-border);
+    color: var(--app-text);
+    box-shadow: none;
+}
+
+body.dark-mode .app-icon-btn.is-info {
+    background: rgba(96, 165, 250, 0.12);
+    border-color: rgba(96, 165, 250, 0.18);
+    color: #93c5fd;
+}
+
+body.dark-mode .app-icon-btn.is-warning {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+}
+
+body.dark-mode .app-icon-btn.is-danger {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+body.dark-mode .app-icon-btn.is-success {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+.asset-shell {
+    font-family: 'Plus Jakarta Sans', 'Source Sans Pro', sans-serif;
+}
+
+.asset-shell .callout,
+.asset-shell .card,
+.asset-shell .modal-content {
+    border-radius: 1rem;
+    border-color: var(--app-border);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+}
+
+.asset-shell .callout {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 255, 0.96));
+    border-left-color: #93c5fd;
+}
+
+.asset-shell .card-header,
+.asset-shell .card-footer {
+    background: linear-gradient(180deg, rgba(249, 251, 255, 0.98), rgba(243, 247, 255, 0.95));
+    border-color: var(--app-border);
+}
+
+.asset-shell .card-title,
+.asset-shell h3,
+.asset-shell h5,
+.asset-shell label {
+    font-family: 'Plus Jakarta Sans', 'Source Sans Pro', sans-serif;
+}
+
+.asset-shell .form-control,
+.asset-shell .custom-file-label,
+.asset-shell .btn {
+    border-radius: 0.8rem;
+}
+
+.asset-shell .btn-primary {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    border-color: #2563eb;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+}
+
+.asset-shell .btn-primary:hover,
+.asset-shell .btn-primary:focus {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    border-color: #1d4ed8;
+}
+
+.asset-shell .table-responsive {
+    border-radius: 0.9rem;
+}
+
+body.dark-mode .asset-shell .callout,
+body.dark-mode .asset-shell .card,
+body.dark-mode .asset-shell .modal-content {
+    background: var(--app-surface);
+    border-color: var(--app-border);
+    box-shadow: 0 22px 40px rgba(2, 6, 23, 0.34);
+}
+
+body.dark-mode .asset-shell .card-header,
+body.dark-mode .asset-shell .card-footer {
+    background: rgba(23, 33, 50, 0.92);
+}

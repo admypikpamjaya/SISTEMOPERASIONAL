@@ -112,4 +112,17 @@ return [
 
     'password_timeout' => 10800,
 
+    /*
+    |----------------------------------------------------------------------
+    | Initial User Password
+    |----------------------------------------------------------------------
+    |
+    | Password sementara saat admin membuat user baru dari panel user
+    | management. User bisa langsung login dengan password ini, lalu admin
+    | dapat mengirim link reset password bila perlu.
+    |
+    */
+
+    'initial_user_password' => env('INITIAL_USER_PASSWORD', 'Password-123!'),
+
 ];

@@ -14,16 +14,73 @@ use App\Models\BlastMessage;
 use App\Models\BlastRecipient;
 use App\Models\BlastTarget;
 use App\Models\Reminder;
+use App\Services\Recipient\ContactValueNormalizer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 class AnnouncementController extends Controller
 {
+    public function __construct(
+        private ContactValueNormalizer $contactValueNormalizer
+    ) {}
+
     /**
      * Display announcement page.
      */
     public function index()
     {
         return view('admin.announcements.index', $this->buildIndexViewData());
+    }
+
+    public function stats(): JsonResponse
+    {
+        $ids = collect((array) request()->query('ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->values();
+
+        $query = Announcement::query()
+            ->withCount([
+                'logs as logs_total_count',
+                'logs as logs_sent_count' => fn ($builder) => $builder->where('status', 'SENT'),
+                'logs as logs_failed_count' => fn ($builder) => $builder->where('status', 'FAILED'),
+                'logs as logs_pending_count' => fn ($builder) => $builder->where('status', 'PENDING'),
+                'logs as logs_email_total_count' => fn ($builder) => $builder->where('channel', 'EMAIL'),
+                'logs as logs_email_opened_count' => fn ($builder) => $builder
+                    ->where('channel', 'EMAIL')
+                    ->whereNotNull('opened_at'),
+            ]);
+
+        if ($ids->isNotEmpty()) {
+            $query->whereIn('id', $ids->all());
+        }
+
+        $stats = $query
+            ->get()
+            ->mapWithKeys(function (Announcement $announcement): array {
+                $emailTotal = (int) ($announcement->logs_email_total_count ?? 0);
+                $emailOpened = (int) ($announcement->logs_email_opened_count ?? 0);
+
+                return [
+                    (string) $announcement->id => [
+                        'total' => (int) ($announcement->logs_total_count ?? 0),
+                        'sent' => (int) ($announcement->logs_sent_count ?? 0),
+                        'failed' => (int) ($announcement->logs_failed_count ?? 0),
+                        'pending' => (int) ($announcement->logs_pending_count ?? 0),
+                        'email_total' => $emailTotal,
+                        'email_opened' => $emailOpened,
+                        'open_rate' => $emailTotal > 0
+                            ? round(($emailOpened / $emailTotal) * 100, 1)
+                            : 0,
+                    ],
+                ];
+            });
+
+        return response()->json([
+            'stats' => $stats,
+            'generated_at' => now()->toIso8601String(),
+        ]);
     }
 
     /**
@@ -167,6 +224,10 @@ class AnnouncementController extends Controller
                 'logs as logs_sent_count' => fn ($query) => $query->where('status', 'SENT'),
                 'logs as logs_failed_count' => fn ($query) => $query->where('status', 'FAILED'),
                 'logs as logs_pending_count' => fn ($query) => $query->where('status', 'PENDING'),
+                'logs as logs_email_total_count' => fn ($query) => $query->where('channel', 'EMAIL'),
+                'logs as logs_email_opened_count' => fn ($query) => $query
+                    ->where('channel', 'EMAIL')
+                    ->whereNotNull('opened_at'),
                 'reminders as reminders_total_count',
                 'reminders as reminders_active_count' => fn ($query) => $query->where('is_active', true),
             ]);
@@ -362,6 +423,7 @@ class AnnouncementController extends Controller
                 $payload->setMeta('blast_message_id', $blastMessage->id);
                 $payload->setMeta('announcement_id', $announcement->id);
                 $payload->setMeta('announcement_log_id', $announcementLog->id);
+                $payload->setMeta('announcement_track_token', $announcementLog->track_token);
 
                 dispatch(new SendEmailBlastJob($target, $subject, $payload));
 
@@ -492,6 +554,9 @@ class AnnouncementController extends Controller
             'target' => $target,
             'status' => 'PENDING',
             'response' => null,
+            'track_token' => strtoupper($channel) === 'EMAIL' ? (string) Str::uuid() : null,
+            'opened_at' => null,
+            'open_count' => 0,
             'sent_at' => null,
         ]);
     }
@@ -520,26 +585,12 @@ class AnnouncementController extends Controller
             return null;
         }
 
-        $normalized = preg_replace('/\D+/', '', trim($target)) ?? '';
-        if ($normalized === '') {
+        $result = $this->contactValueNormalizer->normalizeWhatsapp($target);
+
+        if ($result['value'] === null) {
             return null;
         }
 
-        if (str_starts_with($normalized, '0')) {
-            $normalized = '62' . substr($normalized, 1);
-        } elseif (str_starts_with($normalized, '8')) {
-            $normalized = '62' . $normalized;
-        }
-
-        if (!str_starts_with($normalized, '62')) {
-            return null;
-        }
-
-        $length = strlen($normalized);
-        if ($length < 10 || $length > 15) {
-            return null;
-        }
-
-        return $normalized;
+        return $result['value'];
     }
 }

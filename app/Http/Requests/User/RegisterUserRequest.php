@@ -8,6 +8,14 @@ use Illuminate\Validation\Rule;
 
 class RegisterUserRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => trim((string) $this->input('name')),
+            'email' => strtolower(trim((string) $this->input('email'))),
+        ]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

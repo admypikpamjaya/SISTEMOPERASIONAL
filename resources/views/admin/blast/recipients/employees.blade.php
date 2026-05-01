@@ -598,13 +598,13 @@ body.dark-mode .emp-table td form button.emp-btn {
                                 </td>
                                 <td>
                                     <div style="display:flex;gap:6px;">
-                                        <a href="{{ route('admin.blast.recipients.employees.edit', $employee->id) }}" class="emp-btn" style="padding:6px 9px;background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;">
+                                        <a href="{{ route('admin.blast.recipients.employees.edit', $employee->id) }}" class="emp-btn" style="padding:6px 9px;background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;" title="Edit recipient" aria-label="Edit recipient">
                                             <i class="fas fa-pen"></i>
                                         </a>
                                         <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data karyawan ini?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="emp-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;">
+                                            <button class="emp-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;" title="Hapus recipient" aria-label="Hapus recipient">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>

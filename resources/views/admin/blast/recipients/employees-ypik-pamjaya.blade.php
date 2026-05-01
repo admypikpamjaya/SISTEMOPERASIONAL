@@ -500,13 +500,13 @@
                                 </td>
                                 <td>
                                     <div style="display:flex;gap:6px;">
-                                        <a href="{{ route('admin.blast.recipients.employees-ypik.edit', $employee->id) }}" class="ypk-btn" style="padding:6px 9px;background:#f0fdfa;border-color:#99f6e4;color:#0f766e;">
+                                        <a href="{{ route('admin.blast.recipients.employees-ypik.edit', $employee->id) }}" class="ypk-btn" style="padding:6px 9px;background:#f0fdfa;border-color:#99f6e4;color:#0f766e;" title="Edit recipient" aria-label="Edit recipient">
                                             <i class="fas fa-pen"></i>
                                         </a>
                                         <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data YPIK Pam Jaya ini?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="ypk-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;">
+                                            <button class="ypk-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;" title="Hapus recipient" aria-label="Hapus recipient">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>

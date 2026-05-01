@@ -116,6 +116,28 @@ class BlastMessageTemplateController extends Controller
         );
     }
 
+    public function toggle(Request $request, string $id)
+    {
+        $template = BlastMessageTemplate::findOrFail($id);
+
+        $data = $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        $isActive = (bool) $data['is_active'];
+
+        $template->update([
+            'is_active' => $isActive,
+        ]);
+
+        return back()->with(
+            'success',
+            $isActive
+                ? 'Template berhasil diaktifkan.'
+                : 'Template berhasil dinonaktifkan.'
+        );
+    }
+
     public function destroy(string $id)
     {
         BlastMessageTemplate::findOrFail($id)->delete();

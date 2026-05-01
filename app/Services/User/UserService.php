@@ -9,7 +9,6 @@ use App\DTOs\User\UserDataDTO;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 
 class UserService 
 {
@@ -33,11 +32,10 @@ class UserService
 
     public function createUser(RegisterUserDTO $dto): UserDataDTO
     {
-        $password = Str::random(12);
         $user = User::create([
             'name' => $dto->name,
             'email' => $dto->email,
-            'password' => bcrypt($password),
+            'password' => Hash::make($this->getInitialUserPassword()),
             'role' => $dto->role->value
         ]);
 
@@ -109,5 +107,10 @@ class UserService
             throw new \Exception('User tidak ditemukan', 404);
         
         $user->delete();
+    }
+
+    public function getInitialUserPassword(): string
+    {
+        return (string) config('auth.initial_user_password', 'Password-123!');
     }
 }

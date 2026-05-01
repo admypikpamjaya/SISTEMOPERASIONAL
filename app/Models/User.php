@@ -53,4 +53,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(DiscussionMessage::class, 'user_id');
     }
+
+    public function loginHistories(): HasMany
+    {
+        return $this->hasMany(LoginHistory::class, 'user_id');
+    }
 }

@@ -6,7 +6,11 @@ use App\DataTransferObjects\Recipient\RecipientRowDTO;
 
 class RecipientNormalizer
 {
-    public function normalize(array $row): RecipientRowDTO
+    public function __construct(
+        private ContactValueNormalizer $contactValueNormalizer
+    ) {}
+
+    public function normalize(array $row, bool $autoCompleteEmailDomain = false): RecipientRowDTO
     {
         $errors = [];
 
@@ -31,27 +35,36 @@ class RecipientNormalizer
         // ===== EMAIL =====
         $email = null;
         if ($emailRaw !== '') {
-            if (!filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = 'format email tidak valid';
+            $emailResult = $this->contactValueNormalizer->normalizeEmail(
+                $emailRaw,
+                $autoCompleteEmailDomain
+            );
+
+            if ($emailResult['error'] !== null) {
+                $errors[] = $emailResult['error'];
             } else {
-                $email = $emailRaw;
+                $email = $emailResult['value'];
             }
         }
 
         // ===== WA NORMALIZATION =====
         $wa = null;
         if ($waRaw !== '') {
-            $wa = $this->normalizeWa($waRaw);
-            if (!$wa) {
-                $errors[] = 'format WhatsApp tidak valid';
+            $waResult = $this->contactValueNormalizer->normalizeWhatsapp($waRaw);
+            $wa = $waResult['value'];
+
+            if ($waResult['error'] !== null) {
+                $errors[] = $waResult['error'];
             }
         }
 
         $wa2 = null;
         if ($waRaw2 !== '') {
-            $wa2 = $this->normalizeWa($waRaw2);
-            if (!$wa2) {
-                $errors[] = 'format WhatsApp 2 tidak valid';
+            $waResult2 = $this->contactValueNormalizer->normalizeWhatsapp($waRaw2);
+            $wa2 = $waResult2['value'];
+
+            if ($waResult2['error'] !== null) {
+                $errors[] = str_replace('WhatsApp', 'WhatsApp 2', $waResult2['error']);
             }
         }
 
@@ -71,24 +84,5 @@ class RecipientNormalizer
             isValid: empty($errors),
             errors: $errors
         );
-    }
-
-    private function normalizeWa(string $wa): ?string
-    {
-        $wa = preg_replace('/[^0-9]/', '', $wa);
-
-        if (str_starts_with($wa, '0')) {
-            $wa = '62' . substr($wa, 1);
-        }
-
-        if (!str_starts_with($wa, '62')) {
-            return null;
-        }
-
-        if (strlen($wa) < 10 || strlen($wa) > 15) {
-            return null;
-        }
-
-        return $wa;
     }
 }

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="light dark">
-    <title>Sistem Operasional Yayasan YPIK</title>
+    <title>{{ __('app.app_name') }}</title>
 
     <script>
         (function () {
@@ -61,23 +61,51 @@
             <li class="nav-item dropdown theme-switcher">
                 <a class="nav-link theme-switcher-trigger" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                     <i class="fas fa-sun" data-theme-icon></i>
-                    <span class="d-none d-md-inline ml-1" data-theme-label>Light Mode</span>
+                    <span class="d-none d-md-inline ml-1" data-theme-label>{{ __('app.theme.light') }}</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right theme-switcher-menu">
                     <button type="button" class="dropdown-item theme-option" data-theme-value="light" aria-pressed="true">
                         <span class="theme-option-main">
                             <span class="theme-option-icon"><i class="far fa-sun"></i></span>
-                            <span>Light Mode</span>
+                            <span>{{ __('app.theme.light') }}</span>
                         </span>
                         <i class="fas fa-check theme-option-check"></i>
                     </button>
                     <button type="button" class="dropdown-item theme-option" data-theme-value="dark" aria-pressed="false">
                         <span class="theme-option-main">
                             <span class="theme-option-icon"><i class="far fa-moon"></i></span>
-                            <span>Dark Mode</span>
+                            <span>{{ __('app.theme.dark') }}</span>
                         </span>
                         <i class="fas fa-check theme-option-check"></i>
                     </button>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-language"></i>
+                    <span class="d-none d-md-inline ml-1">{{ strtoupper((string) ($activeLocale ?? app()->getLocale())) }}</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right theme-switcher-menu">
+                    <form method="POST" action="{{ route('locale.update', ['locale' => 'id']) }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item theme-option {{ ($activeLocale ?? app()->getLocale()) === 'id' ? 'active' : '' }}">
+                            <span class="theme-option-main">
+                                <span class="theme-option-icon"><i class="fas fa-flag"></i></span>
+                                <span>{{ __('app.language.id') }}</span>
+                            </span>
+                            <i class="fas fa-check theme-option-check"></i>
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('locale.update', ['locale' => 'en']) }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item theme-option {{ ($activeLocale ?? app()->getLocale()) === 'en' ? 'active' : '' }}">
+                            <span class="theme-option-main">
+                                <span class="theme-option-icon"><i class="fas fa-globe"></i></span>
+                                <span>{{ __('app.language.en') }}</span>
+                            </span>
+                            <i class="fas fa-check theme-option-check"></i>
+                        </button>
+                    </form>
                 </div>
             </li>
             <li class="nav-item">
@@ -98,7 +126,7 @@
             <img src="{{ asset('images/logo_ypik.webp') }}"
                  class="brand-image img-circle elevation-3"
                  style="opacity:.8">
-            <span class="brand-text font-weight-light">SOY YPIK PAM JAYA</span>
+            <span class="brand-text font-weight-light">{{ __('app.brand_short') }}</span>
         </a>
 
         <!-- SIDEBAR MENU -->
@@ -210,7 +238,7 @@
                                         @csrf
                                         <button type="submit" class="nav-link text-left w-100 border-0 bg-transparent">
                                             <i class="nav-icon {{ $menu['icon'] }}"></i>
-                                            <p>{{ $menu['label'] }}</p>
+                                            <p>{{ !empty($menu['label_key']) ? __($menu['label_key']) : $menu['label'] }}</p>
                                         </button>
                                     </form>
                                 @else
@@ -219,7 +247,7 @@
 
                                         <i class="nav-icon {{ $menu['icon'] }}"></i>
                                         <p>
-                                            {{ $menu['label'] }}
+                                            {{ !empty($menu['label_key']) ? __($menu['label_key']) : $menu['label'] }}
                                             @if($hasChildren)
                                                 <i class="right fas fa-angle-left"></i>
                                             @endif
@@ -244,7 +272,7 @@
                                                     <a href="{{ route($child['route']) }}"
                                                        class="nav-link {{ request()->routeIs($child['route']) ? 'active' : '' }}">
                                                         <i class="nav-icon {{ $child['icon'] }}"></i>
-                                                        <p>{{ $child['label'] }}</p>
+                                                        <p>{{ !empty($child['label_key']) ? __($child['label_key']) : $child['label'] }}</p>
                                                     </a>
                                                 </li>
                                             @endif
@@ -287,6 +315,12 @@
 <script src="{{ asset('vendor/adminlte/dist/js/adminlte.min.js') }}"></script>
 <script src="{{ asset('vendor/adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 <script src="{{ asset('js/helper.js') }}"></script>
+<script>
+    window.AppI18n = {
+        themeLight: @json(__('app.theme.light')),
+        themeDark: @json(__('app.theme.dark'))
+    };
+</script>
 <script>
     if (window.ThemeManager) {
         window.ThemeManager.init();

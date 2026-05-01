@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="color-scheme" content="light dark">
-  <title>{{ env('APP_NAME') }}</title>
+  <title>{{ __('app.app_name') }}</title>
 
   <script>
       (function () {
@@ -280,33 +280,47 @@
             <div class="ypk-brand">
                 <img src="{{ asset('images/logo_ypik.webp') }}" alt="logo_ypik">
                 <div>
-                    <h1>{{ env('APP_NAME') }}</h1>
-                    <p>SOY YPIK PAM JAYA</p>
+                    <h1>{{ __('app.app_name') }}</h1>
+                    <p>{{ __('app.brand_short') }}</p>
                 </div>
             </div>
-            <div class="ypk-visual-title">Portal Operasional Terpadu</div>
+            <div class="ypk-visual-title">{{ __('app.auth.portal_title') }}</div>
             <div class="ypk-visual-subtitle">
-                Kelola kegiatan harian, data, dan layanan yayasan dengan lebih rapi dan terarah.
+                {{ __('app.auth.portal_subtitle') }}
             </div>
             <ul class="ypk-visual-list">
-                <li><i class="fas fa-shield-alt"></i> Akses aman untuk seluruh unit kerja</li>
-                <li><i class="fas fa-chart-line"></i> Ringkasan laporan yang mudah dibaca</li>
-                <li><i class="fas fa-bell"></i> Notifikasi tugas dan pengingat penting</li>
+                <li><i class="fas fa-shield-alt"></i> {{ __('app.auth.safe_access') }}</li>
+                <li><i class="fas fa-chart-line"></i> {{ __('app.auth.summary_ready') }}</li>
+                <li><i class="fas fa-bell"></i> {{ __('app.auth.reminder_ready') }}</li>
             </ul>
         </div>
 
         <div class="ypk-login-form">
-            <h2>Masuk ke Akun</h2>
-            <p>Gunakan email terdaftar dan password Anda untuk melanjutkan.</p>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="mb-1">{{ __('app.auth.login_title') }}</h2>
+                    <p class="mb-0">{{ __('app.auth.login_subtitle') }}</p>
+                </div>
+                <div class="d-flex align-items-center" style="gap:8px;">
+                    <form method="POST" action="{{ route('locale.update', ['locale' => 'id']) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm {{ app()->getLocale() === 'id' ? 'btn-primary' : 'btn-light' }}">ID</button>
+                    </form>
+                    <form method="POST" action="{{ route('locale.update', ['locale' => 'en']) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm {{ app()->getLocale() === 'en' ? 'btn-primary' : 'btn-light' }}">EN</button>
+                    </form>
+                </div>
+            </div>
 
             <form id="login-form" action="{{ url()->current() }}" method="post">
                 @csrf
                 <div class="form-group">
                     <label for="email">
                         <i class="fas fa-user mr-1"></i>
-                        Email
+                        {{ __('app.auth.email') }}
                     </label>
-                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email" autocomplete="username">
+                    <input type="text" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="{{ __('app.auth.email_placeholder') }}" autocomplete="username">
                     @error('email')
                         <div class="invalid-feedback">
                             {{ $message }}
@@ -316,7 +330,7 @@
                 <div class="form-group">
                     <label for="password">
                         <i class="fas fa-key mr-1"></i>
-                        Password
+                        {{ __('app.auth.password') }}
                     </label>
                     <input
                         type="password"
@@ -325,7 +339,7 @@
                             @if(session('auth_failed')) is-invalid @endif"
                         id="password"
                         name="password"
-                        placeholder="Masukkan password"
+                        placeholder="{{ __('app.auth.password_placeholder') }}"
                         autocomplete="current-password">
                     @error('password')
                         <div class="invalid-feedback">
@@ -340,21 +354,21 @@
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="icheck-primary">
-                        <input type="checkbox" id="remember" name="remember">
+                        <input type="checkbox" id="remember" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
                         <label for="remember">
-                            Remember Me
+                            {{ __('app.auth.remember') }}
                         </label>
                     </div>
-                    <small class="text-muted">Perlu bantuan? Hubungi admin.</small>
+                    <small class="text-muted">{{ __('app.auth.need_help') }}</small>
                 </div>
                 <button id="submit-form-button" type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt mr-1"></i>
-                    Sign In
+                    {{ __('app.auth.sign_in') }}
                 </button>
             </form>
 
             <div class="ypk-login-footer">
-                <strong>{{ env('APP_NAME') }}</strong> siap membantu operasional harian yayasan.
+                {!! str_replace(':app', '<strong>' . e(__('app.app_name')) . '</strong>', e(__('app.auth.ready'))) !!}
             </div>
         </div>
     </div>

@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\AnnouncementTrackingController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
@@ -58,6 +60,12 @@ Route::prefix('login')
         Route::get('/', 'index')->name('login');
         Route::post('/', 'authenticate');
     });
+
+Route::post('/locale/{locale}', [LocaleController::class, 'update'])
+    ->name('locale.update');
+
+Route::get('/announcement/track/{token}', [AnnouncementTrackingController::class, 'open'])
+    ->name('announcement.track.open');
 
 Route::middleware('auth')->post('/logout', function () {
     Auth::logout();
@@ -176,6 +184,7 @@ Route::prefix('user-database')
     ->controller(UserManagementController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('/login-history', 'loginHistory')->name('login-history');
         Route::get('/{id}', 'show')->name('show');
         Route::post('/', 'store')
             ->middleware('check_access:user_management.write')
@@ -497,6 +506,8 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [AnnouncementController::class, 'index'])
                     ->name('announcements.index');
+                Route::get('/stats', [AnnouncementController::class, 'stats'])
+                    ->name('announcements.stats');
                 Route::get('/create', [AnnouncementController::class, 'create'])
                     ->middleware('check_access:admin_announcement.create')
                     ->name('announcements.create');
@@ -715,6 +726,9 @@ Route::prefix('admin')
                         Route::put('/{id}', [BlastMessageTemplateController::class, 'update'])
                             ->middleware('check_access:blast_template.update')
                             ->name('templates.update');
+                        Route::post('/{id}/toggle', [BlastMessageTemplateController::class, 'toggle'])
+                            ->middleware('check_access:blast_template.update')
+                            ->name('templates.toggle');
                         Route::delete('/{id}', [BlastMessageTemplateController::class, 'destroy'])
                             ->middleware('check_access:blast_template.delete')
                             ->name('templates.destroy');

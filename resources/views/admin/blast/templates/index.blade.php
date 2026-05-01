@@ -242,6 +242,10 @@
     gap: 6px;
 }
 
+.tpl-row-actions form {
+    margin: 0;
+}
+
 .tpl-icon-btn {
     width: 30px;
     height: 30px;
@@ -264,6 +268,18 @@
     border-color: #bfdbfe;
     color: #1d4ed8;
     background: #eff6ff;
+}
+
+.tpl-icon-btn.toggle-off {
+    border-color: #fde68a;
+    color: #b45309;
+    background: #fffbeb;
+}
+
+.tpl-icon-btn.toggle-on {
+    border-color: #bbf7d0;
+    color: #166534;
+    background: #f0fdf4;
 }
 
 .tpl-icon-btn.delete {
@@ -352,7 +368,7 @@
                             <th style="width:120px;">Channel</th>
                             <th style="width:120px;">Status</th>
                             <th>Isi Template</th>
-                            <th style="width:120px;">Aksi</th>
+                            <th style="width:160px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -384,6 +400,21 @@
                                         <a href="{{ route('admin.blast.templates.edit', ['id' => $template->id]) }}" class="tpl-icon-btn edit" title="Edit">
                                             <i class="fas fa-pen"></i>
                                         </a>
+                                        <form
+                                            method="POST"
+                                            action="{{ route('admin.blast.templates.toggle', ['id' => $template->id]) }}"
+                                            onsubmit="return confirm('{{ $template->is_active ? 'Nonaktifkan template ini?' : 'Aktifkan kembali template ini?' }}')"
+                                        >
+                                            @csrf
+                                            <input type="hidden" name="is_active" value="{{ $template->is_active ? 0 : 1 }}">
+                                            <button
+                                                type="submit"
+                                                class="tpl-icon-btn {{ $template->is_active ? 'toggle-off' : 'toggle-on' }}"
+                                                title="{{ $template->is_active ? 'Nonaktifkan Template' : 'Aktifkan Template' }}"
+                                            >
+                                                <i class="fas {{ $template->is_active ? 'fa-pause' : 'fa-play' }}"></i>
+                                            </button>
+                                        </form>
                                         <form method="POST" action="{{ route('admin.blast.templates.destroy', ['id' => $template->id]) }}" onsubmit="return confirm('Hapus template ini?')">
                                             @csrf
                                             @method('DELETE')
@@ -410,4 +441,3 @@
     </div>
 </div>
 @endsection
-
