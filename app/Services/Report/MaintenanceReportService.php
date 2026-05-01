@@ -163,20 +163,21 @@ class MaintenanceReportService
             ->whereIn('id', $ids)
             ->get();
 
-
+        Log::info($logs);
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         $sheet->setCellValue('A1', 'Kode Akun');
-        $sheet->setCellValue('B1', 'Nama Pekerja');
-        $sheet->setCellValue('C1', 'Tanggal Pengerjaan');
-        $sheet->setCellValue('D1', 'Deskripsi Masalah');
-        $sheet->setCellValue('E1', 'Deskripsi Pekerjaan');
-        $sheet->setCellValue('F1', 'PIC (Penanggung Jawab)');
-        $sheet->setCellValue('G1', 'Status');
-        $sheet->setCellValue('H1', 'Biaya');
-        $sheet->setCellValue('I1', 'Kategori');
-        $sheet->setCellValue('J1', 'Dokumentasi Pemeliharaan');
+        $sheet->setCellValue('B1', 'Lokasi');
+        $sheet->setCellValue('C1', 'Nama Pekerja');
+        $sheet->setCellValue('D1', 'Tanggal Pengerjaan');
+        $sheet->setCellValue('E1', 'Deskripsi Masalah');
+        $sheet->setCellValue('F1', 'Deskripsi Pekerjaan');
+        $sheet->setCellValue('G1', 'PIC (Penanggung Jawab)');
+        $sheet->setCellValue('H1', 'Status');
+        $sheet->setCellValue('I1', 'Biaya');
+        $sheet->setCellValue('J1', 'Kategori');
+        $sheet->setCellValue('K1', 'Dokumentasi Pemeliharaan');
 
         $row = 2; 
         foreach ($logs as $log) {
@@ -189,15 +190,16 @@ class MaintenanceReportService
                 : 'No Documentation';
 
             $sheet->setCellValue('A' . $row, $log->asset->account_code);
-            $sheet->setCellValue('B' . $row, $log->worker_name);
-            $sheet->setCellValue('C' . $row, \Carbon\Carbon::parse($log->date)->format('Y-m-d H:i:s')); 
-            $sheet->setCellValue('D' . $row, $log->issue_description);
-            $sheet->setCellValue('E' . $row, $log->working_description);
-            $sheet->setCellValue('F' . $row, $log->pic);
-            $sheet->setCellValue('G' . $row, $log->status->value);
-            $sheet->setCellValue('H' . $row, $log->cost_formatted);
-            $sheet->setCellValue('I' . $row, $log->asset->category->value);
-            $sheet->setCellValue('J' . $row, $documentationUrl);
+            $sheet->setCellValue('B' . $row, $log->asset->location);
+            $sheet->setCellValue('C' . $row, $log->worker_name);
+            $sheet->setCellValue('D' . $row, \Carbon\Carbon::parse($log->date)->format('Y-m-d H:i:s'));
+            $sheet->setCellValue('E' . $row, $log->issue_description);
+            $sheet->setCellValue('F' . $row, $log->working_description);
+            $sheet->setCellValue('G' . $row, $log->pic);
+            $sheet->setCellValue('H' . $row, $log->status->value);
+            $sheet->setCellValue('I' . $row, $log->cost_formatted);
+            $sheet->setCellValue('J' . $row, $log->asset->category->value);
+            $sheet->setCellValue('K' . $row, $documentationUrl);
 
             $row++;
         }
