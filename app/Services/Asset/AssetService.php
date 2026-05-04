@@ -15,12 +15,24 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
+/**
+ * Handles asset master data, CSV import, and QR code lifecycle.
+ *
+ * Important for future finance work:
+ * - this service currently stores inventory master data only;
+ * - depreciation policy fields such as acquisition cost, useful life,
+ *   residual value, and depreciation start date are not saved here yet.
+ */
 class AssetService 
 {
     private const CHUNK_SIZE = 50;
 
     private function extractDataFromCSV(AssetCategory $category, $file): array
     {
+        // CSV import mirrors the same master-data fields as the manual asset
+        // form. Finance depreciation policy fields are intentionally not
+        // derived here yet because the current import contract does not carry
+        // them.
         $dtos = [];
 
         $handle = fopen($file->getRealPath(), 'r');
@@ -129,6 +141,8 @@ class AssetService
         DB::beginTransaction();
         try
         {
+            // The first transaction writes the asset identity that is used by
+            // inventory, maintenance, QR detail pages, and finance lookups.
             $assetData = Arr::except($dto->toArray(), 'detail');
             $validatedAssetData = Asset::validateRegistrationPayload($assetData);
 
@@ -138,6 +152,10 @@ class AssetService
 
             $assetDetailHandler = AssetFactory::createHandler($dto->category);
 
+            // Category-specific detail is kept separate from the asset master.
+            // If automated depreciation is implemented later, prefer writing
+            // finance policy records in a dedicated table rather than mixing
+            // them into these operational detail tables.
             $validatedDetail =$assetDetailHandler->validatePayload($dto->detail);
             $assetDetailHandler->insert($asset->id, $validatedDetail);
 

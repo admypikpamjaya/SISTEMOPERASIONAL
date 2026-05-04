@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+{{-- Developer note: this page creates the asset master only. Finance policy
+     fields for automated depreciation are not part of this form yet. See
+     docs/finance-asset-depreciation.md before extending the asset schema. --}}
 @php
 use App\Enums\Asset\AssetCategory;
 use App\Enums\Asset\AssetUnit;

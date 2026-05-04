@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- Developer note: depreciation rows on this form are still user-entered and
+     flagged by is_depreciation. They are not auto-filled from asset
+     depreciation history yet. --}}
 @php
     $isEditMode = isset($editingReport) && is_array($editingReport);
     $editReportId = $isEditMode ? (string) data_get($editingReport, 'report_id') : null;

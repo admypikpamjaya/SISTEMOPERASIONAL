@@ -14,6 +14,14 @@ use App\Http\Requests\Asset\RegisterAssetViaFileRequest;
 use App\Services\Asset\AssetService;
 use Illuminate\Http\Request;
 
+/**
+ * Asset master controller.
+ *
+ * The current module manages inventory identity and operational detail such as
+ * category, account code, unit, location, purchase year, and per-category
+ * detail. It does not yet persist the finance policy data needed to automate
+ * end-of-period depreciation.
+ */
 class AssetManagementController extends Controller
 {
     public function __construct(
@@ -59,6 +67,9 @@ class AssetManagementController extends Controller
 
     public function store(RegisterAssetRequest $request)
     {
+        // Registration currently creates the asset master only. Any future
+        // depreciation policy flow should be added in the service layer so the
+        // create transaction stays consistent.
         $this->service->registerAsset(RegisterAssetDTO::fromArray($request->validated()));
 
         session()->flash('success', 'Aset berhasil ditambahkan');

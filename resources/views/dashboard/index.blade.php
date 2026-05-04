@@ -438,7 +438,7 @@
                     </div>
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
                         <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.refresh_data') }}</div>
-                        <div style="font-size:1.1rem;font-weight:800;">60 det</div>
+                        <div style="font-size:1.1rem;font-weight:800;">60 Seconds</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
                         <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.status') }}</div>

@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- Developer note: this UI is a manual straight-line depreciation calculator
+     plus log viewer. It does not yet generate posted depreciation runs from
+     asset policies. See docs/finance-asset-depreciation.md. --}}
 @php
     $nowWib = now(config('app.timezone'));
 @endphp

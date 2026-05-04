@@ -1,66 +1,95 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SOY YPIK
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Operasional Yayasan YPIK adalah aplikasi internal berbasis Laravel untuk
+mengelola aset, laporan keuangan, maintenance, user management, diskusi
+internal, dan blasting informasi.
 
-## About Laravel
+README ini dipakai sebagai pintu masuk developer baru. Dokumentasi detail ada di
+folder [docs](docs).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Ringkasan Modul
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Asset Management: registrasi aset, edit aset, QR code, import CSV, detail aset publik.
+- Finance: dashboard, kalkulator penyusutan, snapshot laba rugi, neraca, invoice, general ledger.
+- Maintenance Report: pelaporan dan approval maintenance aset.
+- User Management: user database, histori login, reset password.
+- Discussion: channel diskusi internal dengan attachment, voice note, dan pin pesan.
+- Blasting: pengiriman email dan WhatsApp, termasuk reminder dan dataset tunggakan.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Status Fitur Penyusutan
 
-## Learning Laravel
+Saat ini project sudah memiliki:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- master data aset,
+- halaman kalkulator penyusutan metode garis lurus,
+- tabel histori penyusutan dan run penyusutan,
+- snapshot laporan finance yang bisa menandai baris sebagai penyusutan.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Namun alur tersebut masih belum otomatis dari input aset sampai generate penyusutan
+akhir periode. Detail gap dan revisi requirement client ada di
+[docs/finance-asset-depreciation.md](docs/finance-asset-depreciation.md).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Quick Start
 
-## Laravel Sponsors
+1. Install dependency PHP.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+```bash
+composer install
+```
 
-### Premium Partners
+2. Siapkan environment.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```bash
+copy .env.example .env
+php artisan key:generate
+```
 
-## Contributing
+3. Sesuaikan koneksi database di `.env`, lalu jalankan migrasi.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan migrate
+```
 
-## Code of Conduct
+4. Jalankan aplikasi.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan serve
+```
 
-## Security Vulnerabilities
+## Struktur Folder Penting
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- `app/Http/Controllers`: entry point request web.
+- `app/Services`: business logic utama.
+- `app/Repositories`: query layer yang dipakai service tertentu.
+- `app/DTOs`: payload terstruktur antar layer.
+- `app/Models`: model Eloquent.
+- `resources/views`: Blade UI.
+- `routes/web.php`: routing utama.
+- `database/migrations`: struktur database.
+- `whatsapp-gateway/`: service Node.js terpisah untuk WhatsApp.
 
-## License
+## Entry Point Yang Paling Sering Dibuka
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Asset master: [app/Http/Controllers/Asset/AssetManagementController.php](app/Http/Controllers/Asset/AssetManagementController.php)
+- Asset service: [app/Services/Asset/AssetService.php](app/Services/Asset/AssetService.php)
+- Finance depreciation: [app/Http/Controllers/Finance/AssetDepreciationController.php](app/Http/Controllers/Finance/AssetDepreciationController.php)
+- Finance report: [app/Services/Finance/ReportService.php](app/Services/Finance/ReportService.php)
+- Routing: [routes/web.php](routes/web.php)
+
+## Dokumentasi Tambahan
+
+- [docs/project-overview.md](docs/project-overview.md)
+- [docs/finance-asset-depreciation.md](docs/finance-asset-depreciation.md)
+
+Dokumen lama masih ada untuk referensi historis:
+
+- `documentaion.txt`
+- `dokumentasi-teknis.txt`
+
+## Catatan Untuk Developer Berikutnya
+
+- Asset registration saat ini fokus ke master data inventaris, belum menyimpan policy penyusutan finance.
+- Halaman penyusutan saat ini adalah kalkulator manual plus log, belum generator penyusutan otomatis per akhir periode.
+- Snapshot laba rugi masih menerima input penyusutan manual dari form.
+- Jika ingin menyelesaikan kebutuhan client tentang otomatisasi penyusutan, mulai dari dokumen
+  [docs/finance-asset-depreciation.md](docs/finance-asset-depreciation.md).

@@ -18,6 +18,13 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
+/**
+ * Core inventory master model.
+ *
+ * This model currently represents the operational identity of an asset.
+ * Finance depreciation policy data is expected to live in dedicated finance
+ * tables when the automated depreciation flow is completed.
+ */
 class Asset extends Model
 {
     use HasFactory, HasUuids;
@@ -129,6 +136,8 @@ class Asset extends Model
 
     public function assetDepreciations(): HasMany
     {
+        // Stores posted depreciation history snapshots, not the editable policy
+        // definition itself.
         return $this->hasMany(AssetDepreciation::class, 'asset_id');
     }
 }

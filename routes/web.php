@@ -204,6 +204,10 @@ Route::prefix('user-database')
 |--------------------------------------------------------------------------
 | Finance
 |--------------------------------------------------------------------------
+| Note for maintainers:
+| - /finance/depreciation is the current manual calculator and log UI.
+| - automated asset-based depreciation for period closing is documented in
+|   docs/finance-asset-depreciation.md and is not fully wired yet.
 */
 Route::prefix('finance')
     ->name('finance.')

@@ -15,6 +15,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
+/**
+ * Serves the manual depreciation calculator and its audit log.
+ *
+ * This controller does not yet generate period-closing depreciation runs from
+ * asset master data. It exposes the current manual bridge used by finance
+ * staff while the automated policy-based flow is still being completed.
+ */
 class AssetDepreciationController extends Controller
 {
     public function __construct(
@@ -32,6 +39,9 @@ class AssetDepreciationController extends Controller
             $logPayload = null;
             $loggingAvailable = Schema::hasTable('finance_depreciation_calculation_logs');
 
+            // The log records what the user typed into the calculator at that
+            // moment. It is useful as an audit trail, but it is not the same as
+            // a posted depreciation run in finance_depreciation_histories.
             if ($loggingAvailable) {
                 $log = FinanceDepreciationCalculationLog::query()->create([
                     'asset_id' => $validated['asset_id'],
@@ -90,6 +100,8 @@ class AssetDepreciationController extends Controller
     public function index()
     {
         try {
+            // The page still needs the asset list because users pick an asset
+            // first, then enter finance values manually for the calculation.
             $assets = Asset::query()
                 ->select('id', 'account_code', 'category', 'location')
                 ->orderBy('account_code')

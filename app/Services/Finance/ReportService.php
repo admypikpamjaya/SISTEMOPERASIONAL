@@ -21,6 +21,15 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+/**
+ * Builds finance report snapshots and reconciliation data.
+ *
+ * Current depreciation behavior:
+ * - depreciation lines in profit-loss snapshots are still user-entered;
+ * - the service separates them from regular expenses using isDepreciation;
+ * - automatic pull from asset policy / depreciation history is still a future
+ *   enhancement.
+ */
 class ReportService
 {
     public function __construct(
@@ -175,6 +184,9 @@ class ReportService
         $totalExpense = 0.0;
         $totalDepreciation = 0.0;
 
+        // Depreciation is still sourced from manual report entries. A future
+        // automation step should replace or enrich this with values generated
+        // from finance_depreciation_runs and finance_depreciation_histories.
         foreach ($dto->entries as $entry) {
             if ($entry->type === 'INCOME') {
                 $totalIncome += $entry->amount;
@@ -376,6 +388,9 @@ class ReportService
             $totalExpense = 0.0;
             $totalDepreciation = 0.0;
 
+            // Keep the same manual depreciation separation during edits so old
+            // snapshots stay consistent until automated depreciation is wired
+            // into the report flow.
             foreach ($dto->entries as $entry) {
                 if ($entry->type === 'INCOME') {
                     $totalIncome += $entry->amount;

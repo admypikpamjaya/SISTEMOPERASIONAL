@@ -241,6 +241,14 @@
                                             <p>{{ !empty($menu['label_key']) ? __($menu['label_key']) : $menu['label'] }}</p>
                                         </button>
                                     </form>
+                                    <div class="sidebar-app-meta">
+                                        <div class="sidebar-app-meta-logos">
+                                            <img src="{{ asset('images/logo_ypik.webp') }}" alt="Logo Yayasan YPIK" class="sidebar-app-meta-logo is-ypik">
+                                            <img src="{{ asset('images/logo-si.png') }}" alt="Logo SI" class="sidebar-app-meta-logo">
+                                            <img src="{{ asset('images/logo-pradita.png') }}" alt="Logo Pradita" class="sidebar-app-meta-logo is-pradita">
+                                        </div>
+                                        <span class="sidebar-app-meta-version">Versi Web 1.1</span>
+                                    </div>
                                 @else
                                     <a href="{{ $hasChildren ? route($menu['route']) : route($menu['route']) }}"
                                        class="nav-link {{ (!$hasChildren && request()->routeIs($menu['route'])) || $isActiveParent ? 'active' : '' }}">

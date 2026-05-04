@@ -6,8 +6,19 @@ use App\DTOs\Finance\DepreciationInputDTO;
 use App\DTOs\Finance\DepreciationResultDTO;
 use InvalidArgumentException;
 
+/**
+ * Manual straight-line depreciation calculator.
+ *
+ * The current implementation is intentionally small: it calculates one monthly
+ * depreciation figure from user-supplied acquisition cost and useful life.
+ * It is not yet the end-of-period batch engine that reads asset policies and
+ * produces posted depreciation history automatically.
+ */
 class DepreciationService
 {
+    /**
+     * Calculate monthly depreciation using the straight-line method.
+     */
     public function calculateStraightLine(DepreciationInputDTO $dto): DepreciationResultDTO
     {
         if ($dto->acquisitionCost < 0) {
