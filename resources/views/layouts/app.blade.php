@@ -138,14 +138,15 @@
                     role="menu"
                     data-accordion="false">
 
-                    @php
-                        $blastingOnly = Auth::check()
-                            && auth()->user()->role === \App\Enums\User\UserRole::BLASTING->value;
+                    <?php
+                        $currentUser = auth()->user();
+                        $blastingOnly = $currentUser !== null
+                            && $currentUser->role === \App\Enums\User\UserRole::BLASTING->value;
                         $blastAllowedRoutePrefixes = ['admin.blast.'];
                         $blastAllowedRoutes = ['logout'];
-                        $activeRole = Auth::check() ? auth()->user()->role : null;
+                        $activeRole = $currentUser?->role;
 
-                        $isBlastAllowedRoute = function (?string $route) use ($blastAllowedRoutePrefixes, $blastAllowedRoutes): bool {
+                        $isBlastAllowedRoute = static function (?string $route) use ($blastAllowedRoutePrefixes, $blastAllowedRoutes): bool {
                             if (empty($route)) {
                                 return false;
                             }
@@ -163,7 +164,7 @@
                             return false;
                         };
 
-                        $hasRoleAccess = function (array $item) use ($activeRole): bool {
+                        $hasRoleAccess = static function (array $item) use ($activeRole): bool {
                             if (empty($item['roles'])) {
                                 return true;
                             }
@@ -174,11 +175,11 @@
 
                             return in_array($activeRole, (array) $item['roles'], true);
                         };
-                    @endphp
+                    ?>
 
-                    @foreach(config('menu') as $menu)
+                    <?php foreach (config('menu') as $menu): ?>
 
-                        @php
+                        <?php
                             $menuChildren = collect($menu['children'] ?? []);
                             if ($blastingOnly) {
                                 $menuChildren = $menuChildren
@@ -216,83 +217,74 @@
                                 $isHiddenOnCurrentRoute = collect($hidePatterns)
                                     ->contains(fn($pattern) => request()->routeIs($pattern));
                             }
-                        @endphp
 
-                        @if(
-                            $isAllowedForBlasting &&
-                            !$isHiddenOnCurrentRoute &&
-                            $hasRoleAccess($menu) &&
-                            (
-                                empty($menu['module_name']) ||
-                                app(\App\Services\AccessControl\PermissionService::class)
+                            $canAccessMenu = empty($menu['module_name']) ||
+                                ($currentUser !== null && app(\App\Services\AccessControl\PermissionService::class)
                                     ->checkAccess(
-                                        auth()->user(),
+                                        $currentUser,
                                         \App\Enums\Portal\PortalPermission::from($menu['module_name'] . '.read')->value
-                                    )
-                            )
-                        )
+                                    ));
+                        ?>
 
-                            <li class="nav-item {{ $hasChildren ? 'has-treeview' : '' }} {{ $isActiveParent ? 'menu-open' : '' }}">
-
-                                @if(($menu['route'] ?? null) === 'logout')
-                                    <form method="POST" action="{{ route('logout') }}" class="m-0">
-                                        @csrf
+                        <?php if ($isAllowedForBlasting && !$isHiddenOnCurrentRoute && $hasRoleAccess($menu) && $canAccessMenu): ?>
+                            <li class="nav-item <?php echo e($hasChildren ? 'has-treeview' : ''); ?> <?php echo e($isActiveParent ? 'menu-open' : ''); ?>">
+                                <?php if (($menu['route'] ?? null) === 'logout'): ?>
+                                    <form method="POST" action="<?php echo e(route('logout')); ?>" class="m-0">
+                                        <?php echo csrf_field(); ?>
                                         <button type="submit" class="nav-link text-left w-100 border-0 bg-transparent">
-                                            <i class="nav-icon {{ $menu['icon'] }}"></i>
-                                            <p>{{ !empty($menu['label_key']) ? __($menu['label_key']) : $menu['label'] }}</p>
+                                            <i class="nav-icon <?php echo e($menu['icon']); ?>"></i>
+                                            <p><?php echo e(!empty($menu['label_key']) ? __($menu['label_key']) : $menu['label']); ?></p>
                                         </button>
                                     </form>
                                     <div class="sidebar-app-meta">
                                         <div class="sidebar-app-meta-logos">
-                                            <img src="{{ asset('images/logo_ypik.webp') }}" alt="Logo Yayasan YPIK" class="sidebar-app-meta-logo is-ypik" style="width:auto;height:auto;max-width:56px;max-height:36px;object-fit:contain;">
-                                            <img src="{{ asset('images/logo-si.png') }}" alt="Logo SI" class="sidebar-app-meta-logo" style="width:auto;height:auto;max-width:68px;max-height:36px;object-fit:contain;">
-                                            <img src="{{ asset('images/logo-pradita.png') }}" alt="Logo Pradita" class="sidebar-app-meta-logo is-pradita" style="width:auto;height:auto;max-width:86px;max-height:36px;object-fit:contain;">
+                                            <img src="<?php echo e(asset('images/logo_ypik.webp')); ?>" alt="Logo Yayasan YPIK" class="sidebar-app-meta-logo is-ypik" style="width:auto;height:auto;max-width:56px;max-height:36px;object-fit:contain;">
+                                            <img src="<?php echo e(asset('images/logo-si.png')); ?>" alt="Logo SI" class="sidebar-app-meta-logo" style="width:auto;height:auto;max-width:68px;max-height:36px;object-fit:contain;">
+                                            <img src="<?php echo e(asset('images/logo-pradita.png')); ?>" alt="Logo Pradita" class="sidebar-app-meta-logo is-pradita" style="width:auto;height:auto;max-width:86px;max-height:36px;object-fit:contain;">
                                         </div>
                                         <span class="sidebar-app-meta-version">Versi Web 1.1</span>
                                     </div>
-                                @else
-                                    <a href="{{ $hasChildren ? route($menu['route']) : route($menu['route']) }}"
-                                       class="nav-link {{ (!$hasChildren && request()->routeIs($menu['route'])) || $isActiveParent ? 'active' : '' }}">
-
-                                        <i class="nav-icon {{ $menu['icon'] }}"></i>
+                                <?php else: ?>
+                                    <a href="<?php echo e(route($menu['route'])); ?>"
+                                       class="nav-link <?php echo e((!$hasChildren && request()->routeIs($menu['route'])) || $isActiveParent ? 'active' : ''); ?>">
+                                        <i class="nav-icon <?php echo e($menu['icon']); ?>"></i>
                                         <p>
-                                            {{ !empty($menu['label_key']) ? __($menu['label_key']) : $menu['label'] }}
-                                            @if($hasChildren)
+                                            <?php echo e(!empty($menu['label_key']) ? __($menu['label_key']) : $menu['label']); ?>
+                                            <?php if ($hasChildren): ?>
                                                 <i class="right fas fa-angle-left"></i>
-                                            @endif
+                                            <?php endif; ?>
                                         </p>
                                     </a>
-                                @endif
+                                <?php endif; ?>
 
-                                {{-- CHILDREN --}}
-                                @if($hasChildren)
+                                <?php if ($hasChildren): ?>
                                     <ul class="nav nav-treeview">
-                                        @foreach($menuChildren as $child)
-                                            @php
-                                                $canAccessChild = empty($child['module_name']) || app(\App\Services\AccessControl\PermissionService::class)
-                                                    ->checkAccess(
-                                                        auth()->user(),
-                                                        \App\Enums\Portal\PortalPermission::from($child['module_name'] . '.read')->value
-                                                    );
-                                            @endphp
+                                        <?php foreach ($menuChildren as $child): ?>
+                                            <?php
+                                                $canAccessChild = empty($child['module_name']) ||
+                                                    ($currentUser !== null && app(\App\Services\AccessControl\PermissionService::class)
+                                                        ->checkAccess(
+                                                            $currentUser,
+                                                            \App\Enums\Portal\PortalPermission::from($child['module_name'] . '.read')->value
+                                                        ));
+                                            ?>
 
-                                            @if($canAccessChild)
+                                            <?php if ($canAccessChild): ?>
                                                 <li class="nav-item">
-                                                    <a href="{{ route($child['route']) }}"
-                                                       class="nav-link {{ request()->routeIs($child['route']) ? 'active' : '' }}">
-                                                        <i class="nav-icon {{ $child['icon'] }}"></i>
-                                                        <p>{{ !empty($child['label_key']) ? __($child['label_key']) : $child['label'] }}</p>
+                                                    <a href="<?php echo e(route($child['route'])); ?>"
+                                                       class="nav-link <?php echo e(request()->routeIs($child['route']) ? 'active' : ''); ?>">
+                                                        <i class="nav-icon <?php echo e($child['icon']); ?>"></i>
+                                                        <p><?php echo e(!empty($child['label_key']) ? __($child['label_key']) : $child['label']); ?></p>
                                                     </a>
                                                 </li>
-                                            @endif
-                                        @endforeach
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
                                     </ul>
-                                @endif
-
+                                <?php endif; ?>
                             </li>
-                        @endif
+                        <?php endif; ?>
 
-                    @endforeach
+                    <?php endforeach; ?>
 
                 </ul>
             </nav>
@@ -336,15 +328,16 @@
     }
 </script>
 
-@php
-    $canReadReminder = Auth::check()
+<?php
+    $reminderUser = auth()->user();
+    $canReadReminder = $reminderUser !== null
         && app(\App\Services\AccessControl\PermissionService::class)->checkAccess(
-            auth()->user(),
+            $reminderUser,
             \App\Enums\Portal\PortalPermission::ADMIN_REMINDER_READ->value
         );
-@endphp
+?>
 
-@if($canReadReminder)
+<?php if ($canReadReminder): ?>
 <script>
     (function () {
         const alertEndpoint = @json(route('admin.reminders.alerts'));
@@ -466,7 +459,7 @@
         setInterval(pollReminderAlerts, pollIntervalMs);
     })();
 </script>
-@endif
+<?php endif; ?>
 
 @stack('component_js')
 @yield('js')
