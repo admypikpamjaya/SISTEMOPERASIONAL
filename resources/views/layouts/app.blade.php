@@ -32,7 +32,8 @@
     <!-- SweetAlert -->
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
     <!-- Extras -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @php($appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time())
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $appCssVersion }}">
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -243,9 +244,9 @@
                                     </form>
                                     <div class="sidebar-app-meta">
                                         <div class="sidebar-app-meta-logos">
-                                            <img src="{{ asset('images/logo_ypik.webp') }}" alt="Logo Yayasan YPIK" class="sidebar-app-meta-logo is-ypik">
-                                            <img src="{{ asset('images/logo-si.png') }}" alt="Logo SI" class="sidebar-app-meta-logo">
-                                            <img src="{{ asset('images/logo-pradita.png') }}" alt="Logo Pradita" class="sidebar-app-meta-logo is-pradita">
+                                            <img src="{{ asset('images/logo_ypik.webp') }}" alt="Logo Yayasan YPIK" class="sidebar-app-meta-logo is-ypik" style="width:auto;height:auto;max-width:56px;max-height:36px;object-fit:contain;">
+                                            <img src="{{ asset('images/logo-si.png') }}" alt="Logo SI" class="sidebar-app-meta-logo" style="width:auto;height:auto;max-width:68px;max-height:36px;object-fit:contain;">
+                                            <img src="{{ asset('images/logo-pradita.png') }}" alt="Logo Pradita" class="sidebar-app-meta-logo is-pradita" style="width:auto;height:auto;max-width:86px;max-height:36px;object-fit:contain;">
                                         </div>
                                         <span class="sidebar-app-meta-version">Versi Web 1.1</span>
                                     </div>

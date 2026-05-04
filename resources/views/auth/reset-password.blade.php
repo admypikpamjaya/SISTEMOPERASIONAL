@@ -32,7 +32,8 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
   <!-- Extras -->
-  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+  @php($appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time())
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $appCssVersion }}">
 </head>
 <body class="hold-transition login-page">
 <script>

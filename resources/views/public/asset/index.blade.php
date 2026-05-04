@@ -65,6 +65,7 @@
 
     $groupedComponents = collect($asset->detail ?? [])
         ->keyBy('component_type');
+    $appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time();
 @endphp
 
 <!DOCTYPE html>
@@ -86,7 +87,7 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
   <!-- Extra CSS -->
-  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $appCssVersion }}">
 </head>
 <body style="background-color: #e9ecef;" class="p-3">
 @include('shared.modal')
