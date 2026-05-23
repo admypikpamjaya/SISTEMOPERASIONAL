@@ -54,15 +54,23 @@ class Asset extends Model
         );
     }
 
-    public static function validateRegistrationPayload(array $data)
+    public static function validateRegistrationPayload(array $data, ?string $ignoreAssetId = null)
     {
         $validator = Validator::make($data, 
             [
                 'category' => ['required', Rule::enum(AssetCategory::class)], 
                 'unit' => ['required', Rule::enum(AssetUnit::class)],
-                'account_code' => ['required', 'string', 'unique:assets,account_code'],
+                'account_code' => [
+                    'required',
+                    'string',
+                    Rule::unique('assets', 'account_code')->ignore($ignoreAssetId),
+                ],
                 'location' => ['required', 'string'],
-                'serial_number' => ['nullable', 'string', 'unique:assets,serial_number'],
+                'serial_number' => [
+                    'nullable',
+                    'string',
+                    Rule::unique('assets', 'serial_number')->ignore($ignoreAssetId),
+                ],
                 'purchase_year'=> ['nullable', 'string'],
             ],
             [

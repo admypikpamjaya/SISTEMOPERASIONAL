@@ -11,6 +11,7 @@ use App\Enums\Asset\ComputerComponent;
 use App\Enums\Asset\AssetUnit;
 use App\Models\Asset\Asset;
 use App\Models\Asset\AssetImportBatch;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -686,7 +687,13 @@ class AssetService
         return 'asset-import-file';
     }
 
-    private function storeImportBatch(RegisterAssetViaFileDTO $dto, array $import, int $importedRows): ?AssetImportBatch
+    private function storeImportBatch(
+        RegisterAssetViaFileDTO $dto,
+        array $import,
+        int $importedRows,
+        int $createdRows,
+        int $updatedRows
+    ): ?AssetImportBatch
     {
         if (!Schema::hasTable('asset_import_batches')) {
             return null;
@@ -702,24 +709,31 @@ class AssetService
             'sheet_names' => $import['sheet_names'],
             'metadata' => [
                 'category_label' => $dto->category->label(),
+                'created_rows' => $createdRows,
+                'updated_rows' => $updatedRows,
             ],
             'imported_by' => auth()->id(),
         ]);
     }
 
-    private function persistRegisteredAsset(RegisterAssetDTO $dto)
+    private function resolveValidatedAssetPayload(RegisterAssetDTO $dto, ?Asset $asset = null): array
     {
-        Log::info($dto->toArray());
-
-        // The first transaction writes the asset identity that is used by
-        // inventory, maintenance, QR detail pages, and finance lookups.
         $assetData = Arr::except($dto->toArray(), 'detail');
-        $validatedAssetData = Asset::validateRegistrationPayload($assetData);
 
-        $asset = Asset::create($validatedAssetData);
-        $asset->qr_code_path = $asset->generateQRCode();
-        $asset->save();
+        return Asset::validateRegistrationPayload($assetData, $asset?->id);
+    }
 
+    private function removeDetailByCategory(Asset $asset, AssetCategory $category): void
+    {
+        match ($category) {
+            AssetCategory::AC,
+            AssetCategory::OTHER => $asset->airConditionerDetail()->delete(),
+            AssetCategory::COMPUTER => $asset->computerComponents()->delete(),
+        };
+    }
+
+    private function persistAssetDetail(Asset $asset, RegisterAssetDTO $dto): void
+    {
         $assetDetailHandler = AssetFactory::createHandler($dto->category);
 
         // Category-specific detail is kept separate from the asset master.
@@ -727,9 +741,65 @@ class AssetService
         // finance policy records in a dedicated table rather than mixing
         // them into these operational detail tables.
         $validatedDetail = $assetDetailHandler->validatePayload($dto->detail);
+        $relationName = $assetDetailHandler->getRelationName();
+        $asset->unsetRelation($relationName);
+        $asset->loadMissing($relationName);
+
+        $existingRelation = $asset->getRelation($relationName);
+        $hasExistingDetail = $existingRelation instanceof Collection
+            ? $existingRelation->isNotEmpty()
+            : $existingRelation !== null;
+
+        if ($hasExistingDetail) {
+            $assetDetailHandler->update($asset->id, $validatedDetail);
+            return;
+        }
+
         $assetDetailHandler->insert($asset->id, $validatedDetail);
+    }
+
+    private function createRegisteredAsset(RegisterAssetDTO $dto): Asset
+    {
+        Log::info($dto->toArray());
+
+        // The first transaction writes the asset identity that is used by
+        // inventory, maintenance, QR detail pages, and finance lookups.
+        $validatedAssetData = $this->resolveValidatedAssetPayload($dto);
+
+        $asset = Asset::create($validatedAssetData);
+        $asset->qr_code_path = $asset->generateQRCode();
+        $asset->save();
+
+        $this->persistAssetDetail($asset, $dto);
 
         return $asset->loadWithRelation();
+    }
+
+    private function upsertRegisteredAsset(RegisterAssetDTO $dto): array
+    {
+        $existingAsset = Asset::where('account_code', $dto->accountCode)->first();
+        if (!$existingAsset) {
+            return [
+                'asset' => $this->createRegisteredAsset($dto),
+                'action' => 'created',
+            ];
+        }
+
+        $validatedAssetData = $this->resolveValidatedAssetPayload($dto, $existingAsset);
+        $previousCategory = $existingAsset->category;
+
+        $existingAsset->update($validatedAssetData);
+
+        if ($previousCategory !== $dto->category) {
+            $this->removeDetailByCategory($existingAsset, $previousCategory);
+        }
+
+        $this->persistAssetDetail($existingAsset->fresh(), $dto);
+
+        return [
+            'asset' => $existingAsset->fresh()->loadWithRelation(),
+            'action' => 'updated',
+        ];
     }
 
     private function makeSafeFilename(string $name): string
@@ -808,6 +878,8 @@ class AssetService
         $import = $this->resolveImportRecords($dto);
         $records = $import['records'];
         $importBatch = null;
+        $createdRows = 0;
+        $updatedRows = 0;
 
         DB::beginTransaction();
         try
@@ -820,7 +892,12 @@ class AssetService
                 {
                     try 
                     {
-                        $this->persistRegisteredAsset($record['dto']);
+                        $result = $this->upsertRegisteredAsset($record['dto']);
+                        if (($result['action'] ?? null) === 'created') {
+                            $createdRows++;
+                        } else {
+                            $updatedRows++;
+                        }
                     } 
                     catch (\Throwable $e) 
                     {
@@ -833,7 +910,7 @@ class AssetService
                 }
             }
 
-            $importBatch = $this->storeImportBatch($dto, $import, count($records));
+            $importBatch = $this->storeImportBatch($dto, $import, count($records), $createdRows, $updatedRows);
             DB::commit();
 
             return [
@@ -841,6 +918,8 @@ class AssetService
                 'source_type' => $import['source_type'],
                 'processed_rows' => count($records),
                 'imported_rows' => count($records),
+                'created_rows' => $createdRows,
+                'updated_rows' => $updatedRows,
                 'sheet_count' => count($import['sheet_names']),
                 'sheet_names' => $import['sheet_names'],
                 'batch_id' => $importBatch?->id,

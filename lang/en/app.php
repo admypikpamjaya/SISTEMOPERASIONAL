@@ -178,8 +178,8 @@ return [
         'computer_template_title' => 'Computer Import Template',
         'ac_template_body' => 'Use the official template so account code, location, size, watt, brand, serial number, and purchase year are read automatically.',
         'computer_template_body' => 'Use the official template so every computer block and all component rows across active sheets are read automatically.',
-        'ac_import_note' => 'AC import reads every active sheet and every AC table section in the workbook.',
-        'computer_import_note' => 'Computer import reads every active sheet and every component block under each account code.',
+        'ac_import_note' => 'AC import reads every active sheet. If an account code already exists, the existing data will be updated automatically.',
+        'computer_import_note' => 'Computer import reads every active sheet and every component block. If an account code already exists, the existing data will be updated automatically.',
         'selected_template' => 'Selected template',
     ],
     'announcement' => [

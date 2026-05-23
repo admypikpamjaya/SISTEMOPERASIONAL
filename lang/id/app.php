@@ -178,8 +178,8 @@ return [
         'computer_template_title' => 'Template Import Komputer',
         'ac_template_body' => 'Gunakan template resmi agar kolom akun, lokasi, ukuran, watt, merk, nomor seri, dan tahun pembelian terbaca otomatis.',
         'computer_template_body' => 'Gunakan template resmi agar setiap blok komputer dan seluruh komponen di semua sheet aktif terbaca otomatis.',
-        'ac_import_note' => 'Import AC akan membaca semua sheet aktif dan setiap tabel AC yang ada pada workbook.',
-        'computer_import_note' => 'Import komputer akan membaca semua sheet aktif dan semua blok komponen pada tiap account code.',
+        'ac_import_note' => 'Import AC akan membaca semua sheet aktif. Jika kode akun sudah ada, data lama akan diperbarui otomatis.',
+        'computer_import_note' => 'Import komputer akan membaca semua sheet aktif dan semua blok komponen. Jika kode akun sudah ada, data lama akan diperbarui otomatis.',
         'selected_template' => 'Template yang dipilih',
     ],
     'announcement' => [

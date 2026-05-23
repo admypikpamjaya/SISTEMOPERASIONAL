@@ -85,8 +85,10 @@ class AssetManagementController extends Controller
             $sheetSummary = ($summary['source_type'] ?? 'csv') === 'excel'
                 ? ' dari ' . ($summary['sheet_count'] ?? 0) . ' sheet aktif'
                 : '';
-            $message = 'Import aset ' . $dto->category->label() . ' berhasil. '
-                . ($summary['imported_rows'] ?? 0) . ' data diproses' . $sheetSummary . '.';
+            $message = 'Sinkronisasi aset ' . $dto->category->label() . ' berhasil. '
+                . ($summary['created_rows'] ?? 0) . ' data baru ditambahkan dan '
+                . ($summary['updated_rows'] ?? 0) . ' data lama diperbarui'
+                . $sheetSummary . '.';
 
             session()->flash('success', $message);
 
