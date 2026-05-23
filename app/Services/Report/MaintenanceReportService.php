@@ -210,11 +210,32 @@ class MaintenanceReportService
 
     public function sendNotification(string $id, bool $manuallyTriggered = true): string
     {
+        return $this->sendNotificationToRecipients($id, $manuallyTriggered);
+    }
+
+    /**
+     * @param array<int, string> $manualRecipients
+     */
+    public function sendNotificationToRecipients(
+        string $id,
+        bool $manuallyTriggered = true,
+        array $manualRecipients = []
+    ): string
+    {
         $log = $this->findLogOrFail($id, ['asset', 'maintenanceDocumentations']);
 
-        $this->maintenanceNotificationService->sendForLog($log, $manuallyTriggered);
+        $recipients = $this->maintenanceNotificationService->sendForLog(
+            $log,
+            $manuallyTriggered,
+            $manualRecipients
+        );
 
-        return $this->maintenanceNotificationService->getRecipient();
+        return $this->maintenanceNotificationService->formatRecipients($recipients);
+    }
+
+    public function getNotificationRecipients(): array
+    {
+        return $this->maintenanceNotificationService->getRecipientPayload();
     }
 
     private function findLogOrFail(string $id, array $relations = []): MaintenanceLog

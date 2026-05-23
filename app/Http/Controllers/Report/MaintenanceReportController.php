@@ -8,6 +8,7 @@ use App\DTOs\Report\UpdateMaintenanceReportStatusDTO;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Report\CreateMaintenanceReportRequest;
+use App\Http\Requests\Report\SendMaintenanceNotificationRequest;
 use App\Http\Requests\Report\UpdateMaintenanceReportRequest;
 use App\Http\Requests\Report\UpdateMaintenanceReportStatusRequest;
 use App\Services\Report\MaintenanceReportService;
@@ -56,7 +57,8 @@ class MaintenanceReportController extends Controller
         );
 
         return view('maintenance-report.index', [
-            'reports' => $reports
+            'reports' => $reports,
+            'notificationRecipients' => $this->service->getNotificationRecipients(),
         ]);
     }
 
@@ -67,7 +69,8 @@ class MaintenanceReportController extends Controller
             $report = $this->service->getLog($id);
             return response()->json([
                 'message' => 'Laporan berhasil ditemukan',
-                'data' => $report
+                'data' => $report,
+                'notificationRecipients' => $this->service->getNotificationRecipients(),
             ]);
         }
         catch(\Throwable $e)
@@ -171,11 +174,15 @@ class MaintenanceReportController extends Controller
         }
     }
 
-    public function sendNotification(string $id)
+    public function sendNotification(SendMaintenanceNotificationRequest $request, string $id)
     {
         try
         {
-            $recipient = $this->service->sendNotification($id, true);
+            $recipient = $this->service->sendNotificationToRecipients(
+                $id,
+                true,
+                $request->manualRecipients()
+            );
 
             return response()->json([
                 'message' => 'Notifikasi maintenance berhasil dikirim ke ' . $recipient,

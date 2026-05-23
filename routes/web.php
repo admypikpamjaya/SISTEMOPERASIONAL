@@ -14,6 +14,7 @@ use App\Http\Controllers\Asset\AssetManagementController;
 use App\Http\Controllers\Asset\PublicAssetController;
 
 use App\Http\Controllers\Report\MaintenanceReportController;
+use App\Http\Controllers\Report\MaintenanceNotificationRecipientController;
 use App\Http\Controllers\User\UserManagementController;
 use App\Http\Controllers\Finance\AssetDepreciationController;
 use App\Http\Controllers\Finance\FinanceAccountController;
@@ -83,6 +84,16 @@ Route::prefix('dashboard')
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::get('/chart-data', [DashboardController::class, 'chartData'])->name('chart-data');
+    });
+
+Route::prefix('dashboard/maintenance-notification-recipients')
+    ->name('dashboard.maintenance-notification-recipients.')
+    ->middleware(['auth', 'role:' . UserRole::IT_SUPPORT->value])
+    ->controller(MaintenanceNotificationRecipientController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::delete('/{recipient}', 'destroy')->name('destroy');
     });
 
 /*

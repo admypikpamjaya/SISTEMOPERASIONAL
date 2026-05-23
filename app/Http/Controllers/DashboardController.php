@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Portal\PortalPermission;
+use App\Enums\User\UserRole;
 use App\Models\BlastLog;
 use App\Models\FinanceReport;
 use App\Services\AccessControl\PermissionService;
 use App\Services\Asset\AssetService;
+use App\Services\Report\MaintenanceNotificationService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +19,8 @@ class DashboardController extends Controller
     private const WIB_TIMEZONE = 'Asia/Jakarta';
 
     public function __construct(
-        private AssetService $assetService
+        private AssetService $assetService,
+        private MaintenanceNotificationService $maintenanceNotificationService
     ) {}
 
     public function index(): View
@@ -49,6 +52,9 @@ class DashboardController extends Controller
                 $currentUser,
                 PortalPermission::ADMIN_BLAST_READ->value
             );
+
+        $isSuperAdmin = $currentUser !== null
+            && $currentUser->role === UserRole::IT_SUPPORT->value;
 
         $blastSeries = null;
         $financeSeries = null;
@@ -93,10 +99,14 @@ class DashboardController extends Controller
         Log::info($assetStatisticsByUnit);
 
         return [
+            'isSuperAdmin' => $isSuperAdmin,
             'showFinanceWidgets' => $showFinanceWidgets,
             'showBlastingWidgets' => $showBlastingWidgets,
             'saldo' => $saldo,
             'saldoUpdatedAt' => $saldoUpdatedAt,
+            'maintenanceNotificationRecipients' => $isSuperAdmin
+                ? $this->maintenanceNotificationService->getRecipientPayload()
+                : null,
             'incomeChart' => $showFinanceWidgets ? [
                 'labels' => $financeSeries['labels'],
                 'values' => $financeSeries['income'],

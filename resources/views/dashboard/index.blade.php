@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('shared.modal')
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
@@ -449,6 +450,41 @@
         </div>
 </div>
 
+@if($isSuperAdmin)
+    <div class="section-label">
+        <i class="fas fa-user-shield" style="color:var(--blue-primary);font-size:.7rem;"></i>
+        Superadmin Tools
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+            <div class="saldo-card" id="maintenance-recipient-summary-card">
+                <div>
+                    <div class="saldo-icon"><i class="fas fa-envelope-open-text"></i></div>
+                    <div class="saldo-label">Email Maintenance</div>
+                    <div class="saldo-value" id="maintenance-recipient-total">
+                        {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
+                    </div>
+                    <div class="saldo-meta" id="maintenance-recipient-summary-text">
+                        Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
+                    </div>
+                    <div class="mt-2" id="maintenance-recipient-master-email" style="font-size:.78rem; color:var(--text-muted); word-break:break-word;">
+                        {{ data_get($maintenanceNotificationRecipients, 'master') }}
+                    </div>
+                </div>
+
+                <div class="saldo-footer">
+                    <a href="#" id="open-maintenance-recipient-manager">
+                        <i class="fas fa-cog"></i>
+                        Kelola email maintenance
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
 <div class="section-label">
     <i class="fas fa-box" style="color:var(--blue-primary);font-size:.7rem;"></i>
     {{ __('app.dashboard.asset_stats') }}
@@ -586,11 +622,18 @@
 <script src="{{ asset('vendor/adminlte/plugins/chart.js/Chart.min.js') }}"></script>
 <script>
     (function () {
+        const isSuperAdmin = @json((bool) ($isSuperAdmin ?? false));
         const showFinanceWidgets = @json((bool) ($showFinanceWidgets ?? false));
         const showBlastingWidgets = @json((bool) ($showBlastingWidgets ?? false));
         const chartDataEndpoint = @json(route('dashboard.chart-data'));
+        const maintenanceRecipientRoutes = isSuperAdmin ? {
+            index: @json(route('dashboard.maintenance-notification-recipients.index')),
+            store: @json(route('dashboard.maintenance-notification-recipients.store')),
+            destroy: @json(route('dashboard.maintenance-notification-recipients.destroy', ['recipient' => '__RECIPIENT__']))
+        } : null;
         const refreshIntervalMs = 60000;
         let isRefreshing = false;
+        let maintenanceNotificationRecipients = @json($maintenanceNotificationRecipients ?? null);
 
         const numberFormatter = new Intl.NumberFormat('id-ID', {
             minimumFractionDigits: 0,
@@ -615,6 +658,9 @@
 
         const saldoValueElement = document.getElementById('dashboard-saldo-value');
         const saldoUpdatedElement = document.getElementById('dashboard-saldo-updated');
+        const maintenanceRecipientTotalElement = document.getElementById('maintenance-recipient-total');
+        const maintenanceRecipientSummaryElement = document.getElementById('maintenance-recipient-summary-text');
+        const maintenanceRecipientMasterElement = document.getElementById('maintenance-recipient-master-email');
 
         function formatCurrency(value) {
             const number = Number(value);
@@ -629,6 +675,118 @@
         let expenseChart = null;
         let waChart = null;
         let emailChart = null;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function updateMaintenanceRecipientSummary(payload) {
+            if (!isSuperAdmin || !payload || typeof payload !== 'object') {
+                return;
+            }
+
+            maintenanceNotificationRecipients = payload;
+
+            if (maintenanceRecipientTotalElement) {
+                maintenanceRecipientTotalElement.textContent = String(payload.totalCount ?? 1);
+            }
+
+            if (maintenanceRecipientSummaryElement) {
+                maintenanceRecipientSummaryElement.textContent = `Master tetap aktif, ${payload.additionalCount ?? 0} email tambahan tersimpan`;
+            }
+
+            if (maintenanceRecipientMasterElement) {
+                maintenanceRecipientMasterElement.textContent = payload.master || '-';
+            }
+        }
+
+        function buildMaintenanceRecipientManagerBody() {
+            const config = maintenanceNotificationRecipients && typeof maintenanceNotificationRecipients === 'object'
+                ? maintenanceNotificationRecipients
+                : {
+                    master: '',
+                    stored: [],
+                    additionalCount: 0,
+                    totalCount: 0
+                };
+
+            const storedRecipients = Array.isArray(config.stored) ? config.stored : [];
+            const storedRecipientsHtml = storedRecipients.length > 0
+                ? storedRecipients.map((recipient) => `
+                    <div class="d-flex align-items-start justify-content-between border rounded px-3 py-2 mb-2">
+                        <div>
+                            <div class="font-weight-bold">${escapeHtml(recipient.name || 'Tanpa nama')}</div>
+                            <div class="text-muted small">${escapeHtml(recipient.email || '')}</div>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger delete-maintenance-recipient-button"
+                            data-id="${escapeHtml(recipient.id || '')}"
+                            data-label="${escapeHtml(recipient.label || recipient.email || '')}"
+                        >
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('')
+                : `
+                    <div class="border rounded px-3 py-3 text-muted text-center">
+                        Belum ada email tambahan. Email master tetap aktif otomatis.
+                    </div>
+                `;
+
+            return `
+                <div class="alert alert-info mb-3">
+                    <div class="font-weight-bold mb-1"><i class="fas fa-lock mr-1"></i>Email master tetap aktif</div>
+                    <div>${escapeHtml(config.master || '-')}</div>
+                </div>
+
+                <form id="maintenance-recipient-form">
+                    <div class="form-group">
+                        <label for="maintenance-recipient-name">Nama / Keterangan</label>
+                        <input type="text" id="maintenance-recipient-name" name="name" class="form-control" placeholder="Contoh: Kepala Sekolah TK">
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance-recipient-email">Email Penerima</label>
+                        <input type="email" id="maintenance-recipient-email" name="email" class="form-control" placeholder="nama@email.com" required>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Tambah Email
+                    </button>
+                </form>
+
+                <hr>
+
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="font-weight-bold">Email Tambahan Aktif</div>
+                    <span class="badge badge-info">${escapeHtml(config.additionalCount ?? 0)} email</span>
+                </div>
+                ${storedRecipientsHtml}
+            `;
+        }
+
+        async function loadMaintenanceRecipientConfig() {
+            if (!isSuperAdmin || !maintenanceRecipientRoutes) {
+                return maintenanceNotificationRecipients;
+            }
+
+            const response = await Http.get(maintenanceRecipientRoutes.index);
+            const payload = response?.data ?? null;
+
+            if (payload) {
+                updateMaintenanceRecipientSummary(payload);
+            }
+
+            return payload;
+        }
+
+        function showMaintenanceRecipientManager() {
+            modal.show('Kelola Email Maintenance', buildMaintenanceRecipientManagerBody(), '');
+        }
 
         function isDarkTheme() {
             if (window.ThemeManager) {
@@ -855,6 +1013,10 @@
                 emailChart.data.datasets[0].data = payload.emailChart.values || [];
                 emailChart.update();
             }
+
+            if (isSuperAdmin && payload.maintenanceNotificationRecipients) {
+                updateMaintenanceRecipientSummary(payload.maintenanceNotificationRecipients);
+            }
         }
 
         async function refreshDashboardData() {
@@ -881,6 +1043,79 @@
                 if (targetUrl) window.location.href = targetUrl;
             });
         });
+
+        if (isSuperAdmin) {
+            updateMaintenanceRecipientSummary(maintenanceNotificationRecipients);
+
+            $(document).on('click', '#open-maintenance-recipient-manager', async function (event) {
+                event.preventDefault();
+                Loading.show();
+
+                try {
+                    await loadMaintenanceRecipientConfig();
+                    showMaintenanceRecipientManager();
+                } catch (error) {
+                    Notification.error(error);
+                } finally {
+                    Loading.hide();
+                }
+            });
+
+            $(document).on('submit', '#maintenance-recipient-form', async function (event) {
+                event.preventDefault();
+
+                const form = event.currentTarget;
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                Loading.show();
+
+                try {
+                    const response = await Http.post(
+                        maintenanceRecipientRoutes.store,
+                        new FormData(form)
+                    );
+
+                    updateMaintenanceRecipientSummary(response?.data ?? null);
+                    showMaintenanceRecipientManager();
+                    Notification.success(response?.message || 'Email maintenance berhasil ditambahkan.');
+                } catch (error) {
+                    Notification.error(error);
+                } finally {
+                    Loading.hide();
+                }
+            });
+
+            $(document).on('click', '.delete-maintenance-recipient-button', async function () {
+                const recipientId = $(this).data('id');
+                const recipientLabel = $(this).data('label') || 'email ini';
+
+                const confirmation = await Notification.confirmation(
+                    `Hapus ${recipientLabel} dari daftar email maintenance?`
+                );
+                if (!confirmation.isConfirmed) {
+                    return;
+                }
+
+                Loading.show();
+
+                try {
+                    const response = await Http.delete(
+                        maintenanceRecipientRoutes.destroy.replace('__RECIPIENT__', recipientId)
+                    );
+
+                    updateMaintenanceRecipientSummary(response?.data ?? null);
+                    showMaintenanceRecipientManager();
+                    Notification.success(response?.message || 'Email maintenance berhasil dihapus.');
+                } catch (error) {
+                    Notification.error(error);
+                } finally {
+                    Loading.hide();
+                }
+            });
+        }
 
         window.addEventListener('app:theme-change', refreshChartTheme);
 

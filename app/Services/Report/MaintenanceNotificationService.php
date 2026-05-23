@@ -7,30 +7,30 @@ use App\DataTransferObjects\BlastPayload;
 use App\Enums\Asset\AssetCategory;
 use App\Models\Asset\Asset;
 use App\Models\Log\MaintenanceLog;
+use App\Models\MaintenanceNotificationRecipient;
 use App\Services\Blast\EmailBlastService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class MaintenanceNotificationService
 {
-    private const DEFAULT_RECIPIENT = 'Ridodwikurniawan@gmail.com';
+    public const MASTER_RECIPIENT = 'Ridodwikurniawan@gmail.com';
 
     public function __construct(
         private EmailBlastService $emailBlastService
     ) {}
 
-    public function getRecipient(): string
+    public function getMasterRecipient(): string
     {
-        return trim((string) config(
-            'services.maintenance_notification.recipient',
-            self::DEFAULT_RECIPIENT
-        ));
+        return self::MASTER_RECIPIENT;
     }
 
     public function sendForLog(
         MaintenanceLog $log,
-        bool $manuallyTriggered = false
-    ): bool {
+        bool $manuallyTriggered = false,
+        array $manualRecipients = []
+    ): array {
         $log->loadMissing(['asset', 'maintenanceDocumentations']);
 
         $asset = $log->asset;
@@ -38,27 +38,97 @@ class MaintenanceNotificationService
             throw new RuntimeException('Aset untuk laporan maintenance tidak ditemukan.');
         }
 
-        $recipient = $this->getRecipient();
-        if ($recipient === '') {
+        $recipients = $this->resolveRecipients($manualRecipients);
+        if ($recipients === []) {
             throw new RuntimeException('Email tujuan notifikasi maintenance belum dikonfigurasi.');
         }
 
         $subject = $this->buildSubject($log, $asset, $manuallyTriggered);
         $payload = $this->buildPayload($log, $asset, $manuallyTriggered);
 
-        $sent = $this->emailBlastService->send($recipient, $subject, $payload);
-        if (!$sent) {
-            throw new RuntimeException('Email notifikasi maintenance gagal dikirim.');
+        foreach ($recipients as $recipient) {
+            $sent = $this->emailBlastService->send($recipient, $subject, $payload);
+            if (!$sent) {
+                throw new RuntimeException('Email notifikasi maintenance gagal dikirim ke ' . $recipient . '.');
+            }
         }
 
         Log::info('[MAINTENANCE EMAIL SENT]', [
             'maintenance_log_id' => (string) $log->id,
             'asset_id' => (string) $asset->id,
-            'recipient' => $recipient,
+            'recipients' => $recipients,
             'mode' => $manuallyTriggered ? 'manual' : 'automatic',
         ]);
 
-        return true;
+        return $recipients;
+    }
+
+    public function formatRecipients(array $recipients): string
+    {
+        return implode(', ', $recipients);
+    }
+
+    public function getRecipientPayload(): array
+    {
+        $masterRecipient = $this->getMasterRecipient();
+        $storedRecipients = $this->getAdditionalRecipients();
+        $storedRecipientPayload = $storedRecipients
+            ->map(function (MaintenanceNotificationRecipient $recipient): array {
+                $label = $recipient->name
+                    ? $recipient->name . ' (' . $recipient->email . ')'
+                    : $recipient->email;
+
+                return [
+                    'id' => (string) $recipient->id,
+                    'name' => $recipient->name,
+                    'email' => $recipient->email,
+                    'label' => $label,
+                ];
+            })
+            ->values()
+            ->all();
+
+        $allRecipients = $this->resolveRecipients();
+
+        return [
+            'master' => $masterRecipient,
+            'stored' => $storedRecipientPayload,
+            'storedDisplay' => implode(', ', array_map(
+                static fn (array $recipient): string => (string) $recipient['email'],
+                $storedRecipientPayload
+            )),
+            'all' => $allRecipients,
+            'allDisplay' => $this->formatRecipients($allRecipients),
+            'additionalCount' => count($storedRecipientPayload),
+            'totalCount' => count($allRecipients),
+        ];
+    }
+
+    public function createAdditionalRecipient(
+        array $attributes,
+        ?string $actorId = null
+    ): MaintenanceNotificationRecipient {
+        return MaintenanceNotificationRecipient::query()->create([
+            'name' => ($attributes['name'] ?? null) ?: null,
+            'email' => strtolower(trim((string) $attributes['email'])),
+            'created_by' => $actorId,
+        ]);
+    }
+
+    public function deleteAdditionalRecipient(MaintenanceNotificationRecipient $recipient): void
+    {
+        $recipient->delete();
+    }
+
+    /**
+     * @return Collection<int, MaintenanceNotificationRecipient>
+     */
+    public function getAdditionalRecipients(): Collection
+    {
+        return MaintenanceNotificationRecipient::query()
+            ->orderBy('name')
+            ->orderBy('email')
+            ->get();
     }
 
     private function buildSubject(
@@ -147,5 +217,38 @@ class MaintenanceNotificationService
         $value = trim((string) $category);
 
         return $value !== '' ? $value : '-';
+    }
+
+    /**
+     * @param array<int, string> $manualRecipients
+     * @return array<int, string>
+     */
+    private function resolveRecipients(array $manualRecipients = []): array
+    {
+        $additionalRecipients = $this->getAdditionalRecipients()
+            ->pluck('email')
+            ->all();
+
+        $candidates = array_merge(
+            [$this->getMasterRecipient()],
+            $additionalRecipients,
+            $manualRecipients
+        );
+
+        $uniqueRecipients = [];
+
+        foreach ($candidates as $candidate) {
+            $recipient = trim((string) $candidate);
+            if ($recipient === '' || filter_var($recipient, FILTER_VALIDATE_EMAIL) === false) {
+                continue;
+            }
+
+            $normalizedKey = strtolower($recipient);
+            if (!array_key_exists($normalizedKey, $uniqueRecipients)) {
+                $uniqueRecipients[$normalizedKey] = $recipient;
+            }
+        }
+
+        return array_values($uniqueRecipients);
     }
 }

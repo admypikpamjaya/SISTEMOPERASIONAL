@@ -11,7 +11,20 @@ $badgeMap = [
 ];
 
 $isUserCanUpdate = app(PermissionService::class)->checkAccess(auth()->user(), PortalPermission::MAINTENANCE_REPORT_UPDATE->value);
-$maintenanceNotificationRecipient = config('services.maintenance_notification.recipient', 'Ridodwikurniawan@gmail.com');
+$maintenanceNotificationConfig = $notificationRecipients ?? [
+    'master' => \App\Services\Report\MaintenanceNotificationService::MASTER_RECIPIENT,
+    'stored' => [],
+    'all' => [\App\Services\Report\MaintenanceNotificationService::MASTER_RECIPIENT],
+    'allDisplay' => \App\Services\Report\MaintenanceNotificationService::MASTER_RECIPIENT,
+    'additionalCount' => 0,
+    'totalCount' => 1,
+];
+$maintenanceNotificationMasterRecipient = (string) data_get(
+    $maintenanceNotificationConfig,
+    'master',
+    \App\Services\Report\MaintenanceNotificationService::MASTER_RECIPIENT
+);
+$maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificationConfig, 'additionalCount', 0);
 @endphp
 
 @extends('layouts.app')
@@ -24,8 +37,13 @@ $maintenanceNotificationRecipient = config('services.maintenance_notification.re
             <div class="col-md-6">
                 <span class="card-title">Laporan Pemeliharaan</span>
                 <div class="small text-muted mt-2">
-                    Notifikasi email maintenance baru dikirim otomatis ke <strong>{{ $maintenanceNotificationRecipient }}</strong>.
-                    Jika perlu kirim ulang, buka detail laporan lalu klik <strong>Kirim Notifikasi</strong>.
+                    Notifikasi email maintenance baru dikirim otomatis ke email master <strong>{{ $maintenanceNotificationMasterRecipient }}</strong>
+                    @if($maintenanceNotificationAdditionalCount > 0)
+                        dan <strong>{{ $maintenanceNotificationAdditionalCount }}</strong> email tambahan dari dashboard superadmin.
+                    @else
+                        dan saat ini belum ada email tambahan dari dashboard superadmin.
+                    @endif
+                    Jika perlu kirim ulang, buka detail laporan lalu klik <strong>Kirim Notifikasi</strong> dan Anda tetap bisa menambahkan email manual.
                 </div>
             </div>
             <div class="col-md-6">
@@ -143,7 +161,30 @@ $maintenanceNotificationRecipient = config('services.maintenance_notification.re
 @section('js')
 <script>
     const isUserCanUpdate = "{{ $isUserCanUpdate }}";
-    const maintenanceNotificationRecipient = @json($maintenanceNotificationRecipient);
+    let maintenanceNotificationConfig = @json($maintenanceNotificationConfig);
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderMaintenanceRecipientBadges(recipients, formatter = (recipient) => recipient) {
+        if (!Array.isArray(recipients) || recipients.length === 0) {
+            return '<span class="badge badge-secondary mr-1 mb-1">Belum ada email tambahan</span>';
+        }
+
+        return recipients
+            .map((recipient) => `
+                <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem;">
+                    <i class="fas fa-envelope mr-1"></i>${escapeHtml(formatter(recipient))}
+                </span>
+            `)
+            .join('');
+    }
 
     function resetState()
     {
@@ -151,8 +192,24 @@ $maintenanceNotificationRecipient = config('services.maintenance_notification.re
         $('.child-checkbox').prop('checked', false);
     }
 
-    function constructMaintenanceReportForm(data) 
+    function constructMaintenanceReportForm(data, recipientConfig) 
     {
+        const notificationConfig = recipientConfig && typeof recipientConfig === 'object'
+            ? recipientConfig
+            : maintenanceNotificationConfig;
+        const masterRecipient = notificationConfig?.master ?? '';
+        const storedRecipients = Array.isArray(notificationConfig?.stored)
+            ? notificationConfig.stored
+            : [];
+        const allRecipients = Array.isArray(notificationConfig?.all) && notificationConfig.all.length > 0
+            ? notificationConfig.all
+            : (masterRecipient ? [masterRecipient] : []);
+        const storedRecipientsHtml = renderMaintenanceRecipientBadges(
+            storedRecipients,
+            (recipient) => recipient?.label ?? recipient?.email ?? ''
+        );
+        const allRecipientsHtml = renderMaintenanceRecipientBadges(allRecipients);
+
         const constructEvidencePhoto = () => {
             let html = '';
             data.evidencePhotos.forEach((photo, index) => {
@@ -235,13 +292,42 @@ $maintenanceNotificationRecipient = config('services.maintenance_notification.re
                         ${constructEvidencePhoto()}
                     </details>
                 </div>
-                <div class="form-group mb-0">
-                    <label>Email Notifikasi</label>
-                    <input type="text" class="form-control" value="${maintenanceNotificationRecipient}" readonly>
+                <div class="form-group">
+                    <label>Email Master</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        </div>
+                        <input type="text" class="form-control" value="${escapeHtml(masterRecipient)}" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Dashboard Superadmin</label>
+                    <div class="border rounded p-2" style="min-height:44px;">
+                        ${storedRecipientsHtml}
+                    </div>
                     <small class="form-text text-muted">
-                        Sistem akan mengirim otomatis saat laporan dibuat, dan bisa dikirim ulang manual dari tombol aksi.
+                        Daftar ini dikelola superadmin dari dashboard dan akan ikut terkirim otomatis.
                     </small>
                 </div>
+                <div class="form-group">
+                    <label>Semua Tujuan Otomatis</label>
+                    <div class="border rounded p-2" style="min-height:44px;">
+                        ${allRecipientsHtml}
+                    </div>
+                    <small class="form-text text-muted">
+                        Sistem akan selalu mengirim ke email master dan seluruh email aktif yang tersimpan.
+                    </small>
+                </div>
+                ${isUserCanUpdate ? `
+                    <div class="form-group mb-0">
+                        <label>Email Manual Tambahan</label>
+                        <textarea name="manual_recipients" class="form-control" rows="2" placeholder="Pisahkan dengan koma, enter, atau titik koma"></textarea>
+                        <small class="form-text text-muted">
+                            Kolom ini hanya dipakai sekali saat klik <strong>Kirim Notifikasi</strong> dan tidak disimpan ke dashboard.
+                        </small>
+                    </div>
+                ` : ''}
             </form>
         `;
     }
@@ -288,9 +374,11 @@ $maintenanceNotificationRecipient = config('services.maintenance_notification.re
             Loading.show();
             try 
             {
-                const { data } = await Http.get($(this).data('url'));
+                const response = await Http.get($(this).data('url'));
+                const data = response.data;
+                maintenanceNotificationConfig = response.notificationRecipients || maintenanceNotificationConfig;
 
-                const form = constructMaintenanceReportForm(data);
+                const form = constructMaintenanceReportForm(data, maintenanceNotificationConfig);
                 const isStatusPendingOrRejected = (data.status === 'Pending' || data.status === 'Rejected');
                 const buttons = `
                     @permission('maintenance_report.update_status')
@@ -402,16 +490,29 @@ $maintenanceNotificationRecipient = config('services.maintenance_notification.re
             $(this).prop('disabled', true);
             try
             {
+                const reportForm = document.getElementById('maintenance-report');
+                const manualRecipients = reportForm
+                    ? String(new FormData(reportForm).get('manual_recipients') ?? '').trim()
+                    : '';
+
                 const confirmation = await Notification.confirmation(
-                    'Kirim ulang notifikasi maintenance ke ' + maintenanceNotificationRecipient + '?'
+                    manualRecipients !== ''
+                        ? 'Kirim ulang notifikasi maintenance ke email master, daftar email dashboard, dan email manual tambahan?'
+                        : 'Kirim ulang notifikasi maintenance ke email master dan daftar email dashboard?'
                 );
                 if(!confirmation.isConfirmed)
                     return;
 
                 Loading.show();
 
+                const formData = new FormData();
+                if (manualRecipients !== '') {
+                    formData.append('manual_recipients', manualRecipients);
+                }
+
                 const { message } = await Http.post(
-                    "{{ route('maintenance-report.notify', ':id') }}".replace(':id', $(this).data('id'))
+                    "{{ route('maintenance-report.notify', ':id') }}".replace(':id', $(this).data('id')),
+                    formData
                 );
 
                 Notification.success(message);
