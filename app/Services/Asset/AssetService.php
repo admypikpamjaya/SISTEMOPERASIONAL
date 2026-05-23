@@ -7,6 +7,7 @@ use App\DTOs\Asset\RegisterAssetDTO;
 use App\DTOs\Asset\RegisterAssetViaFileDTO;
 use App\DTOs\File\DownloadFileDTO;
 use App\Enums\Asset\AssetCategory;
+use App\Enums\Asset\ComputerComponent;
 use App\Enums\Asset\AssetUnit;
 use App\Models\Asset\Asset;
 use Illuminate\Support\Arr;
@@ -33,6 +34,12 @@ class AssetService
         'location',
         'dimension',
         'power_rating',
+        'brand',
+    ];
+    private const COMPUTER_TEMPLATE_REQUIRED_HEADERS = [
+        'account_code',
+        'location',
+        'component_name',
         'brand',
     ];
 
@@ -101,13 +108,24 @@ class AssetService
      */
     private function extractRecordsFromSpreadsheet(AssetCategory $category, $file): array
     {
-        if ($category !== AssetCategory::AC) {
-            throw new \Exception(
-                'Import Excel multi-sheet saat ini khusus untuk kategori AC. Untuk kategori lain, silakan gunakan template CSV.',
+        return match ($category) {
+            AssetCategory::AC => $this->extractAirConditionerRecordsFromSpreadsheet($file),
+            AssetCategory::COMPUTER => $this->extractComputerRecordsFromSpreadsheet($file),
+            default => throw new \Exception(
+                'Import Excel multi-sheet saat ini hanya tersedia untuk kategori AC dan COMPUTER. Untuk kategori lain, silakan gunakan template CSV.',
                 422
-            );
-        }
+            ),
+        };
+    }
 
+    /**
+     * @return array{
+     *     records: array<int, array{dto: RegisterAssetDTO, source_label: string}>,
+     *     sheet_names: array<int, string>
+     * }
+     */
+    private function extractAirConditionerRecordsFromSpreadsheet($file): array
+    {
         if (!class_exists(IOFactory::class)) {
             throw new \Exception(
                 'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.',
@@ -181,7 +199,7 @@ class AssetService
 
                 $records[] = [
                     'dto' => new RegisterAssetDTO(
-                        category: $category,
+                        category: AssetCategory::AC,
                         accountCode: $payload['account_code'],
                         serialNumber: $payload['serial_number'],
                         unit: $unit->value,
@@ -200,6 +218,130 @@ class AssetService
 
         if (empty($records)) {
             throw new \Exception('Tidak ada data aset AC yang berhasil dibaca dari template Excel.', 422);
+        }
+
+        return [
+            'records' => $records,
+            'sheet_names' => $sheetNames,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     records: array<int, array{dto: RegisterAssetDTO, source_label: string}>,
+     *     sheet_names: array<int, string>
+     * }
+     */
+    private function extractComputerRecordsFromSpreadsheet($file): array
+    {
+        if (!class_exists(IOFactory::class)) {
+            throw new \Exception(
+                'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.',
+                500
+            );
+        }
+
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $records = [];
+        $sheetNames = [];
+
+        foreach ($spreadsheet->getWorksheetIterator() as $sheet) {
+            if ($sheet->getSheetState() !== Worksheet::SHEETSTATE_VISIBLE) {
+                continue;
+            }
+
+            $rows = $sheet->toArray(null, true, true, false);
+            if ($this->isSpreadsheetRowsEmpty($rows)) {
+                continue;
+            }
+
+            $sheetTitle = trim((string) $sheet->getTitle());
+            $sheetNames[] = $sheetTitle;
+
+            $unit = $this->resolveUnitFromSheetTitle($sheetTitle);
+            if (!$unit instanceof AssetUnit) {
+                throw new \Exception(
+                    "Sheet \"{$sheetTitle}\" tidak bisa dipetakan ke unit aset. Gunakan nama sheet yang mengandung TK, SD, atau YPIK.",
+                    422
+                );
+            }
+
+            $headerMap = [];
+            $currentAsset = null;
+
+            foreach ($rows as $index => $row) {
+                if (!is_array($row) || $this->isSpreadsheetRowEmpty($row)) {
+                    continue;
+                }
+
+                $candidateHeaderMap = $this->buildComputerSpreadsheetHeaderMap($row);
+                if (!empty($candidateHeaderMap)) {
+                    $this->assertComputerHeaderRequirements($candidateHeaderMap, $sheetTitle);
+
+                    if ($currentAsset !== null) {
+                        $records[] = $this->createComputerImportRecord($currentAsset, $sheetTitle);
+                        $currentAsset = null;
+                    }
+
+                    $headerMap = $candidateHeaderMap;
+                    continue;
+                }
+
+                if (empty($headerMap)) {
+                    continue;
+                }
+
+                $accountCode = $this->resolveSpreadsheetCell($row, $headerMap, 'account_code');
+                $componentName = $this->resolveSpreadsheetCell($row, $headerMap, 'component_name');
+
+                if ($accountCode !== null) {
+                    if ($currentAsset !== null) {
+                        $records[] = $this->createComputerImportRecord($currentAsset, $sheetTitle);
+                    }
+
+                    $rowNumber = $index + 1;
+                    $location = $this->resolveSpreadsheetCell($row, $headerMap, 'location');
+                    if ($location === null) {
+                        throw new \Exception(
+                            "Lokasi kosong pada sheet \"{$sheetTitle}\" baris ke-{$rowNumber}.",
+                            422
+                        );
+                    }
+
+                    $currentAsset = [
+                        'row_number' => $rowNumber,
+                        'account_code' => $accountCode,
+                        'location' => $location,
+                        'serial_number' => $this->resolveSpreadsheetCell($row, $headerMap, 'serial_number'),
+                        'purchase_year' => $this->resolveSpreadsheetCell($row, $headerMap, 'purchase_year'),
+                        'unit' => $unit->value,
+                        'components' => [],
+                    ];
+                }
+
+                if ($currentAsset === null || $componentName === null) {
+                    continue;
+                }
+
+                $component = $this->normalizeComputerSpreadsheetComponent(
+                    $componentName,
+                    $this->resolveSpreadsheetCell($row, $headerMap, 'brand'),
+                    $this->resolveSpreadsheetCell($row, $headerMap, 'specification'),
+                    $this->resolveSpreadsheetCell($row, $headerMap, 'serial_number')
+                );
+
+                if ($component !== null) {
+                    $currentAsset['components'][] = $component;
+                }
+            }
+
+            if ($currentAsset !== null) {
+                $records[] = $this->createComputerImportRecord($currentAsset, $sheetTitle);
+            }
+        }
+
+        if (empty($records)) {
+            throw new \Exception('Tidak ada data aset komputer yang berhasil dibaca dari template Excel.', 422);
         }
 
         return [
@@ -261,6 +403,22 @@ class AssetService
         };
     }
 
+    private function canonicalComputerHeader(string $header): ?string
+    {
+        $normalized = $this->normalizeHeaderToken($header);
+
+        return match (true) {
+            in_array($normalized, ['accountcode', 'akuncode', 'kodeakun'], true) => 'account_code',
+            in_array($normalized, ['lantairuang', 'lokasi', 'ruang'], true) => 'location',
+            in_array($normalized, ['unit', 'komponen', 'component'], true) => 'component_name',
+            in_array($normalized, ['merk', 'brand'], true) => 'brand',
+            in_array($normalized, ['unitwatt', 'specification', 'spesifikasi', 'spek'], true) => 'specification',
+            in_array($normalized, ['noserirangka', 'noseri', 'serialnumber', 'nomorseri'], true) => 'serial_number',
+            in_array($normalized, ['tahunpembelian', 'purchaseyear', 'tahun'], true) => 'purchase_year',
+            default => null,
+        };
+    }
+
     /**
      * @param array<int, mixed> $row
      * @return array<string, int>
@@ -271,6 +429,26 @@ class AssetService
 
         foreach ($row as $index => $value) {
             $canonicalHeader = $this->canonicalAcHeader((string) $value);
+            if ($canonicalHeader === null || array_key_exists($canonicalHeader, $headerMap)) {
+                continue;
+            }
+
+            $headerMap[$canonicalHeader] = $index;
+        }
+
+        return $headerMap;
+    }
+
+    /**
+     * @param array<int, mixed> $row
+     * @return array<string, int>
+     */
+    private function buildComputerSpreadsheetHeaderMap(array $row): array
+    {
+        $headerMap = [];
+
+        foreach ($row as $index => $value) {
+            $canonicalHeader = $this->canonicalComputerHeader((string) $value);
             if ($canonicalHeader === null || array_key_exists($canonicalHeader, $headerMap)) {
                 continue;
             }
@@ -297,6 +475,21 @@ class AssetService
     }
 
     /**
+     * @param array<string, int> $headerMap
+     */
+    private function assertComputerHeaderRequirements(array $headerMap, string $sheetTitle): void
+    {
+        foreach (self::COMPUTER_TEMPLATE_REQUIRED_HEADERS as $requiredHeader) {
+            if (!array_key_exists($requiredHeader, $headerMap)) {
+                throw new \Exception(
+                    "Header \"{$requiredHeader}\" tidak ditemukan pada sheet \"{$sheetTitle}\".",
+                    422
+                );
+            }
+        }
+    }
+
+    /**
      * @param array<int, mixed> $row
      * @param array<string, int> $headerMap
      */
@@ -311,7 +504,7 @@ class AssetService
             return null;
         }
 
-        $normalizedValue = trim((string) $value);
+        $normalizedValue = preg_replace('/\s+/u', ' ', trim((string) $value)) ?? trim((string) $value);
         return $normalizedValue === '' ? null : $normalizedValue;
     }
 
@@ -336,6 +529,79 @@ class AssetService
                 );
             }
         }
+    }
+
+    private function normalizeComputerComponentName(string $componentName): ?ComputerComponent
+    {
+        $normalized = $this->normalizeHeaderToken($componentName);
+
+        return match ($normalized) {
+            'monitor' => ComputerComponent::MONITOR,
+            'motherboard' => ComputerComponent::MOTHERBOARD,
+            'processor' => ComputerComponent::PROCESSOR,
+            'ram' => ComputerComponent::RAM,
+            'storage' => ComputerComponent::STORAGE,
+            'graphiccard', 'gpu', 'vga' => ComputerComponent::GPU,
+            'keyboardmouse', 'keyboard', 'mouse' => ComputerComponent::KEYBOARD_MOUSE,
+            'cpu' => null,
+            default => null,
+        };
+    }
+
+    private function normalizeComputerSpreadsheetComponent(
+        string $componentName,
+        ?string $brand,
+        ?string $specification,
+        ?string $serialNumber
+    ): ?array {
+        $componentType = $this->normalizeComputerComponentName($componentName);
+        if (!$componentType instanceof ComputerComponent) {
+            return null;
+        }
+
+        return [
+            'component_type' => $componentType->value,
+            'brand' => $brand,
+            'specification' => $specification,
+            'serial_number' => $serialNumber,
+        ];
+    }
+
+    /**
+     * @param array{
+     *     row_number: int,
+     *     account_code: string,
+     *     location: string,
+     *     serial_number: ?string,
+     *     purchase_year: ?string,
+     *     unit: string,
+     *     components: array<int, array<string, ?string>>
+     * } $asset
+     * @return array{dto: RegisterAssetDTO, source_label: string}
+     */
+    private function createComputerImportRecord(array $asset, string $sheetTitle): array
+    {
+        if (empty($asset['components'])) {
+            throw new \Exception(
+                "Komponen komputer tidak ditemukan pada sheet \"{$sheetTitle}\" baris ke-{$asset['row_number']}.",
+                422
+            );
+        }
+
+        return [
+            'dto' => new RegisterAssetDTO(
+                category: AssetCategory::COMPUTER,
+                accountCode: $asset['account_code'],
+                serialNumber: $asset['serial_number'],
+                unit: $asset['unit'],
+                location: $asset['location'],
+                purchaseYear: $asset['purchase_year'],
+                detail: [
+                    'components' => $asset['components'],
+                ]
+            ),
+            'source_label' => "sheet \"{$sheetTitle}\" baris ke-{$asset['row_number']}",
+        ];
     }
 
     private function resolveUnitFromSheetTitle(string $sheetTitle): ?AssetUnit
@@ -520,6 +786,7 @@ class AssetService
                     {
                         throw new \Exception(
                             'Gagal import pada ' . $record['source_label'] . ': ' . $e->getMessage(),
+                            $e->getCode() ?: 500,
                             previous: $e
                         );
                     }

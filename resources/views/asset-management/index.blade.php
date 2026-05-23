@@ -18,6 +18,29 @@ $activeFilterCount = collect([
     request('category'),
     request('unit'),
 ])->filter(fn ($value) => filled($value))->count();
+
+$templateConfigs = [
+    [
+        'category' => AssetCategory::AC,
+        'title' => __('app.asset.ac_template_title'),
+        'body' => __('app.asset.ac_template_body'),
+        'import_label' => __('app.asset.import_ac'),
+        'download_label' => __('app.asset.download_ac_template'),
+        'note' => __('app.asset.ac_import_note'),
+        'icon' => 'fas fa-snowflake',
+        'download_url' => route('asset-management.download-template', ['category' => AssetCategory::AC->value]),
+    ],
+    [
+        'category' => AssetCategory::COMPUTER,
+        'title' => __('app.asset.computer_template_title'),
+        'body' => __('app.asset.computer_template_body'),
+        'import_label' => __('app.asset.import_computer'),
+        'download_label' => __('app.asset.download_computer_template'),
+        'note' => __('app.asset.computer_import_note'),
+        'icon' => 'fas fa-desktop',
+        'download_url' => route('asset-management.download-template', ['category' => AssetCategory::COMPUTER->value]),
+    ],
+];
 @endphp
 
 @section('section_name', __('app.asset.title'))
@@ -181,7 +204,7 @@ $activeFilterCount = collect([
 
     .asset-info-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1rem;
     }
 
@@ -213,6 +236,17 @@ $activeFilterCount = collect([
         color: var(--app-text-soft);
         font-size: 0.9rem;
         line-height: 1.7;
+    }
+
+    .asset-template-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        margin-top: 1rem;
+    }
+
+    .asset-template-actions .asset-inline-btn {
+        flex: 1 1 180px;
     }
 
     .asset-chip-list {
@@ -361,8 +395,7 @@ $activeFilterCount = collect([
     }
 
     @media (max-width: 991.98px) {
-        .asset-hero-inner,
-        .asset-info-grid {
+        .asset-hero-inner {
             grid-template-columns: 1fr;
         }
 
@@ -425,10 +458,23 @@ $activeFilterCount = collect([
 
                 <div class="asset-hero-actions">
                     @if($canAssetCreate)
-                        <button id="toggle-asset-registration-via-file-button" type="button" class="asset-hero-btn is-primary">
-                            <i class="fas fa-file-import"></i>
-                            <span>{{ __('app.asset.upload_file') }}</span>
-                        </button>
+                        @foreach($templateConfigs as $templateConfig)
+                            <button
+                                type="button"
+                                class="asset-hero-btn is-primary js-open-asset-import"
+                                data-category="{{ $templateConfig['category']->value }}"
+                                data-title="{{ $templateConfig['title'] }}"
+                                data-body="{{ $templateConfig['body'] }}"
+                                data-note="{{ $templateConfig['note'] }}"
+                                data-import-label="{{ $templateConfig['import_label'] }}"
+                                data-download-label="{{ $templateConfig['download_label'] }}"
+                                data-download-url="{{ $templateConfig['download_url'] }}"
+                                data-icon="{{ $templateConfig['icon'] }}"
+                            >
+                                <i class="{{ $templateConfig['icon'] }}"></i>
+                                <span>{{ $templateConfig['import_label'] }}</span>
+                            </button>
+                        @endforeach
 
                         <a href="{{ route('asset-management.register-form') }}" class="asset-hero-btn">
                             <i class="fas fa-plus-circle"></i>
@@ -436,10 +482,12 @@ $activeFilterCount = collect([
                         </a>
                     @endif
 
-                    <a href="{{ route('asset-management.download-template', ['category' => 'AC']) }}" class="asset-hero-btn">
-                        <i class="fas fa-file-download"></i>
-                        <span>{{ __('app.asset.download_template') }}</span>
-                    </a>
+                    @foreach($templateConfigs as $templateConfig)
+                        <a href="{{ $templateConfig['download_url'] }}" class="asset-hero-btn">
+                            <i class="fas fa-file-download"></i>
+                            <span>{{ $templateConfig['download_label'] }}</span>
+                        </a>
+                    @endforeach
 
                     <a id="download-qr-anchor" href="#" class="d-none"></a>
                     <button id="download-qr-code-button" type="button" class="asset-hero-btn">
@@ -466,7 +514,7 @@ $activeFilterCount = collect([
                     <span class="asset-stat-label">Filter Aktif</span>
                     <span class="asset-stat-value">{{ $activeFilterCount }}</span>
                     <span class="asset-stat-caption">
-                        {{ $selectedCategory?->label() ?? 'Semua kategori' }} • {{ $selectedUnit?->name ?? 'Semua unit' }}
+                        {{ $selectedCategory?->label() ?? 'Semua kategori' }} | {{ $selectedUnit?->name ?? 'Semua unit' }}
                     </span>
                 </article>
             </div>
@@ -474,46 +522,55 @@ $activeFilterCount = collect([
     </section>
 
     <section class="asset-info-grid">
-        <article class="asset-info-card">
-            <span class="asset-info-icon">
-                <i class="fas fa-circle-info"></i>
-            </span>
-            <h3>{{ __('app.asset.template_title') }}</h3>
-            <p>{{ __('app.asset.template_body') }}</p>
-
-            <div class="asset-chip-list">
-                <span class="asset-chip">
-                    <i class="fas fa-table"></i>
-                    {{ __('app.asset.multi_sheet_note') }}
+        @foreach($templateConfigs as $templateConfig)
+            <article class="asset-info-card">
+                <span class="asset-info-icon">
+                    <i class="{{ $templateConfig['icon'] }}"></i>
                 </span>
-                <span class="asset-chip">
-                    <i class="fas fa-file-excel"></i>
-                    {{ __('app.asset.supported_formats') }}
-                </span>
-                <span class="asset-chip">
-                    <i class="fas fa-snowflake"></i>
-                    {{ __('app.asset.import_note') }}
-                </span>
-            </div>
-        </article>
+                <h3>{{ $templateConfig['title'] }}</h3>
+                <p>{{ $templateConfig['body'] }}</p>
 
-        <article class="asset-info-card">
-            <span class="asset-info-icon">
-                <i class="fas fa-download"></i>
-            </span>
-            <h3>{{ __('app.asset.download_template') }}</h3>
-            <p>
-                Template Excel AC yang kamu berikan sudah disiapkan langsung di sistem,
-                jadi user bisa download ulang kapan pun tanpa perlu cari file manual lagi.
-            </p>
+                <div class="asset-chip-list">
+                    <span class="asset-chip">
+                        <i class="fas fa-table"></i>
+                        {{ __('app.asset.multi_sheet_note') }}
+                    </span>
+                    <span class="asset-chip">
+                        <i class="fas fa-file-excel"></i>
+                        {{ __('app.asset.supported_formats') }}
+                    </span>
+                    <span class="asset-chip">
+                        <i class="{{ $templateConfig['icon'] }}"></i>
+                        {{ $templateConfig['note'] }}
+                    </span>
+                </div>
 
-            <div class="asset-hero-actions mt-3">
-                <a href="{{ route('asset-management.download-template', ['category' => 'AC']) }}" class="asset-inline-btn">
-                    <i class="fas fa-cloud-download-alt"></i>
-                    <span>{{ __('app.asset.download_template') }}</span>
-                </a>
-            </div>
-        </article>
+                <div class="asset-template-actions">
+                    @if($canAssetCreate)
+                        <button
+                            type="button"
+                            class="asset-inline-btn js-open-asset-import"
+                            data-category="{{ $templateConfig['category']->value }}"
+                            data-title="{{ $templateConfig['title'] }}"
+                            data-body="{{ $templateConfig['body'] }}"
+                            data-note="{{ $templateConfig['note'] }}"
+                            data-import-label="{{ $templateConfig['import_label'] }}"
+                            data-download-label="{{ $templateConfig['download_label'] }}"
+                            data-download-url="{{ $templateConfig['download_url'] }}"
+                            data-icon="{{ $templateConfig['icon'] }}"
+                        >
+                            <i class="{{ $templateConfig['icon'] }}"></i>
+                            <span>{{ $templateConfig['import_label'] }}</span>
+                        </button>
+                    @endif
+
+                    <a href="{{ $templateConfig['download_url'] }}" class="asset-inline-btn">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        <span>{{ $templateConfig['download_label'] }}</span>
+                    </a>
+                </div>
+            </article>
+        @endforeach
     </section>
 
     <form class="card asset-table-card">
@@ -523,22 +580,37 @@ $activeFilterCount = collect([
                     <div>
                         <h3 class="asset-toolbar-title">{{ __('app.asset.title') }}</h3>
                         <p class="asset-toolbar-subtitle">
-                            Filter data, import template AC, dan kelola QR aset dari satu halaman.
+                            Filter data, import template AC atau komputer, dan kelola QR aset dari satu halaman.
                         </p>
                     </div>
 
                     <div class="asset-toolbar-actions">
                         @if($canAssetCreate)
-                            <button id="open-import-toolbar-button" type="button" class="asset-inline-btn">
-                                <i class="fas fa-file-import"></i>
-                                <span>{{ __('app.asset.upload_file') }}</span>
-                            </button>
+                            @foreach($templateConfigs as $templateConfig)
+                                <button
+                                    type="button"
+                                    class="asset-inline-btn js-open-asset-import"
+                                    data-category="{{ $templateConfig['category']->value }}"
+                                    data-title="{{ $templateConfig['title'] }}"
+                                    data-body="{{ $templateConfig['body'] }}"
+                                    data-note="{{ $templateConfig['note'] }}"
+                                    data-import-label="{{ $templateConfig['import_label'] }}"
+                                    data-download-label="{{ $templateConfig['download_label'] }}"
+                                    data-download-url="{{ $templateConfig['download_url'] }}"
+                                    data-icon="{{ $templateConfig['icon'] }}"
+                                >
+                                    <i class="{{ $templateConfig['icon'] }}"></i>
+                                    <span>{{ $templateConfig['import_label'] }}</span>
+                                </button>
+                            @endforeach
                         @endif
 
-                        <a href="{{ route('asset-management.download-template', ['category' => 'AC']) }}" class="asset-inline-btn">
-                            <i class="fas fa-file-arrow-down"></i>
-                            <span>{{ __('app.asset.download_template') }}</span>
-                        </a>
+                        @foreach($templateConfigs as $templateConfig)
+                            <a href="{{ $templateConfig['download_url'] }}" class="asset-inline-btn">
+                                <i class="fas fa-file-arrow-down"></i>
+                                <span>{{ $templateConfig['download_label'] }}</span>
+                            </a>
+                        @endforeach
                     </div>
                 </div>
 
@@ -616,7 +688,7 @@ $activeFilterCount = collect([
             </span>
 
             <span>
-                Kategori: <strong>{{ $selectedCategory?->label() ?? 'Semua' }}</strong> •
+                Kategori: <strong>{{ $selectedCategory?->label() ?? 'Semua' }}</strong> |
                 Unit: <strong>{{ $selectedUnit?->name ?? 'Semua' }}</strong>
             </span>
         </div>
@@ -673,7 +745,7 @@ $activeFilterCount = collect([
                                         <h4>{{ __('app.asset.empty') }}</h4>
                                         <p>
                                             Belum ada aset yang cocok dengan filter ini. Kamu bisa tambah manual
-                                            atau import memakai template AC yang sudah disiapkan.
+                                            atau import memakai template AC maupun komputer yang sudah disiapkan.
                                         </p>
                                     </div>
                                 </td>
@@ -704,7 +776,18 @@ $activeFilterCount = collect([
 
 @section('js')
 <script>
-    const assetTemplateDownloadUrl = @json(route('asset-management.download-template', ['category' => 'AC']));
+    const assetImportConfigs = @json(
+        collect($templateConfigs)->map(fn ($config) => [
+            'category' => $config['category']->value,
+            'title' => $config['title'],
+            'body' => $config['body'],
+            'note' => $config['note'],
+            'import_label' => $config['import_label'],
+            'download_label' => $config['download_label'],
+            'download_url' => $config['download_url'],
+            'icon' => $config['icon'],
+        ])->values()
+    );
 
     function resetState()
     {
@@ -712,29 +795,30 @@ $activeFilterCount = collect([
         $('.child-checkbox').prop('checked', false);
     }
 
-    function constructAssetRegistrationViaFileForm()
+    function getAssetImportConfig(category)
+    {
+        return assetImportConfigs.find(config => config.category === category) ?? assetImportConfigs[0];
+    }
+
+    function constructAssetRegistrationViaFileForm(config)
     {
         return `
             <form id="asset-registration-via-file-form">
                 <div class="asset-import-form-note mb-3">
-                    <strong>${@json(__('app.asset.template_title'))}</strong>
-                    ${@json(__('app.asset.template_body'))}
+                    <strong>${config.title}</strong>
+                    ${config.body}
                     <div class="mt-2">
-                        <a href="${assetTemplateDownloadUrl}" class="font-weight-bold">
-                            ${@json(__('app.asset.download_template'))}
+                        <a href="${config.download_url}" class="font-weight-bold">
+                            ${config.download_label}
                         </a>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="category">${@json(__('app.asset.category'))} <span class="text-red">*</span></label>
-                    <select name="category" id="category" class="form-control" required>
-                        <option value="" disabled selected>${@json(__('app.asset.choose_category'))}</option>
-                        @foreach(AssetCategory::cases() as $category)
-                            <option value="{{ $category->value }}">{{ $category->label() }}</option>
-                        @endforeach
-                    </select>
-                    <small class="form-text text-muted">${@json(__('app.asset.import_note'))}</small>
+                <input type="hidden" name="category" value="${config.category}">
+
+                <div class="asset-import-form-note mb-3">
+                    <strong>${@json(__('app.asset.selected_template'))}</strong>
+                    ${config.note}
                 </div>
 
                 <div class="form-group mb-0">
@@ -763,16 +847,17 @@ $activeFilterCount = collect([
             $(this).closest('form').submit();
         });
 
-        $('#toggle-asset-registration-via-file-button, #open-import-toolbar-button').on('click', function() {
-            const form = constructAssetRegistrationViaFileForm();
+        $(document).on('click', '.js-open-asset-import', function() {
+            const config = getAssetImportConfig($(this).data('category'));
+            const form = constructAssetRegistrationViaFileForm(config);
             const buttons = `
                 <button id="register-asset-via-file-button" class="btn btn-sm btn-primary">
-                    <i class="fas fa-file-import mr-1"></i>
-                    ${@json(__('app.asset.upload_file'))}
+                    <i class="${config.icon} mr-1"></i>
+                    ${config.import_label}
                 </button>
             `;
 
-            modal.show(@json(__('app.asset.upload_form_title')), form, buttons);
+            modal.show(`${@json(__('app.asset.upload_form_title'))} - ${config.title}`, form, buttons);
         });
 
         $('#root-checkbox').on('click', function() {
@@ -784,15 +869,6 @@ $activeFilterCount = collect([
             const form = document.getElementById('asset-registration-via-file-form');
             if (!form.checkValidity()) {
                 form.reportValidity();
-                return;
-            }
-
-            const fileInput = document.getElementById('asset-file-input');
-            const selectedFile = fileInput?.files?.[0] ?? null;
-            const selectedCategory = form.querySelector('[name="category"]')?.value ?? '';
-
-            if (selectedFile && /\.(xlsx|xls)$/i.test(selectedFile.name) && selectedCategory !== 'AC') {
-                Notification.warning(@json(__('app.asset.import_note')));
                 return;
             }
 

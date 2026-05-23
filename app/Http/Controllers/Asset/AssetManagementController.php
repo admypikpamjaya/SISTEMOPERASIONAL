@@ -78,42 +78,60 @@ class AssetManagementController extends Controller
 
     public function storeWithFile(RegisterAssetViaFileRequest $request)
     {
-        $summary = $this->service->registerAssetViaFile(RegisterAssetViaFileDTO::fromArray($request->validated()));
+        try {
+            $dto = RegisterAssetViaFileDTO::fromArray($request->validated());
+            $summary = $this->service->registerAssetViaFile($dto);
 
-        $sheetSummary = ($summary['source_type'] ?? 'csv') === 'excel'
-            ? ' dari ' . ($summary['sheet_count'] ?? 0) . ' sheet aktif'
-            : '';
-        $message = 'Import aset berhasil. ' . ($summary['imported_rows'] ?? 0) . ' data diproses' . $sheetSummary . '.';
+            $sheetSummary = ($summary['source_type'] ?? 'csv') === 'excel'
+                ? ' dari ' . ($summary['sheet_count'] ?? 0) . ' sheet aktif'
+                : '';
+            $message = 'Import aset ' . $dto->category->label() . ' berhasil. '
+                . ($summary['imported_rows'] ?? 0) . ' data diproses' . $sheetSummary . '.';
 
-        session()->flash('success', $message);
+            session()->flash('success', $message);
 
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'summary' => $summary,
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'summary' => $summary,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 500);
+        }
     }
 
     public function downloadTemplate(string $category)
     {
         $category = strtoupper(trim($category));
+        $templateMap = [
+            AssetCategory::AC->value => [
+                'path' => resource_path('asset-templates/ac/LIST AC SEKRETARIAT YPIK.xlsx'),
+                'download_name' => 'template-import-ac-ypik.xlsx',
+            ],
+            AssetCategory::COMPUTER->value => [
+                'path' => resource_path('asset-templates/computer/LIST KOMPUTER (REV) (3).xlsx'),
+                'download_name' => 'template-import-komputer-ypik.xlsx',
+            ],
+        ];
 
-        if ($category !== AssetCategory::AC->value) {
+        if (!array_key_exists($category, $templateMap)) {
             return redirect()
                 ->route('asset-management.index')
                 ->with('error', 'Template untuk kategori tersebut belum tersedia.');
         }
 
-        $templatePath = resource_path('asset-templates/ac/LIST AC SEKRETARIAT YPIK.xlsx');
+        $templatePath = $templateMap[$category]['path'];
         if (!is_file($templatePath)) {
             return redirect()
                 ->route('asset-management.index')
-                ->with('error', 'File template AC tidak ditemukan.');
+                ->with('error', 'File template tidak ditemukan.');
         }
 
         return response()->download(
             $templatePath,
-            'template-import-ac-ypik.xlsx'
+            $templateMap[$category]['download_name']
         );
     }
 

@@ -139,11 +139,13 @@
                     data-accordion="false">
 
                     <?php
+                        $blastingOnly = false;
+                        $blastAllowedRoutePrefixes = ['admin.blast.'];
+                        $blastAllowedRoutes = ['logout'];
+                        $activeRole = null;
                         $currentUser = auth()->user();
                         $blastingOnly = $currentUser !== null
                             && $currentUser->role === \App\Enums\User\UserRole::BLASTING->value;
-                        $blastAllowedRoutePrefixes = ['admin.blast.'];
-                        $blastAllowedRoutes = ['logout'];
                         $activeRole = $currentUser?->role;
 
                         $isBlastAllowedRoute = static function (?string $route) use ($blastAllowedRoutePrefixes, $blastAllowedRoutes): bool {
