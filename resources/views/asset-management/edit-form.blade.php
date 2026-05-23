@@ -83,7 +83,7 @@ $groupedComponents = collect($asset->detail)
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-group">
-                                            <label for="brand">Brand <span class="text-red">*</span></label>
+                                            <label for="brand">Merk <span class="text-red">*</span></label>
                                             <input
                                                 type="text"
                                                 name="brand"
@@ -96,7 +96,7 @@ $groupedComponents = collect($asset->detail)
                                     </div>
                                     <div class="col">
                                         <div class="form-group">
-                                            <label for="dimension">Dimensi <span class="text-red">*</span></label>
+                                            <label for="dimension">Ukuran / Dimensi <span class="text-red">*</span></label>
                                             <input
                                                 type="text"
                                                 name="dimension"
@@ -112,9 +112,9 @@ $groupedComponents = collect($asset->detail)
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-group mb-0">
-                                            <label for="power_rating">Voltase <span class="text-red">*</span></label>
+                                            <label for="power_rating">Unit / Watt <span class="text-red">*</span></label>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 name="power_rating"
                                                 class="form-control"
                                                 id="power_rating"

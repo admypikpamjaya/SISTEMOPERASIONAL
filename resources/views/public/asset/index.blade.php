@@ -31,29 +31,29 @@
     $assetDetailFields = [
         AssetCategory::AC->value => [
             [
-                'label' => 'Brand',
+                'label' => 'Merk',
                 'key' => 'brand'    
             ],
             [
-                'label' => 'Dimensi',
+                'label' => 'Ukuran / Dimensi',
                 'key' => 'dimension'
             ],
             [
-                'label' => 'Voltase',
+                'label' => 'Unit / Watt',
                 'key' => 'power_rating'    
             ]
         ],
         AssetCategory::OTHER->value => [
             [
-                'label' => 'Brand',
+                'label' => 'Merk',
                 'key' => 'brand'    
             ],
             [
-                'label' => 'Dimensi',
+                'label' => 'Ukuran / Dimensi',
                 'key' => 'dimension'
             ],
             [
-                'label' => 'Voltase',
+                'label' => 'Unit / Watt',
                 'key' => 'power_rating'    
             ]
         ],

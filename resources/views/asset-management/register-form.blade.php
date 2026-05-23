@@ -106,9 +106,9 @@ use App\Enums\Asset\AssetUnit;
 <script>
     const assetDetailForm = {
         'AC': [
-            { label: 'Brand <span class="text-red">*</span>', name: 'brand', type: 'text' },
-            { label: 'Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
-            { label: 'Voltase <span class="text-red">*</span>', name: 'power_rating', type: 'number', min: 1 },
+            { label: 'Merk <span class="text-red">*</span>', name: 'brand', type: 'text' },
+            { label: 'Ukuran / Dimensi <span class="text-red">*</span>', name: 'dimension', type: 'text' },
+            { label: 'Unit / Watt <span class="text-red">*</span>', name: 'power_rating', type: 'text' },
         ],
         'COMPUTER': [
             { type: 'component', component: 'Monitor' },

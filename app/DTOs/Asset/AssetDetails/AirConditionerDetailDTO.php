@@ -6,15 +6,15 @@ class AirConditionerDetailDTO
 {
     public function __construct(
         public string $brand,
-        public float $dimensions,
-        public int $power_rating
+        public string $dimension,
+        public string $powerRating
     ) {}
 
     public static function fromArray(array $data): self 
     {
         return new self(
             $data['brand'],
-            $data['dimensions'],
+            $data['dimension'],
             $data['power_rating']
         );
     }

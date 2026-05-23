@@ -25,6 +25,20 @@ class AirConditionerDetail extends Model
         );
     }
 
+    protected function dimension(): Attribute
+    {
+        return Attribute::make(
+            set: fn($value) => $value ? strtoupper(trim($value)) : null
+        );
+    }
+
+    protected function powerRating(): Attribute
+    {
+        return Attribute::make(
+            set: fn($value) => $value ? strtoupper(trim($value)) : null
+        );
+    }
+
     public function asset()
     {
         return $this->belongsTo(Asset::class);

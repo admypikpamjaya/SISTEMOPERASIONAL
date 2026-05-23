@@ -13,6 +13,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use ZipArchive;
 
 /**
@@ -26,14 +28,21 @@ use ZipArchive;
 class AssetService 
 {
     private const CHUNK_SIZE = 50;
+    private const AC_TEMPLATE_REQUIRED_HEADERS = [
+        'account_code',
+        'location',
+        'dimension',
+        'power_rating',
+        'brand',
+    ];
 
-    private function extractDataFromCSV(AssetCategory $category, $file): array
+    private function extractRecordsFromCsv(AssetCategory $category, $file): array
     {
         // CSV import mirrors the same master-data fields as the manual asset
         // form. Finance depreciation policy fields are intentionally not
         // derived here yet because the current import contract does not carry
         // them.
-        $dtos = [];
+        $records = [];
 
         $handle = fopen($file->getRealPath(), 'r');
         $headers = array_map('trim', fgetcsv($handle));
@@ -65,20 +74,357 @@ class AssetService
 
             $detail = $handler->extractDetailFromCsv($row);
 
-            $dtos[] = new RegisterAssetDTO(
-                category: $category,
-                accountCode: $row['account_code'],
-                serialNumber: $row['serial_number'] ?? null,
-                unit: $row['unit'],
-                location: $row['location'],
-                purchaseYear: $row['purchase_year'] ?? null,
-                detail: $detail
-            );
+            $records[] = [
+                'dto' => new RegisterAssetDTO(
+                    category: $category,
+                    accountCode: $row['account_code'],
+                    serialNumber: $row['serial_number'] ?? null,
+                    unit: $row['unit'],
+                    location: $row['location'],
+                    purchaseYear: $row['purchase_year'] ?? null,
+                    detail: $detail
+                ),
+                'source_label' => "baris ke-{$rowNumber}",
+            ];
         }
 
         fclose($handle);
 
-        return $dtos;
+        return $records;
+    }
+
+    /**
+     * @return array{
+     *     records: array<int, array{dto: RegisterAssetDTO, source_label: string}>,
+     *     sheet_names: array<int, string>
+     * }
+     */
+    private function extractRecordsFromSpreadsheet(AssetCategory $category, $file): array
+    {
+        if ($category !== AssetCategory::AC) {
+            throw new \Exception(
+                'Import Excel multi-sheet saat ini khusus untuk kategori AC. Untuk kategori lain, silakan gunakan template CSV.',
+                422
+            );
+        }
+
+        if (!class_exists(IOFactory::class)) {
+            throw new \Exception(
+                'Library Excel belum tersedia di server. Jalankan composer install agar phpoffice/phpspreadsheet terpasang.',
+                500
+            );
+        }
+
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $records = [];
+        $sheetNames = [];
+
+        foreach ($spreadsheet->getWorksheetIterator() as $sheet) {
+            if ($sheet->getSheetState() !== Worksheet::SHEETSTATE_VISIBLE) {
+                continue;
+            }
+
+            $rows = $sheet->toArray(null, true, true, false);
+            if ($this->isSpreadsheetRowsEmpty($rows)) {
+                continue;
+            }
+
+            $sheetTitle = trim((string) $sheet->getTitle());
+            $sheetNames[] = $sheetTitle;
+
+            $unit = $this->resolveUnitFromSheetTitle($sheetTitle);
+            if (!$unit instanceof AssetUnit) {
+                throw new \Exception(
+                    "Sheet \"{$sheetTitle}\" tidak bisa dipetakan ke unit aset. Gunakan nama sheet yang mengandung TK, SD, atau YPIK/SEKRETARIAT.",
+                    422
+                );
+            }
+
+            $headerMap = [];
+
+            foreach ($rows as $index => $row) {
+                if (!is_array($row) || $this->isSpreadsheetRowEmpty($row)) {
+                    continue;
+                }
+
+                $candidateHeaderMap = $this->buildAcSpreadsheetHeaderMap($row);
+                if (!empty($candidateHeaderMap)) {
+                    $this->assertAcHeaderRequirements($candidateHeaderMap, $sheetTitle);
+                    $headerMap = $candidateHeaderMap;
+                    continue;
+                }
+
+                if (empty($headerMap)) {
+                    continue;
+                }
+
+                $payload = [
+                    'account_code' => $this->resolveSpreadsheetCell($row, $headerMap, 'account_code'),
+                    'location' => $this->resolveSpreadsheetCell($row, $headerMap, 'location'),
+                    'dimension' => $this->resolveSpreadsheetCell($row, $headerMap, 'dimension'),
+                    'power_rating' => $this->resolveSpreadsheetCell($row, $headerMap, 'power_rating'),
+                    'brand' => $this->resolveSpreadsheetCell($row, $headerMap, 'brand'),
+                    'serial_number' => $this->resolveSpreadsheetCell($row, $headerMap, 'serial_number'),
+                    'purchase_year' => $this->resolveSpreadsheetCell($row, $headerMap, 'purchase_year'),
+                ];
+
+                if ($this->isSpreadsheetRowEmpty($payload)) {
+                    continue;
+                }
+
+                if ($payload['account_code'] === null) {
+                    continue;
+                }
+
+                $rowNumber = $index + 1;
+                $this->assertAcSpreadsheetRowRequirements($payload, $sheetTitle, $rowNumber);
+
+                $records[] = [
+                    'dto' => new RegisterAssetDTO(
+                        category: $category,
+                        accountCode: $payload['account_code'],
+                        serialNumber: $payload['serial_number'],
+                        unit: $unit->value,
+                        location: $payload['location'],
+                        purchaseYear: $payload['purchase_year'],
+                        detail: [
+                            'brand' => $payload['brand'],
+                            'dimension' => $payload['dimension'],
+                            'power_rating' => $payload['power_rating'],
+                        ]
+                    ),
+                    'source_label' => "sheet \"{$sheetTitle}\" baris ke-{$rowNumber}",
+                ];
+            }
+        }
+
+        if (empty($records)) {
+            throw new \Exception('Tidak ada data aset AC yang berhasil dibaca dari template Excel.', 422);
+        }
+
+        return [
+            'records' => $records,
+            'sheet_names' => $sheetNames,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     records: array<int, array{dto: RegisterAssetDTO, source_label: string}>,
+     *     source_type: string,
+     *     sheet_names: array<int, string>
+     * }
+     */
+    private function resolveImportRecords(RegisterAssetViaFileDTO $dto): array
+    {
+        $extension = $this->resolveUploadedFileExtension($dto->file);
+
+        if (in_array($extension, ['xlsx', 'xls'], true)) {
+            $spreadsheetRecords = $this->extractRecordsFromSpreadsheet($dto->category, $dto->file);
+
+            return [
+                'records' => $spreadsheetRecords['records'],
+                'source_type' => 'excel',
+                'sheet_names' => $spreadsheetRecords['sheet_names'],
+            ];
+        }
+
+        if ($extension === 'csv') {
+            return [
+                'records' => $this->extractRecordsFromCsv($dto->category, $dto->file),
+                'source_type' => 'csv',
+                'sheet_names' => [],
+            ];
+        }
+
+        throw new \Exception('Format file tidak didukung. Gunakan file xlsx, xls, atau csv.', 422);
+    }
+
+    private function normalizeHeaderToken(string $value): string
+    {
+        return preg_replace('/[^a-z0-9]+/', '', strtolower(trim($value))) ?? '';
+    }
+
+    private function canonicalAcHeader(string $header): ?string
+    {
+        $normalized = $this->normalizeHeaderToken($header);
+
+        return match (true) {
+            in_array($normalized, ['akuncodeacypik', 'akuncode', 'accountcode', 'kodeakun'], true) => 'account_code',
+            in_array($normalized, ['lantairuang', 'lokasi', 'ruang'], true) => 'location',
+            in_array($normalized, ['ukurandimensi', 'dimensi', 'dimension', 'kapasitaspk', 'kapasitas'], true) => 'dimension',
+            in_array($normalized, ['unitwatt', 'voltase', 'tegangan', 'dayalistrik', 'powerrating', 'watt'], true) => 'power_rating',
+            in_array($normalized, ['merk', 'brand'], true) => 'brand',
+            in_array($normalized, ['noserirangka', 'noseri', 'nomorseri', 'serialnumber', 'norangka'], true) => 'serial_number',
+            in_array($normalized, ['tahunpembelian', 'purchaseyear', 'tahun'], true) => 'purchase_year',
+            default => null,
+        };
+    }
+
+    /**
+     * @param array<int, mixed> $row
+     * @return array<string, int>
+     */
+    private function buildAcSpreadsheetHeaderMap(array $row): array
+    {
+        $headerMap = [];
+
+        foreach ($row as $index => $value) {
+            $canonicalHeader = $this->canonicalAcHeader((string) $value);
+            if ($canonicalHeader === null || array_key_exists($canonicalHeader, $headerMap)) {
+                continue;
+            }
+
+            $headerMap[$canonicalHeader] = $index;
+        }
+
+        return $headerMap;
+    }
+
+    /**
+     * @param array<string, int> $headerMap
+     */
+    private function assertAcHeaderRequirements(array $headerMap, string $sheetTitle): void
+    {
+        foreach (self::AC_TEMPLATE_REQUIRED_HEADERS as $requiredHeader) {
+            if (!array_key_exists($requiredHeader, $headerMap)) {
+                throw new \Exception(
+                    "Header \"{$requiredHeader}\" tidak ditemukan pada sheet \"{$sheetTitle}\".",
+                    422
+                );
+            }
+        }
+    }
+
+    /**
+     * @param array<int, mixed> $row
+     * @param array<string, int> $headerMap
+     */
+    private function resolveSpreadsheetCell(array $row, array $headerMap, string $field): ?string
+    {
+        if (!array_key_exists($field, $headerMap)) {
+            return null;
+        }
+
+        $value = $row[$headerMap[$field]] ?? null;
+        if ($value === null) {
+            return null;
+        }
+
+        $normalizedValue = trim((string) $value);
+        return $normalizedValue === '' ? null : $normalizedValue;
+    }
+
+    /**
+     * @param array<string, ?string> $payload
+     */
+    private function assertAcSpreadsheetRowRequirements(array $payload, string $sheetTitle, int $rowNumber): void
+    {
+        $requiredFields = [
+            'account_code' => 'Kode akun',
+            'location' => 'Lokasi',
+            'dimension' => 'Ukuran dimensi',
+            'power_rating' => 'Unit / watt',
+            'brand' => 'Merk',
+        ];
+
+        foreach ($requiredFields as $field => $label) {
+            if (($payload[$field] ?? null) === null) {
+                throw new \Exception(
+                    "{$label} kosong pada sheet \"{$sheetTitle}\" baris ke-{$rowNumber}.",
+                    422
+                );
+            }
+        }
+    }
+
+    private function resolveUnitFromSheetTitle(string $sheetTitle): ?AssetUnit
+    {
+        $normalizedTitle = strtoupper($sheetTitle);
+
+        if (preg_match('/\bTK\b|TKIA/', $normalizedTitle) === 1) {
+            return AssetUnit::TK;
+        }
+
+        if (preg_match('/\bSD\b|SDIA/', $normalizedTitle) === 1) {
+            return AssetUnit::SD;
+        }
+
+        if (str_contains($normalizedTitle, 'YPIK') || str_contains($normalizedTitle, 'SEKRETARIAT')) {
+            return AssetUnit::YAYASAN;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<int, array<int, mixed>> $rows
+     */
+    private function isSpreadsheetRowsEmpty(array $rows): bool
+    {
+        foreach ($rows as $row) {
+            if (is_array($row) && !$this->isSpreadsheetRowEmpty($row)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<int|string, mixed> $row
+     */
+    private function isSpreadsheetRowEmpty(array $row): bool
+    {
+        foreach ($row as $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (trim((string) $value) !== '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function resolveUploadedFileExtension($file): string
+    {
+        if (method_exists($file, 'getClientOriginalExtension')) {
+            return strtolower((string) $file->getClientOriginalExtension());
+        }
+
+        if (method_exists($file, 'getClientOriginalName')) {
+            return strtolower((string) pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+        }
+
+        return '';
+    }
+
+    private function persistRegisteredAsset(RegisterAssetDTO $dto)
+    {
+        Log::info($dto->toArray());
+
+        // The first transaction writes the asset identity that is used by
+        // inventory, maintenance, QR detail pages, and finance lookups.
+        $assetData = Arr::except($dto->toArray(), 'detail');
+        $validatedAssetData = Asset::validateRegistrationPayload($assetData);
+
+        $asset = Asset::create($validatedAssetData);
+        $asset->qr_code_path = $asset->generateQRCode();
+        $asset->save();
+
+        $assetDetailHandler = AssetFactory::createHandler($dto->category);
+
+        // Category-specific detail is kept separate from the asset master.
+        // If automated depreciation is implemented later, prefer writing
+        // finance policy records in a dedicated table rather than mixing
+        // them into these operational detail tables.
+        $validatedDetail = $assetDetailHandler->validatePayload($dto->detail);
+        $assetDetailHandler->insert($asset->id, $validatedDetail);
+
+        return $asset->loadWithRelation();
     }
 
     private function makeSafeFilename(string $name): string
@@ -137,30 +483,13 @@ class AssetService
 
     public function registerAsset(RegisterAssetDTO $dto)
     {
-        Log::info($dto->toArray());
         DB::beginTransaction();
         try
         {
-            // The first transaction writes the asset identity that is used by
-            // inventory, maintenance, QR detail pages, and finance lookups.
-            $assetData = Arr::except($dto->toArray(), 'detail');
-            $validatedAssetData = Asset::validateRegistrationPayload($assetData);
-
-            $asset = Asset::create($validatedAssetData);
-            $asset->qr_code_path = $asset->generateQRCode();
-            $asset->save();
-
-            $assetDetailHandler = AssetFactory::createHandler($dto->category);
-
-            // Category-specific detail is kept separate from the asset master.
-            // If automated depreciation is implemented later, prefer writing
-            // finance policy records in a dedicated table rather than mixing
-            // them into these operational detail tables.
-            $validatedDetail =$assetDetailHandler->validatePayload($dto->detail);
-            $assetDetailHandler->insert($asset->id, $validatedDetail);
+            $asset = $this->persistRegisteredAsset($dto);
 
             DB::commit();
-            return $asset->loadWithRelation();
+            return $asset;
         }
         catch(\Throwable $e)
         {
@@ -171,32 +500,41 @@ class AssetService
 
     public function registerAssetViaFile(RegisterAssetViaFileDTO $dto)
     {
+        $import = $this->resolveImportRecords($dto);
+        $records = $import['records'];
+
         DB::beginTransaction();
         try
         {
-            $data = $this->extractDataFromCSV($dto->category, $dto->file);
-            $chunks = array_chunk($data, self::CHUNK_SIZE);
+            $chunks = array_chunk($records, self::CHUNK_SIZE);
 
-            foreach ($chunks as $chunkIndex => $chunk) 
+            foreach ($chunks as $chunk) 
             {
-                foreach ($chunk as $rowIndex => $assetDTO) 
+                foreach ($chunk as $record) 
                 {
                     try 
                     {
-                        $this->registerAsset($assetDTO);
+                        $this->persistRegisteredAsset($record['dto']);
                     } 
                     catch (\Throwable $e) 
                     {
                         throw new \Exception(
-                            "Gagal import CSV di baris ke-" .
-                            (($chunkIndex * self::CHUNK_SIZE) + $rowIndex + 2) .
-                            ": " . $e->getMessage(),
+                            'Gagal import pada ' . $record['source_label'] . ': ' . $e->getMessage(),
                             previous: $e
                         );
                     }
                 }
             }
             DB::commit();
+
+            return [
+                'category' => $dto->category->value,
+                'source_type' => $import['source_type'],
+                'processed_rows' => count($records),
+                'imported_rows' => count($records),
+                'sheet_count' => count($import['sheet_names']),
+                'sheet_names' => $import['sheet_names'],
+            ];
         }
         catch(\Throwable $e)
         {

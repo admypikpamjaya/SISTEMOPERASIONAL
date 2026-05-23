@@ -78,10 +78,43 @@ class AssetManagementController extends Controller
 
     public function storeWithFile(RegisterAssetViaFileRequest $request)
     {
-        $this->service->registerAssetViaFile(RegisterAssetViaFileDTO::fromArray($request->validated()));
+        $summary = $this->service->registerAssetViaFile(RegisterAssetViaFileDTO::fromArray($request->validated()));
 
-        session()->flash('success', 'Aset berhasil ditambahkan');
-        return response()->json(['success' => true]);
+        $sheetSummary = ($summary['source_type'] ?? 'csv') === 'excel'
+            ? ' dari ' . ($summary['sheet_count'] ?? 0) . ' sheet aktif'
+            : '';
+        $message = 'Import aset berhasil. ' . ($summary['imported_rows'] ?? 0) . ' data diproses' . $sheetSummary . '.';
+
+        session()->flash('success', $message);
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'summary' => $summary,
+        ]);
+    }
+
+    public function downloadTemplate(string $category)
+    {
+        $category = strtoupper(trim($category));
+
+        if ($category !== AssetCategory::AC->value) {
+            return redirect()
+                ->route('asset-management.index')
+                ->with('error', 'Template untuk kategori tersebut belum tersedia.');
+        }
+
+        $templatePath = resource_path('asset-templates/ac/LIST AC SEKRETARIAT YPIK.xlsx');
+        if (!is_file($templatePath)) {
+            return redirect()
+                ->route('asset-management.index')
+                ->with('error', 'File template AC tidak ditemukan.');
+        }
+
+        return response()->download(
+            $templatePath,
+            'template-import-ac-ypik.xlsx'
+        );
     }
 
     public function update(EditAssetRequest $request)

@@ -219,7 +219,8 @@ class MaintenanceReportService
     public function sendNotificationToRecipients(
         string $id,
         bool $manuallyTriggered = true,
-        array $manualRecipients = []
+        array $manualRecipients = [],
+        ?array $selectedAdditionalRecipientIds = null
     ): string
     {
         $log = $this->findLogOrFail($id, ['asset', 'maintenanceDocumentations']);
@@ -227,7 +228,8 @@ class MaintenanceReportService
         $recipients = $this->maintenanceNotificationService->sendForLog(
             $log,
             $manuallyTriggered,
-            $manualRecipients
+            $manualRecipients,
+            $selectedAdditionalRecipientIds
         );
 
         return $this->maintenanceNotificationService->formatRecipients($recipients);

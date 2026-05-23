@@ -29,7 +29,8 @@ class MaintenanceNotificationService
     public function sendForLog(
         MaintenanceLog $log,
         bool $manuallyTriggered = false,
-        array $manualRecipients = []
+        array $manualRecipients = [],
+        ?array $selectedAdditionalRecipientIds = null
     ): array {
         $log->loadMissing(['asset', 'maintenanceDocumentations']);
 
@@ -38,7 +39,7 @@ class MaintenanceNotificationService
             throw new RuntimeException('Aset untuk laporan maintenance tidak ditemukan.');
         }
 
-        $recipients = $this->resolveRecipients($manualRecipients);
+        $recipients = $this->resolveRecipients($manualRecipients, $selectedAdditionalRecipientIds);
         if ($recipients === []) {
             throw new RuntimeException('Email tujuan notifikasi maintenance belum dikonfigurasi.');
         }
@@ -93,6 +94,10 @@ class MaintenanceNotificationService
         return [
             'master' => $masterRecipient,
             'stored' => $storedRecipientPayload,
+            'selectedStoredIds' => array_map(
+                static fn (array $recipient): string => (string) $recipient['id'],
+                $storedRecipientPayload
+            ),
             'storedDisplay' => implode(', ', array_map(
                 static fn (array $recipient): string => (string) $recipient['email'],
                 $storedRecipientPayload
@@ -223,11 +228,12 @@ class MaintenanceNotificationService
      * @param array<int, string> $manualRecipients
      * @return array<int, string>
      */
-    private function resolveRecipients(array $manualRecipients = []): array
+    private function resolveRecipients(
+        array $manualRecipients = [],
+        ?array $selectedAdditionalRecipientIds = null
+    ): array
     {
-        $additionalRecipients = $this->getAdditionalRecipients()
-            ->pluck('email')
-            ->all();
+        $additionalRecipients = $this->resolveAdditionalRecipientEmails($selectedAdditionalRecipientIds);
 
         $candidates = array_merge(
             [$this->getMasterRecipient()],
@@ -250,5 +256,31 @@ class MaintenanceNotificationService
         }
 
         return array_values($uniqueRecipients);
+    }
+
+    /**
+     * @param array<int, string>|null $selectedAdditionalRecipientIds
+     * @return array<int, string>
+     */
+    private function resolveAdditionalRecipientEmails(?array $selectedAdditionalRecipientIds = null): array
+    {
+        $query = MaintenanceNotificationRecipient::query()
+            ->orderBy('name')
+            ->orderBy('email');
+
+        if (is_array($selectedAdditionalRecipientIds)) {
+            if ($selectedAdditionalRecipientIds === []) {
+                return [];
+            }
+
+            $query->whereIn('id', $selectedAdditionalRecipientIds);
+        }
+
+        return $query
+            ->pluck('email')
+            ->map(static fn ($email): string => trim((string) $email))
+            ->filter(static fn (string $email): bool => $email !== '')
+            ->values()
+            ->all();
     }
 }

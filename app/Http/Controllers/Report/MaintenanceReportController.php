@@ -181,7 +181,8 @@ class MaintenanceReportController extends Controller
             $recipient = $this->service->sendNotificationToRecipients(
                 $id,
                 true,
-                $request->manualRecipients()
+                $request->manualRecipients(),
+                $request->selectedDashboardRecipientIds()
             );
 
             return response()->json([

@@ -31,6 +31,81 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
 
 @section('content')
 @include('shared.modal')
+<style>
+    .maintenance-recipient-selection-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        flex-wrap: wrap;
+        margin-bottom: .5rem;
+    }
+    .maintenance-recipient-selection-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .82rem;
+    }
+    .maintenance-recipient-selection-actions .btn {
+        font-size: .78rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .maintenance-recipient-option-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: .65rem;
+    }
+    .maintenance-recipient-option {
+        display: flex;
+        align-items: flex-start;
+        gap: .7rem;
+        padding: .85rem .9rem;
+        border: 1px solid rgba(96, 165, 250, 0.22);
+        border-radius: 12px;
+        background: rgba(37, 99, 235, 0.08);
+        cursor: pointer;
+        transition: border-color .2s ease, background .2s ease, transform .2s ease;
+        margin: 0;
+    }
+    .maintenance-recipient-option:hover {
+        border-color: rgba(96, 165, 250, 0.38);
+        background: rgba(37, 99, 235, 0.14);
+        transform: translateY(-1px);
+    }
+    .maintenance-recipient-option input {
+        margin-top: .2rem;
+        transform: scale(1.06);
+        accent-color: #2563eb;
+    }
+    .maintenance-recipient-option-copy {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+        min-width: 0;
+    }
+    .maintenance-recipient-option-name {
+        font-size: .84rem;
+        font-weight: 700;
+        line-height: 1.45;
+        color: #e2e8f0;
+        word-break: break-word;
+    }
+    .maintenance-recipient-option-email {
+        font-size: .76rem;
+        color: #93c5fd;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+    .maintenance-recipient-preview-box {
+        min-height: 52px;
+    }
+    .maintenance-recipient-preview-meta {
+        font-size: .78rem;
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+</style>
 <form class="card">
     <div class="card-header">
         <div class="row justify-content-between align-items-center">
@@ -43,7 +118,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                     @else
                         dan saat ini belum ada email tambahan dari dashboard superadmin.
                     @endif
-                    Jika perlu kirim ulang, buka detail laporan lalu klik <strong>Kirim Notifikasi</strong> dan Anda tetap bisa menambahkan email manual.
+                    Jika perlu kirim ulang, buka detail laporan lalu klik <strong>Kirim Notifikasi</strong>; dari sana Anda bisa memilih email dashboard yang ikut dikirim dan tetap bisa menambahkan email manual.
                 </div>
             </div>
             <div class="col-md-6">
@@ -186,6 +261,128 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
             .join('');
     }
 
+    function isValidMaintenanceEmail(value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? '').trim());
+    }
+
+    function normalizeUniqueMaintenanceRecipients(recipients) {
+        const uniqueRecipients = new Map();
+
+        (Array.isArray(recipients) ? recipients : []).forEach((recipient) => {
+            const value = String(recipient ?? '').trim();
+            if (value === '' || !isValidMaintenanceEmail(value)) {
+                return;
+            }
+
+            const key = value.toLowerCase();
+            if (!uniqueRecipients.has(key)) {
+                uniqueRecipients.set(key, value);
+            }
+        });
+
+        return Array.from(uniqueRecipients.values());
+    }
+
+    function parseMaintenanceManualRecipients(rawValue) {
+        const value = String(rawValue ?? '').trim();
+        if (value === '') {
+            return [];
+        }
+
+        return normalizeUniqueMaintenanceRecipients(
+            value.split(/[\s,;\r\n]+/)
+        );
+    }
+
+    function renderMaintenanceDashboardRecipientOptions(recipients, selectedIds, selectable = true) {
+        if (!Array.isArray(recipients) || recipients.length === 0) {
+            return '<div class="text-muted small">Belum ada email dashboard tambahan yang aktif.</div>';
+        }
+
+        const selectedRecipientIds = new Set(
+            Array.isArray(selectedIds) ? selectedIds.map((recipientId) => String(recipientId)) : []
+        );
+
+        return `
+            <div class="maintenance-recipient-option-grid">
+                ${recipients.map((recipient) => `
+                    <label class="maintenance-recipient-option">
+                        <input
+                            type="checkbox"
+                            name="selected_dashboard_recipient_ids[]"
+                            value="${escapeHtml(recipient?.id ?? '')}"
+                            class="maintenance-dashboard-recipient-checkbox"
+                            ${selectedRecipientIds.has(String(recipient?.id ?? '')) ? 'checked' : ''}
+                            ${selectable ? '' : 'disabled'}
+                        >
+                        <span class="maintenance-recipient-option-copy">
+                            <span class="maintenance-recipient-option-name">${escapeHtml(recipient?.name || 'Email Dashboard')}</span>
+                            <span class="maintenance-recipient-option-email">${escapeHtml(recipient?.email || '-')}</span>
+                        </span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function getSelectedDashboardRecipients(reportForm, recipientConfig) {
+        if (!reportForm) {
+            return [];
+        }
+
+        const notificationConfig = recipientConfig && typeof recipientConfig === 'object'
+            ? recipientConfig
+            : maintenanceNotificationConfig;
+        const storedRecipients = Array.isArray(notificationConfig?.stored)
+            ? notificationConfig.stored
+            : [];
+        const selectedRecipientIds = new Set(
+            Array.from(reportForm.querySelectorAll('.maintenance-dashboard-recipient-checkbox:checked'))
+                .map((checkbox) => String(checkbox.value))
+        );
+
+        return storedRecipients.filter((recipient) => selectedRecipientIds.has(String(recipient?.id ?? '')));
+    }
+
+    function updateMaintenanceRecipientSelectionPreview(reportForm, recipientConfig) {
+        if (!reportForm) {
+            return;
+        }
+
+        const notificationConfig = recipientConfig && typeof recipientConfig === 'object'
+            ? recipientConfig
+            : maintenanceNotificationConfig;
+        const masterRecipient = String(notificationConfig?.master ?? '').trim();
+        const selectedDashboardRecipients = getSelectedDashboardRecipients(reportForm, notificationConfig);
+        const manualRecipients = parseMaintenanceManualRecipients(
+            new FormData(reportForm).get('manual_recipients') ?? ''
+        );
+        const selectedDashboardEmails = selectedDashboardRecipients
+            .map((recipient) => String(recipient?.email ?? '').trim())
+            .filter((recipient) => recipient !== '');
+        const allSelectedRecipients = normalizeUniqueMaintenanceRecipients([
+            masterRecipient,
+            ...selectedDashboardEmails,
+            ...manualRecipients,
+        ]);
+
+        const previewContainer = reportForm.querySelector('#maintenance-selected-recipient-preview');
+        const previewCountBadge = reportForm.querySelector('#maintenance-selected-recipient-count');
+        const dashboardCountBadge = reportForm.querySelector('#maintenance-selected-dashboard-count');
+
+        if (previewContainer) {
+            previewContainer.innerHTML = renderMaintenanceRecipientBadges(allSelectedRecipients);
+        }
+
+        if (previewCountBadge) {
+            previewCountBadge.textContent = `${allSelectedRecipients.length} email`;
+        }
+
+        if (dashboardCountBadge) {
+            dashboardCountBadge.textContent = `${selectedDashboardRecipients.length} dipilih`;
+        }
+    }
+
     function resetState()
     {
         $('#root-checkbox').prop('checked', false);
@@ -201,14 +398,21 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
         const storedRecipients = Array.isArray(notificationConfig?.stored)
             ? notificationConfig.stored
             : [];
-        const allRecipients = Array.isArray(notificationConfig?.all) && notificationConfig.all.length > 0
-            ? notificationConfig.all
-            : (masterRecipient ? [masterRecipient] : []);
-        const storedRecipientsHtml = renderMaintenanceRecipientBadges(
-            storedRecipients,
-            (recipient) => recipient?.label ?? recipient?.email ?? ''
+        const selectedStoredRecipientIds = Array.isArray(notificationConfig?.selectedStoredIds)
+            ? notificationConfig.selectedStoredIds
+            : storedRecipients.map((recipient) => recipient?.id).filter((recipientId) => !!recipientId);
+        const selectedStoredRecipients = storedRecipients.filter(
+            (recipient) => selectedStoredRecipientIds.includes(recipient?.id)
         );
-        const allRecipientsHtml = renderMaintenanceRecipientBadges(allRecipients);
+        const storedRecipientsHtml = renderMaintenanceDashboardRecipientOptions(
+            storedRecipients,
+            selectedStoredRecipientIds,
+            Boolean(isUserCanUpdate)
+        );
+        const selectedRecipientsHtml = renderMaintenanceRecipientBadges([
+            masterRecipient,
+            ...selectedStoredRecipients.map((recipient) => recipient?.email ?? '')
+        ]);
 
         const constructEvidencePhoto = () => {
             let html = '';
@@ -237,8 +441,8 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                 </div>
                 ${data.asset.category === 'AC' && `
                     <div class="form-group">
-                        <label>PK</label>
-                        <input type="text" class="form-control" value="${data.asset.detail.dimension} PK" readonly>
+                        <label>Ukuran / Dimensi</label>
+                        <input type="text" class="form-control" value="${data.asset.detail.dimension ?? '-'}" readonly>
                     </div>
                 `}
                 <div class="form-group">
@@ -302,21 +506,34 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Email Dashboard Superadmin</label>
+                    <div class="maintenance-recipient-selection-toolbar">
+                        <label class="mb-0">Email Dashboard Superadmin</label>
+                        ${isUserCanUpdate && storedRecipients.length > 0 ? `
+                            <div class="maintenance-recipient-selection-actions">
+                                <button type="button" class="btn btn-link btn-sm p-0 maintenance-select-all-dashboard-recipients">Pilih semua</button>
+                                <span class="text-muted">•</span>
+                                <button type="button" class="btn btn-link btn-sm p-0 maintenance-clear-dashboard-recipients">Kosongkan</button>
+                                <span class="badge badge-info" id="maintenance-selected-dashboard-count">${selectedStoredRecipients.length} dipilih</span>
+                            </div>
+                        ` : ''}
+                    </div>
                     <div class="border rounded p-2" style="min-height:44px;">
                         ${storedRecipientsHtml}
                     </div>
                     <small class="form-text text-muted">
-                        Daftar ini dikelola superadmin dari dashboard dan akan ikut terkirim otomatis.
+                        Email master tetap wajib terkirim. Dari daftar dashboard di atas, Anda bisa memilih siapa saja yang ikut dikirim untuk pengiriman kali ini.
                     </small>
                 </div>
                 <div class="form-group">
-                    <label>Semua Tujuan Otomatis</label>
-                    <div class="border rounded p-2" style="min-height:44px;">
-                        ${allRecipientsHtml}
+                    <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;">
+                        <label class="mb-0">Tujuan Yang Akan Dikirim</label>
+                        <span class="badge badge-primary" id="maintenance-selected-recipient-count">${1 + selectedStoredRecipients.length} email</span>
                     </div>
-                    <small class="form-text text-muted">
-                        Sistem akan selalu mengirim ke email master dan seluruh email aktif yang tersimpan.
+                    <div id="maintenance-selected-recipient-preview" class="border rounded p-2 maintenance-recipient-preview-box" style="min-height:44px;">
+                        ${selectedRecipientsHtml}
+                    </div>
+                    <small class="form-text maintenance-recipient-preview-meta">
+                        Preview ini akan berubah saat Anda memilih email dashboard atau menambahkan email manual tambahan.
                     </small>
                 </div>
                 ${isUserCanUpdate ? `
@@ -324,7 +541,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                         <label>Email Manual Tambahan</label>
                         <textarea name="manual_recipients" class="form-control" rows="2" placeholder="Pisahkan dengan koma, enter, atau titik koma"></textarea>
                         <small class="form-text text-muted">
-                            Kolom ini hanya dipakai sekali saat klik <strong>Kirim Notifikasi</strong> dan tidak disimpan ke dashboard.
+                            Kolom ini hanya dipakai sekali saat klik <strong>Kirim Notifikasi</strong>, tidak disimpan ke dashboard, dan email duplikat akan diabaikan otomatis.
                         </small>
                     </div>
                 ` : ''}
@@ -408,6 +625,10 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                 `;
 
                 modal.show('Form Detail Laporan Pemeliharaan', form, buttons);
+                updateMaintenanceRecipientSelectionPreview(
+                    document.getElementById('maintenance-report'),
+                    maintenanceNotificationConfig
+                );
             }
             catch(error)
             {
@@ -486,26 +707,81 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
             }
         });
 
+        $(document).on('change', '.maintenance-dashboard-recipient-checkbox', function() {
+            updateMaintenanceRecipientSelectionPreview(
+                document.getElementById('maintenance-report'),
+                maintenanceNotificationConfig
+            );
+        });
+
+        $(document).on('input', '#maintenance-report textarea[name="manual_recipients"]', function() {
+            updateMaintenanceRecipientSelectionPreview(
+                document.getElementById('maintenance-report'),
+                maintenanceNotificationConfig
+            );
+        });
+
+        $(document).on('click', '.maintenance-select-all-dashboard-recipients', function() {
+            const reportForm = document.getElementById('maintenance-report');
+            if (!reportForm) {
+                return;
+            }
+
+            $(reportForm)
+                .find('.maintenance-dashboard-recipient-checkbox')
+                .prop('checked', true);
+
+            updateMaintenanceRecipientSelectionPreview(reportForm, maintenanceNotificationConfig);
+        });
+
+        $(document).on('click', '.maintenance-clear-dashboard-recipients', function() {
+            const reportForm = document.getElementById('maintenance-report');
+            if (!reportForm) {
+                return;
+            }
+
+            $(reportForm)
+                .find('.maintenance-dashboard-recipient-checkbox')
+                .prop('checked', false);
+
+            updateMaintenanceRecipientSelectionPreview(reportForm, maintenanceNotificationConfig);
+        });
+
         $(document).on('click', '#send-maintenance-report-notification-button', async function() {
             $(this).prop('disabled', true);
             try
             {
                 const reportForm = document.getElementById('maintenance-report');
+                const selectedDashboardRecipientIds = reportForm
+                    ? Array.from(reportForm.querySelectorAll('.maintenance-dashboard-recipient-checkbox:checked'))
+                        .map((checkbox) => String(checkbox.value))
+                    : [];
                 const manualRecipients = reportForm
                     ? String(new FormData(reportForm).get('manual_recipients') ?? '').trim()
                     : '';
+                const manualRecipientList = parseMaintenanceManualRecipients(manualRecipients);
+                const selectedDashboardRecipientCount = selectedDashboardRecipientIds.length;
+                let confirmationMessage = 'Kirim ulang notifikasi maintenance ke email master saja?';
 
-                const confirmation = await Notification.confirmation(
-                    manualRecipients !== ''
-                        ? 'Kirim ulang notifikasi maintenance ke email master, daftar email dashboard, dan email manual tambahan?'
-                        : 'Kirim ulang notifikasi maintenance ke email master dan daftar email dashboard?'
-                );
+                if (selectedDashboardRecipientCount > 0 && manualRecipientList.length > 0) {
+                    confirmationMessage = `Kirim ulang notifikasi maintenance ke email master, ${selectedDashboardRecipientCount} email dashboard terpilih, dan email manual tambahan?`;
+                } else if (selectedDashboardRecipientCount > 0) {
+                    confirmationMessage = `Kirim ulang notifikasi maintenance ke email master dan ${selectedDashboardRecipientCount} email dashboard terpilih?`;
+                } else if (manualRecipientList.length > 0) {
+                    confirmationMessage = 'Kirim ulang notifikasi maintenance ke email master dan email manual tambahan?';
+                }
+
+                const confirmation = await Notification.confirmation(confirmationMessage);
                 if(!confirmation.isConfirmed)
                     return;
 
                 Loading.show();
 
                 const formData = new FormData();
+                selectedDashboardRecipientIds.forEach((recipientId) => {
+                    formData.append('selected_dashboard_recipient_ids[]', recipientId);
+                });
+
                 if (manualRecipients !== '') {
                     formData.append('manual_recipients', manualRecipients);
                 }

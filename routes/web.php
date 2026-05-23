@@ -134,6 +134,7 @@ Route::prefix('asset-management')
             ->middleware('check_access:asset_management.update')
             ->name('edit-form');
         Route::get('/download-qr-code', 'downloadQrCode')->name('download-qr-code');
+        Route::get('/templates/{category}/download', 'downloadTemplate')->name('download-template');
         Route::post('/', 'store')
             ->middleware('check_access:asset_management.write')
             ->name('store');

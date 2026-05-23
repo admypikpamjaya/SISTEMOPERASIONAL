@@ -25,7 +25,7 @@ class RegisterAssetViaFileRequest extends FormRequest
     {
         return [
             'category' => ['required', Rule::enum(AssetCategory::class)],
-            'file' => ['required', 'file', 'mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values']
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv']
         ];
     }
 
@@ -37,8 +37,7 @@ class RegisterAssetViaFileRequest extends FormRequest
 
             'file.required' => 'File tidak boleh kosong',
             'file.file' => 'File harus berupa file',
-            'file.mimetypes' => 'File harus berupa format CSV yang valid', 
-            'file.mimes' => 'File harus berupa file CSV'
+            'file.mimes' => 'File harus berupa file xlsx, xls, atau csv'
         ];
     }
 }

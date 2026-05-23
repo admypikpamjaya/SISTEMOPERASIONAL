@@ -13,18 +13,18 @@ class AirConditionerDetailHandler implements AssetDetailHandler
         $validator = Validator::make($payload, 
             [
                 'brand'        => ['required', 'string'],
-                'dimension'   => ['required', 'numeric', 'min:0.1'],
-                'power_rating' => ['required', 'integer', 'min:1'],
+                'dimension'    => ['required', 'string', 'max:100'],
+                'power_rating' => ['required', 'string', 'max:100'],
             ],
             [
                 'brand.required'        => 'Merk AC wajib diisi untuk kategori AC.',
-                'dimension.required'   => 'Dimensi AC wajib diisi.',
-                'dimension.numeric'    => 'Dimensi harus berupa angka.',
-                'dimension.min'        => 'Dimensi tidak valid.',
+                'dimension.required'    => 'Ukuran dimensi AC wajib diisi.',
+                'dimension.string'      => 'Ukuran dimensi AC tidak valid.',
+                'dimension.max'         => 'Ukuran dimensi AC terlalu panjang.',
 
-                'power_rating.required' => 'Daya listrik AC wajib diisi.',
-                'power_rating.integer'  => 'Daya listrik harus berupa angka.',
-                'power_rating.min'      => 'Daya listrik tidak valid.',
+                'power_rating.required' => 'Unit / watt AC wajib diisi.',
+                'power_rating.string'   => 'Unit / watt AC tidak valid.',
+                'power_rating.max'      => 'Unit / watt AC terlalu panjang.',
             ]
         );
 
