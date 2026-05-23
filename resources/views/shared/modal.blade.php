@@ -25,9 +25,13 @@
 @push('component_js')
 <script>
     const modal = $('#shared-modal');
+    const defaultDialogClass = 'modal-dialog modal-dialog-centered';
+    const defaultBodyClass = 'modal-body';
 
-    modal.show = (title, body, buttons) => {
+    modal.show = (title, body, buttons, options = {}) => {
         modal.find('.modal-title').text(title);
+        modal.find('.modal-dialog').attr('class', `${defaultDialogClass}${options.dialogClass ? ' ' + options.dialogClass : ''}`);
+        modal.find('#modal-body').attr('class', `${defaultBodyClass}${options.bodyClass ? ' ' + options.bodyClass : ''}`);
 
         modal.find('#modal-body').html(body || '');
         modal.find('#modal-footer-buttons-container').html(buttons || '');
@@ -38,5 +42,11 @@
     modal.hide = () => {
         modal.modal('hide');
     }
+
+    modal.on('hidden.bs.modal', () => {
+        modal.find('.modal-dialog').attr('class', defaultDialogClass);
+        modal.find('#modal-body').attr('class', defaultBodyClass);
+        modal.find('#modal-footer-buttons-container').html('');
+    });
 </script>
 @endpush

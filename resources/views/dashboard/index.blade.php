@@ -459,53 +459,88 @@
     <div class="row">
         <div class="col-12 mb-3">
             <div class="saldo-card" id="maintenance-recipient-summary-card">
-                <div class="row align-items-stretch">
-                    <div class="col-lg-4 col-md-5 col-sm-12 mb-3 mb-lg-0">
-                        <div class="h-100 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="saldo-icon"><i class="fas fa-envelope-open-text"></i></div>
-                                <div class="saldo-label">Email Maintenance</div>
-                                <div class="saldo-value" id="maintenance-recipient-total">
-                                    {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
-                                </div>
-                                <div class="saldo-meta" id="maintenance-recipient-summary-text">
-                                    Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
-                                </div>
-                                <div class="mt-2" id="maintenance-recipient-master-email" style="font-size:.78rem; color:var(--text-muted); word-break:break-word;">
-                                    {{ data_get($maintenanceNotificationRecipients, 'master') }}
-                                </div>
-                            </div>
+                <div class="d-flex flex-wrap align-items-start justify-content-between mb-3" style="gap:1rem;">
+                    <div>
+                        <div class="saldo-icon mb-3"><i class="fas fa-envelope-open-text"></i></div>
+                        <div class="saldo-label mb-2">Email Maintenance</div>
+                        <div class="small" style="color:var(--text-muted); max-width:720px; line-height:1.7;">
+                            Kelola email penerima report maintenance dari dashboard superadmin. Email master tetap aktif, lalu email tambahan bisa ditambah atau dihapus kapan saja.
+                        </div>
+                    </div>
 
-                            <div class="saldo-footer mb-0 pb-0" style="border-top:1px solid var(--border-light);">
-                                <button type="button" id="open-maintenance-recipient-manager" class="btn btn-primary btn-sm" style="border-radius:999px; padding:.55rem 1rem;">
-                                    <i class="fas fa-cog mr-1"></i>
-                                    Kelola email maintenance
-                                </button>
+                    <div class="d-flex flex-wrap" style="gap:.65rem;">
+                        <button
+                            type="button"
+                            id="open-maintenance-recipient-add"
+                            class="btn btn-primary btn-sm"
+                            style="border-radius:999px; padding:.6rem 1rem; min-width:160px;"
+                        >
+                            <i class="fas fa-plus mr-1"></i>
+                            Tambah Email
+                        </button>
+                        <button
+                            type="button"
+                            id="open-maintenance-recipient-manager"
+                            class="btn btn-outline-light btn-sm"
+                            style="border-radius:999px; padding:.6rem 1rem; min-width:170px;"
+                        >
+                            <i class="fas fa-cog mr-1"></i>
+                            Kelola Daftar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row align-items-stretch">
+                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3 mb-lg-0">
+                        <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
+                            <div class="saldo-label mb-2">Total Tujuan</div>
+                            <div class="saldo-value mb-2" id="maintenance-recipient-total">
+                                {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
+                            </div>
+                            <div class="saldo-meta" id="maintenance-recipient-summary-text" style="line-height:1.6;">
+                                Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-8 col-md-7 col-sm-12">
+                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3 mb-lg-0">
                         <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
                             <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="saldo-label mb-0">Email Master</div>
+                                <span class="badge badge-success">Tetap Aktif</span>
+                            </div>
+                            <div id="maintenance-recipient-master-email" style="font-size:.95rem; font-weight:600; color:var(--text-primary); word-break:break-word; line-height:1.6;">
+                                {{ data_get($maintenanceNotificationRecipients, 'master') }}
+                            </div>
+                            <div class="small mt-3" style="color:var(--text-muted);">
+                                Email ini selalu menerima report dan tidak bisa dihapus.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 col-md-12 col-sm-12">
+                        <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
+                            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap" style="gap:.6rem;">
                                 <div class="saldo-label mb-0">Email Tambahan Aktif</div>
                                 <span class="badge badge-info" id="maintenance-recipient-count-badge">
                                     {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email
                                 </span>
                             </div>
 
-                            <div id="maintenance-recipient-preview" style="min-height:52px;">
+                            <div id="maintenance-recipient-preview" style="min-height:56px;">
                                 @forelse((array) data_get($maintenanceNotificationRecipients, 'stored', []) as $recipient)
-                                    <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem;">
+                                    <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem; padding:.45rem .7rem;">
                                         <i class="fas fa-envelope mr-1"></i>{{ data_get($recipient, 'label', data_get($recipient, 'email', '-')) }}
                                     </span>
                                 @empty
-                                    <span class="badge badge-secondary mr-1 mb-1">Belum ada email tambahan</span>
+                                    <div class="d-flex align-items-center justify-content-center h-100 text-center" style="min-height:72px; border:1px dashed rgba(148,163,184,.28); border-radius:12px; color:var(--text-muted);">
+                                        Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">+ Tambah Email</strong> untuk menambahkan penerima baru.
+                                    </div>
                                 @endforelse
                             </div>
 
                             <div class="small mt-3" style="color:var(--text-muted); line-height:1.6;">
-                                Popup pengelolaan email akan membuka form tambah/hapus penerima. Email master tetap terkunci dan selalu ikut menerima report maintenance.
+                                Tombol <strong>Tambah Email</strong> membuka form penambahan cepat. Tombol <strong>Kelola Daftar</strong> membuka daftar lengkap untuk tambah dan hapus email.
                             </div>
                         </div>
                     </div>
