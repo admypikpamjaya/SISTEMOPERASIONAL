@@ -129,6 +129,11 @@
         box-shadow: 0 0 0 3px rgba(59,130,246,.14);
         background: #fff;
     }
+    .ad-input[readonly] {
+        background: #EFF6FF;
+        color: var(--text);
+        cursor: not-allowed;
+    }
     .ad-input[type="number"] { -moz-appearance: textfield; }
     .ad-input[type="number"]::-webkit-outer-spin-button,
     .ad-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
@@ -336,6 +341,11 @@
         box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14) !important;
     }
 
+    body.dark-mode .ad-input[readonly] {
+        background: rgba(96, 165, 250, 0.08) !important;
+        color: var(--app-text) !important;
+    }
+
     body.dark-mode .ad-select option {
         background: var(--app-surface) !important;
         color: var(--app-text) !important;
@@ -415,16 +425,19 @@
                     @csrf
                     <div class="ad-card-body">
 
-                        {{-- Asset ID --}}
+                        {{-- Asset --}}
                         <div class="ad-form-group">
                             <label for="asset_id">
-                                <i class="fas fa-barcode"></i> Asset ID
+                                <i class="fas fa-cube"></i> Asset
                             </label>
                             <select id="asset_id" name="asset_id" class="ad-select" required>
                                 <option value="">Pilih asset dari database</option>
                                 @foreach(($assets ?? collect()) as $asset)
-                                    <option value="{{ $asset->id }}">
-                                        #{{ $asset->id }} - {{ $asset->account_code }} ({{ $asset->category }})
+                                    <option
+                                        value="{{ $asset->id }}"
+                                        data-asset-label="{{ $asset->display_label }}"
+                                    >
+                                        {{ $asset->display_label }}
                                     </option>
                                 @endforeach
                             </select>
@@ -448,6 +461,30 @@
                             </div>
                         </div>
 
+                        {{-- Periode Manfaat --}}
+                        <div class="form-row" style="gap:0 12px;">
+                            <div class="ad-form-group col-md-6" style="padding:0;">
+                                <label for="period_start">
+                                    <i class="fas fa-calendar-alt"></i> Periode Dari
+                                </label>
+                                <input
+                                    type="month" id="period_start" name="period_start"
+                                    class="ad-input"
+                                    value="{{ $nowWib->format('Y-m') }}" required
+                                >
+                            </div>
+                            <div class="ad-form-group col-md-6" style="padding:0;">
+                                <label for="period_end">
+                                    <i class="fas fa-calendar-check"></i> Periode Sampai
+                                </label>
+                                <input
+                                    type="month" id="period_end" name="period_end"
+                                    class="ad-input"
+                                    value="{{ $nowWib->format('Y-m') }}" required
+                                >
+                            </div>
+                        </div>
+
                         {{-- Umur Manfaat --}}
                         <div class="ad-form-group">
                             <label for="useful_life_months">
@@ -455,33 +492,11 @@
                             </label>
                             <input
                                 type="number" id="useful_life_months" name="useful_life_months"
-                                class="ad-input" min="1" required
+                                class="ad-input" min="1" readonly required
                             >
-                        </div>
-
-                        {{-- Bulan & Tahun --}}
-                        <div class="form-row" style="gap:0 12px;">
-                            <div class="ad-form-group col-md-6" style="padding:0;">
-                                <label for="month">
-                                    <i class="fas fa-calendar-alt"></i> Bulan
-                                </label>
-                                <select id="month" name="month" class="ad-select" required>
-                                    @for($m = 1; $m <= 12; $m++)
-                                        <option value="{{ $m }}" {{ $nowWib->month === $m ? 'selected' : '' }}>
-                                            {{ \Carbon\Carbon::create()->month($m)->format('F') }}
-                                        </option>
-                                    @endfor
-                                </select>
-                            </div>
-                            <div class="ad-form-group col-md-6" style="padding:0;">
-                                <label for="year">
-                                    <i class="fas fa-calendar-check"></i> Tahun
-                                </label>
-                                <input
-                                    type="number" id="year" name="year"
-                                    class="ad-input" min="1900" max="2100"
-                                    value="{{ $nowWib->year }}" required
-                                >
+                            <div class="ad-hint">
+                                <i class="fas fa-magic"></i>
+                                Terisi otomatis berdasarkan rentang periode yang dipilih.
                             </div>
                         </div>
 
@@ -516,9 +531,9 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-barcode"></i> Asset ID
+                                <i class="fas fa-cube"></i> Asset
                             </div>
-                            <div class="ad-result-value" id="result-asset-id">
+                            <div class="ad-result-value" id="result-asset-label">
                                 <span class="ad-chip">-</span>
                             </div>
                         </div>
@@ -532,7 +547,7 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-hourglass-half"></i> Umur Bulan
+                                <i class="fas fa-hourglass-half"></i> Umur Manfaat
                             </div>
                             <div class="ad-result-value" id="result-useful-life">
                                 <span class="ad-chip">-</span>
@@ -548,7 +563,7 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-calendar-alt"></i> Periode
+                                <i class="fas fa-calendar-alt"></i> Periode Manfaat
                             </div>
                             <div class="ad-result-value" id="result-period">
                                 <span class="ad-chip">-</span>
@@ -605,11 +620,11 @@
                                         {{ $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}
                                     </td>
                                     <td>
-                                        <div class="ad-asset-code">{{ $log->asset?->account_code ?? '-' }}</div>
-                                        <div class="ad-asset-sub">ID: {{ $log->asset_id }}</div>
+                                        <div class="ad-asset-code">{{ $log->asset_display_code ?? '-' }}</div>
+                                        <div class="ad-asset-sub">{{ $log->asset_display_meta ?? '-' }}</div>
                                     </td>
                                     <td>
-                                        <span class="ad-badge">{{ sprintf('%02d/%04d', (int) $log->period_month, (int) $log->period_year) }}</span>
+                                        <span class="ad-badge">{{ $log->period_display_label ?? '-' }}</span>
                                     </td>
                                     <td style="font-weight:700; color:var(--p2);">
                                         Rp {{ number_format((float) $log->acquisition_cost, 2, ',', '.') }}
@@ -666,6 +681,10 @@
         const submitBtn = document.getElementById('submit-btn');
         const alertBox  = document.getElementById('depreciation-alert');
         const logBody   = document.getElementById('depreciation-log-body');
+        const assetSelect = document.getElementById('asset_id');
+        const periodStartInput = document.getElementById('period_start');
+        const periodEndInput = document.getElementById('period_end');
+        const usefulLifeInput = document.getElementById('useful_life_months');
         const logShowUrlTemplate = @json(route('finance.depreciation.logs.show', ['log' => '__LOG_ID__']));
         const logDownloadUrlTemplate = @json(route('finance.depreciation.logs.download', ['log' => '__LOG_ID__']));
 
@@ -684,9 +703,62 @@
         }
 
         function escapeHtml(v) {
-            return String(v ?? '')
+            return String(v == null ? '' : v)
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                 .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        }
+
+        function parsePeriodValue(value) {
+            if (!value || !/^\d{4}-\d{2}$/.test(value)) return null;
+
+            const [year, month] = value.split('-').map(Number);
+            if (!year || !month) return null;
+
+            return { year, month };
+        }
+
+        function calculateUsefulLifeMonths(startValue, endValue) {
+            const start = parsePeriodValue(startValue);
+            const end = parsePeriodValue(endValue);
+
+            if (!start || !end) return null;
+
+            const span = ((end.year - start.year) * 12) + (end.month - start.month) + 1;
+            return span >= 1 ? span : null;
+        }
+
+        function formatPeriodValue(value) {
+            const parsed = parsePeriodValue(value);
+            if (!parsed) return '-';
+
+            return String(parsed.month).padStart(2, '0') + '/' + parsed.year;
+        }
+
+        function formatPeriodRange(startValue, endValue) {
+            const startLabel = formatPeriodValue(startValue);
+            const endLabel = formatPeriodValue(endValue);
+
+            if (startLabel === '-' || endLabel === '-') {
+                return '-';
+            }
+
+            return `${startLabel} s/d ${endLabel}`;
+        }
+
+        function syncUsefulLifeMonths() {
+            const months = calculateUsefulLifeMonths(
+                periodStartInput.value,
+                periodEndInput.value
+            );
+
+            if (months === null && periodStartInput.value && periodEndInput.value) {
+                usefulLifeInput.value = '';
+                periodEndInput.setCustomValidity('Periode sampai harus sama atau setelah periode dari.');
+                return;
+            }
+
+            periodEndInput.setCustomValidity('');
+            usefulLifeInput.value = months === null ? '' : months;
         }
 
         function renumberLogRows() {
@@ -714,11 +786,11 @@
                 <td style="font-size:.84rem;">${escapeHtml(log.calculated_at_label || '-')}</td>
                 <td>
                     <div class="ad-asset-code">${escapeHtml(log.asset_account_code || '-')}</div>
-                    <div class="ad-asset-sub">ID: ${escapeHtml(log.asset_id || '-')}</div>
+                    <div class="ad-asset-sub">${escapeHtml(log.asset_display_meta || '-')}</div>
                 </td>
                 <td><span class="ad-badge">${escapeHtml(log.period_label || '-')}</span></td>
                 <td style="font-weight:700;color:var(--p2);">Rp ${formatNumber(log.acquisition_cost)}</td>
-                <td style="font-weight:600;text-align:center;">${escapeHtml(log.useful_life_months ?? '-')}</td>
+                <td style="font-weight:600;text-align:center;">${escapeHtml(log.useful_life_months != null ? log.useful_life_months : '-')}</td>
                 <td style="font-weight:700;color:#16A34A;">Rp ${formatNumber(log.depreciation_per_month)}</td>
                 <td>
                     <div style="display:flex;align-items:center;gap:7px;">
@@ -771,21 +843,24 @@
                 }
 
                 const data = payload.data || {};
+                const selectedAsset = assetSelect.selectedOptions.length
+                    ? assetSelect.selectedOptions[0]
+                    : null;
+                const selectedAssetLabel = selectedAsset
+                    ? selectedAsset.getAttribute('data-asset-label')
+                    : '-';
 
-                document.getElementById('result-asset-id').innerHTML =
-                    `<span class="ad-chip">${data.asset_id || '-'}</span>`;
+                document.getElementById('result-asset-label').innerHTML =
+                    `<span class="ad-chip">${escapeHtml(data.asset_label || selectedAssetLabel || '-')}</span>`;
                 document.getElementById('result-acquisition-cost').textContent =
                     'Rp ' + formatNumber(data.acquisition_cost);
                 document.getElementById('result-useful-life').innerHTML =
-                    `<span class="ad-chip">${data.useful_life_months ?? '-'}</span>`;
+                    `<span class="ad-chip">${data.useful_life_months != null ? data.useful_life_months : '-'}</span>`;
                 document.getElementById('result-depreciation-per-month').textContent =
                     'Rp ' + formatNumber(data.depreciation_per_month);
 
-                const periodLabel = (data.period_month && data.period_year)
-                    ? String(data.period_month).padStart(2, '0') + '/' + data.period_year
-                    : '-';
                 document.getElementById('result-period').innerHTML =
-                    `<span class="ad-chip">${periodLabel}</span>`;
+                    `<span class="ad-chip">${escapeHtml(data.period_label || formatPeriodRange(periodStartInput.value, periodEndInput.value))}</span>`;
                 document.getElementById('result-calculated-at').textContent =
                     data.calculated_at || '-';
 
@@ -809,9 +884,10 @@
         document.getElementById('acquisition_cost').addEventListener('input', function () {
             if (this.value < 0) this.value = 0;
         });
-        document.getElementById('useful_life_months').addEventListener('input', function () {
-            if (this.value < 1) this.value = 1;
-        });
+
+        periodStartInput.addEventListener('input', syncUsefulLifeMonths);
+        periodEndInput.addEventListener('input', syncUsefulLifeMonths);
+        syncUsefulLifeMonths();
     })();
 </script>
 @endsection

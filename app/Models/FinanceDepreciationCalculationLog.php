@@ -15,6 +15,8 @@ class FinanceDepreciationCalculationLog extends Model
 
     protected $fillable = [
         'asset_id',
+        'period_start_date',
+        'period_end_date',
         'period_month',
         'period_year',
         'acquisition_cost',
@@ -25,6 +27,8 @@ class FinanceDepreciationCalculationLog extends Model
     ];
 
     protected $casts = [
+        'period_start_date' => 'date',
+        'period_end_date' => 'date',
         'period_month' => 'integer',
         'period_year' => 'integer',
         'acquisition_cost' => 'decimal:2',

@@ -9,6 +9,8 @@ use App\Http\Requests\Finance\CalculateDepreciationRequest;
 use App\Models\Asset\Asset;
 use App\Models\FinanceDepreciationCalculationLog;
 use App\Services\Finance\DepreciationService;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -32,12 +34,20 @@ class AssetDepreciationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $input = DepreciationInputDTO::fromArray($validated);
+            $periodStart = $this->parsePeriodMonth($validated['period_start']);
+            $periodEnd = $this->parsePeriodMonth($validated['period_end']);
+            $usefulLifeMonths = $this->resolveUsefulLifeMonths($periodStart, $periodEnd);
+            $input = DepreciationInputDTO::fromArray(array_merge($validated, [
+                'useful_life_months' => $usefulLifeMonths,
+            ]));
             $result = $this->depreciationService->calculateStraightLine($input);
             $calculatedAt = now(config('app.timezone'));
             $logId = null;
             $logPayload = null;
             $loggingAvailable = Schema::hasTable('finance_depreciation_calculation_logs');
+            $asset = Asset::query()
+                ->select('id', 'account_code', 'category', 'location')
+                ->find($validated['asset_id']);
 
             // The log records what the user typed into the calculator at that
             // moment. It is useful as an audit trail, but it is not the same as
@@ -45,8 +55,10 @@ class AssetDepreciationController extends Controller
             if ($loggingAvailable) {
                 $log = FinanceDepreciationCalculationLog::query()->create([
                     'asset_id' => $validated['asset_id'],
-                    'period_month' => (int) $validated['month'],
-                    'period_year' => (int) $validated['year'],
+                    'period_start_date' => $periodStart->toDateString(),
+                    'period_end_date' => $periodEnd->toDateString(),
+                    'period_month' => $periodEnd->month,
+                    'period_year' => $periodEnd->year,
                     'acquisition_cost' => $result->acquisitionCost,
                     'useful_life_months' => $result->usefulLifeMonths,
                     'depreciation_per_month' => $result->depreciationPerMonth,
@@ -55,16 +67,31 @@ class AssetDepreciationController extends Controller
                 ]);
                 $logId = $log->id;
                 $log->loadMissing([
-                    'asset:id,account_code',
+                    'asset:id,account_code,category,location',
                     'calculator:id,name',
                 ]);
 
                 $logPayload = [
                     'id' => $log->id,
                     'calculated_at_label' => $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s'),
-                    'asset_id' => $log->asset_id,
+                    'asset_label' => $this->formatAssetDisplay(
+                        $log->asset?->category,
+                        $log->asset?->account_code,
+                        $log->asset?->location
+                    ),
                     'asset_account_code' => $log->asset?->account_code ?? '-',
-                    'period_label' => sprintf('%02d/%04d', (int) $log->period_month, (int) $log->period_year),
+                    'asset_category_label' => $this->formatAssetCategory($log->asset?->category),
+                    'asset_location' => $log->asset?->location ?? '-',
+                    'asset_display_meta' => $this->formatAssetMeta(
+                        $log->asset?->category,
+                        $log->asset?->location
+                    ),
+                    'period_label' => $this->formatPeriodLabel(
+                        $log->period_start_date,
+                        $log->period_end_date,
+                        $log->period_month,
+                        $log->period_year
+                    ),
                     'acquisition_cost' => (float) $log->acquisition_cost,
                     'useful_life_months' => (int) $log->useful_life_months,
                     'depreciation_per_month' => (float) $log->depreciation_per_month,
@@ -79,8 +106,19 @@ class AssetDepreciationController extends Controller
             return response()->json([
                 'message' => $message,
                 'data' => array_merge($result->toArray(), [
-                    'period_month' => (int) $validated['month'],
-                    'period_year' => (int) $validated['year'],
+                    'asset_label' => $this->formatAssetDisplay(
+                        $asset?->category,
+                        $asset?->account_code,
+                        $asset?->location
+                    ),
+                    'period_start' => $validated['period_start'],
+                    'period_end' => $validated['period_end'],
+                    'period_label' => $this->formatPeriodLabel(
+                        $periodStart,
+                        $periodEnd
+                    ),
+                    'period_month' => $periodEnd->month,
+                    'period_year' => $periodEnd->year,
                     'calculated_at' => $calculatedAt->format('Y-m-d H:i:s'),
                     'log_id' => $logId,
                     'log_saved' => $logId !== null,
@@ -105,7 +143,17 @@ class AssetDepreciationController extends Controller
             $assets = Asset::query()
                 ->select('id', 'account_code', 'category', 'location')
                 ->orderBy('account_code')
-                ->get();
+                ->get()
+                ->map(function (Asset $asset): Asset {
+                    $asset->category_label = $this->formatAssetCategory($asset->category);
+                    $asset->display_label = $this->formatAssetDisplay(
+                        $asset->category,
+                        $asset->account_code,
+                        $asset->location
+                    );
+
+                    return $asset;
+                });
             $logs = new Collection();
             if (Schema::hasTable('finance_depreciation_calculation_logs')) {
                 $logs = FinanceDepreciationCalculationLog::query()
@@ -115,7 +163,28 @@ class AssetDepreciationController extends Controller
                     ])
                     ->orderByDesc('calculated_at')
                     ->limit(50)
-                    ->get();
+                    ->get()
+                    ->map(function (FinanceDepreciationCalculationLog $log): FinanceDepreciationCalculationLog {
+                        $log->asset_category_label = $this->formatAssetCategory($log->asset?->category);
+                        $log->asset_display_code = $log->asset?->account_code ?? '-';
+                        $log->asset_display_meta = $this->formatAssetMeta(
+                            $log->asset?->category,
+                            $log->asset?->location
+                        );
+                        $log->asset_display_label = $this->formatAssetDisplay(
+                            $log->asset?->category,
+                            $log->asset?->account_code,
+                            $log->asset?->location
+                        );
+                        $log->period_display_label = $this->formatPeriodLabel(
+                            $log->period_start_date,
+                            $log->period_end_date,
+                            $log->period_month,
+                            $log->period_year
+                        );
+
+                        return $log;
+                    });
             }
 
             return view('finance.depreciation', [
@@ -140,6 +209,12 @@ class AssetDepreciationController extends Controller
 
         return view('finance.depreciation-show', [
             'log' => $log,
+            'periodLabel' => $this->formatPeriodLabel(
+                $log->period_start_date,
+                $log->period_end_date,
+                $log->period_month,
+                $log->period_year
+            ),
         ]);
     }
 
@@ -155,6 +230,12 @@ class AssetDepreciationController extends Controller
         if (class_exists(\Dompdf\Dompdf::class)) {
             $html = view('finance.depreciation-log-pdf', [
                 'log' => $log,
+                'periodLabel' => $this->formatPeriodLabel(
+                    $log->period_start_date,
+                    $log->period_end_date,
+                    $log->period_month,
+                    $log->period_year
+                ),
                 'timezone' => config('app.timezone'),
             ])->render();
 
@@ -185,11 +266,15 @@ class AssetDepreciationController extends Controller
             'DETAIL LOG PENYUSUTAN ASET',
             'ID Log: ' . $log->id,
             'Waktu Hitung: ' . $calculatedAt,
-            'Asset ID: ' . $log->asset_id,
             'Kode Akun Asset: ' . (string) ($log->asset?->account_code ?? '-'),
             'Kategori Asset: ' . $this->formatAssetCategory($log->asset?->category),
             'Lokasi Asset: ' . (string) ($log->asset?->location ?? '-'),
-            'Periode: ' . sprintf('%02d/%04d', (int) $log->period_month, (int) $log->period_year),
+            'Periode: ' . $this->formatPeriodLabel(
+                $log->period_start_date,
+                $log->period_end_date,
+                $log->period_month,
+                $log->period_year
+            ),
             'Nilai Perolehan: Rp ' . number_format((float) $log->acquisition_cost, 2, ',', '.'),
             'Umur Manfaat (bulan): ' . (int) $log->useful_life_months,
             'Penyusutan per bulan: Rp ' . number_format((float) $log->depreciation_per_month, 2, ',', '.'),
@@ -256,5 +341,60 @@ class AssetDepreciationController extends Controller
         }
 
         return '-';
+    }
+
+    private function formatAssetDisplay(
+        mixed $category,
+        ?string $accountCode,
+        ?string $location
+    ): string {
+        return implode(' | ', [
+            $this->formatAssetCategory($category),
+            $accountCode ?: '-',
+            $location ?: '-',
+        ]);
+    }
+
+    private function formatAssetMeta(mixed $category, ?string $location): string
+    {
+        return implode(' - ', array_filter([
+            $this->formatAssetCategory($category),
+            $location,
+        ])) ?: '-';
+    }
+
+    private function formatPeriodLabel(
+        ?CarbonInterface $periodStart = null,
+        ?CarbonInterface $periodEnd = null,
+        ?int $periodMonth = null,
+        ?int $periodYear = null
+    ): string {
+        if ($periodStart !== null && $periodEnd !== null) {
+            return $periodStart->format('m/Y') . ' s/d ' . $periodEnd->format('m/Y');
+        }
+
+        if ($periodMonth !== null && $periodYear !== null) {
+            return sprintf('%02d/%04d', $periodMonth, $periodYear);
+        }
+
+        return '-';
+    }
+
+    private function parsePeriodMonth(string $value): CarbonImmutable
+    {
+        return CarbonImmutable::createFromFormat(
+            'Y-m',
+            trim($value),
+            config('app.timezone')
+        )->startOfMonth();
+    }
+
+    private function resolveUsefulLifeMonths(
+        CarbonImmutable $periodStart,
+        CarbonImmutable $periodEnd
+    ): int {
+        return (($periodEnd->year - $periodStart->year) * 12)
+            + ($periodEnd->month - $periodStart->month)
+            + 1;
     }
 }

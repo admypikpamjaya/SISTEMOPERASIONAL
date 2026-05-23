@@ -67,10 +67,6 @@
                 <td>{{ $log->calculated_at?->timezone($timezone ?? config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Asset ID</th>
-                <td>{{ $log->asset_id }}</td>
-            </tr>
-            <tr>
                 <th>Kode Akun Asset</th>
                 <td>{{ $log->asset?->account_code ?? '-' }}</td>
             </tr>
@@ -83,8 +79,8 @@
                 <td>{{ $log->asset?->location ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Periode</th>
-                <td>{{ sprintf('%02d/%04d', (int) $log->period_month, (int) $log->period_year) }}</td>
+                <th>Periode Manfaat</th>
+                <td>{{ $periodLabel ?? '-' }}</td>
             </tr>
             <tr>
                 <th>Nilai Perolehan</th>

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Finance;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Throwable;
 
 class CalculateDepreciationRequest extends FormRequest
 {
@@ -24,9 +26,8 @@ class CalculateDepreciationRequest extends FormRequest
         return [
             'asset_id' => 'required|string|exists:assets,id',
             'acquisition_cost' => 'required|numeric|min:0',
-            'useful_life_months' => 'required|integer|min:1',
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer|digits:4|between:1900,2100',
+            'period_start' => 'required|date_format:Y-m',
+            'period_end' => 'required|date_format:Y-m',
         ];
     }
 
@@ -38,16 +39,46 @@ class CalculateDepreciationRequest extends FormRequest
             'acquisition_cost.required' => 'Nilai perolehan wajib diisi.',
             'acquisition_cost.numeric' => 'Nilai perolehan harus berupa angka.',
             'acquisition_cost.min' => 'Nilai perolehan minimal 0.',
-            'useful_life_months.required' => 'Umur aset (bulan) wajib diisi.',
-            'useful_life_months.integer' => 'Umur aset (bulan) harus bilangan bulat.',
-            'useful_life_months.min' => 'Umur aset (bulan) minimal 1.',
-            'month.required' => 'Bulan wajib diisi.',
-            'month.integer' => 'Bulan harus berupa angka.',
-            'month.between' => 'Bulan harus antara 1 sampai 12.',
-            'year.required' => 'Tahun wajib diisi.',
-            'year.integer' => 'Tahun harus berupa angka.',
-            'year.digits' => 'Tahun harus 4 digit.',
-            'year.between' => 'Tahun tidak valid.',
+            'period_start.required' => 'Periode dari wajib diisi.',
+            'period_start.date_format' => 'Format periode dari tidak valid.',
+            'period_end.required' => 'Periode sampai wajib diisi.',
+            'period_end.date_format' => 'Format periode sampai tidak valid.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $periodStart = $this->parsePeriodMonth($this->input('period_start'));
+            $periodEnd = $this->parsePeriodMonth($this->input('period_end'));
+
+            if ($periodStart === null || $periodEnd === null) {
+                return;
+            }
+
+            if ($periodEnd->lt($periodStart)) {
+                $validator->errors()->add(
+                    'period_end',
+                    'Periode sampai harus sama atau setelah periode dari.'
+                );
+            }
+        });
+    }
+
+    private function parsePeriodMonth(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::createFromFormat(
+                'Y-m',
+                trim($value),
+                config('app.timezone')
+            )->startOfMonth();
+        } catch (Throwable) {
+            return null;
+        }
     }
 }
