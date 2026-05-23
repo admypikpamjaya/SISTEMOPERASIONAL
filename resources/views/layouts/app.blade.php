@@ -164,6 +164,29 @@
                             return false;
                         };
 
+                        $matchesMenuRoute = static function (array $item) : bool {
+                            $patterns = [];
+
+                            if (!empty($item['route']) && is_string($item['route'])) {
+                                $patterns[] = $item['route'];
+                            }
+
+                            $activeRoutes = $item['active_routes'] ?? [];
+                            if (is_string($activeRoutes) && $activeRoutes !== '') {
+                                $patterns[] = $activeRoutes;
+                            } elseif (is_array($activeRoutes)) {
+                                foreach ($activeRoutes as $pattern) {
+                                    if (is_string($pattern) && $pattern !== '') {
+                                        $patterns[] = $pattern;
+                                    }
+                                }
+                            }
+
+                            return collect($patterns)->contains(
+                                static fn (string $pattern): bool => request()->routeIs($pattern)
+                            );
+                        };
+
                         $hasRoleAccess = static function (array $item) use ($activeRole): bool {
                             if (empty($item['roles'])) {
                                 return true;
@@ -197,8 +220,8 @@
                             $isAllowedForBlasting = true;
 
                             if ($hasChildren) {
-                                $isActiveParent = $menuChildren->pluck('route')
-                                    ->contains(fn($r) => request()->routeIs($r));
+                                $isActiveParent = $menuChildren
+                                    ->contains(fn($child) => $matchesMenuRoute($child));
                             }
 
                             if ($blastingOnly) {
@@ -246,7 +269,7 @@
                                     </div>
                                 <?php else: ?>
                                     <a href="<?php echo e(route($menu['route'])); ?>"
-                                       class="nav-link <?php echo e((!$hasChildren && request()->routeIs($menu['route'])) || $isActiveParent ? 'active' : ''); ?>">
+                                       class="nav-link <?php echo e((!$hasChildren && $matchesMenuRoute($menu)) || $isActiveParent ? 'active' : ''); ?>">
                                         <i class="nav-icon <?php echo e($menu['icon']); ?>"></i>
                                         <p>
                                             <?php echo e(!empty($menu['label_key']) ? __($menu['label_key']) : $menu['label']); ?>
@@ -272,7 +295,7 @@
                                             <?php if ($canAccessChild): ?>
                                                 <li class="nav-item">
                                                     <a href="<?php echo e(route($child['route'])); ?>"
-                                                       class="nav-link <?php echo e(request()->routeIs($child['route']) ? 'active' : ''); ?>">
+                                                       class="nav-link <?php echo e($matchesMenuRoute($child) ? 'active' : ''); ?>">
                                                         <i class="nav-icon <?php echo e($child['icon']); ?>"></i>
                                                         <p><?php echo e(!empty($child['label_key']) ? __($child['label_key']) : $child['label']); ?></p>
                                                     </a>

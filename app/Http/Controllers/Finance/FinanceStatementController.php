@@ -633,13 +633,17 @@ class FinanceStatementController extends Controller
 
             $batchId = (string) $row->batch_id;
             $filter = StatementFilterDTO::fromArray($request->validated());
+            $returnMode = $request->input('return_to') === 'main' ? 'main' : 'manage';
+            $statementDataSource = $returnMode === 'main'
+                ? ((string) ($filter->statementDataSource ?: 'imported'))
+                : 'imported';
             $this->financeImportedStatementService->deleteRow($row);
 
             return redirect()
-                ->route($this->statementManageRoute($statementType), array_merge(
+                ->route($this->statementPageRoute($statementType, $returnMode === 'manage'), array_merge(
                     $filter->toQueryArray(),
                     [
-                        'statement_data_source' => 'imported',
+                        'statement_data_source' => $statementDataSource,
                         'statement_batch_id' => $batchId,
                     ]
                 ))
@@ -1675,6 +1679,19 @@ class FinanceStatementController extends Controller
         return match ($statementType) {
             FinanceStatementBatch::TYPE_BALANCE_SHEET => 'finance.report.balance-sheet.manage',
             FinanceStatementBatch::TYPE_PROFIT_LOSS => 'finance.report.profit-loss.manage',
+            default => 'finance.dashboard',
+        };
+    }
+
+    private function statementPageRoute(string $statementType, bool $isManageMode): string
+    {
+        if ($isManageMode) {
+            return $this->statementManageRoute($statementType);
+        }
+
+        return match ($statementType) {
+            FinanceStatementBatch::TYPE_BALANCE_SHEET => 'finance.report.balance-sheet',
+            FinanceStatementBatch::TYPE_PROFIT_LOSS => 'finance.report.profit-loss',
             default => 'finance.dashboard',
         };
     }

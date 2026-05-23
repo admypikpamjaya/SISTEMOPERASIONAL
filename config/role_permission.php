@@ -80,6 +80,10 @@ return [
      | FINANCE
      =============================== */
     UserRole::FINANCE->value => [
+        PortalPermission::ASSET_MANAGEMENT_READ,
+        PortalPermission::ASSET_MANAGEMENT_CREATE,
+        PortalPermission::ASSET_MANAGEMENT_UPDATE,
+        PortalPermission::ASSET_MANAGEMENT_DELETE,
         PortalPermission::FINANCE_DEPRECIATION_READ,
         PortalPermission::FINANCE_DEPRECIATION_CALCULATE,
         PortalPermission::FINANCE_REPORT_READ,

@@ -1004,6 +1004,7 @@
                                             <input type="hidden" name="statement_data_source" value="imported">
                                             <input type="hidden" name="statement_batch_id" value="{{ $selectedBatchId }}">
                                             <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
+                                            <input type="hidden" name="return_to" value="manage">
                                             <button type="submit" class="fs-inline-link" style="color:var(--fs-red); border-color:rgba(239,68,68,.2);">
                                                 <i class="fas fa-trash"></i> Hapus
                                             </button>
@@ -1326,6 +1327,21 @@
                                                         <a class="dropdown-item" href="{{ $manageRowRoute }}">
                                                             <i class="fas fa-pen"></i> {{ $isImportedSource ? 'Edit Baris' : 'Kelola Import' }}
                                                         </a>
+                                                        @if($canManageStatementMapping && !empty($row['id']))
+                                                            <form method="POST" action="{{ route('finance.report.balance-sheet.rows.destroy', $row['id']) }}" onsubmit="return confirm('Hapus baris import lembar saldo ini?')" style="margin:0;">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <input type="hidden" name="statement_data_source" value="{{ $statementDataSource }}">
+                                                                <input type="hidden" name="statement_batch_id" value="{{ $row['imported_batch_id'] ?? $selectedBatchId }}">
+                                                                @if($isImportedSource)
+                                                                    <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
+                                                                @endif
+                                                                <input type="hidden" name="return_to" value="main">
+                                                                <button type="submit" class="dropdown-item" style="color:var(--fs-red); background:none; border:none; width:100%; text-align:left;">
+                                                                    <i class="fas fa-trash"></i> {{ $rowHasJournalSource ? 'Hapus Baris Import' : 'Hapus Baris' }}
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                     @endif
                                                 </div>
                                             </div>

@@ -32,6 +32,12 @@ return array_map($withFallbackLabel, [
         'label_key'   => 'app.menu.asset_management',
         'icon'        => 'fas fa-boxes',
         'route'       => 'asset-management.index',
+        'roles'       => [
+            UserRole::IT_SUPPORT->value,
+            UserRole::ASSET_MANAGER->value,
+            UserRole::PEMBINA->value,
+            UserRole::QC->value,
+        ],
         'children'    => [
             [
                 'module_name' => 'asset_management',
@@ -152,6 +158,14 @@ return array_map($withFallbackLabel, [
                 'label_key' => 'app.menu.asset_depreciation',
                 'icon'  => 'fas fa-calculator',
                 'route' => 'finance.depreciation.index',
+            ],
+            [
+                'label_key' => 'app.menu.asset_management',
+                'icon'  => 'fas fa-boxes',
+                'route' => 'asset-management.index',
+                'module_name' => 'asset_management',
+                'roles' => [UserRole::FINANCE->value],
+                'active_routes' => ['asset-management.*'],
             ],
             [
                 'label_key' => 'app.menu.input_finance_report',
