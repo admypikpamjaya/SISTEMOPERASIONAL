@@ -26,12 +26,18 @@
 <script>
     const modal = $('#shared-modal');
     const defaultDialogClass = 'modal-dialog modal-dialog-centered';
+    const defaultContentClass = 'modal-content';
+    const defaultHeaderClass = 'modal-header';
     const defaultBodyClass = 'modal-body';
+    const defaultFooterClass = 'modal-footer';
 
     modal.show = (title, body, buttons, options = {}) => {
         modal.find('.modal-title').text(title);
         modal.find('.modal-dialog').attr('class', `${defaultDialogClass}${options.dialogClass ? ' ' + options.dialogClass : ''}`);
+        modal.find('.modal-content').attr('class', `${defaultContentClass}${options.contentClass ? ' ' + options.contentClass : ''}`);
+        modal.find('.modal-header').attr('class', `${defaultHeaderClass}${options.headerClass ? ' ' + options.headerClass : ''}`);
         modal.find('#modal-body').attr('class', `${defaultBodyClass}${options.bodyClass ? ' ' + options.bodyClass : ''}`);
+        modal.find('.modal-footer').attr('class', `${defaultFooterClass}${options.footerClass ? ' ' + options.footerClass : ''}`);
 
         modal.find('#modal-body').html(body || '');
         modal.find('#modal-footer-buttons-container').html(buttons || '');
@@ -45,7 +51,10 @@
 
     modal.on('hidden.bs.modal', () => {
         modal.find('.modal-dialog').attr('class', defaultDialogClass);
+        modal.find('.modal-content').attr('class', defaultContentClass);
+        modal.find('.modal-header').attr('class', defaultHeaderClass);
         modal.find('#modal-body').attr('class', defaultBodyClass);
+        modal.find('.modal-footer').attr('class', defaultFooterClass);
         modal.find('#modal-footer-buttons-container').html('');
     });
 </script>
