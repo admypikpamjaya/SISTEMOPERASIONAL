@@ -364,6 +364,463 @@
     }
 
     /* ─── Animations ──────────────────────────── */
+    .maintenance-hub-card {
+        padding: 0;
+    }
+    .maintenance-hub-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 1fr);
+        min-height: 100%;
+    }
+    .maintenance-hub-hero {
+        position: relative;
+        padding: 1.55rem;
+        border-right: 1px solid var(--border-light);
+        background:
+            radial-gradient(circle at top left, rgba(59,130,246,0.18), transparent 40%),
+            linear-gradient(180deg, rgba(37,99,235,0.05), transparent 65%);
+        overflow: hidden;
+    }
+    .maintenance-hub-hero::after {
+        content: '';
+        position: absolute;
+        right: -24px;
+        bottom: -36px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: rgba(37,99,235,0.06);
+    }
+    .maintenance-hub-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(37,99,235,0.10);
+        color: var(--blue-primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1rem;
+    }
+    .maintenance-hub-kicker .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent-green);
+        box-shadow: 0 0 0 5px rgba(16,185,129,0.12);
+    }
+    .maintenance-hub-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.2;
+        margin: 0 0 0.55rem;
+        letter-spacing: -0.02em;
+    }
+    .maintenance-hub-description {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        line-height: 1.8;
+        max-width: 540px;
+        margin-bottom: 1.25rem;
+        position: relative;
+        z-index: 1;
+    }
+    .maintenance-hub-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        margin-bottom: 1.15rem;
+        position: relative;
+        z-index: 1;
+    }
+    .maintenance-hub-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        min-width: 180px;
+        padding: 0.82rem 1.2rem;
+        border-radius: 16px;
+        font-size: 0.86rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        text-decoration: none !important;
+    }
+    .maintenance-hub-btn:hover {
+        transform: translateY(-1px);
+    }
+    .maintenance-hub-btn-primary {
+        color: #fff;
+        background: linear-gradient(135deg, var(--blue-primary), var(--blue-light));
+        box-shadow: 0 12px 24px rgba(37,99,235,0.22);
+    }
+    .maintenance-hub-btn-primary:hover {
+        color: #fff;
+        box-shadow: 0 16px 28px rgba(37,99,235,0.28);
+    }
+    .maintenance-hub-btn-secondary {
+        color: var(--text-primary);
+        background: rgba(255,255,255,0.72);
+        border-color: rgba(37,99,235,0.14);
+        box-shadow: 0 10px 22px rgba(15,23,42,0.06);
+    }
+    .maintenance-hub-btn-secondary:hover {
+        color: var(--blue-primary);
+        border-color: rgba(37,99,235,0.28);
+        background: rgba(255,255,255,0.9);
+    }
+    .maintenance-hub-master {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.78rem 0.95rem;
+        border-radius: 16px;
+        background: rgba(15,23,42,0.035);
+        border: 1px solid rgba(37,99,235,0.10);
+        position: relative;
+        z-index: 1;
+    }
+    .maintenance-hub-master-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(16,185,129,0.12);
+        color: #059669;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .maintenance-hub-master-email {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+    .maintenance-hub-panel {
+        padding: 1.55rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .maintenance-hub-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    .maintenance-hub-stat {
+        border: 1px solid rgba(37,99,235,0.12);
+        border-radius: 18px;
+        padding: 1rem 1.05rem;
+        background: linear-gradient(180deg, rgba(37,99,235,0.04), rgba(255,255,255,0.9));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+    .maintenance-hub-stat-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin-bottom: 0.6rem;
+    }
+    .maintenance-hub-stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    .maintenance-hub-stat-meta {
+        font-size: 0.77rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+    }
+    .maintenance-hub-preview-card {
+        flex: 1;
+        border: 1px solid rgba(37,99,235,0.12);
+        border-radius: 20px;
+        padding: 1.1rem;
+        background:
+            radial-gradient(circle at top right, rgba(6,182,212,0.10), transparent 30%),
+            linear-gradient(180deg, rgba(37,99,235,0.035), rgba(255,255,255,0.94));
+    }
+    .maintenance-hub-preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        margin-bottom: 0.85rem;
+    }
+    .maintenance-hub-preview-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    .maintenance-hub-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.38rem 0.8rem;
+        border-radius: 999px;
+        background: rgba(6,182,212,0.12);
+        color: #0891b2;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .maintenance-hub-preview-body {
+        min-height: 90px;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0.7rem;
+    }
+    .maintenance-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.72rem 0.9rem;
+        border-radius: 14px;
+        background: rgba(37,99,235,0.08);
+        border: 1px solid rgba(37,99,235,0.12);
+        color: var(--text-primary);
+        max-width: 100%;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+    .maintenance-chip i {
+        color: var(--blue-primary);
+        font-size: 0.78rem;
+    }
+    .maintenance-chip span {
+        font-size: 0.8rem;
+        font-weight: 600;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+    .maintenance-hub-empty {
+        width: 100%;
+        min-height: 92px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border-radius: 16px;
+        border: 1px dashed rgba(37,99,235,0.20);
+        background: rgba(15,23,42,0.025);
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        padding: 1rem;
+    }
+    .maintenance-hub-note {
+        margin-top: 0.9rem;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        line-height: 1.7;
+    }
+    .maintenance-modal-shell {
+        background: var(--surface-card);
+    }
+    .maintenance-modal-hero {
+        padding: 1.4rem 1.4rem 1.2rem;
+        border-bottom: 1px solid var(--border-light);
+        background:
+            radial-gradient(circle at top right, rgba(6,182,212,0.12), transparent 28%),
+            linear-gradient(135deg, rgba(37,99,235,0.08), rgba(255,255,255,0.96));
+    }
+    .maintenance-modal-hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.34rem 0.72rem;
+        border-radius: 999px;
+        background: rgba(37,99,235,0.10);
+        color: var(--blue-primary);
+        font-size: 0.71rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.8rem;
+    }
+    .maintenance-modal-hero-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.45rem;
+        letter-spacing: -0.02em;
+    }
+    .maintenance-modal-hero-text {
+        font-size: 0.86rem;
+        color: var(--text-secondary);
+        line-height: 1.75;
+        margin: 0;
+    }
+    .maintenance-modal-hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-top: 1rem;
+    }
+    .maintenance-soft-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.42rem 0.82rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .maintenance-soft-badge.master {
+        background: rgba(16,185,129,0.12);
+        color: #059669;
+    }
+    .maintenance-soft-badge.count {
+        background: rgba(6,182,212,0.12);
+        color: #0891b2;
+    }
+    .maintenance-modal-content {
+        padding: 1.35rem;
+    }
+    .maintenance-modal-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+        gap: 1rem;
+    }
+    .maintenance-modal-panel {
+        border: 1px solid rgba(37,99,235,0.12);
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(37,99,235,0.03), rgba(255,255,255,0.98));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        padding: 1.15rem;
+    }
+    .maintenance-modal-panel-title {
+        font-size: 0.96rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    .maintenance-modal-panel-text {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        line-height: 1.7;
+        margin-bottom: 1rem;
+    }
+    .maintenance-modal-master-box {
+        border-radius: 16px;
+        border: 1px solid rgba(16,185,129,0.18);
+        background: rgba(16,185,129,0.08);
+        padding: 0.9rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .maintenance-modal-master-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #059669;
+        margin-bottom: 0.35rem;
+    }
+    .maintenance-modal-master-email {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        word-break: break-word;
+        margin-bottom: 0.3rem;
+    }
+    .maintenance-modal-master-note {
+        font-size: 0.76rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+    .maintenance-modal-list {
+        max-height: 430px;
+        overflow: auto;
+        padding-right: 0.1rem;
+    }
+    .maintenance-modal-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.95rem 1rem;
+        border-radius: 16px;
+        border: 1px solid rgba(37,99,235,0.10);
+        background: rgba(255,255,255,0.85);
+    }
+    .maintenance-modal-item + .maintenance-modal-item {
+        margin-top: 0.75rem;
+    }
+    .maintenance-modal-item-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.2rem;
+    }
+    .maintenance-modal-item-email {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        word-break: break-word;
+        margin-bottom: 0.55rem;
+    }
+    .maintenance-modal-empty {
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1.2rem;
+        border-radius: 18px;
+        border: 1px dashed rgba(37,99,235,0.20);
+        color: var(--text-muted);
+        background: rgba(15,23,42,0.025);
+    }
+    .maintenance-modal-empty i {
+        font-size: 2rem;
+        color: rgba(37,99,235,0.65);
+        margin-bottom: 0.75rem;
+    }
+    @media (max-width: 1199.98px) {
+        .maintenance-hub-grid,
+        .maintenance-modal-grid {
+            grid-template-columns: 1fr;
+        }
+        .maintenance-hub-hero {
+            border-right: 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+    }
+    @media (max-width: 767.98px) {
+        .maintenance-hub-hero,
+        .maintenance-hub-panel,
+        .maintenance-modal-content,
+        .maintenance-modal-hero {
+            padding: 1.1rem;
+        }
+        .maintenance-hub-actions {
+            flex-direction: column;
+        }
+        .maintenance-hub-btn {
+            width: 100%;
+            min-width: 100%;
+        }
+        .maintenance-hub-stats {
+            grid-template-columns: 1fr;
+        }
+        .maintenance-hub-title {
+            font-size: 1.15rem;
+        }
+    }
     @keyframes fadeUp {
         from { opacity: 0; transform: translateY(18px); }
         to   { opacity: 1; transform: translateY(0); }
@@ -458,92 +915,96 @@
 
     <div class="row">
         <div class="col-12 mb-3">
-            <div class="saldo-card" id="maintenance-recipient-summary-card">
-                <div class="d-flex flex-wrap align-items-start justify-content-between mb-3" style="gap:1rem;">
-                    <div>
+            <div class="saldo-card maintenance-hub-card" id="maintenance-recipient-summary-card">
+                <div class="maintenance-hub-grid">
+                    <div class="maintenance-hub-hero">
+                        <div class="maintenance-hub-kicker">
+                            <span class="dot"></span>
+                            Superadmin Maintenance
+                        </div>
+
                         <div class="saldo-icon mb-3"><i class="fas fa-envelope-open-text"></i></div>
-                        <div class="saldo-label mb-2">Email Maintenance</div>
-                        <div class="small" style="color:var(--text-muted); max-width:720px; line-height:1.7;">
-                            Kelola email penerima report maintenance dari dashboard superadmin. Email master tetap aktif, lalu email tambahan bisa ditambah atau dihapus kapan saja.
+                        <h3 class="maintenance-hub-title">Distribusi Report Maintenance</h3>
+                        <div class="maintenance-hub-description">
+                            Kelola email penerima report maintenance langsung dari dashboard superadmin. Email master tetap aktif, sementara email tambahan bisa ditambah atau dihapus kapan saja dengan tampilan yang lebih cepat dan rapi.
                         </div>
-                    </div>
 
-                    <div class="d-flex flex-wrap" style="gap:.65rem;">
-                        <button
-                            type="button"
-                            id="open-maintenance-recipient-add"
-                            class="btn btn-primary btn-sm"
-                            style="border-radius:999px; padding:.6rem 1rem; min-width:160px;"
-                        >
-                            <i class="fas fa-plus mr-1"></i>
-                            Tambah Email
-                        </button>
-                        <button
-                            type="button"
-                            id="open-maintenance-recipient-manager"
-                            class="btn btn-outline-light btn-sm"
-                            style="border-radius:999px; padding:.6rem 1rem; min-width:170px;"
-                        >
-                            <i class="fas fa-cog mr-1"></i>
-                            Kelola Daftar
-                        </button>
-                    </div>
-                </div>
-
-                <div class="row align-items-stretch">
-                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3 mb-lg-0">
-                        <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
-                            <div class="saldo-label mb-2">Total Tujuan</div>
-                            <div class="saldo-value mb-2" id="maintenance-recipient-total">
-                                {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
-                            </div>
-                            <div class="saldo-meta" id="maintenance-recipient-summary-text" style="line-height:1.6;">
-                                Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
-                            </div>
+                        <div class="maintenance-hub-actions">
+                            <button
+                                type="button"
+                                id="open-maintenance-recipient-add"
+                                class="maintenance-hub-btn maintenance-hub-btn-primary"
+                            >
+                                <i class="fas fa-plus"></i>
+                                Tambah Email
+                            </button>
+                            <button
+                                type="button"
+                                id="open-maintenance-recipient-manager"
+                                class="maintenance-hub-btn maintenance-hub-btn-secondary"
+                            >
+                                <i class="fas fa-sliders-h"></i>
+                                Kelola Daftar
+                            </button>
                         </div>
-                    </div>
 
-                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3 mb-lg-0">
-                        <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="saldo-label mb-0">Email Master</div>
-                                <span class="badge badge-success">Tetap Aktif</span>
-                            </div>
-                            <div id="maintenance-recipient-master-email" style="font-size:.95rem; font-weight:600; color:var(--text-primary); word-break:break-word; line-height:1.6;">
+                        <div class="maintenance-hub-master">
+                            <span class="maintenance-hub-master-badge">
+                                <i class="fas fa-lock"></i>
+                                Master Aktif
+                            </span>
+                            <span class="maintenance-hub-master-email" id="maintenance-recipient-master-email">
                                 {{ data_get($maintenanceNotificationRecipients, 'master') }}
-                            </div>
-                            <div class="small mt-3" style="color:var(--text-muted);">
-                                Email ini selalu menerima report dan tidak bisa dihapus.
-                            </div>
+                            </span>
                         </div>
                     </div>
 
-                    <div class="col-lg-6 col-md-12 col-sm-12">
-                        <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
-                            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap" style="gap:.6rem;">
-                                <div class="saldo-label mb-0">Email Tambahan Aktif</div>
-                                <span class="badge badge-info" id="maintenance-recipient-count-badge">
+                    <div class="maintenance-hub-panel">
+                        <div class="maintenance-hub-stats">
+                            <div class="maintenance-hub-stat">
+                                <div class="maintenance-hub-stat-label">Total Tujuan</div>
+                                <div class="maintenance-hub-stat-value" id="maintenance-recipient-total">
+                                    {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
+                                </div>
+                                <div class="maintenance-hub-stat-meta" id="maintenance-recipient-summary-text">
+                                    Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
+                                </div>
+                            </div>
+
+                            <div class="maintenance-hub-stat">
+                                <div class="maintenance-hub-stat-label">Email Master</div>
+                                <div class="maintenance-hub-stat-value" style="font-size:1rem; line-height:1.45; word-break:break-word;">
+                                    Terkunci
+                                </div>
+                                <div class="maintenance-hub-stat-meta">
+                                    Email master di sisi kiri selalu menerima report maintenance dan tidak dapat dihapus.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="maintenance-hub-preview-card">
+                            <div class="maintenance-hub-preview-header">
+                                <h4 class="maintenance-hub-preview-title">Email Tambahan Aktif</h4>
+                                <span class="maintenance-hub-count-badge" id="maintenance-recipient-count-badge">
                                     {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email
                                 </span>
                             </div>
 
-                            <div id="maintenance-recipient-preview" style="min-height:56px;">
+                            <div class="maintenance-hub-preview-body" id="maintenance-recipient-preview">
                                 @forelse((array) data_get($maintenanceNotificationRecipients, 'stored', []) as $recipient)
-                                    <div class="d-inline-flex align-items-center mr-2 mb-2 px-3 py-2 rounded" style="background:rgba(59,130,246,.14); border:1px solid rgba(59,130,246,.28); color:#bfdbfe; max-width:100%;">
-                                        <i class="fas fa-envelope mr-2" style="font-size:.78rem;"></i>
-                                        <span style="font-size:.82rem; font-weight:600; white-space:normal; word-break:break-word;">
-                                            {{ data_get($recipient, 'label', data_get($recipient, 'email', '-')) }}
-                                        </span>
+                                    <div class="maintenance-chip">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>{{ data_get($recipient, 'label', data_get($recipient, 'email', '-')) }}</span>
                                     </div>
                                 @empty
-                                    <div class="d-flex align-items-center justify-content-center h-100 text-center" style="min-height:72px; border:1px dashed rgba(148,163,184,.28); border-radius:12px; color:var(--text-muted);">
-                                        Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">+ Tambah Email</strong> untuk menambahkan penerima baru.
+                                    <div class="maintenance-hub-empty">
+                                        Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">Tambah Email</strong> untuk menambahkan penerima baru.
                                     </div>
                                 @endforelse
                             </div>
 
-                            <div class="small mt-3" style="color:var(--text-muted); line-height:1.6;">
-                                Tombol <strong>Tambah Email</strong> membuka form penambahan cepat. Tombol <strong>Kelola Daftar</strong> membuka daftar lengkap untuk tambah dan hapus email.
+                            <div class="maintenance-hub-note">
+                                Tombol <strong>Tambah Email</strong> membuka form penambahan cepat, sedangkan <strong>Kelola Daftar</strong> menampilkan daftar lengkap untuk tambah dan hapus email.
                             </div>
                         </div>
                     </div>
@@ -755,6 +1216,23 @@
                 .replace(/'/g, '&#039;');
         }
 
+        function buildMaintenanceRecipientChip(label) {
+            return `
+                <div class="maintenance-chip">
+                    <i class="fas fa-envelope"></i>
+                    <span>${escapeHtml(label || '')}</span>
+                </div>
+            `;
+        }
+
+        function buildMaintenanceRecipientEmptyState(message) {
+            return `
+                <div class="maintenance-hub-empty">
+                    ${message}
+                </div>
+            `;
+        }
+
         function updateMaintenanceRecipientSummary(payload) {
             if (!isSuperAdmin || !payload || typeof payload !== 'object') {
                 return;
@@ -782,17 +1260,8 @@
                 const storedRecipients = Array.isArray(payload.stored) ? payload.stored : [];
 
                 maintenanceRecipientPreviewElement.innerHTML = storedRecipients.length > 0
-                    ? storedRecipients.map((recipient) => `
-                        <div class="d-inline-flex align-items-center mr-2 mb-2 px-3 py-2 rounded" style="background:rgba(59,130,246,.14); border:1px solid rgba(59,130,246,.28); color:#bfdbfe; max-width:100%;">
-                            <i class="fas fa-envelope mr-2" style="font-size:.78rem;"></i>
-                            <span style="font-size:.82rem; font-weight:600; white-space:normal; word-break:break-word;">${escapeHtml(recipient.label || recipient.email || '')}</span>
-                        </div>
-                    `).join('')
-                    : `
-                        <div class="d-flex align-items-center justify-content-center h-100 text-center" style="min-height:72px; border:1px dashed rgba(148,163,184,.28); border-radius:12px; color:var(--text-muted);">
-                            Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">+ Tambah Email</strong> untuk menambahkan penerima baru.
-                        </div>
-                    `;
+                    ? storedRecipients.map((recipient) => buildMaintenanceRecipientChip(recipient.label || recipient.email || '')).join('')
+                    : buildMaintenanceRecipientEmptyState('Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">Tambah Email</strong> untuk menambahkan penerima baru.');
             }
         }
 
@@ -809,28 +1278,26 @@
             const storedRecipients = Array.isArray(config.stored) ? config.stored : [];
             const storedRecipientsHtml = storedRecipients.length > 0
                 ? storedRecipients.map((recipient) => `
-                    <div class="d-flex align-items-start justify-content-between px-3 py-3 mb-2 rounded" style="border:1px solid rgba(148,163,184,.18); background:rgba(255,255,255,.03); gap:1rem;">
+                    <div class="maintenance-modal-item">
                         <div>
-                            <div class="font-weight-bold mb-1" style="color:var(--text-primary);">${escapeHtml(recipient.name || 'Tanpa nama')}</div>
-                            <div class="small mb-2" style="color:var(--text-muted); word-break:break-word;">${escapeHtml(recipient.email || '')}</div>
-                            <span class="badge badge-info">Email Tambahan</span>
+                            <div class="maintenance-modal-item-name">${escapeHtml(recipient.name || 'Tanpa nama')}</div>
+                            <div class="maintenance-modal-item-email">${escapeHtml(recipient.email || '')}</div>
+                            ${buildMaintenanceRecipientChip(recipient.label || recipient.email || '')}
                         </div>
                         <button
                             type="button"
                             class="btn btn-sm btn-outline-danger delete-maintenance-recipient-button"
                             data-id="${escapeHtml(recipient.id || '')}"
                             data-label="${escapeHtml(recipient.label || recipient.email || '')}"
-                            style="border-radius:10px; min-width:44px;"
+                            style="border-radius:12px; min-width:44px;"
                         >
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `).join('')
                 : `
-                    <div class="d-flex flex-column align-items-center justify-content-center text-center px-3 py-4 rounded" style="border:1px dashed rgba(148,163,184,.24); color:var(--text-muted); min-height:220px;">
-                        <div class="mb-2" style="font-size:2rem; color:#60a5fa;">
-                            <i class="fas fa-envelope-open-text"></i>
-                        </div>
+                    <div class="maintenance-modal-empty">
+                        <i class="fas fa-envelope-open-text"></i>
                         <div class="font-weight-bold mb-2">Belum ada email tambahan</div>
                         <div style="max-width:320px; line-height:1.7;">
                             Klik tombol <strong>+ Tambah Email</strong> untuk menambahkan penerima report maintenance selain email master.
@@ -839,50 +1306,45 @@
                 `;
 
             return `
-                <div class="px-4 pt-4 pb-3" style="background:linear-gradient(135deg, rgba(37,99,235,.16), rgba(6,182,212,.10)); border-bottom:1px solid rgba(148,163,184,.12);">
-                    <div class="d-flex flex-wrap align-items-start justify-content-between" style="gap:1rem;">
+                <div class="maintenance-modal-shell">
+                    <div class="maintenance-modal-hero">
                         <div>
-                            <div class="text-uppercase font-weight-bold mb-2" style="font-size:.74rem; letter-spacing:.08em; color:#93c5fd;">
+                            <div class="maintenance-modal-hero-kicker">
+                                <i class="fas fa-paper-plane"></i>
                                 Email Maintenance
                             </div>
-                            <div class="h5 mb-2" style="color:var(--text-primary);">
+                            <div class="maintenance-modal-hero-title">
                                 Kelola penerima report maintenance
                             </div>
-                            <div style="color:var(--text-muted); line-height:1.7; max-width:620px;">
+                            <p class="maintenance-modal-hero-text">
                                 Email master akan selalu ikut menerima report. Gunakan form di bawah untuk menambahkan email tambahan yang bisa dipanggil otomatis dari halaman maintenance report.
+                            </p>
+                            <div class="maintenance-modal-hero-badges">
+                                <span class="maintenance-soft-badge master">
+                                    <i class="fas fa-lock"></i>Email master aktif
+                                </span>
+                                <span class="maintenance-soft-badge count">
+                                    <i class="fas fa-users"></i>${escapeHtml(config.additionalCount ?? 0)} email tambahan
+                                </span>
+                                <span class="maintenance-soft-badge count">
+                                    <i class="fas fa-window-restore"></i>${mode === 'add' ? 'Mode tambah cepat' : 'Mode kelola daftar'}
+                                </span>
                             </div>
                         </div>
-                        <div class="d-flex flex-wrap" style="gap:.55rem;">
-                            <span class="badge badge-success px-3 py-2" style="font-size:.78rem;">
-                                <i class="fas fa-lock mr-1"></i>Email master aktif
-                            </span>
-                            <span class="badge badge-info px-3 py-2" style="font-size:.78rem;">
-                                ${escapeHtml(config.additionalCount ?? 0)} email tambahan
-                            </span>
-                        </div>
                     </div>
-                </div>
 
-                <div class="p-4">
-                    <div class="row">
-                        <div class="col-lg-5 mb-3 mb-lg-0">
-                            <div class="h-100 rounded" style="border:1px solid rgba(148,163,184,.16); background:rgba(255,255,255,.03); padding:1.15rem;">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div>
-                                        <div class="font-weight-bold mb-1" style="color:var(--text-primary);">Tambah Email Baru</div>
-                                        <div class="small" style="color:var(--text-muted);">
-                                            Tambahkan penerima report maintenance dari dashboard superadmin.
-                                        </div>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:42px; height:42px; background:rgba(59,130,246,.16); color:#60a5fa;">
-                                        <i class="fas fa-plus"></i>
-                                    </div>
+                    <div class="maintenance-modal-content">
+                        <div class="maintenance-modal-grid">
+                            <div class="maintenance-modal-panel">
+                                <div class="maintenance-modal-panel-title">Tambah Email Baru</div>
+                                <div class="maintenance-modal-panel-text">
+                                    Tambahkan email penerima report maintenance dengan nama PIC atau keterangan agar daftar lebih mudah dibaca.
                                 </div>
 
-                                <div class="rounded px-3 py-3 mb-3" style="border:1px solid rgba(34,197,94,.18); background:rgba(34,197,94,.08);">
-                                    <div class="small text-uppercase font-weight-bold mb-2" style="letter-spacing:.08em; color:#86efac;">Email Master</div>
-                                    <div class="font-weight-bold mb-1" style="word-break:break-word;">${escapeHtml(config.master || '-')}</div>
-                                    <div class="small" style="color:var(--text-muted);">Tetap aktif otomatis dan tidak dapat dihapus.</div>
+                                <div class="maintenance-modal-master-box">
+                                    <div class="maintenance-modal-master-label">Email Master</div>
+                                    <div class="maintenance-modal-master-email">${escapeHtml(config.master || '-')}</div>
+                                    <div class="maintenance-modal-master-note">Email ini tetap aktif otomatis dan tidak dapat dihapus.</div>
                                 </div>
 
                                 <form id="maintenance-recipient-form">
@@ -894,35 +1356,27 @@
                                         <label for="maintenance-recipient-email">Email Penerima</label>
                                         <input type="email" id="maintenance-recipient-email" name="email" class="form-control" placeholder="nama@email.com" required>
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-block" style="border-radius:12px; padding:.75rem 1rem;">
-                                        <i class="fas fa-plus mr-1"></i> Tambah Email
+                                    <button type="submit" class="maintenance-hub-btn maintenance-hub-btn-primary w-100" style="min-width:100%;">
+                                        <i class="fas fa-plus"></i>
+                                        Tambah Email
                                     </button>
                                 </form>
                             </div>
-                        </div>
 
-                        <div class="col-lg-7">
-                            <div class="h-100 rounded" style="border:1px solid rgba(148,163,184,.16); background:rgba(255,255,255,.03); padding:1.15rem;">
-                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap:.75rem;">
+                            <div class="maintenance-modal-panel">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap:.75rem;">
                                     <div>
-                                        <div class="font-weight-bold mb-1" style="color:var(--text-primary);">Daftar Email Tambahan</div>
-                                        <div class="small" style="color:var(--text-muted);">
-                                            Daftar ini dipanggil otomatis saat kirim report maintenance.
+                                        <div class="maintenance-modal-panel-title mb-1">Daftar Email Tambahan</div>
+                                        <div class="maintenance-modal-panel-text mb-0">
+                                            Daftar ini dipanggil otomatis dari halaman maintenance report dan tetap bisa ditambah atau dihapus kapan saja.
                                         </div>
                                     </div>
-                                    <span class="badge badge-info px-3 py-2" style="font-size:.78rem;">
-                                        ${escapeHtml(config.additionalCount ?? 0)} email aktif
+                                    <span class="maintenance-soft-badge count">
+                                        <i class="fas fa-envelope"></i>${escapeHtml(config.additionalCount ?? 0)} email aktif
                                     </span>
                                 </div>
 
-                                <div class="mb-3 rounded px-3 py-3" style="border:1px dashed rgba(148,163,184,.18); background:rgba(15,23,42,.18);">
-                                    <div class="small text-uppercase font-weight-bold mb-2" style="letter-spacing:.08em; color:#93c5fd;">Mode Popup</div>
-                                    <div style="color:var(--text-primary);">
-                                        ${mode === 'add' ? 'Form tambah email sedang diprioritaskan.' : 'Daftar email aktif sedang ditampilkan untuk dikelola.'}
-                                    </div>
-                                </div>
-
-                                <div style="max-height:420px; overflow:auto; padding-right:.15rem;">
+                                <div class="maintenance-modal-list">
                                     ${storedRecipientsHtml}
                                 </div>
                             </div>
