@@ -529,9 +529,12 @@
 
                             <div id="maintenance-recipient-preview" style="min-height:56px;">
                                 @forelse((array) data_get($maintenanceNotificationRecipients, 'stored', []) as $recipient)
-                                    <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem; padding:.45rem .7rem;">
-                                        <i class="fas fa-envelope mr-1"></i>{{ data_get($recipient, 'label', data_get($recipient, 'email', '-')) }}
-                                    </span>
+                                    <div class="d-inline-flex align-items-center mr-2 mb-2 px-3 py-2 rounded" style="background:rgba(59,130,246,.14); border:1px solid rgba(59,130,246,.28); color:#bfdbfe; max-width:100%;">
+                                        <i class="fas fa-envelope mr-2" style="font-size:.78rem;"></i>
+                                        <span style="font-size:.82rem; font-weight:600; white-space:normal; word-break:break-word;">
+                                            {{ data_get($recipient, 'label', data_get($recipient, 'email', '-')) }}
+                                        </span>
+                                    </div>
                                 @empty
                                     <div class="d-flex align-items-center justify-content-center h-100 text-center" style="min-height:72px; border:1px dashed rgba(148,163,184,.28); border-radius:12px; color:var(--text-muted);">
                                         Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">+ Tambah Email</strong> untuk menambahkan penerima baru.
@@ -780,15 +783,20 @@
 
                 maintenanceRecipientPreviewElement.innerHTML = storedRecipients.length > 0
                     ? storedRecipients.map((recipient) => `
-                        <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem;">
-                            <i class="fas fa-envelope mr-1"></i>${escapeHtml(recipient.label || recipient.email || '')}
-                        </span>
+                        <div class="d-inline-flex align-items-center mr-2 mb-2 px-3 py-2 rounded" style="background:rgba(59,130,246,.14); border:1px solid rgba(59,130,246,.28); color:#bfdbfe; max-width:100%;">
+                            <i class="fas fa-envelope mr-2" style="font-size:.78rem;"></i>
+                            <span style="font-size:.82rem; font-weight:600; white-space:normal; word-break:break-word;">${escapeHtml(recipient.label || recipient.email || '')}</span>
+                        </div>
                     `).join('')
-                    : '<span class="badge badge-secondary mr-1 mb-1">Belum ada email tambahan</span>';
+                    : `
+                        <div class="d-flex align-items-center justify-content-center h-100 text-center" style="min-height:72px; border:1px dashed rgba(148,163,184,.28); border-radius:12px; color:var(--text-muted);">
+                            Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">+ Tambah Email</strong> untuk menambahkan penerima baru.
+                        </div>
+                    `;
             }
         }
 
-        function buildMaintenanceRecipientManagerBody() {
+        function buildMaintenanceRecipientManagerBody(mode = 'manage') {
             const config = maintenanceNotificationRecipients && typeof maintenanceNotificationRecipients === 'object'
                 ? maintenanceNotificationRecipients
                 : {
@@ -801,54 +809,126 @@
             const storedRecipients = Array.isArray(config.stored) ? config.stored : [];
             const storedRecipientsHtml = storedRecipients.length > 0
                 ? storedRecipients.map((recipient) => `
-                    <div class="d-flex align-items-start justify-content-between border rounded px-3 py-2 mb-2">
+                    <div class="d-flex align-items-start justify-content-between px-3 py-3 mb-2 rounded" style="border:1px solid rgba(148,163,184,.18); background:rgba(255,255,255,.03); gap:1rem;">
                         <div>
-                            <div class="font-weight-bold">${escapeHtml(recipient.name || 'Tanpa nama')}</div>
-                            <div class="text-muted small">${escapeHtml(recipient.email || '')}</div>
+                            <div class="font-weight-bold mb-1" style="color:var(--text-primary);">${escapeHtml(recipient.name || 'Tanpa nama')}</div>
+                            <div class="small mb-2" style="color:var(--text-muted); word-break:break-word;">${escapeHtml(recipient.email || '')}</div>
+                            <span class="badge badge-info">Email Tambahan</span>
                         </div>
                         <button
                             type="button"
                             class="btn btn-sm btn-outline-danger delete-maintenance-recipient-button"
                             data-id="${escapeHtml(recipient.id || '')}"
                             data-label="${escapeHtml(recipient.label || recipient.email || '')}"
+                            style="border-radius:10px; min-width:44px;"
                         >
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `).join('')
                 : `
-                    <div class="border rounded px-3 py-3 text-muted text-center">
-                        Belum ada email tambahan. Email master tetap aktif otomatis.
+                    <div class="d-flex flex-column align-items-center justify-content-center text-center px-3 py-4 rounded" style="border:1px dashed rgba(148,163,184,.24); color:var(--text-muted); min-height:220px;">
+                        <div class="mb-2" style="font-size:2rem; color:#60a5fa;">
+                            <i class="fas fa-envelope-open-text"></i>
+                        </div>
+                        <div class="font-weight-bold mb-2">Belum ada email tambahan</div>
+                        <div style="max-width:320px; line-height:1.7;">
+                            Klik tombol <strong>+ Tambah Email</strong> untuk menambahkan penerima report maintenance selain email master.
+                        </div>
                     </div>
                 `;
 
             return `
-                <div class="alert alert-info mb-3">
-                    <div class="font-weight-bold mb-1"><i class="fas fa-lock mr-1"></i>Email master tetap aktif</div>
-                    <div>${escapeHtml(config.master || '-')}</div>
+                <div class="px-4 pt-4 pb-3" style="background:linear-gradient(135deg, rgba(37,99,235,.16), rgba(6,182,212,.10)); border-bottom:1px solid rgba(148,163,184,.12);">
+                    <div class="d-flex flex-wrap align-items-start justify-content-between" style="gap:1rem;">
+                        <div>
+                            <div class="text-uppercase font-weight-bold mb-2" style="font-size:.74rem; letter-spacing:.08em; color:#93c5fd;">
+                                Email Maintenance
+                            </div>
+                            <div class="h5 mb-2" style="color:var(--text-primary);">
+                                Kelola penerima report maintenance
+                            </div>
+                            <div style="color:var(--text-muted); line-height:1.7; max-width:620px;">
+                                Email master akan selalu ikut menerima report. Gunakan form di bawah untuk menambahkan email tambahan yang bisa dipanggil otomatis dari halaman maintenance report.
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap" style="gap:.55rem;">
+                            <span class="badge badge-success px-3 py-2" style="font-size:.78rem;">
+                                <i class="fas fa-lock mr-1"></i>Email master aktif
+                            </span>
+                            <span class="badge badge-info px-3 py-2" style="font-size:.78rem;">
+                                ${escapeHtml(config.additionalCount ?? 0)} email tambahan
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                <form id="maintenance-recipient-form">
-                    <div class="form-group">
-                        <label for="maintenance-recipient-name">Nama / Keterangan</label>
-                        <input type="text" id="maintenance-recipient-name" name="name" class="form-control" placeholder="Contoh: Kepala Sekolah TK">
-                    </div>
-                    <div class="form-group">
-                        <label for="maintenance-recipient-email">Email Penerima</label>
-                        <input type="email" id="maintenance-recipient-email" name="email" class="form-control" placeholder="nama@email.com" required>
-                    </div>
-                    <button type="submit" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus"></i> Tambah Email
-                    </button>
-                </form>
+                <div class="p-4">
+                    <div class="row">
+                        <div class="col-lg-5 mb-3 mb-lg-0">
+                            <div class="h-100 rounded" style="border:1px solid rgba(148,163,184,.16); background:rgba(255,255,255,.03); padding:1.15rem;">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <div class="font-weight-bold mb-1" style="color:var(--text-primary);">Tambah Email Baru</div>
+                                        <div class="small" style="color:var(--text-muted);">
+                                            Tambahkan penerima report maintenance dari dashboard superadmin.
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:42px; height:42px; background:rgba(59,130,246,.16); color:#60a5fa;">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                </div>
 
-                <hr>
+                                <div class="rounded px-3 py-3 mb-3" style="border:1px solid rgba(34,197,94,.18); background:rgba(34,197,94,.08);">
+                                    <div class="small text-uppercase font-weight-bold mb-2" style="letter-spacing:.08em; color:#86efac;">Email Master</div>
+                                    <div class="font-weight-bold mb-1" style="word-break:break-word;">${escapeHtml(config.master || '-')}</div>
+                                    <div class="small" style="color:var(--text-muted);">Tetap aktif otomatis dan tidak dapat dihapus.</div>
+                                </div>
 
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="font-weight-bold">Email Tambahan Aktif</div>
-                    <span class="badge badge-info">${escapeHtml(config.additionalCount ?? 0)} email</span>
+                                <form id="maintenance-recipient-form">
+                                    <div class="form-group">
+                                        <label for="maintenance-recipient-name">Nama / Keterangan</label>
+                                        <input type="text" id="maintenance-recipient-name" name="name" class="form-control" placeholder="Contoh: Kepala Sekolah TK">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maintenance-recipient-email">Email Penerima</label>
+                                        <input type="email" id="maintenance-recipient-email" name="email" class="form-control" placeholder="nama@email.com" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block" style="border-radius:12px; padding:.75rem 1rem;">
+                                        <i class="fas fa-plus mr-1"></i> Tambah Email
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div class="h-100 rounded" style="border:1px solid rgba(148,163,184,.16); background:rgba(255,255,255,.03); padding:1.15rem;">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap:.75rem;">
+                                    <div>
+                                        <div class="font-weight-bold mb-1" style="color:var(--text-primary);">Daftar Email Tambahan</div>
+                                        <div class="small" style="color:var(--text-muted);">
+                                            Daftar ini dipanggil otomatis saat kirim report maintenance.
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-info px-3 py-2" style="font-size:.78rem;">
+                                        ${escapeHtml(config.additionalCount ?? 0)} email aktif
+                                    </span>
+                                </div>
+
+                                <div class="mb-3 rounded px-3 py-3" style="border:1px dashed rgba(148,163,184,.18); background:rgba(15,23,42,.18);">
+                                    <div class="small text-uppercase font-weight-bold mb-2" style="letter-spacing:.08em; color:#93c5fd;">Mode Popup</div>
+                                    <div style="color:var(--text-primary);">
+                                        ${mode === 'add' ? 'Form tambah email sedang diprioritaskan.' : 'Daftar email aktif sedang ditampilkan untuk dikelola.'}
+                                    </div>
+                                </div>
+
+                                <div style="max-height:420px; overflow:auto; padding-right:.15rem;">
+                                    ${storedRecipientsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                ${storedRecipientsHtml}
             `;
         }
 
@@ -867,8 +947,25 @@
             return payload;
         }
 
-        function showMaintenanceRecipientManager() {
-            modal.show('Kelola Email Maintenance', buildMaintenanceRecipientManagerBody(), '');
+        function showMaintenanceRecipientManager(mode = 'manage') {
+            modal.show(
+                mode === 'add' ? 'Tambah Email Maintenance' : 'Kelola Email Maintenance',
+                buildMaintenanceRecipientManagerBody(mode),
+                '',
+                {
+                    dialogClass: 'modal-xl modal-dialog-scrollable',
+                    bodyClass: 'modal-body p-0'
+                }
+            );
+
+            if (mode === 'add') {
+                setTimeout(() => {
+                    const emailInput = document.getElementById('maintenance-recipient-email');
+                    if (emailInput) {
+                        emailInput.focus();
+                    }
+                }, 150);
+            }
         }
 
         function isDarkTheme() {
@@ -893,6 +990,16 @@
         function createScales(options = {}) {
             const palette = getActiveThemePalette();
             const useCurrencyAxis = Boolean(options.currency);
+            const yAxisTicks = {
+                beginAtZero: true,
+                maxTicksLimit: 3,
+                fontColor: palette.tick,
+                fontSize: 10
+            };
+
+            if (useCurrencyAxis) {
+                yAxisTicks.callback = (value) => 'Rp ' + numberFormatter.format(value);
+            }
 
             return {
                 xAxes: [{
@@ -904,15 +1011,7 @@
                     }
                 }],
                 yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        maxTicksLimit: 3,
-                        fontColor: palette.tick,
-                        fontSize: 10,
-                        callback: useCurrencyAxis
-                            ? (value) => 'Rp ' + numberFormatter.format(value)
-                            : undefined
-                    },
+                    ticks: yAxisTicks,
                     gridLines: createGridLines(palette.grid)
                 }]
             };
@@ -1130,15 +1229,16 @@
         if (isSuperAdmin) {
             updateMaintenanceRecipientSummary(maintenanceNotificationRecipients);
 
-            $(document).on('click', '#open-maintenance-recipient-manager', async function (event) {
+            $(document).on('click', '#open-maintenance-recipient-add, #open-maintenance-recipient-manager', async function (event) {
                 event.preventDefault();
-                showMaintenanceRecipientManager();
+                const mode = event.currentTarget.id === 'open-maintenance-recipient-add' ? 'add' : 'manage';
+                showMaintenanceRecipientManager(mode);
                 Loading.show();
 
                 try {
                     const latestPayload = await loadMaintenanceRecipientConfig();
                     if (latestPayload) {
-                        showMaintenanceRecipientManager();
+                        showMaintenanceRecipientManager(mode);
                     }
                 } catch (error) {
                     Notification.warning('Popup tetap dibuka, tetapi daftar email terbaru belum berhasil dimuat dari server.');
@@ -1165,7 +1265,7 @@
                     );
 
                     updateMaintenanceRecipientSummary(response?.data ?? null);
-                    showMaintenanceRecipientManager();
+                    showMaintenanceRecipientManager('add');
                     Notification.success(response?.message || 'Email maintenance berhasil ditambahkan.');
                 } catch (error) {
                     Notification.error(error);
@@ -1193,7 +1293,7 @@
                     );
 
                     updateMaintenanceRecipientSummary(response?.data ?? null);
-                    showMaintenanceRecipientManager();
+                    showMaintenanceRecipientManager('manage');
                     Notification.success(response?.message || 'Email maintenance berhasil dihapus.');
                 } catch (error) {
                     Notification.error(error);
