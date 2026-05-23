@@ -457,28 +457,58 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+        <div class="col-12 mb-3">
             <div class="saldo-card" id="maintenance-recipient-summary-card">
-                <div>
-                    <div class="saldo-icon"><i class="fas fa-envelope-open-text"></i></div>
-                    <div class="saldo-label">Email Maintenance</div>
-                    <div class="saldo-value" id="maintenance-recipient-total">
-                        {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
-                    </div>
-                    <div class="saldo-meta" id="maintenance-recipient-summary-text">
-                        Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
-                    </div>
-                    <div class="mt-2" id="maintenance-recipient-master-email" style="font-size:.78rem; color:var(--text-muted); word-break:break-word;">
-                        {{ data_get($maintenanceNotificationRecipients, 'master') }}
-                    </div>
-                </div>
+                <div class="row align-items-stretch">
+                    <div class="col-lg-4 col-md-5 col-sm-12 mb-3 mb-lg-0">
+                        <div class="h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="saldo-icon"><i class="fas fa-envelope-open-text"></i></div>
+                                <div class="saldo-label">Email Maintenance</div>
+                                <div class="saldo-value" id="maintenance-recipient-total">
+                                    {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
+                                </div>
+                                <div class="saldo-meta" id="maintenance-recipient-summary-text">
+                                    Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
+                                </div>
+                                <div class="mt-2" id="maintenance-recipient-master-email" style="font-size:.78rem; color:var(--text-muted); word-break:break-word;">
+                                    {{ data_get($maintenanceNotificationRecipients, 'master') }}
+                                </div>
+                            </div>
 
-                <div class="saldo-footer">
-                    <a href="#" id="open-maintenance-recipient-manager">
-                        <i class="fas fa-cog"></i>
-                        Kelola email maintenance
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
+                            <div class="saldo-footer mb-0 pb-0" style="border-top:1px solid var(--border-light);">
+                                <button type="button" id="open-maintenance-recipient-manager" class="btn btn-primary btn-sm" style="border-radius:999px; padding:.55rem 1rem;">
+                                    <i class="fas fa-cog mr-1"></i>
+                                    Kelola email maintenance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8 col-md-7 col-sm-12">
+                        <div class="h-100 border rounded" style="border-color:var(--border-light)!important; padding:1rem 1.1rem; background:rgba(255,255,255,.02);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="saldo-label mb-0">Email Tambahan Aktif</div>
+                                <span class="badge badge-info" id="maintenance-recipient-count-badge">
+                                    {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email
+                                </span>
+                            </div>
+
+                            <div id="maintenance-recipient-preview" style="min-height:52px;">
+                                @forelse((array) data_get($maintenanceNotificationRecipients, 'stored', []) as $recipient)
+                                    <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem;">
+                                        <i class="fas fa-envelope mr-1"></i>{{ data_get($recipient, 'label', data_get($recipient, 'email', '-')) }}
+                                    </span>
+                                @empty
+                                    <span class="badge badge-secondary mr-1 mb-1">Belum ada email tambahan</span>
+                                @endforelse
+                            </div>
+
+                            <div class="small mt-3" style="color:var(--text-muted); line-height:1.6;">
+                                Popup pengelolaan email akan membuka form tambah/hapus penerima. Email master tetap terkunci dan selalu ikut menerima report maintenance.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -661,6 +691,8 @@
         const maintenanceRecipientTotalElement = document.getElementById('maintenance-recipient-total');
         const maintenanceRecipientSummaryElement = document.getElementById('maintenance-recipient-summary-text');
         const maintenanceRecipientMasterElement = document.getElementById('maintenance-recipient-master-email');
+        const maintenanceRecipientCountBadgeElement = document.getElementById('maintenance-recipient-count-badge');
+        const maintenanceRecipientPreviewElement = document.getElementById('maintenance-recipient-preview');
 
         function formatCurrency(value) {
             const number = Number(value);
@@ -702,6 +734,22 @@
 
             if (maintenanceRecipientMasterElement) {
                 maintenanceRecipientMasterElement.textContent = payload.master || '-';
+            }
+
+            if (maintenanceRecipientCountBadgeElement) {
+                maintenanceRecipientCountBadgeElement.textContent = `${payload.additionalCount ?? 0} email`;
+            }
+
+            if (maintenanceRecipientPreviewElement) {
+                const storedRecipients = Array.isArray(payload.stored) ? payload.stored : [];
+
+                maintenanceRecipientPreviewElement.innerHTML = storedRecipients.length > 0
+                    ? storedRecipients.map((recipient) => `
+                        <span class="badge badge-info mr-1 mb-1" style="font-size:.78rem;">
+                            <i class="fas fa-envelope mr-1"></i>${escapeHtml(recipient.label || recipient.email || '')}
+                        </span>
+                    `).join('')
+                    : '<span class="badge badge-secondary mr-1 mb-1">Belum ada email tambahan</span>';
             }
         }
 
@@ -1049,13 +1097,16 @@
 
             $(document).on('click', '#open-maintenance-recipient-manager', async function (event) {
                 event.preventDefault();
+                showMaintenanceRecipientManager();
                 Loading.show();
 
                 try {
-                    await loadMaintenanceRecipientConfig();
-                    showMaintenanceRecipientManager();
+                    const latestPayload = await loadMaintenanceRecipientConfig();
+                    if (latestPayload) {
+                        showMaintenanceRecipientManager();
+                    }
                 } catch (error) {
-                    Notification.error(error);
+                    Notification.warning('Popup tetap dibuka, tetapi daftar email terbaru belum berhasil dimuat dari server.');
                 } finally {
                     Loading.hide();
                 }
