@@ -41,6 +41,19 @@ $templateConfigs = [
         'download_url' => route('asset-management.download-template', ['category' => AssetCategory::COMPUTER->value]),
     ],
 ];
+
+$templateConfigPayload = array_map(static function (array $config): array {
+    return [
+        'category' => $config['category']->value,
+        'title' => $config['title'],
+        'body' => $config['body'],
+        'note' => $config['note'],
+        'import_label' => $config['import_label'],
+        'download_label' => $config['download_label'],
+        'download_url' => $config['download_url'],
+        'icon' => $config['icon'],
+    ];
+}, $templateConfigs);
 @endphp
 
 @section('section_name', __('app.asset.title'))
@@ -776,18 +789,7 @@ $templateConfigs = [
 
 @section('js')
 <script>
-    const assetImportConfigs = @json(
-        collect($templateConfigs)->map(fn ($config) => [
-            'category' => $config['category']->value,
-            'title' => $config['title'],
-            'body' => $config['body'],
-            'note' => $config['note'],
-            'import_label' => $config['import_label'],
-            'download_label' => $config['download_label'],
-            'download_url' => $config['download_url'],
-            'icon' => $config['icon'],
-        ])->values()
-    );
+    const assetImportConfigs = @json($templateConfigPayload);
 
     function resetState()
     {

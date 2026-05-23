@@ -10,9 +10,11 @@ use App\Enums\Asset\AssetCategory;
 use App\Enums\Asset\ComputerComponent;
 use App\Enums\Asset\AssetUnit;
 use App\Models\Asset\Asset;
+use App\Models\Asset\AssetImportBatch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -668,6 +670,43 @@ class AssetService
         return '';
     }
 
+    private function resolveUploadedFileName($file): string
+    {
+        if (method_exists($file, 'getClientOriginalName')) {
+            $name = trim((string) $file->getClientOriginalName());
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if (method_exists($file, 'getFilename')) {
+            return (string) $file->getFilename();
+        }
+
+        return 'asset-import-file';
+    }
+
+    private function storeImportBatch(RegisterAssetViaFileDTO $dto, array $import, int $importedRows): ?AssetImportBatch
+    {
+        if (!Schema::hasTable('asset_import_batches')) {
+            return null;
+        }
+
+        return AssetImportBatch::create([
+            'category' => $dto->category,
+            'source_type' => $import['source_type'],
+            'source_file_name' => $this->resolveUploadedFileName($dto->file),
+            'processed_rows' => $importedRows,
+            'imported_rows' => $importedRows,
+            'sheet_count' => count($import['sheet_names']),
+            'sheet_names' => $import['sheet_names'],
+            'metadata' => [
+                'category_label' => $dto->category->label(),
+            ],
+            'imported_by' => auth()->id(),
+        ]);
+    }
+
     private function persistRegisteredAsset(RegisterAssetDTO $dto)
     {
         Log::info($dto->toArray());
@@ -768,6 +807,7 @@ class AssetService
     {
         $import = $this->resolveImportRecords($dto);
         $records = $import['records'];
+        $importBatch = null;
 
         DB::beginTransaction();
         try
@@ -792,6 +832,8 @@ class AssetService
                     }
                 }
             }
+
+            $importBatch = $this->storeImportBatch($dto, $import, count($records));
             DB::commit();
 
             return [
@@ -801,6 +843,7 @@ class AssetService
                 'imported_rows' => count($records),
                 'sheet_count' => count($import['sheet_names']),
                 'sheet_names' => $import['sheet_names'],
+                'batch_id' => $importBatch?->id,
             ];
         }
         catch(\Throwable $e)
