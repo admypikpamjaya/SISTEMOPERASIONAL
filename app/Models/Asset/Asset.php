@@ -37,7 +37,8 @@ class Asset extends Model
 
     protected $casts = [
         'category' => AssetCategory::class,
-        'unit' => AssetUnit::class
+        'unit' => AssetUnit::class,
+        'last_imported_at' => 'datetime',
     ];
 
     protected function serialNumber(): Attribute

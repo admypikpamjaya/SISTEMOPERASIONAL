@@ -38,7 +38,10 @@ class AssetManagementController extends Controller
             ($request->category) ? AssetCategory::from($request->category) : null, 
             ($request->unit) ? AssetUnit::from($request->unit) : null,
             $page, 
-            $pageSize
+            $pageSize,
+            $request->recorded_from,
+            $request->recorded_until,
+            $request->import_file
         );
         return view('asset-management.index', [
             'assets' => $assets

@@ -13,6 +13,7 @@ use App\Models\Asset\Asset;
 use App\Models\Asset\AssetImportBatch;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -687,6 +688,21 @@ class AssetService
         return 'asset-import-file';
     }
 
+    private function normalizeDateFilter(?string $value, bool $endOfDay = false): ?Carbon
+    {
+        if (!filled($value)) {
+            return null;
+        }
+
+        try {
+            $date = Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $endOfDay ? $date->endOfDay() : $date->startOfDay();
+    }
+
     private function storeImportBatch(
         RegisterAssetViaFileDTO $dto,
         array $import,
@@ -716,11 +732,18 @@ class AssetService
         ]);
     }
 
-    private function resolveValidatedAssetPayload(RegisterAssetDTO $dto, ?Asset $asset = null): array
+    private function resolveValidatedAssetPayload(
+        RegisterAssetDTO $dto,
+        ?Asset $asset = null,
+        array $extraAttributes = []
+    ): array
     {
         $assetData = Arr::except($dto->toArray(), 'detail');
 
-        return Asset::validateRegistrationPayload($assetData, $asset?->id);
+        return array_merge(
+            Asset::validateRegistrationPayload($assetData, $asset?->id),
+            $extraAttributes
+        );
     }
 
     private function removeDetailByCategory(Asset $asset, AssetCategory $category): void
@@ -758,13 +781,13 @@ class AssetService
         $assetDetailHandler->insert($asset->id, $validatedDetail);
     }
 
-    private function createRegisteredAsset(RegisterAssetDTO $dto): Asset
+    private function createRegisteredAsset(RegisterAssetDTO $dto, array $extraAttributes = []): Asset
     {
         Log::info($dto->toArray());
 
         // The first transaction writes the asset identity that is used by
         // inventory, maintenance, QR detail pages, and finance lookups.
-        $validatedAssetData = $this->resolveValidatedAssetPayload($dto);
+        $validatedAssetData = $this->resolveValidatedAssetPayload($dto, extraAttributes: $extraAttributes);
 
         $asset = Asset::create($validatedAssetData);
         $asset->qr_code_path = $asset->generateQRCode();
@@ -775,17 +798,17 @@ class AssetService
         return $asset->loadWithRelation();
     }
 
-    private function upsertRegisteredAsset(RegisterAssetDTO $dto): array
+    private function upsertRegisteredAsset(RegisterAssetDTO $dto, array $extraAttributes = []): array
     {
         $existingAsset = Asset::where('account_code', $dto->accountCode)->first();
         if (!$existingAsset) {
             return [
-                'asset' => $this->createRegisteredAsset($dto),
+                'asset' => $this->createRegisteredAsset($dto, $extraAttributes),
                 'action' => 'created',
             ];
         }
 
-        $validatedAssetData = $this->resolveValidatedAssetPayload($dto, $existingAsset);
+        $validatedAssetData = $this->resolveValidatedAssetPayload($dto, $existingAsset, $extraAttributes);
         $previousCategory = $existingAsset->category;
 
         $existingAsset->update($validatedAssetData);
@@ -807,7 +830,16 @@ class AssetService
         return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
     }
 
-    public function getAssets(?string $keyword = null, ?AssetCategory $category = null, ?AssetUnit $unit = null, ?int $page = 1, ?int $pageSize = 10)
+    public function getAssets(
+        ?string $keyword = null,
+        ?AssetCategory $category = null,
+        ?AssetUnit $unit = null,
+        ?int $page = 1,
+        ?int $pageSize = 10,
+        ?string $recordedFrom = null,
+        ?string $recordedUntil = null,
+        ?string $importFile = null
+    )
     {
         $query = Asset::query();
         if($keyword)
@@ -828,12 +860,48 @@ class AssetService
             $query->where('unit', $unit);
         }
 
+        if (filled($importFile)) {
+            $query->where('last_import_file_name', 'like', '%' . trim($importFile) . '%');
+        }
+
+        $recordedFromDate = $this->normalizeDateFilter($recordedFrom);
+        if ($recordedFromDate) {
+            $query->where(function ($q) use ($recordedFromDate) {
+                $q->where(function ($subQuery) use ($recordedFromDate) {
+                    $subQuery->whereNotNull('last_imported_at')
+                        ->where('last_imported_at', '>=', $recordedFromDate);
+                })->orWhere(function ($subQuery) use ($recordedFromDate) {
+                    $subQuery->whereNull('last_imported_at')
+                        ->where('updated_at', '>=', $recordedFromDate);
+                });
+            });
+        }
+
+        $recordedUntilDate = $this->normalizeDateFilter($recordedUntil, true);
+        if ($recordedUntilDate) {
+            $query->where(function ($q) use ($recordedUntilDate) {
+                $q->where(function ($subQuery) use ($recordedUntilDate) {
+                    $subQuery->whereNotNull('last_imported_at')
+                        ->where('last_imported_at', '<=', $recordedUntilDate);
+                })->orWhere(function ($subQuery) use ($recordedUntilDate) {
+                    $subQuery->whereNull('last_imported_at')
+                        ->where('updated_at', '<=', $recordedUntilDate);
+                });
+            });
+        }
+
         return $query
+            ->orderByDesc(DB::raw('COALESCE(last_imported_at, updated_at)'))
             ->orderBy('account_code', 'asc')
             ->paginate($pageSize, ['*'], 'page', $page)
             ->appends(array_filter([
                 'keyword' => $keyword,
                 'category' => $category?->value,
+                'unit' => $unit?->value,
+                'page_size' => $pageSize,
+                'recorded_from' => $recordedFrom,
+                'recorded_until' => $recordedUntil,
+                'import_file' => $importFile,
             ]));
     }
 
@@ -861,7 +929,7 @@ class AssetService
         DB::beginTransaction();
         try
         {
-            $asset = $this->persistRegisteredAsset($dto);
+            $asset = $this->createRegisteredAsset($dto);
 
             DB::commit();
             return $asset;
@@ -880,6 +948,11 @@ class AssetService
         $importBatch = null;
         $createdRows = 0;
         $updatedRows = 0;
+        $importedAt = now();
+        $importMetadata = [
+            'last_import_file_name' => $this->resolveUploadedFileName($dto->file),
+            'last_imported_at' => $importedAt,
+        ];
 
         DB::beginTransaction();
         try
@@ -892,7 +965,7 @@ class AssetService
                 {
                     try 
                     {
-                        $result = $this->upsertRegisteredAsset($record['dto']);
+                        $result = $this->upsertRegisteredAsset($record['dto'], $importMetadata);
                         if (($result['action'] ?? null) === 'created') {
                             $createdRows++;
                         } else {

@@ -17,6 +17,9 @@ $activeFilterCount = collect([
     request('keyword'),
     request('category'),
     request('unit'),
+    request('recorded_from'),
+    request('recorded_until'),
+    request('import_file'),
 ])->filter(fn ($value) => filled($value))->count();
 
 $templateConfigs = [
@@ -669,6 +672,40 @@ $templateConfigPayload = array_map(static function (array $config): array {
                     </div>
 
                     <div class="asset-filter-field">
+                        <label for="asset-recorded-from-input" class="asset-filter-label">{{ __('app.asset.latest_recorded_from') }}</label>
+                        <input
+                            id="asset-recorded-from-input"
+                            type="date"
+                            name="recorded_from"
+                            value="{{ request('recorded_from') }}"
+                            class="form-control"
+                        />
+                    </div>
+
+                    <div class="asset-filter-field">
+                        <label for="asset-recorded-until-input" class="asset-filter-label">{{ __('app.asset.latest_recorded_until') }}</label>
+                        <input
+                            id="asset-recorded-until-input"
+                            type="date"
+                            name="recorded_until"
+                            value="{{ request('recorded_until') }}"
+                            class="form-control"
+                        />
+                    </div>
+
+                    <div class="asset-filter-field">
+                        <label for="asset-import-file-input" class="asset-filter-label">{{ __('app.asset.import_file_label') }}</label>
+                        <input
+                            id="asset-import-file-input"
+                            type="text"
+                            name="import_file"
+                            value="{{ request('import_file') }}"
+                            class="form-control"
+                            placeholder="{{ __('app.asset.import_file_placeholder') }}"
+                        />
+                    </div>
+
+                    <div class="asset-filter-field">
                         <label for="page-size-select" class="asset-filter-label">{{ __('app.asset.row_limit') }}</label>
                         <select
                             name="page_size"
@@ -688,6 +725,16 @@ $templateConfigPayload = array_map(static function (array $config): array {
                                 <i class="fas fa-filter"></i>
                                 {{ $activeFilterCount > 0 ? $activeFilterCount . ' filter aktif' : 'Tanpa filter' }}
                             </span>
+                            <span class="asset-chip">
+                                <i class="fas fa-clock"></i>
+                                {{ __('app.asset.filter_summary_caption') }}
+                            </span>
+                            @if($activeFilterCount > 0)
+                                <a href="{{ route('asset-management.index') }}" class="asset-chip">
+                                    <i class="fas fa-rotate-left"></i>
+                                    {{ __('app.asset.clear_filters') }}
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -704,6 +751,10 @@ $templateConfigPayload = array_map(static function (array $config): array {
                 Kategori: <strong>{{ $selectedCategory?->label() ?? 'Semua' }}</strong> |
                 Unit: <strong>{{ $selectedUnit?->name ?? 'Semua' }}</strong>
             </span>
+
+            <span>
+                File import: <strong>{{ request('import_file') ?: 'Semua file' }}</strong>
+            </span>
         </div>
 
         <div class="card-body pt-0">
@@ -717,7 +768,8 @@ $templateConfigPayload = array_map(static function (array $config): array {
                             <th scope="col">KATEGORI</th>
                             <th scope="col">KODE AKUN</th>
                             <th scope="col">LOKASI</th>
-                            <th scope="col">TANGGAL DIDAFTARKAN</th>
+                            <th scope="col">{{ strtoupper(__('app.asset.latest_data_at')) }}</th>
+                            <th scope="col">{{ strtoupper(__('app.asset.latest_import_file')) }}</th>
                             <th scope="col" class="text-center">{{ strtoupper(__('app.asset.actions')) }}</th>
                         </tr>
                     </thead>
@@ -728,7 +780,12 @@ $templateConfigPayload = array_map(static function (array $config): array {
                                 <td>{{ $asset->category?->label() ?? $asset->category }}</td>
                                 <td>{{ $asset->account_code }}</td>
                                 <td>{{ $asset->location }}</td>
-                                <td>{{ $asset->created_at->format('d M Y') }}</td>
+                                <td>
+                                    {{ optional($asset->last_imported_at ?? $asset->updated_at)->format('d M Y H:i') }}
+                                </td>
+                                <td>
+                                    {{ $asset->last_import_file_name ?: __('app.asset.manual_entry_label') }}
+                                </td>
                                 <td class="text-center">
                                     <div class="app-table-actions">
                                         <a href="{{ route('assets.detail', $asset->id) }}" target="_blank" class="app-icon-btn is-info" title="{{ __('app.asset.view_detail') }}" aria-label="{{ __('app.asset.view_detail') }}">
@@ -752,7 +809,7 @@ $templateConfigPayload = array_map(static function (array $config): array {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="asset-empty-state">
                                         <i class="fas fa-inbox"></i>
                                         <h4>{{ __('app.asset.empty') }}</h4>
