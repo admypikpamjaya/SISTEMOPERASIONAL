@@ -5,6 +5,7 @@ namespace App\Models\Asset;
 use App\Enums\Asset\AssetCategory;
 use App\Enums\Asset\AssetUnit;
 use App\Models\AssetDepreciation;
+use App\Models\FinanceAssetPolicy;
 use App\Models\Log\MaintenanceLog;
 use App\Services\Asset\AssetFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -39,6 +40,7 @@ class Asset extends Model
         'category' => AssetCategory::class,
         'unit' => AssetUnit::class,
         'last_imported_at' => 'datetime',
+        'purchase_price' => 'decimal:2',
     ];
 
     protected function serialNumber(): Attribute
@@ -73,6 +75,7 @@ class Asset extends Model
                     Rule::unique('assets', 'serial_number')->ignore($ignoreAssetId),
                 ],
                 'purchase_year'=> ['nullable', 'string'],
+                'purchase_price' => ['nullable', 'numeric', 'min:0'],
             ],
             [
                 'category.required' => 'Kategori aset wajib diisi.',
@@ -92,6 +95,8 @@ class Asset extends Model
                 'serial_number.unique' => 'Nomor seri sudah terdaftar.',
 
                 'purchase_year.string' => 'Input tahun pembelian harus berupa teks.',
+                'purchase_price.numeric' => 'Harga aset harus berupa angka.',
+                'purchase_price.min' => 'Harga aset tidak boleh kurang dari 0.',
             ]
         );
 
@@ -148,5 +153,10 @@ class Asset extends Model
         // Stores posted depreciation history snapshots, not the editable policy
         // definition itself.
         return $this->hasMany(AssetDepreciation::class, 'asset_id');
+    }
+
+    public function financePolicies(): HasMany
+    {
+        return $this->hasMany(FinanceAssetPolicy::class, 'asset_id');
     }
 }

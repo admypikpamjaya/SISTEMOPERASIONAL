@@ -18,6 +18,7 @@ class AssetDataDTO
         public ?AssetUnit $unit,
         public string $location,
         public ?string $purchaseYear,
+        public ?float $purchasePrice,
         public array $detail,
         public ?array $maintenanceLogs
     ) {}
@@ -28,10 +29,13 @@ class AssetDataDTO
             $data['id'],
             AssetCategory::from($data['category']),
             $data['account_code'],
-            $data['asset_serial_number'] ?? null,
+            $data['asset_serial_number'] ?? $data['serial_number'] ?? null,
             (AssetUnit::from($data['unit']) ?? null),
             $data['location'],
             $data['purchase_year'] ?? null,
+            isset($data['purchase_price']) && $data['purchase_price'] !== ''
+                ? (float) $data['purchase_price']
+                : null,
             $data['detail'] ?? [],
             $data['maintenance_logs'] ?? null
         );
@@ -58,6 +62,7 @@ class AssetDataDTO
             $asset->unit,
             $asset->location,
             $asset->purchase_year,
+            $asset->purchase_price !== null ? (float) $asset->purchase_price : null,
             $detail,
             $logs
         );

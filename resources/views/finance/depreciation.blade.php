@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- Developer note: this UI is a manual straight-line depreciation calculator
-     plus log viewer. It does not yet generate posted depreciation runs from
-     asset policies. See docs/finance-asset-depreciation.md. --}}
+{{-- Developer note: this UI calculates straight-line depreciation and now
+     posts the result into finance depreciation history plus journal entries.
+     The useful-life input is still derived from the selected period range. --}}
 @php
     $nowWib = now(config('app.timezone'));
 @endphp
@@ -403,7 +403,7 @@
                 Asset Depreciation
             </h1>
             <p style="font-size:.8rem; color:var(--muted); font-weight:500; margin:0;">
-                Kalkulasi penyusutan aset metode garis lurus
+                Kalkulasi penyusutan aset, histori, dan jurnal otomatis
             </p>
         </div>
     </div>
@@ -436,6 +436,7 @@
                                     <option
                                         value="{{ $asset->id }}"
                                         data-asset-label="{{ $asset->display_label }}"
+                                        data-purchase-price="{{ $asset->purchase_price !== null ? number_format((float) $asset->purchase_price, 2, '.', '') : '' }}"
                                     >
                                         {{ $asset->display_label }}
                                     </option>
@@ -456,8 +457,12 @@
                                 <span class="ad-prefix">Rp</span>
                                 <input
                                     type="number" id="acquisition_cost" name="acquisition_cost"
-                                    class="ad-input" min="0" step="0.01" required
+                                    class="ad-input" min="0" step="0.01"
                                 >
+                            </div>
+                            <div class="ad-hint" id="acquisition_cost_hint">
+                                <i class="fas fa-magic"></i>
+                                Akan terisi otomatis dari harga aset jika tersedia, dan masih bisa disesuaikan manual.
                             </div>
                         </div>
 
@@ -577,6 +582,13 @@
                             <div class="ad-result-value" id="result-calculated-at" style="font-size:.84rem;">-</div>
                         </div>
 
+                        <div class="ad-result-row">
+                            <div class="ad-result-label">
+                                <i class="fas fa-book"></i> Jurnal Penyusutan
+                            </div>
+                            <div class="ad-result-value" id="result-journal-reference" style="font-size:.84rem;">-</div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -682,6 +694,8 @@
         const alertBox  = document.getElementById('depreciation-alert');
         const logBody   = document.getElementById('depreciation-log-body');
         const assetSelect = document.getElementById('asset_id');
+        const acquisitionCostInput = document.getElementById('acquisition_cost');
+        const acquisitionCostHint = document.getElementById('acquisition_cost_hint');
         const periodStartInput = document.getElementById('period_start');
         const periodEndInput = document.getElementById('period_end');
         const usefulLifeInput = document.getElementById('useful_life_months');
@@ -759,6 +773,30 @@
 
             periodEndInput.setCustomValidity('');
             usefulLifeInput.value = months === null ? '' : months;
+        }
+
+        function syncAcquisitionCostFromAsset() {
+            const selectedAsset = assetSelect.selectedOptions.length
+                ? assetSelect.selectedOptions[0]
+                : null;
+            const purchasePrice = selectedAsset
+                ? selectedAsset.getAttribute('data-purchase-price')
+                : '';
+
+            if (purchasePrice) {
+                acquisitionCostInput.value = purchasePrice;
+                acquisitionCostHint.innerHTML = `
+                    <i class="fas fa-magic"></i>
+                    Nilai perolehan diambil dari harga aset dan tetap bisa Anda ubah manual.
+                `;
+                return;
+            }
+
+            acquisitionCostInput.value = '';
+            acquisitionCostHint.innerHTML = `
+                <i class="fas fa-pen"></i>
+                Harga aset belum tersedia. Isi manual agar sistem bisa merekam jurnal penyusutan.
+            `;
         }
 
         function renumberLogRows() {
@@ -863,6 +901,10 @@
                     `<span class="ad-chip">${escapeHtml(data.period_label || formatPeriodRange(periodStartInput.value, periodEndInput.value))}</span>`;
                 document.getElementById('result-calculated-at').textContent =
                     data.calculated_at || '-';
+                document.getElementById('result-journal-reference').textContent =
+                    data.journal_invoice_no
+                        ? `${data.journal_invoice_no} | ${data.journal_reference || '-'}`
+                        : '-';
 
                 if (data.log_saved && data.log) {
                     prependLogRow(data.log);
@@ -881,12 +923,14 @@
         });
 
         /* ── Input validation ── */
-        document.getElementById('acquisition_cost').addEventListener('input', function () {
+        acquisitionCostInput.addEventListener('input', function () {
             if (this.value < 0) this.value = 0;
         });
 
+        assetSelect.addEventListener('change', syncAcquisitionCostFromAsset);
         periodStartInput.addEventListener('input', syncUsefulLifeMonths);
         periodEndInput.addEventListener('input', syncUsefulLifeMonths);
+        syncAcquisitionCostFromAsset();
         syncUsefulLifeMonths();
     })();
 </script>

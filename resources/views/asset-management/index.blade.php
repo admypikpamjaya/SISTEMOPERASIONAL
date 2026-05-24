@@ -768,6 +768,7 @@ $templateConfigPayload = array_map(static function (array $config): array {
                             <th scope="col">KATEGORI</th>
                             <th scope="col">KODE AKUN</th>
                             <th scope="col">LOKASI</th>
+                            <th scope="col">HARGA</th>
                             <th scope="col">{{ strtoupper(__('app.asset.latest_data_at')) }}</th>
                             <th scope="col">{{ strtoupper(__('app.asset.latest_import_file')) }}</th>
                             <th scope="col" class="text-center">{{ strtoupper(__('app.asset.actions')) }}</th>
@@ -780,6 +781,7 @@ $templateConfigPayload = array_map(static function (array $config): array {
                                 <td>{{ $asset->category?->label() ?? $asset->category }}</td>
                                 <td>{{ $asset->account_code }}</td>
                                 <td>{{ $asset->location }}</td>
+                                <td>{{ $asset->purchase_price !== null ? 'Rp ' . number_format((float) $asset->purchase_price, 2, ',', '.') : '-' }}</td>
                                 <td>
                                     {{ optional($asset->last_imported_at ?? $asset->updated_at)->format('d M Y H:i') }}
                                 </td>
@@ -809,7 +811,7 @@ $templateConfigPayload = array_map(static function (array $config): array {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="asset-empty-state">
                                         <i class="fas fa-inbox"></i>
                                         <h4>{{ __('app.asset.empty') }}</h4>

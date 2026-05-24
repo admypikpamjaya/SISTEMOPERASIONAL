@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\Finance\StatementFilterDTO;
 use App\Enums\Portal\PortalPermission;
 use App\Enums\User\UserRole;
 use App\Models\BlastLog;
 use App\Models\FinanceReport;
 use App\Services\AccessControl\PermissionService;
 use App\Services\Asset\AssetService;
+use App\Services\Finance\FinancialStatementService;
 use App\Services\Report\MaintenanceNotificationService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -20,6 +22,7 @@ class DashboardController extends Controller
 
     public function __construct(
         private AssetService $assetService,
+        private FinancialStatementService $financialStatementService,
         private MaintenanceNotificationService $maintenanceNotificationService
     ) {}
 
@@ -69,28 +72,22 @@ class DashboardController extends Controller
 
         if ($showFinanceWidgets) {
             $financeSeries = $this->buildFinanceSeries();
+            $dashboardSummary = $this->financialStatementService->getDashboardSummary(
+                StatementFilterDTO::fromArray([
+                    'period_type' => 'ALL',
+                    'per_page' => 10,
+                ])
+            );
 
-            $allReports = FinanceReport::query()
-                ->where('is_read_only', true)
-                ->get(['summary']);
+            $saldo = round((float) data_get(
+                $dashboardSummary,
+                'journal_overview.total_posted_nominal',
+                0
+            ), 2);
 
-            $saldo = round($allReports->sum(static function (FinanceReport $report): float {
-                return (float) data_get(
-                    $report->summary,
-                    'ending_balance',
-                    data_get($report->summary, 'net_result', 0)
-                );
-            }), 2);
-
-            $latestReport = FinanceReport::query()
-                ->where('is_read_only', true)
-                ->orderByDesc('generated_at')
-                ->orderByDesc('version_no')
-                ->first();
-
-            $saldoUpdatedAt = $latestReport?->generated_at
-                ? $latestReport->generated_at
-                    ->copy()
+            $latestPostedAt = data_get($dashboardSummary, 'journal_overview.latest_posted_at');
+            $saldoUpdatedAt = $latestPostedAt
+                ? Carbon::parse($latestPostedAt)
                     ->timezone(self::WIB_TIMEZONE)
                     ->format('d/m/Y H:i:s')
                 : null;

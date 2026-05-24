@@ -93,6 +93,7 @@ class AssetService
                     unit: $row['unit'],
                     location: $row['location'],
                     purchaseYear: $row['purchase_year'] ?? null,
+                    purchasePrice: $this->parseImportedPrice($row['purchase_price'] ?? null),
                     detail: $detail
                 ),
                 'source_label' => "baris ke-{$rowNumber}",
@@ -188,6 +189,7 @@ class AssetService
                     'brand' => $this->resolveSpreadsheetCell($row, $headerMap, 'brand'),
                     'serial_number' => $this->resolveSpreadsheetCell($row, $headerMap, 'serial_number'),
                     'purchase_year' => $this->resolveSpreadsheetCell($row, $headerMap, 'purchase_year'),
+                    'purchase_price' => $this->resolveSpreadsheetCell($row, $headerMap, 'purchase_price'),
                 ];
 
                 if ($this->isSpreadsheetRowEmpty($payload)) {
@@ -209,6 +211,7 @@ class AssetService
                         unit: $unit->value,
                         location: $payload['location'],
                         purchaseYear: $payload['purchase_year'],
+                        purchasePrice: $this->parseImportedPrice($payload['purchase_price']),
                         detail: [
                             'brand' => $payload['brand'],
                             'dimension' => $payload['dimension'],
@@ -318,6 +321,7 @@ class AssetService
                         'location' => $location,
                         'serial_number' => $this->resolveSpreadsheetCell($row, $headerMap, 'serial_number'),
                         'purchase_year' => $this->resolveSpreadsheetCell($row, $headerMap, 'purchase_year'),
+                        'purchase_price' => $this->resolveSpreadsheetCell($row, $headerMap, 'purchase_price'),
                         'unit' => $unit->value,
                         'components' => [],
                     ];
@@ -403,6 +407,7 @@ class AssetService
             in_array($normalized, ['merk', 'brand'], true) => 'brand',
             in_array($normalized, ['noserirangka', 'noseri', 'nomorseri', 'serialnumber', 'norangka'], true) => 'serial_number',
             in_array($normalized, ['tahunpembelian', 'purchaseyear', 'tahun'], true) => 'purchase_year',
+            in_array($normalized, ['harga', 'price', 'purchaseprice', 'nilaiperolehan', 'nominal'], true) => 'purchase_price',
             default => null,
         };
     }
@@ -419,6 +424,7 @@ class AssetService
             in_array($normalized, ['unitwatt', 'specification', 'spesifikasi', 'spek'], true) => 'specification',
             in_array($normalized, ['noserirangka', 'noseri', 'serialnumber', 'nomorseri'], true) => 'serial_number',
             in_array($normalized, ['tahunpembelian', 'purchaseyear', 'tahun'], true) => 'purchase_year',
+            in_array($normalized, ['harga', 'price', 'purchaseprice', 'nilaiperolehan', 'nominal'], true) => 'purchase_price',
             default => null,
         };
     }
@@ -578,6 +584,7 @@ class AssetService
      *     location: string,
      *     serial_number: ?string,
      *     purchase_year: ?string,
+     *     purchase_price: ?string,
      *     unit: string,
      *     components: array<int, array<string, ?string>>
      * } $asset
@@ -600,6 +607,7 @@ class AssetService
                 unit: $asset['unit'],
                 location: $asset['location'],
                 purchaseYear: $asset['purchase_year'],
+                purchasePrice: $this->parseImportedPrice($asset['purchase_price'] ?? null),
                 detail: [
                     'components' => $asset['components'],
                 ]
@@ -703,6 +711,64 @@ class AssetService
         return $endOfDay ? $date->endOfDay() : $date->startOfDay();
     }
 
+    private function parseImportedPrice(mixed $value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            $numericValue = round((float) $value, 2);
+            return $numericValue >= 0 ? $numericValue : null;
+        }
+
+        $normalized = trim((string) $value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $normalized = preg_replace('/[^0-9,\.\-]/', '', $normalized) ?? '';
+        if ($normalized === '' || $normalized === '-') {
+            return null;
+        }
+
+        $hasComma = str_contains($normalized, ',');
+        $hasDot = str_contains($normalized, '.');
+
+        if ($hasComma && $hasDot) {
+            if (strrpos($normalized, ',') > strrpos($normalized, '.')) {
+                $normalized = str_replace('.', '', $normalized);
+                $normalized = str_replace(',', '.', $normalized);
+            } else {
+                $normalized = str_replace(',', '', $normalized);
+            }
+        } elseif ($hasComma) {
+            $segments = explode(',', $normalized);
+            $lastSegment = end($segments);
+
+            if ($lastSegment !== false && strlen($lastSegment) <= 2) {
+                $normalized = str_replace('.', '', $normalized);
+                $normalized = str_replace(',', '.', $normalized);
+            } else {
+                $normalized = str_replace(',', '', $normalized);
+            }
+        } elseif ($hasDot) {
+            $segments = explode('.', $normalized);
+            $lastSegment = end($segments);
+
+            if ($lastSegment !== false && strlen($lastSegment) > 2) {
+                $normalized = str_replace('.', '', $normalized);
+            }
+        }
+
+        if (!is_numeric($normalized)) {
+            return null;
+        }
+
+        $numericValue = round((float) $normalized, 2);
+        return $numericValue >= 0 ? $numericValue : null;
+    }
+
     private function storeImportBatch(
         RegisterAssetViaFileDTO $dto,
         array $import,
@@ -739,6 +805,15 @@ class AssetService
     ): array
     {
         $assetData = Arr::except($dto->toArray(), 'detail');
+
+        if (
+            $asset !== null
+            && ($assetData['purchase_price'] ?? null) === null
+            && array_key_exists('last_imported_at', $extraAttributes)
+            && $asset->purchase_price !== null
+        ) {
+            $assetData['purchase_price'] = (float) $asset->purchase_price;
+        }
 
         return array_merge(
             Asset::validateRegistrationPayload($assetData, $asset?->id),
@@ -1016,7 +1091,8 @@ class AssetService
             'serial_number' => $dto->serialNumber,
             'unit' => $dto->unit,
             'location' => $dto->location,
-            'purchase_year' => $dto->purchaseYear
+            'purchase_year' => $dto->purchaseYear,
+            'purchase_price' => $dto->purchasePrice,
         ]);
 
         $handler = AssetFactory::createHandler($asset->category);

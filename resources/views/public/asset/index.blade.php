@@ -25,6 +25,12 @@
         [
             'label' => 'Tahun Pembelian',
             'key' => 'purchaseYear'    
+        ],
+        [
+            'label' => 'Harga / Nilai Perolehan',
+            'value' => $asset->purchasePrice !== null
+                ? 'Rp ' . number_format((float) $asset->purchasePrice, 2, ',', '.')
+                : '-'
         ]
     ];
 
@@ -126,7 +132,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>{{ $field['label'] }}</label>
-                                    <input type="text" class="form-control" value="{{ data_get($asset, $field['key']) }}" readonly>
+                                    <input type="text" class="form-control" value="{{ $field['value'] ?? data_get($asset, $field['key']) }}" readonly>
                                 </div>
                             </div>
                         @endforeach

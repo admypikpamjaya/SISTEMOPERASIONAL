@@ -25,7 +25,7 @@ class CalculateDepreciationRequest extends FormRequest
     {
         return [
             'asset_id' => 'required|string|exists:assets,id',
-            'acquisition_cost' => 'required|numeric|min:0',
+            'acquisition_cost' => 'nullable|numeric|min:0',
             'period_start' => 'required|date_format:Y-m',
             'period_end' => 'required|date_format:Y-m',
         ];
@@ -36,7 +36,6 @@ class CalculateDepreciationRequest extends FormRequest
         return [
             'asset_id.required' => 'Asset wajib disertakan.',
             'asset_id.exists' => 'Asset tidak ditemukan.',
-            'acquisition_cost.required' => 'Nilai perolehan wajib diisi.',
             'acquisition_cost.numeric' => 'Nilai perolehan harus berupa angka.',
             'acquisition_cost.min' => 'Nilai perolehan minimal 0.',
             'period_start.required' => 'Periode dari wajib diisi.',

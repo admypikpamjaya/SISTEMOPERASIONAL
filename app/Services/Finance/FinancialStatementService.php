@@ -352,6 +352,7 @@ class FinancialStatementService
     {
         $balanceSheet = $this->getBalanceSheetReport($filter);
         $profitLoss = $this->getProfitLossReport($filter);
+        $journalOverview = $this->getJournalOverview($filter, $balanceSheet['summary']);
 
         return [
             'balance_sheet' => [
@@ -364,6 +365,39 @@ class FinancialStatementService
                 'expense_count' => count($profitLoss['expense_rows']),
             ],
             'general_ledger' => $this->getGeneralLedgerSummary($filter),
+            'journal_overview' => $journalOverview,
+        ];
+    }
+
+    /**
+     * @param array<string, float|int>|null $balanceSheetSummary
+     * @return array{
+     *   posted_invoice_count:int,
+     *   total_posted_nominal:float,
+     *   journal_balance:float,
+     *   latest_posted_at:?string
+     * }
+     */
+    public function getJournalOverview(
+        StatementFilterDTO $filter,
+        ?array $balanceSheetSummary = null
+    ): array {
+        $invoiceQuery = DB::table('finance_invoices as fi')
+            ->where('fi.status', 'POSTED');
+
+        $this->applyInvoicePeriodFilter($invoiceQuery, $filter);
+
+        $latestPostedAt = (clone $invoiceQuery)
+            ->orderByDesc('fi.posted_at')
+            ->value('fi.posted_at');
+
+        return [
+            'posted_invoice_count' => (int) (clone $invoiceQuery)->count('fi.id'),
+            'total_posted_nominal' => round((float) (clone $invoiceQuery)->sum('fi.total_debit'), 2),
+            'journal_balance' => round((float) (($balanceSheetSummary['asset_side_total'] ?? 0)), 2),
+            'latest_posted_at' => $latestPostedAt !== null
+                ? (string) $latestPostedAt
+                : null,
         ];
     }
 
@@ -561,6 +595,35 @@ class FinancialStatementService
 
         if (!empty($filter->accountCode)) {
             $query->where('fii.account_code', $filter->accountCode);
+        }
+
+        return $query;
+    }
+
+    private function applyInvoicePeriodFilter(Builder $query, StatementFilterDTO $filter): Builder
+    {
+        if (!empty($filter->startDate) || !empty($filter->endDate)) {
+            if (!empty($filter->startDate)) {
+                $query->whereDate('fi.accounting_date', '>=', $filter->startDate);
+            }
+
+            if (!empty($filter->endDate)) {
+                $query->whereDate('fi.accounting_date', '<=', $filter->endDate);
+            }
+
+            return $query;
+        }
+
+        if (!empty($filter->reportDate)) {
+            $query->whereDate('fi.accounting_date', $filter->reportDate);
+        }
+
+        if ($filter->year !== null) {
+            $query->whereYear('fi.accounting_date', $filter->year);
+        }
+
+        if ($filter->month !== null) {
+            $query->whereMonth('fi.accounting_date', $filter->month);
         }
 
         return $query;

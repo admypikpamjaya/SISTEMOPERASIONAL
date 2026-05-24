@@ -37,7 +37,19 @@ class AssetDepreciationController extends Controller
             $periodStart = $this->parsePeriodMonth($validated['period_start']);
             $periodEnd = $this->parsePeriodMonth($validated['period_end']);
             $usefulLifeMonths = $this->resolveUsefulLifeMonths($periodStart, $periodEnd);
+            $asset = Asset::query()
+                ->select('id', 'account_code', 'category', 'location', 'purchase_price')
+                ->find($validated['asset_id']);
+            if ($asset === null) {
+                throw new \Exception('Aset tidak ditemukan.', 404);
+            }
+
+            $acquisitionCost = $this->resolveAcquisitionCost(
+                $validated['acquisition_cost'] ?? null,
+                $asset
+            );
             $input = DepreciationInputDTO::fromArray(array_merge($validated, [
+                'acquisition_cost' => $acquisitionCost,
                 'useful_life_months' => $usefulLifeMonths,
             ]));
             $result = $this->depreciationService->calculateStraightLine($input);
@@ -45,63 +57,71 @@ class AssetDepreciationController extends Controller
             $logId = null;
             $logPayload = null;
             $loggingAvailable = Schema::hasTable('finance_depreciation_calculation_logs');
-            $asset = Asset::query()
-                ->select('id', 'account_code', 'category', 'location')
-                ->find($validated['asset_id']);
+            $posting = $this->depreciationService->postCalculatedDepreciation(
+                $asset,
+                $result,
+                $periodStart,
+                $periodEnd
+            );
 
             // The log records what the user typed into the calculator at that
             // moment. It is useful as an audit trail, but it is not the same as
             // a posted depreciation run in finance_depreciation_histories.
             if ($loggingAvailable) {
-                $log = FinanceDepreciationCalculationLog::query()->create([
-                    'asset_id' => $validated['asset_id'],
-                    'period_start_date' => $periodStart->toDateString(),
-                    'period_end_date' => $periodEnd->toDateString(),
-                    'period_month' => $periodEnd->month,
-                    'period_year' => $periodEnd->year,
-                    'acquisition_cost' => $result->acquisitionCost,
-                    'useful_life_months' => $result->usefulLifeMonths,
-                    'depreciation_per_month' => $result->depreciationPerMonth,
-                    'calculated_by' => auth()->id() ? (string) auth()->id() : null,
-                    'calculated_at' => $calculatedAt,
-                ]);
-                $logId = $log->id;
-                $log->loadMissing([
-                    'asset:id,account_code,category,location',
-                    'calculator:id,name',
-                ]);
+                try {
+                    $log = FinanceDepreciationCalculationLog::query()->create([
+                        'asset_id' => $validated['asset_id'],
+                        'period_start_date' => $periodStart->toDateString(),
+                        'period_end_date' => $periodEnd->toDateString(),
+                        'period_month' => $periodEnd->month,
+                        'period_year' => $periodEnd->year,
+                        'acquisition_cost' => $result->acquisitionCost,
+                        'useful_life_months' => $result->usefulLifeMonths,
+                        'depreciation_per_month' => $result->depreciationPerMonth,
+                        'calculated_by' => auth()->id() ? (string) auth()->id() : null,
+                        'calculated_at' => $calculatedAt,
+                    ]);
+                    $logId = $log->id;
+                    $log->loadMissing([
+                        'asset:id,account_code,category,location',
+                        'calculator:id,name',
+                    ]);
 
-                $logPayload = [
-                    'id' => $log->id,
-                    'calculated_at_label' => $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s'),
-                    'asset_label' => $this->formatAssetDisplay(
-                        $log->asset?->category,
-                        $log->asset?->account_code,
-                        $log->asset?->location
-                    ),
-                    'asset_account_code' => $log->asset?->account_code ?? '-',
-                    'asset_category_label' => $this->formatAssetCategory($log->asset?->category),
-                    'asset_location' => $log->asset?->location ?? '-',
-                    'asset_display_meta' => $this->formatAssetMeta(
-                        $log->asset?->category,
-                        $log->asset?->location
-                    ),
-                    'period_label' => $this->formatPeriodLabel(
-                        $log->period_start_date,
-                        $log->period_end_date,
-                        $log->period_month,
-                        $log->period_year
-                    ),
-                    'acquisition_cost' => (float) $log->acquisition_cost,
-                    'useful_life_months' => (int) $log->useful_life_months,
-                    'depreciation_per_month' => (float) $log->depreciation_per_month,
-                    'calculated_by_name' => $log->calculator?->name ?? '-',
-                ];
+                    $logPayload = [
+                        'id' => $log->id,
+                        'calculated_at_label' => $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s'),
+                        'asset_label' => $this->formatAssetDisplay(
+                            $log->asset?->category,
+                            $log->asset?->account_code,
+                            $log->asset?->location
+                        ),
+                        'asset_account_code' => $log->asset?->account_code ?? '-',
+                        'asset_category_label' => $this->formatAssetCategory($log->asset?->category),
+                        'asset_location' => $log->asset?->location ?? '-',
+                        'asset_display_meta' => $this->formatAssetMeta(
+                            $log->asset?->category,
+                            $log->asset?->location
+                        ),
+                        'period_label' => $this->formatPeriodLabel(
+                            $log->period_start_date,
+                            $log->period_end_date,
+                            $log->period_month,
+                            $log->period_year
+                        ),
+                        'acquisition_cost' => (float) $log->acquisition_cost,
+                        'useful_life_months' => (int) $log->useful_life_months,
+                        'depreciation_per_month' => (float) $log->depreciation_per_month,
+                        'calculated_by_name' => $log->calculator?->name ?? '-',
+                    ];
+                } catch (Throwable $loggingException) {
+                    report($loggingException);
+                    $loggingAvailable = false;
+                }
             }
 
             $message = $loggingAvailable
-                ? 'Perhitungan penyusutan berhasil dan log tersimpan.'
-                : 'Perhitungan penyusutan berhasil, tetapi log belum tersimpan (tabel log belum tersedia).';
+                ? 'Perhitungan penyusutan berhasil. Histori dan jurnal penyusutan juga sudah direkam.'
+                : 'Perhitungan penyusutan berhasil. Histori dan jurnal penyusutan sudah direkam, tetapi tabel log kalkulasi belum tersedia.';
 
             return response()->json([
                 'message' => $message,
@@ -120,6 +140,13 @@ class AssetDepreciationController extends Controller
                     'period_month' => $periodEnd->month,
                     'period_year' => $periodEnd->year,
                     'calculated_at' => $calculatedAt->format('Y-m-d H:i:s'),
+                    'policy_id' => $posting['policy']->id,
+                    'depreciation_run_id' => $posting['run']->id,
+                    'depreciation_history_id' => $posting['history']->id,
+                    'journal_invoice_id' => $posting['invoice']->id,
+                    'journal_invoice_no' => $posting['invoice']->invoice_no,
+                    'journal_reference' => $posting['invoice']->reference,
+                    'journal_status' => $posting['invoice']->status,
                     'log_id' => $logId,
                     'log_saved' => $logId !== null,
                     'logging_available' => $loggingAvailable,
@@ -127,11 +154,16 @@ class AssetDepreciationController extends Controller
                 ]),
             ]);
         } catch (Throwable $exception) {
-            report($exception);
+            $status = $this->resolveExceptionStatusCode($exception);
+            if ($status >= 500) {
+                report($exception);
+            }
 
             return response()->json([
-                'message' => 'Gagal menghitung penyusutan aset.',
-            ], 500);
+                'message' => $status >= 500
+                    ? 'Gagal menghitung penyusutan aset.'
+                    : $exception->getMessage(),
+            ], $status);
         }
     }
 
@@ -141,7 +173,7 @@ class AssetDepreciationController extends Controller
             // The page still needs the asset list because users pick an asset
             // first, then enter finance values manually for the calculation.
             $assets = Asset::query()
-                ->select('id', 'account_code', 'category', 'location')
+                ->select('id', 'account_code', 'category', 'location', 'purchase_price')
                 ->orderBy('account_code')
                 ->get()
                 ->map(function (Asset $asset): Asset {
@@ -396,5 +428,32 @@ class AssetDepreciationController extends Controller
         return (($periodEnd->year - $periodStart->year) * 12)
             + ($periodEnd->month - $periodStart->month)
             + 1;
+    }
+
+    private function resolveAcquisitionCost(mixed $inputAcquisitionCost, Asset $asset): float
+    {
+        if ($inputAcquisitionCost !== null && $inputAcquisitionCost !== '') {
+            return round((float) $inputAcquisitionCost, 2);
+        }
+
+        if ($asset->purchase_price !== null) {
+            return round((float) $asset->purchase_price, 2);
+        }
+
+        throw new \Exception(
+            'Harga aset belum tersedia. Isi nilai perolehan manual atau lengkapi harga pada data aset terlebih dahulu.',
+            422
+        );
+    }
+
+    private function resolveExceptionStatusCode(Throwable $exception): int
+    {
+        $code = (int) $exception->getCode();
+
+        if ($code >= 400 && $code <= 599) {
+            return $code;
+        }
+
+        return 500;
     }
 }

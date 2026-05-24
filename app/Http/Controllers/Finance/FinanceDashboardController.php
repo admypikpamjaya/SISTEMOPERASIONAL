@@ -48,10 +48,7 @@ class FinanceDashboardController extends Controller
                 ),
             ];
 
-            $dashboardSummary = [];
-            if (in_array(true, $featureAccess, true)) {
-                $dashboardSummary = $this->financialStatementService->getDashboardSummary($filter);
-            }
+            $dashboardSummary = $this->financialStatementService->getDashboardSummary($filter);
 
             return view('finance.dashboard', [
                 'reports' => $reports,

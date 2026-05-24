@@ -16,7 +16,8 @@ class MinimalAssetDataDTO
         public array $detail,
         public ?AssetUnit $unit,
         public string $location,
-        public ?string $purchaseYear
+        public ?string $purchaseYear,
+        public ?float $purchasePrice
     ) {}
 
     public static function fromModel(Asset $data): self 
@@ -28,7 +29,8 @@ class MinimalAssetDataDTO
             self::mapDetail($data),
             $data->unit,
             $data->location,
-            $data->purchase_year
+            $data->purchase_year,
+            $data->purchase_price !== null ? (float) $data->purchase_price : null
         );
     }
 

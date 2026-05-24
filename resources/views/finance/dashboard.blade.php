@@ -13,6 +13,10 @@
     $balanceSheetUncategorized = (int) data_get($dashboardSummary, 'balance_sheet.uncategorized_count', 0);
     $profitLossSummary = data_get($dashboardSummary, 'profit_loss.totals', []);
     $generalLedgerSummary = data_get($dashboardSummary, 'general_ledger', []);
+    $journalOverview = data_get($dashboardSummary, 'journal_overview', []);
+    $journalOverviewLatestPostedAt = data_get($journalOverview, 'latest_posted_at')
+        ? \Carbon\Carbon::parse((string) data_get($journalOverview, 'latest_posted_at'))->timezone(config('app.timezone'))->format('d/m/Y H:i:s')
+        : '-';
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -248,15 +252,43 @@
         </div>
         <div class="col-lg-4">
             <div class="fd-hero">
-                <small><i class="fas fa-file-invoice"></i> Snapshot Tersedia</small>
-                <strong>{{ number_format($totalReports, 0, ',', '.') }}</strong>
-                <p>Total snapshot laporan finance untuk filter yang sedang aktif.</p>
-                <a href="{{ route('finance.report.snapshots', $filterQuery) }}"><i class="fas fa-arrow-right"></i> Buka Snapshot Laporan</a>
+                <small><i class="fas fa-file-invoice-dollar"></i> Total Nominal Invoice Posted</small>
+                <strong>Rp {{ number_format((float) data_get($journalOverview, 'total_posted_nominal', 0), 2, ',', '.') }}</strong>
+                <p>
+                    {{ number_format((int) data_get($journalOverview, 'posted_invoice_count', 0), 0, ',', '.') }}
+                    invoice posted untuk filter aktif. Update jurnal terakhir:
+                    {{ $journalOverviewLatestPostedAt }}.
+                </p>
+                <a href="{{ route('finance.invoice.index') }}"><i class="fas fa-arrow-right"></i> Buka Faktur / Jurnal</a>
             </div>
         </div>
     </div>
 
     <div class="fd-feature-grid">
+        <div class="fd-feature-card">
+            <div class="fd-feature-top">
+                <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-blue);"><i class="fas fa-wallet"></i></span><span>Ringkasan Jurnal</span></div>
+                <span class="fd-badge"><i class="fas fa-book-open"></i> Journal Based</span>
+            </div>
+            <div class="fd-mini-grid">
+                <div class="fd-mini-item"><div class="fd-mini-label">Saldo Jurnal</div><div class="fd-mini-value blue">Rp {{ number_format((float) data_get($journalOverview, 'journal_balance', 0), 2, ',', '.') }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">Total Nominal</div><div class="fd-mini-value">Rp {{ number_format((float) data_get($journalOverview, 'total_posted_nominal', 0), 2, ',', '.') }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">Invoice Posted</div><div class="fd-mini-value">{{ number_format((int) data_get($journalOverview, 'posted_invoice_count', 0), 0, ',', '.') }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">Update Terakhir</div><div class="fd-mini-value" style="font-size:.76rem;">{{ $journalOverviewLatestPostedAt }}</div></div>
+            </div>
+            <div class="fd-mini-note">Nilai diambil dari jurnal finance berstatus POSTED agar saldo dashboard selaras dengan buku besar.</div>
+            <div class="fd-feature-actions">
+                <a href="{{ route('finance.invoice.index') }}" class="fd-feature-btn primary">
+                    <i class="fas fa-file-invoice-dollar"></i> Buka Jurnal
+                </a>
+                @if(!empty($featureAccess['general_ledger']))
+                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-feature-btn muted">
+                        <i class="fas fa-book-open"></i> Buku Besar
+                    </a>
+                @endif
+            </div>
+        </div>
+
         @if(!empty($featureAccess['balance_sheet']))
             <div class="fd-feature-card">
                 <div class="fd-feature-top">

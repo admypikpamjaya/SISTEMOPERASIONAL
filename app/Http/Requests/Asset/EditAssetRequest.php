@@ -35,6 +35,7 @@ class EditAssetRequest extends FormRequest
             'unit' => ['required', Rule::enum(AssetUnit::class)],
             'location' => 'required|string',
             'purchase_year'=> ['nullable', 'string'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'detail' => ['nullable', 'array', Rule::requiredIf($useAcLikeDetail)],
         ];
     }
@@ -58,6 +59,8 @@ class EditAssetRequest extends FormRequest
             'location.required' => 'Field lokasi wajib diisi',
 
             'purchase_year.string' => 'Tahun pembelian harus berupa teks.',
+            'purchase_price.numeric' => 'Harga aset harus berupa angka.',
+            'purchase_price.min' => 'Harga aset tidak boleh kurang dari 0.',
 
             'detail.required' => 'Field detail wajib diisi'
         ];

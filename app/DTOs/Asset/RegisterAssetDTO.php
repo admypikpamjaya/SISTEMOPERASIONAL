@@ -13,6 +13,7 @@ class RegisterAssetDTO
         public string $unit,
         public string $location,
         public ?string $purchaseYear,
+        public ?float $purchasePrice,
         public array $detail
     ) {}
 
@@ -25,6 +26,7 @@ class RegisterAssetDTO
             'unit' => $this->unit,
             'location' => $this->location,
             'purchase_year' => $this->purchaseYear,
+            'purchase_price' => $this->purchasePrice,
             'detail' => $this->detail
         ];
     }
@@ -34,10 +36,13 @@ class RegisterAssetDTO
         return new self(
             AssetCategory::from($data['category']),
             $data['account_code'],
-            $data['asset_serial_number'] ?? null,
+            $data['asset_serial_number'] ?? $data['serial_number'] ?? null,
             $data['unit'],
             $data['location'],
             $data['purchase_year'] ?? null,
+            isset($data['purchase_price']) && $data['purchase_price'] !== ''
+                ? (float) $data['purchase_price']
+                : null,
             $data['detail'] ?? []
         );
     }

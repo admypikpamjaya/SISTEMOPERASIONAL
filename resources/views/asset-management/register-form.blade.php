@@ -77,6 +77,12 @@ use App\Enums\Asset\AssetUnit;
                                         <input type="text" name="purchase_year" class="form-control" id="purchase_year" placeholder="{{ __('app.asset.purchase_year_placeholder') }}">
                                     </div>
                                 </div>
+                                <div class="col">
+                                    <div class="form-group mb-0">
+                                        <label for="purchase_price">{{ __('app.asset.purchase_price') }}</label>
+                                        <input type="number" name="purchase_price" min="0" step="0.01" class="form-control" id="purchase_price" placeholder="{{ __('app.asset.purchase_price_placeholder') }}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </form>

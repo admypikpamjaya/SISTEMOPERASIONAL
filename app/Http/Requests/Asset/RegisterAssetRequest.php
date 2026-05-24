@@ -34,6 +34,7 @@ class RegisterAssetRequest extends FormRequest
             'unit' => ['required', Rule::enum(AssetUnit::class)],
             'location' => ['required', 'string'],
             'purchase_year'=> ['nullable', 'string'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'detail' => ['nullable', 'array', Rule::requiredIf($useAcLikeDetail)],
         ];
     }
@@ -55,6 +56,8 @@ class RegisterAssetRequest extends FormRequest
             'location.required' => 'Lokasi tidak boleh kosong',
 
             'purchase_year.string' => 'Tahun pembelian harus berupa teks',
+            'purchase_price.numeric' => 'Harga aset harus berupa angka',
+            'purchase_price.min' => 'Harga aset tidak boleh kurang dari 0',
 
             'detail.required' => 'Detail tidak boleh kosong',
             'detail.*' => 'Detail tidak valid'

@@ -53,6 +53,24 @@ $groupedComponents = collect($asset->detail)
 
                             <div class="row">
                                 <div class="col">
+                                    <div class="form-group">
+                                        <label for="purchase_price">{{ __('app.asset.purchase_price') }}</label>
+                                        <input
+                                            type="number"
+                                            name="purchase_price"
+                                            class="form-control"
+                                            id="purchase_price"
+                                            min="0"
+                                            step="0.01"
+                                            value="{{ $asset->purchasePrice }}"
+                                            placeholder="{{ __('app.asset.purchase_price_placeholder') }}"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col">
                                     <div class="form-group mb-0">
                                         <label for="unit">{{ __('app.asset.unit') }} <span class="text-red">*</span></label>
                                         <select name="unit" id="unit" class="form-control">
