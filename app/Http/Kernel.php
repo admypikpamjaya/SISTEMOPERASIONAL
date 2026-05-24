@@ -67,6 +67,7 @@ class Kernel extends HttpKernel
         'check_access' => \App\Http\Middleware\AccessCheck::class,
         'ensure_finance_access' => \App\Http\Middleware\EnsureFinanceAccess::class,
         'set_locale' => \App\Http\Middleware\SetLocale::class,
+        'redirect_legacy_asset_host' => \App\Http\Middleware\RedirectLegacyAssetHost::class,
     ];
     protected $routeMiddleware = [
     // ...

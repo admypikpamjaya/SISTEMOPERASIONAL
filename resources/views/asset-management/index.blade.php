@@ -790,7 +790,7 @@ $templateConfigPayload = array_map(static function (array $config): array {
                                 </td>
                                 <td class="text-center">
                                     <div class="app-table-actions">
-                                        <a href="{{ route('assets.detail', $asset->id) }}" target="_blank" class="app-icon-btn is-info" title="{{ __('app.asset.view_detail') }}" aria-label="{{ __('app.asset.view_detail') }}">
+                                        <a href="{{ \App\Support\AssetPublicUrl::detailUrl((string) $asset->id) }}" target="_blank" class="app-icon-btn is-info" title="{{ __('app.asset.view_detail') }}" aria-label="{{ __('app.asset.view_detail') }}">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         @if($canAssetUpdate)

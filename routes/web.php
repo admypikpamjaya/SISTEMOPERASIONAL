@@ -498,6 +498,7 @@ Route::prefix('finance')
 |--------------------------------------------------------------------------
 */
 Route::get('assets/{id}', [PublicAssetController::class, 'show'])
+    ->middleware('redirect_legacy_asset_host')
     ->name('assets.detail');
 
 Route::get('reset-password/{token}', [ResetPasswordController::class, 'index'])

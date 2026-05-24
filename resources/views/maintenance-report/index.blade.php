@@ -198,7 +198,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                         <td><input class="child-checkbox" type="checkbox" value="{{ $report->id }}"></td>
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td class="text-left">
-                            <a href="{{ route('assets.detail', $report->asset->id) }}" target="_blank">{{ $report->asset->account_code }}</a>
+                            <a href="{{ \App\Support\AssetPublicUrl::detailUrl((string) $report->asset->id) }}" target="_blank">{{ $report->asset->account_code }}</a>
                         </td>
                         <td>
                             <span>

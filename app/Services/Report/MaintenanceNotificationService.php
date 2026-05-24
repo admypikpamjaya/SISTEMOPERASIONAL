@@ -9,6 +9,7 @@ use App\Models\Asset\Asset;
 use App\Models\Log\MaintenanceLog;
 use App\Models\MaintenanceNotificationRecipient;
 use App\Services\Blast\EmailBlastService;
+use App\Support\AssetPublicUrl;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -173,7 +174,7 @@ class MaintenanceNotificationService
             '- Kategori: ' . $this->resolveCategoryLabel($asset->category),
             '- Lokasi: ' . ((string) $asset->location !== '' ? (string) $asset->location : '-'),
             '- Tahun pembelian: ' . ((string) ($asset->purchase_year ?? '') !== '' ? (string) $asset->purchase_year : '-'),
-            '- Link detail aset: ' . route('assets.detail', ['id' => $asset->id]),
+            '- Link detail aset: ' . AssetPublicUrl::detailUrl((string) $asset->id),
             '',
             'Data maintenance',
             '- Nama pekerja: ' . (string) $log->worker_name,

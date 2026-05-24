@@ -7,6 +7,7 @@ use App\Enums\Asset\AssetUnit;
 use App\Models\AssetDepreciation;
 use App\Models\FinanceAssetPolicy;
 use App\Models\Log\MaintenanceLog;
+use App\Support\AssetPublicUrl;
 use App\Services\Asset\AssetFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -135,7 +136,7 @@ class Asset extends Model
         $uniqueId = Str::uuid()->toString();
         $qr = QrCode::size(512)
             ->format('svg')
-            ->generate(route('assets.detail', ['id' => $assetId]));
+            ->generate(AssetPublicUrl::detailUrl($assetId));
 
         $filePath = "asset_qr_codes/{$assetId}-{$uniqueId}.svg";
         Storage::disk('public')->put($filePath, $qr);
