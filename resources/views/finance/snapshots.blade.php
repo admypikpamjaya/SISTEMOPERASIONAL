@@ -170,6 +170,94 @@
     .sc-value.red    { color: var(--accent-red); }
     .sc-value.big    { font-size: 1.6rem; }
 
+    .sfr-live-card {
+        background: white; border-radius: var(--radius-lg);
+        border: 1px solid var(--border-light); box-shadow: var(--shadow-md);
+        overflow: hidden; margin-bottom: 1.25rem; animation: fadeUp 0.56s ease both;
+    }
+    .sfr-live-header {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light);
+        background: linear-gradient(135deg, rgba(26,86,219,0.08), rgba(6,182,212,0.08));
+        flex-wrap: wrap;
+    }
+    .sfr-live-title {
+        display: flex; align-items: center; gap: .6rem;
+        margin: 0; color: var(--text-primary); font-size: .94rem; font-weight: 800;
+    }
+    .sfr-live-title span {
+        width: 30px; height: 30px; border-radius: 9px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(37,99,235,.12); color: var(--blue-primary); font-size: .75rem;
+    }
+    .sfr-live-meta {
+        display: flex; align-items: center; gap: .55rem; flex-wrap: wrap;
+        color: var(--text-muted); font-size: .76rem; font-weight: 700;
+    }
+    .sfr-live-pill {
+        display: inline-flex; align-items: center; gap: .35rem;
+        padding: .28rem .62rem; border-radius: 999px;
+        background: rgba(15,23,42,.05); color: var(--text-secondary);
+    }
+    .sfr-live-body { padding: 1.15rem 1.25rem 1.25rem; }
+    .sfr-live-grid {
+        display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .8rem; margin-bottom: 1rem;
+    }
+    @media(max-width: 991px) { .sfr-live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media(max-width: 520px) { .sfr-live-grid { grid-template-columns: 1fr; } }
+    .sfr-live-metric {
+        border: 1px solid var(--border-light); border-radius: var(--radius-md);
+        background: #fbfdff; padding: .85rem .9rem; min-height: 92px;
+    }
+    .sfr-live-metric .metric-label {
+        display: flex; align-items: center; gap: .35rem;
+        color: var(--text-muted); font-size: .66rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: .07em; margin-bottom: .38rem;
+    }
+    .sfr-live-metric .metric-value {
+        color: var(--text-primary); font-size: 1rem; font-weight: 700;
+        line-height: 1.25; word-break: break-word;
+    }
+    .sfr-live-metric .metric-value.big { font-size: 1.2rem; }
+    .sfr-live-metric .metric-value.green { color: var(--accent-green); }
+    .sfr-live-metric .metric-value.red { color: var(--accent-red); }
+    .sfr-live-metric .metric-note { color: var(--text-muted); font-size: .72rem; font-weight: 600; margin-top: .25rem; }
+    .sfr-live-panels {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .85rem; margin-bottom: 1rem;
+    }
+    @media(max-width: 991px) { .sfr-live-panels { grid-template-columns: 1fr; } }
+    .sfr-live-panel {
+        border: 1px solid var(--border-light); border-radius: var(--radius-md);
+        background: white; overflow: hidden;
+    }
+    .sfr-live-panel-title {
+        display: flex; align-items: center; gap: .45rem;
+        padding: .75rem .85rem; border-bottom: 1px solid var(--border-light);
+        font-size: .78rem; font-weight: 800; color: var(--text-primary);
+        background: #f8fafc;
+    }
+    .sfr-live-row {
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .58rem .85rem; border-bottom: 1px solid rgba(226,232,240,.75);
+        font-size: .78rem;
+    }
+    .sfr-live-row:last-child { border-bottom: none; }
+    .sfr-live-row span:first-child { color: var(--text-secondary); font-weight: 600; }
+    .sfr-live-row span:last-child { color: var(--text-primary); font-weight: 800; text-align: right; }
+    .sfr-live-table-title {
+        display: flex; align-items: center; gap: .45rem;
+        color: var(--text-primary); font-size: .82rem; font-weight: 800;
+        margin: .25rem 0 .7rem;
+    }
+    .sfr-live-empty {
+        display: flex; align-items: center; gap: .55rem;
+        padding: .8rem .9rem; border-radius: var(--radius-sm);
+        border: 1px solid rgba(245,158,11,.22); background: rgba(245,158,11,.08);
+        color: #92400e; font-size: .8rem; font-weight: 700;
+    }
+
     /* ── Table Card ───────────────────────────── */
     .sfr-table-card {
         background: white; border-radius: var(--radius-lg);
@@ -321,11 +409,14 @@
     .anim-d4 { animation-delay: 0.20s; }
     body.dark-mode .sfr-page-header,
     body.dark-mode .sfr-filter-card,
+    body.dark-mode .sfr-live-card,
     body.dark-mode .sfr-table-card {
         color: var(--app-text) !important;
     }
 
     body.dark-mode .sfr-filter-card,
+    body.dark-mode .sfr-live-card,
+    body.dark-mode .sfr-live-panel,
     body.dark-mode .sfr-table-card {
         background: var(--app-surface) !important;
         border-color: var(--app-border) !important;
@@ -333,6 +424,8 @@
     }
 
     body.dark-mode .sfr-filter-header,
+    body.dark-mode .sfr-live-header,
+    body.dark-mode .sfr-live-panel-title,
     body.dark-mode .sfr-table-header,
     body.dark-mode .sfr-table-footer {
         background: var(--app-surface-soft) !important;
@@ -340,6 +433,7 @@
     }
 
     body.dark-mode .sfr-summary-card,
+    body.dark-mode .sfr-live-metric,
     body.dark-mode .sfr-alert-empty {
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
@@ -347,18 +441,35 @@
     }
 
     body.dark-mode .sfr-header-title,
+    body.dark-mode .sfr-live-title,
+    body.dark-mode .sfr-live-table-title,
     body.dark-mode .sfr-table-title,
     body.dark-mode .sc-value,
+    body.dark-mode .sfr-live-metric .metric-value,
+    body.dark-mode .sfr-live-row span:last-child,
     body.dark-mode .comp-label {
         color: var(--app-text) !important;
     }
 
     body.dark-mode .sfr-header-sub,
+    body.dark-mode .sfr-live-meta,
+    body.dark-mode .sfr-live-metric .metric-label,
+    body.dark-mode .sfr-live-metric .metric-note,
+    body.dark-mode .sfr-live-row span:first-child,
     body.dark-mode .sfr-label,
     body.dark-mode .amount-cell,
     body.dark-mode .comp-none,
     body.dark-mode .sfr-empty-text {
         color: var(--app-text-muted) !important;
+    }
+
+    body.dark-mode .sfr-live-pill {
+        background: rgba(148, 163, 184, 0.14) !important;
+        color: var(--app-text-soft) !important;
+    }
+
+    body.dark-mode .sfr-live-row {
+        border-color: var(--app-border) !important;
     }
 
     body.dark-mode .sfr-control {
@@ -421,12 +532,28 @@
     $totalOpeningBalance = (float) data_get($totals ?? [], 'total_opening_balance', 0);
     $totalNetResult = (float) data_get($totals ?? [], 'total_net_result', 0);
     $totalCount = (int) data_get($totals ?? [], 'count', 0);
+    $statementReportDate = $periodType === 'DAILY' ? $reportDate : null;
+    $statementMonth = $periodType === 'MONTHLY' ? $month : null;
+    $statementYear = in_array($periodType, ['MONTHLY', 'YEARLY'], true) ? $year : null;
     $statementRouteParams = array_filter([
         'period_type' => $periodType,
-        'report_date' => $reportDate,
-        'month' => $month,
-        'year' => $year,
+        'report_date' => $statementReportDate,
+        'month' => $statementMonth,
+        'year' => $statementYear,
     ], static fn ($value) => $value !== null && $value !== '');
+    $actualJournalOverview = data_get($actualSummary ?? [], 'journal_overview', []);
+    $actualBalanceSummary = data_get($actualSummary ?? [], 'balance_sheet.summary', []);
+    $actualProfitLossTotals = data_get($actualSummary ?? [], 'profit_loss.totals', []);
+    $actualLedgerSummary = data_get($actualSummary ?? [], 'general_ledger', []);
+    $actualLatestPostedAt = data_get($actualJournalOverview, 'latest_posted_at')
+        ? \Carbon\Carbon::parse((string) data_get($actualJournalOverview, 'latest_posted_at'))->timezone(config('app.timezone'))->format('d/m/Y H:i:s')
+        : '-';
+    $actualPostedCount = (int) data_get($actualJournalOverview, 'posted_invoice_count', 0);
+    $actualPostedNominal = (float) data_get($actualJournalOverview, 'total_posted_nominal', 0);
+    $actualIncome = (float) data_get($actualProfitLossTotals, 'income', 0);
+    $actualExpense = (float) data_get($actualProfitLossTotals, 'expense', 0);
+    $actualNetResult = (float) data_get($actualProfitLossTotals, 'net_result', 0);
+    $actualInvoiceRows = $actualInvoices ?? collect();
 @endphp
 
 {{-- ── Page Header ──────────────────────────────────── --}}
@@ -545,21 +672,136 @@
 </div>
 
 {{-- ── Summary Cards ────────────────────────────────── --}}
+<div class="sfr-live-card">
+    <div class="sfr-live-header">
+        <h3 class="sfr-live-title">
+            <span><i class="fas fa-bolt"></i></span>
+            Cuplikan Aktual Jurnal Terposting
+        </h3>
+        <div class="sfr-live-meta">
+            <span class="sfr-live-pill"><i class="fas fa-calendar-check"></i> Periode: {{ $actualPeriodLabel ?? '-' }}</span>
+            <span class="sfr-live-pill"><i class="fas fa-clock"></i> Diperbarui WIB: {{ $actualLatestPostedAt }}</span>
+        </div>
+    </div>
+    <div class="sfr-live-body">
+        <div class="sfr-live-grid">
+            <div class="sfr-live-metric">
+                <div class="metric-label"><i class="fas fa-file-invoice-dollar"></i> Total Nominal Terposting</div>
+                <div class="metric-value big">Rp {{ number_format($actualPostedNominal, 2, ',', '.') }}</div>
+                <div class="metric-note">Sumber: finance_invoices.total_debit</div>
+            </div>
+            <div class="sfr-live-metric">
+                <div class="metric-label"><i class="fas fa-layer-group"></i> Faktur/Jurnal Terposting</div>
+                <div class="metric-value big">{{ number_format($actualPostedCount, 0, ',', '.') }}</div>
+                <div class="metric-note">Status POSTED sesuai filter periode</div>
+            </div>
+            <div class="sfr-live-metric">
+                <div class="metric-label"><i class="fas fa-chart-line"></i> Surplus (Defisit)</div>
+                <div class="metric-value {{ $actualNetResult >= 0 ? 'green' : 'red' }}">Rp {{ number_format($actualNetResult, 2, ',', '.') }}</div>
+                <div class="metric-note">Pemasukan dikurangi pengeluaran</div>
+            </div>
+            <div class="sfr-live-metric">
+                <div class="metric-label"><i class="fas fa-book"></i> Total Buku Besar</div>
+                <div class="metric-value">Rp {{ number_format((float) data_get($actualLedgerSummary, 'total_debit', 0), 2, ',', '.') }}</div>
+                <div class="metric-note">{{ number_format((int) data_get($actualLedgerSummary, 'entry_count', 0), 0, ',', '.') }} baris jurnal</div>
+            </div>
+        </div>
+
+        <div class="sfr-live-panels">
+            <div class="sfr-live-panel">
+                <div class="sfr-live-panel-title"><i class="fas fa-balance-scale"></i> Lembar Saldo</div>
+                <div class="sfr-live-row"><span>Kas</span><span>Rp {{ number_format((float) data_get($actualBalanceSummary, 'kas_total', 0), 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Piutang</span><span>Rp {{ number_format((float) data_get($actualBalanceSummary, 'piutang_total', 0), 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Aset</span><span>Rp {{ number_format((float) data_get($actualBalanceSummary, 'aset_total', 0), 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Liabilitas</span><span>Rp {{ number_format((float) data_get($actualBalanceSummary, 'liabilitas_total', 0), 2, ',', '.') }}</span></div>
+            </div>
+            <div class="sfr-live-panel">
+                <div class="sfr-live-panel-title"><i class="fas fa-chart-area"></i> Laba Rugi</div>
+                <div class="sfr-live-row"><span>Total Pemasukan</span><span>Rp {{ number_format($actualIncome, 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Total Pengeluaran</span><span>Rp {{ number_format($actualExpense, 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Surplus (Defisit)</span><span>Rp {{ number_format($actualNetResult, 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Akun Laba Rugi</span><span>{{ number_format((int) data_get($actualSummary ?? [], 'profit_loss.income_count', 0) + (int) data_get($actualSummary ?? [], 'profit_loss.expense_count', 0), 0, ',', '.') }}</span></div>
+            </div>
+            <div class="sfr-live-panel">
+                <div class="sfr-live-panel-title"><i class="fas fa-book-open"></i> Buku Besar</div>
+                <div class="sfr-live-row"><span>Jumlah Akun</span><span>{{ number_format((int) data_get($actualLedgerSummary, 'account_count', 0), 0, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Total Debit</span><span>Rp {{ number_format((float) data_get($actualLedgerSummary, 'total_debit', 0), 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Total Kredit</span><span>Rp {{ number_format((float) data_get($actualLedgerSummary, 'total_credit', 0), 2, ',', '.') }}</span></div>
+                <div class="sfr-live-row"><span>Selisih</span><span>Rp {{ number_format((float) data_get($actualLedgerSummary, 'balance_gap', 0), 2, ',', '.') }}</span></div>
+            </div>
+        </div>
+
+        <div class="sfr-live-table-title">
+            <i class="fas fa-receipt"></i> Jurnal Terposting Terbaru
+        </div>
+        @if($actualInvoiceRows->isNotEmpty())
+            <div class="table-responsive">
+                <table class="sfr-table">
+                    <thead>
+                        <tr>
+                            <th>No. Jurnal</th>
+                            <th>Tanggal Akuntansi</th>
+                            <th>Tipe</th>
+                            <th>Nama Jurnal</th>
+                            <th>Total Debit</th>
+                            <th>Total Kredit</th>
+                            <th>Diposting</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($actualInvoiceRows as $invoice)
+                            <tr>
+                                <td><span class="amount-cell">{{ $invoice->invoice_no }}</span></td>
+                                <td>{{ optional($invoice->accounting_date)->format('d/m/Y') ?? '-' }}</td>
+                                <td>
+                                    <span class="badge-type {{ strtoupper((string) $invoice->entry_type) === 'INCOME' ? 'all' : 'monthly' }}">
+                                        {{ $invoice->entry_type }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="font-weight:700;color:var(--text-primary);">{{ $invoice->journal_name }}</div>
+                                    @if(!empty($invoice->reference))
+                                        <div style="font-size:.72rem;color:var(--text-muted);">{{ $invoice->reference }}</div>
+                                    @endif
+                                </td>
+                                <td><span class="amount-cell">Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}</span></td>
+                                <td><span class="amount-cell">Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}</span></td>
+                                <td>{{ optional($invoice->posted_at)->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}</td>
+                                <td>
+                                    <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="btn-preview">
+                                        <i class="fas fa-eye"></i> Detail
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="sfr-live-empty">
+                <i class="fas fa-info-circle"></i>
+                Belum ada jurnal terposting untuk filter periode ini.
+            </div>
+        @endif
+    </div>
+</div>
+
 <div class="sfr-summary-grid">
     <div class="sfr-summary-card sc-count anim-d1">
-        <div class="sc-label"><span class="sc-icon sc-icon-count"><i class="fas fa-layer-group"></i></span> {{ __('app.finance.snapshot_count') }}</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-count"><i class="fas fa-layer-group"></i></span> Snapshot Manual Tersimpan</div>
         <div class="sc-value big">{{ number_format($totalCount, 0, ',', '.') }}</div>
     </div>
     <div class="sfr-summary-card sc-opening anim-d2">
-        <div class="sc-label"><span class="sc-icon sc-icon-opening"><i class="fas fa-wallet"></i></span> {{ __('app.finance.total_opening_balance') }}</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-opening"><i class="fas fa-wallet"></i></span> Saldo Awal Snapshot</div>
         <div class="sc-value" style="font-size:1rem;">Rp {{ number_format($totalOpeningBalance, 2, ',', '.') }}</div>
     </div>
     <div class="sfr-summary-card sc-ending anim-d3">
-        <div class="sc-label"><span class="sc-icon sc-icon-ending"><i class="fas fa-wallet"></i></span> {{ __('app.finance.total_ending_balance') }}</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-ending"><i class="fas fa-wallet"></i></span> Saldo Akhir Snapshot</div>
         <div class="sc-value blue" style="font-size:1rem;">Rp {{ number_format($totalEndingBalance, 2, ',', '.') }}</div>
     </div>
     <div class="sfr-summary-card sc-surplus anim-d4">
-        <div class="sc-label"><span class="sc-icon sc-icon-surplus"><i class="fas fa-balance-scale"></i></span> {{ __('app.finance.total_surplus_deficit') }}</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-surplus"><i class="fas fa-balance-scale"></i></span> Surplus Snapshot</div>
         <div class="sc-value {{ $totalNetResult >= 0 ? 'green' : 'red' }}" style="font-size:1rem;">Rp {{ number_format($totalNetResult, 2, ',', '.') }}</div>
     </div>
 </div>
@@ -576,7 +818,7 @@
     @if($reports->total() === 0)
         <div class="sfr-alert-empty">
             <i class="fas fa-exclamation-triangle"></i>
-            {{ __('app.finance.no_snapshot_filter') }}
+            Belum ada snapshot manual tersimpan untuk saringan ini. Cuplikan aktual di atas tetap diambil dari jurnal terposting.
         </div>
     @endif
 
@@ -713,7 +955,7 @@
                         <td colspan="10">
                             <div class="sfr-empty-state">
                                 <div class="sfr-empty-icon"><i class="fas fa-inbox"></i></div>
-                                <div class="sfr-empty-text">{{ __('app.finance.snapshot_empty_filter') }}</div>
+                                <div class="sfr-empty-text">Tidak ada snapshot manual tersimpan untuk saringan ini.</div>
                             </div>
                         </td>
                     </tr>

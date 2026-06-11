@@ -1004,7 +1004,7 @@
                     </div>
                 </div>
                 <div class="saldo-footer">
-                    <a href="{{ route('finance.report.snapshots') }}">
+                    <a href="{{ route('finance.report.snapshots', ['period_type' => 'ALL']) }}">
                         <i class="fas fa-chart-bar"></i>
                         {{ __('app.dashboard.view_snapshot') }}
                         <i class="fas fa-arrow-right"></i>

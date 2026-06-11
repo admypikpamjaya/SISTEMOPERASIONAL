@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Finance;
 use App\DTOs\Finance\FinanceSnapshotFilterDTO;
 use App\DTOs\Finance\GenerateProfitLossReportDTO;
 use App\DTOs\Finance\ProfitLossReportDetailDTO;
+use App\DTOs\Finance\StatementFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\FinanceReportIndexRequest;
 use App\Http\Requests\Finance\GenerateProfitLossReportRequest;
 use App\Models\FinanceAccount;
 use App\Models\FinanceInvoice;
+use App\Services\Finance\FinancialStatementService;
 use App\Services\Finance\ReportDocumentService;
 use App\Services\Finance\ReportService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use RuntimeException;
 use Throwable;
@@ -21,7 +24,8 @@ class FinanceReportController extends Controller
 {
     public function __construct(
         private ReportService $reportService,
-        private ReportDocumentService $reportDocumentService
+        private ReportDocumentService $reportDocumentService,
+        private FinancialStatementService $financialStatementService
     ) {}
 
     public function index(FinanceReportIndexRequest $request)
@@ -73,16 +77,22 @@ class FinanceReportController extends Controller
     public function snapshots(FinanceReportIndexRequest $request)
     {
         try {
-            $validated = $request->validated();
+            $validated = $this->normalizeSnapshotFilters($request->validated());
             $selectedPeriodType = strtoupper((string) ($validated['period_type'] ?? 'MONTHLY'));
 
             $filter = FinanceSnapshotFilterDTO::fromArray($validated);
             $result = $this->reportService->getSnapshots($filter);
+            $statementFilter = $this->buildStatementFilter($filter);
+            $actualSummary = $this->financialStatementService->getDashboardSummary($statementFilter);
+            $actualInvoices = $this->getPostedInvoicePreview($filter);
 
             return view('finance.snapshots', [
                 'reports' => $result['reports'],
                 'comparisons' => $result['comparisons'],
                 'totals' => $result['totals'],
+                'actualSummary' => $actualSummary,
+                'actualInvoices' => $actualInvoices,
+                'actualPeriodLabel' => $this->buildActualPeriodLabel($selectedPeriodType, $filter),
                 'filters' => [
                     'period_type' => $selectedPeriodType,
                     'report_date' => $filter->reportDate,
@@ -100,6 +110,111 @@ class FinanceReportController extends Controller
                 ->route('finance.report.index')
                 ->with('error', 'Gagal memuat snapshot laporan finance.');
         }
+    }
+
+    /**
+     * @param array<string, mixed> $validated
+     * @return array<string, mixed>
+     */
+    private function normalizeSnapshotFilters(array $validated): array
+    {
+        $periodType = strtoupper((string) ($validated['period_type'] ?? 'MONTHLY'));
+        $validated['period_type'] = $periodType;
+
+        if ($periodType === 'ALL') {
+            $validated['report_date'] = null;
+            $validated['year'] = null;
+            $validated['month'] = null;
+
+            return $validated;
+        }
+
+        if ($periodType === 'DAILY') {
+            $date = Carbon::parse((string) ($validated['report_date'] ?? now()->toDateString()));
+            $validated['report_date'] = $date->toDateString();
+            $validated['year'] = (int) $date->year;
+            $validated['month'] = (int) $date->month;
+
+            return $validated;
+        }
+
+        $validated['report_date'] = null;
+        $validated['year'] = (int) ($validated['year'] ?? now()->year);
+
+        if ($periodType === 'YEARLY') {
+            $validated['month'] = null;
+
+            return $validated;
+        }
+
+        $validated['month'] = (int) ($validated['month'] ?? now()->month);
+
+        return $validated;
+    }
+
+    private function buildStatementFilter(FinanceSnapshotFilterDTO $filter): StatementFilterDTO
+    {
+        return StatementFilterDTO::fromArray([
+            'period_type' => $filter->periodType ?? 'ALL',
+            'report_date' => $filter->reportDate,
+            'year' => $filter->year,
+            'month' => $filter->month,
+            'per_page' => $filter->perPage,
+        ]);
+    }
+
+    private function getPostedInvoicePreview(FinanceSnapshotFilterDTO $filter)
+    {
+        $query = FinanceInvoice::query()
+            ->where('status', 'POSTED');
+
+        $this->applySnapshotPeriodToInvoiceQuery($query, $filter);
+
+        return $query
+            ->orderByDesc('accounting_date')
+            ->orderByDesc('posted_at')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get([
+                'id',
+                'invoice_no',
+                'accounting_date',
+                'entry_type',
+                'journal_name',
+                'reference',
+                'total_debit',
+                'total_credit',
+                'posted_at',
+            ]);
+    }
+
+    private function applySnapshotPeriodToInvoiceQuery(Builder $query, FinanceSnapshotFilterDTO $filter): Builder
+    {
+        if (!empty($filter->reportDate)) {
+            $query->whereDate('accounting_date', $filter->reportDate);
+        }
+
+        if ($filter->year !== null) {
+            $query->whereYear('accounting_date', $filter->year);
+        }
+
+        if ($filter->month !== null) {
+            $query->whereMonth('accounting_date', $filter->month);
+        }
+
+        return $query;
+    }
+
+    private function buildActualPeriodLabel(string $periodType, FinanceSnapshotFilterDTO $filter): string
+    {
+        return match ($periodType) {
+            'ALL' => 'Semua periode',
+            'DAILY' => !empty($filter->reportDate)
+                ? Carbon::parse((string) $filter->reportDate)->format('d/m/Y')
+                : now()->format('d/m/Y'),
+            'YEARLY' => (string) ($filter->year ?? now()->year),
+            default => sprintf('%02d/%04d', (int) ($filter->month ?? now()->month), (int) ($filter->year ?? now()->year)),
+        };
     }
 
     public function store(GenerateProfitLossReportRequest $request)
