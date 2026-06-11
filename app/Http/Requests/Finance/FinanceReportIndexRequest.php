@@ -4,6 +4,7 @@ namespace App\Http\Requests\Finance;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 
 class FinanceReportIndexRequest extends FormRequest
 {
@@ -22,13 +23,18 @@ class FinanceReportIndexRequest extends FormRequest
      */
     public function rules(): array
     {
+        $categoryRules = ['nullable', 'uuid'];
+        if (Schema::hasTable('finance_categories')) {
+            $categoryRules[] = 'exists:finance_categories,id';
+        }
+
         return [
             'period_type' => 'nullable|string|in:ALL,DAILY,MONTHLY,YEARLY',
             'report_date' => 'nullable|date',
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
             'report_type' => 'nullable|string|in:DAILY,MONTHLY,YEARLY',
-            'category_id' => 'nullable|uuid|exists:finance_categories,id',
+            'category_id' => $categoryRules,
             'comparison_type' => 'nullable|string|in:NONE,PREVIOUS_PERIOD,SAME_PERIOD_LAST_YEAR,SPECIFIC_DATE',
             'comparison_offset' => 'nullable|integer|min:1|max:36',
             'comparison_date' => 'nullable|date|required_if:comparison_type,SPECIFIC_DATE',

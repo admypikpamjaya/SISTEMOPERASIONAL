@@ -64,6 +64,8 @@ class FinanceReportRepository
             $query->where('is_read_only', true);
         }
 
+        $this->applyCategoryFilter($query, $categoryId);
+
         return $query->orderByDesc('generated_at')
             ->paginate($perPage, ['*'], 'page', $page);
     }
@@ -103,6 +105,7 @@ class FinanceReportRepository
         ?string $reportDate = null,
         ?int $year = null,
         ?int $month = null,
+        ?string $categoryId = null,
         bool $readOnlyOnly = true,
         int $page = 1,
         int $perPage = 20
@@ -184,9 +187,7 @@ class FinanceReportRepository
             $query->where('is_read_only', true);
         }
 
-        if (!empty($categoryId)) {
-            $query->where('category_id', $categoryId);
-        }
+        $this->applyCategoryFilter($query, $categoryId);
 
         $query->whereHas('period', function ($periodQuery) use ($periodType, $reportDate, $year, $month) {
             if (!empty($periodType) && strtoupper((string) $periodType) !== 'ALL') {
@@ -207,5 +208,23 @@ class FinanceReportRepository
         });
 
         return $query;
+    }
+
+    private function applyCategoryFilter(Builder $query, ?string $categoryId): Builder
+    {
+        if (empty($categoryId)) {
+            return $query;
+        }
+
+        if (!$this->hasFinanceReportCategoryColumn()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('category_id', $categoryId);
+    }
+
+    private function hasFinanceReportCategoryColumn(): bool
+    {
+        return Schema::hasColumn('finance_report_snapshots', 'category_id');
     }
 }

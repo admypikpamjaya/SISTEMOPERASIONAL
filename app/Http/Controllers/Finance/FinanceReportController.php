@@ -17,6 +17,7 @@ use App\Services\Finance\ReportService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
 
@@ -173,8 +174,10 @@ class FinanceReportController extends Controller
 
         $this->applySnapshotPeriodToInvoiceQuery($query, $filter);
 
-        if (!empty($filter->categoryId)) {
+        if (!empty($filter->categoryId) && Schema::hasColumn('finance_invoices', 'category_id')) {
             $query->where('category_id', $filter->categoryId);
+        } elseif (!empty($filter->categoryId)) {
+            $query->whereRaw('1 = 0');
         }
 
         return $query

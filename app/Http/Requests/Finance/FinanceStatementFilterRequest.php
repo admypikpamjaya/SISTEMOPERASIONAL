@@ -5,6 +5,7 @@ namespace App\Http\Requests\Finance;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FinanceStatementFilterRequest extends FormRequest
 {
@@ -15,6 +16,11 @@ class FinanceStatementFilterRequest extends FormRequest
 
     public function rules(): array
     {
+        $categoryRules = ['nullable', 'uuid'];
+        if (Schema::hasTable('finance_categories')) {
+            $categoryRules[] = 'exists:finance_categories,id';
+        }
+
         return [
             'period_type' => 'nullable|string|in:ALL,DAILY,MONTHLY,YEARLY',
             'report_date' => 'nullable|date',
@@ -33,7 +39,7 @@ class FinanceStatementFilterRequest extends FormRequest
             'statement_batch_id' => 'nullable|uuid',
             'ledger_source' => 'nullable|string|in:system,imported,combined',
             'ledger_batch_id' => 'nullable|uuid',
-            'category_id' => 'nullable|uuid|exists:finance_categories,id',
+            'category_id' => $categoryRules,
             'selected_ids' => 'nullable|array',
             'selected_ids.*' => 'integer|min:1',
             'export_scope' => 'nullable|string|in:all,filter,to_date',

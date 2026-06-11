@@ -6,9 +6,15 @@ use App\DTOs\Finance\StatementFilterDTO;
 use App\Models\FinanceAccount;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FinancialStatementService
 {
+    /**
+     * @var array<string, bool>
+     */
+    private array $schemaCache = [];
+
     /**
      * @return array{
      *   sections: array<int, array{key:string,label:string,rows:array<int, array<string, mixed>>,total:float}>,
@@ -515,10 +521,13 @@ class FinancialStatementService
     {
         $query = DB::table('finance_invoice_items as fii')
             ->join('finance_invoices as fi', 'fi.id', '=', 'fii.invoice_id')
-            ->leftJoin('finance_categories as fc', 'fc.id', '=', 'fi.category_id')
             ->leftJoin('finance_accounts as fa', 'fa.code', '=', 'fii.account_code')
             ->leftJoin('assets as a', 'a.account_code', '=', 'fii.account_code')
             ->where('fi.status', 'POSTED');
+
+        if ($this->canJoinFinanceCategories()) {
+            $query->leftJoin('finance_categories as fc', 'fc.id', '=', 'fi.category_id');
+        }
 
         return $this->applyPeriodFilter($query, $filter);
     }
@@ -534,8 +543,6 @@ class FinancialStatementService
                 'fi.journal_name',
                 'fi.reference',
                 'fi.entry_type',
-                'fi.category_id',
-                'fc.name as category_name',
                 'fii.account_code',
                 'fii.partner_name',
                 'fii.label',
@@ -547,6 +554,18 @@ class FinancialStatementService
                 'fii.sort_order',
             ])
             ->selectRaw("COALESCE(fa.name, fii.label, fii.account_code) as account_name");
+
+        if ($this->hasFinanceInvoiceCategoryColumn()) {
+            $query->addSelect('fi.category_id');
+        } else {
+            $query->selectRaw('NULL as category_id');
+        }
+
+        if ($this->canJoinFinanceCategories()) {
+            $query->addSelect('fc.name as category_name');
+        } else {
+            $query->selectRaw('NULL as category_name');
+        }
 
         $this->applyJournalItemFilters($query, $filter);
 
@@ -602,9 +621,7 @@ class FinancialStatementService
             $query->where('fii.account_code', $filter->accountCode);
         }
 
-        if (!empty($filter->categoryId)) {
-            $query->where('fi.category_id', $filter->categoryId);
-        }
+        $this->applyInvoiceCategoryFilter($query, $filter);
 
         return $query;
     }
@@ -633,11 +650,55 @@ class FinancialStatementService
             }
         }
 
-        if (!empty($filter->categoryId)) {
-            $query->where('fi.category_id', $filter->categoryId);
-        }
+        $this->applyInvoiceCategoryFilter($query, $filter);
 
         return $query;
+    }
+
+    private function applyInvoiceCategoryFilter(Builder $query, StatementFilterDTO $filter): Builder
+    {
+        if (empty($filter->categoryId)) {
+            return $query;
+        }
+
+        if (!$this->hasFinanceInvoiceCategoryColumn()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('fi.category_id', $filter->categoryId);
+    }
+
+    private function canJoinFinanceCategories(): bool
+    {
+        return $this->hasFinanceInvoiceCategoryColumn()
+            && $this->hasTable('finance_categories');
+    }
+
+    private function hasFinanceInvoiceCategoryColumn(): bool
+    {
+        return $this->hasColumn('finance_invoices', 'category_id');
+    }
+
+    private function hasTable(string $table): bool
+    {
+        $cacheKey = 'table:' . $table;
+
+        if (!array_key_exists($cacheKey, $this->schemaCache)) {
+            $this->schemaCache[$cacheKey] = Schema::hasTable($table);
+        }
+
+        return $this->schemaCache[$cacheKey];
+    }
+
+    private function hasColumn(string $table, string $column): bool
+    {
+        $cacheKey = 'column:' . $table . ':' . $column;
+
+        if (!array_key_exists($cacheKey, $this->schemaCache)) {
+            $this->schemaCache[$cacheKey] = Schema::hasColumn($table, $column);
+        }
+
+        return $this->schemaCache[$cacheKey];
     }
 
     private function applyJournalSearchFilter(Builder $query, string $search): Builder
