@@ -7,7 +7,7 @@
     $account = $report['account'] ?? ['code' => null, 'name' => null];
     $journalItems = $items && method_exists($items, 'items') ? $items->items() : (is_array($items) ? $items : []);
     $searchTerm = $filters['search'] ?? null;
-    $statementSourceLabel = $statementSourceLabel ?? 'Laporan Finance';
+    $statementSourceLabel = $statementSourceLabel ?? __('app.finance.finance_report');
     $statementBackUrl = $statementBackUrl ?? route('finance.dashboard');
     $selectedItemCount = count(request()->query('selected_ids', []));
 @endphp
@@ -435,17 +435,17 @@
     <div class="ji-page-title">
         <div class="ji-title-icon"><i class="fas fa-table"></i></div>
         <div>
-            <h1>{{ $statementSourceLabel }} · Item Jurnal</h1>
-            <p>Rincian item jurnal untuk akun {{ !empty($account['code']) ? $account['code'] : 'terpilih' }} pada periode {{ $periodLabel }}.</p>
+            <h1>{{ __('app.finance.journal_items_title', ['source' => $statementSourceLabel]) }}</h1>
+            <p>{{ __('app.finance.journal_items_subtitle', ['account' => !empty($account['code']) ? $account['code'] : __('app.finance.selected_account'), 'period' => $periodLabel]) }}</p>
         </div>
     </div>
 
     <div class="ji-nav">
         <a href="{{ $statementBackUrl }}" class="ji-nav-link muted">
-            <i class="fas fa-arrow-left"></i> Kembali
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance.back') }}
         </a>
         <a href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $account['code']])) }}" class="ji-nav-link muted">
-            <i class="fas fa-book-open"></i> Buku Besar
+            <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
         </a>
     </div>
 </div>
@@ -454,11 +454,11 @@
     <div>
         <span class="ji-context-badge">
             <i class="fas fa-filter"></i>
-            {{ !empty($account['code']) ? '[' . $account['code'] . '] ' . ($account['name'] ?? '-') : 'Semua akun' }}
+            {{ !empty($account['code']) ? '[' . $account['code'] . '] ' . ($account['name'] ?? '-') : __('app.finance.all_accounts') }}
         </span>
-        <div class="ji-context-help">Klik checkbox untuk memilih item jurnal yang ingin ikut diekspor. Jika tidak ada yang dipilih, ekspor memakai seluruh hasil filter aktif.</div>
+        <div class="ji-context-help">{{ __('app.finance.journal_items_select_help') }}</div>
     </div>
-    <div class="ji-context-help">Sumber: {{ $statementSourceLabel }}</div>
+    <div class="ji-context-help">{{ __('app.finance.source_label', ['source' => $statementSourceLabel]) }}</div>
 </div>
 
 @include('finance.partials.statement-filter', [
@@ -469,19 +469,19 @@
 
 <div class="ji-summary-grid">
     <div class="ji-summary-card">
-        <div class="ji-summary-label"><i class="fas fa-list-ul"></i> Baris Jurnal</div>
+        <div class="ji-summary-label"><i class="fas fa-list-ul"></i> {{ __('app.finance.journal_rows') }}</div>
         <div class="ji-summary-value">{{ number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.') }}</div>
     </div>
     <div class="ji-summary-card">
-        <div class="ji-summary-label"><i class="fas fa-money-bill-wave"></i> Nilai Jurnal</div>
+        <div class="ji-summary-label"><i class="fas fa-money-bill-wave"></i> {{ __('app.finance.journal_value') }}</div>
         <div class="ji-summary-value">Rp {{ number_format((float) ($summary['total_amount'] ?? 0), 2, ',', '.') }}</div>
     </div>
     <div class="ji-summary-card">
-        <div class="ji-summary-label"><i class="fas fa-arrow-up"></i> Total Debit</div>
+        <div class="ji-summary-label"><i class="fas fa-arrow-up"></i> {{ __('app.finance.total_debit') }}</div>
         <div class="ji-summary-value">Rp {{ number_format((float) ($summary['total_debit'] ?? 0), 2, ',', '.') }}</div>
     </div>
     <div class="ji-summary-card">
-        <div class="ji-summary-label"><i class="fas fa-arrow-down"></i> Total Kredit</div>
+        <div class="ji-summary-label"><i class="fas fa-arrow-down"></i> {{ __('app.finance.total_credit') }}</div>
         <div class="ji-summary-value">Rp {{ number_format((float) ($summary['total_credit'] ?? 0), 2, ',', '.') }}</div>
     </div>
 </div>
@@ -491,11 +491,11 @@
         <div class="ji-toolbar-left">
             <label class="ji-select-all">
                 <input type="checkbox" class="ji-checkbox" id="ji-select-all">
-                <span>Pilih Semua</span>
+                <span>{{ __('app.finance.select_all') }}</span>
             </label>
             <span class="ji-select-chip" id="ji-selected-chip">
                 <i class="fas fa-check-circle"></i>
-                <span id="ji-selected-count">{{ $selectedItemCount }}</span> item dipilih
+                <span id="ji-selected-count" data-template="{{ __('app.finance.selected_items', ['count' => '__COUNT__']) }}">{{ __('app.finance.selected_items', ['count' => $selectedItemCount]) }}</span>
             </span>
         </div>
 
@@ -508,10 +508,10 @@
                 @endforeach
                 <div class="ji-search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" name="search" class="ji-search-input" placeholder="Cari entri jurnal, label, rekanan, referensi, atau akun..." value="{{ $searchTerm }}">
+                    <input type="text" name="search" class="ji-search-input" placeholder="{{ __('app.finance.journal_items_search_placeholder') }}" value="{{ $searchTerm }}">
                 </div>
                 <button type="submit" class="ji-btn ji-btn-muted">
-                    <i class="fas fa-search"></i> Cari
+                    <i class="fas fa-search"></i> {{ __('app.finance.search') }}
                 </button>
             </form>
 
@@ -529,18 +529,18 @@
             <thead>
                 <tr>
                     <th class="ji-checkbox-col"></th>
-                    <th>Tanggal</th>
-                    <th>Entri Jurnal</th>
-                    <th>Akun</th>
-                    <th>Rekanan</th>
-                    <th>Label</th>
-                    <th>Pajak</th>
-                    <th>Jumlah</th>
-                    <th>Debit</th>
-                    <th>Kredit</th>
-                    <th>Tax Grids</th>
-                    <th>Analisa Distribusi</th>
-                    <th>Aksi</th>
+                    <th>{{ __('app.finance.date') }}</th>
+                    <th>{{ __('app.finance.journal_entry') }}</th>
+                    <th>{{ __('app.finance.accounts') }}</th>
+                    <th>{{ __('app.finance.partner_name') }}</th>
+                    <th>{{ __('app.finance.label') }}</th>
+                    <th>{{ __('app.finance.tax') }}</th>
+                    <th>{{ __('app.finance.amount') }}</th>
+                    <th>{{ __('app.finance.debit') }}</th>
+                    <th>{{ __('app.finance.credit') }}</th>
+                    <th>{{ __('app.finance.tax_grids') }}</th>
+                    <th>{{ __('app.finance.analytic_distribution') }}</th>
+                    <th>{{ __('app.finance.action') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -570,7 +570,7 @@
                         <td>{{ $item['analytic_distribution'] ?? '-' }}</td>
                         <td>
                             <a href="{{ route('finance.invoice.show', $item['invoice_id']) }}" class="ji-row-action">
-                                <i class="fas fa-folder-open"></i> Item Jurnal
+                                <i class="fas fa-folder-open"></i> {{ __('app.finance.journal_items') }}
                             </a>
                         </td>
                     </tr>
@@ -579,7 +579,7 @@
                         <td colspan="13">
                             <div class="ji-empty">
                                 <i class="fas fa-inbox"></i>
-                                <div>Belum ada item jurnal untuk filter aktif.</div>
+                                <div>{{ __('app.finance.no_journal_items_filter') }}</div>
                             </div>
                         </td>
                     </tr>
@@ -620,7 +620,7 @@
                 }).length;
 
                 if (selectedCount) {
-                    selectedCount.textContent = checkedCount.toString();
+                    selectedCount.textContent = (selectedCount.dataset.template || '__COUNT__').replace('__COUNT__', checkedCount.toString());
                 }
 
                 if (selectAll) {

@@ -197,64 +197,64 @@
 <div class="adl-wrap">
     <div class="adl-head">
         <div>
-            <h1 class="adl-title">Detail Log Asset Depreciation</h1>
-            <p class="adl-subtitle">Rincian hasil kalkulasi penyusutan aset.</p>
+            <h1 class="adl-title">{{ __('app.finance.asset_depreciation_log_detail') }}</h1>
+            <p class="adl-subtitle">{{ __('app.finance.depreciation_detail_desc') }}</p>
         </div>
         <div class="adl-actions">
             <a href="{{ route('finance.depreciation.index') }}" class="adl-btn">
-                <i class="fas fa-arrow-left"></i> Kembali
+                <i class="fas fa-arrow-left"></i> {{ __('app.finance.back') }}
             </a>
             <a href="{{ route('finance.depreciation.logs.download', ['log' => $log->id]) }}" class="adl-btn adl-btn-primary">
-                <i class="fas fa-file-pdf"></i> Download PDF
+                <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
             </a>
         </div>
     </div>
 
     <div class="adl-card">
         <div class="adl-card-head">
-            ID Log #{{ $log->id }}
+            {{ __('app.finance.log_id') }} #{{ $log->id }}
         </div>
         <div class="adl-table-wrap">
             <table class="adl-table">
                 <tbody>
                     <tr>
-                        <th>Waktu Hitung (WIB)</th>
+                        <th>{{ __('app.finance.calculated_at_wib') }}</th>
                         <td>{{ $log->calculated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <th>Kode Akun Asset</th>
+                        <th>{{ __('app.finance.asset_account_code') }}</th>
                         <td>{{ $log->asset?->account_code ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <th>Kategori Asset</th>
+                        <th>{{ __('app.finance.asset_category_label') }}</th>
                         <td>{{ $assetCategoryLabel }}</td>
                     </tr>
                     <tr>
-                        <th>Lokasi Asset</th>
+                        <th>{{ __('app.finance.asset_location') }}</th>
                         <td>{{ $log->asset?->location ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <th>Periode Manfaat</th>
+                        <th>{{ __('app.finance.benefit_period') }}</th>
                         <td>{{ $periodLabel ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <th>Nilai Perolehan</th>
+                        <th>{{ __('app.finance.acquisition_cost') }}</th>
                         <td>Rp {{ number_format((float) $log->acquisition_cost, 2, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <th>Umur Manfaat (bulan)</th>
+                        <th>{{ __('app.finance.useful_life_months') }}</th>
                         <td>{{ (int) $log->useful_life_months }}</td>
                     </tr>
                     <tr>
-                        <th>Penyusutan per Bulan</th>
+                        <th>{{ __('app.finance.monthly_depreciation') }}</th>
                         <td>Rp {{ number_format((float) $log->depreciation_per_month, 2, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <th>Dihitung Oleh</th>
+                        <th>{{ __('app.finance.calculated_by') }}</th>
                         <td>{{ $log->calculator?->name ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <th>Email Penghitung</th>
+                        <th>{{ __('app.finance.calculator_email') }}</th>
                         <td>{{ $log->calculator?->email ?? '-' }}</td>
                     </tr>
                 </tbody>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'WhatsApp Blast')
+@section('title', __('app.blast.whatsapp_title'))
 
 @section('content')
 
@@ -136,58 +136,7 @@ body,
     color: var(--blue-primary); font-size: 13px;
 }
 
-/* ─── CAMPAIGN CONTROL ──────────────────────── */
-.wa-campaign-panel { padding: 18px 22px; margin-bottom: 18px; }
-.campaign-panel-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
-.campaign-panel-icon {
-    width: 42px; height: 42px; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--blue-primary), var(--blue-mid));
-    border-radius: 11px; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 14px rgba(37,99,235,.3);
-}
-.campaign-panel-icon i { color: #fff; font-size: 16px; }
-.campaign-panel-label  { font-size: 14px; font-weight: 800; color: var(--navy); margin-bottom: 3px; }
-.campaign-panel-note   { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
-
-.campaign-search-row   { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-.campaign-search-results {
-    display: flex; flex-direction: column; gap: 6px;
-    margin-bottom: 12px; max-height: 180px; overflow: auto;
-}
-.campaign-search-empty { font-size: 12px; color: var(--text-muted); }
-.campaign-search-item {
-    border: 1px solid var(--blue-border); border-radius: var(--radius-sm);
-    padding: 8px 12px; display: flex; justify-content: space-between;
-    gap: 8px; align-items: center; background: var(--blue-lighter);
-}
-.campaign-search-meta  { font-size: 11px; color: var(--text-mid); line-height: 1.5; }
-.campaign-result-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-
-.campaign-control-actions {
-    display: grid; gap: 10px;
-    grid-template-columns: repeat(3, minmax(0,1fr));
-}
-.campaign-control-form { display: flex; gap: 7px; }
-.campaign-input-wrap   { position: relative; flex: 1; }
-.campaign-control-input {
-    width: 100%; border: 1px solid var(--blue-border); border-radius: var(--radius-sm);
-    padding: 8px 12px; font-size: 12.5px; font-family: inherit;
-    background: var(--blue-lighter); color: var(--text-dark);
-    transition: border-color .2s, box-shadow .2s;
-}
-.campaign-control-input:focus {
-    outline: none; border-color: var(--blue-mid);
-    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
-}
-.campaign-target-input { padding-right: 30px; }
-.campaign-clear-btn {
-    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-    width: 20px; height: 20px; border: none; border-radius: 50%;
-    background: var(--border); color: var(--text-mid); font-size: 13px;
-    cursor: pointer; display: none; align-items: center; justify-content: center; padding: 0;
-}
-.campaign-clear-btn.visible { display: inline-flex; }
-
+/* ─── ACTION BUTTONS ──────────────────────── */
 /* ─── BUTTONS ───────────────────────────────── */
 .campaign-btn {
     border: none; border-radius: var(--radius-sm); padding: 8px 14px;
@@ -672,7 +621,6 @@ body,
 @media (max-width: 1400px) {
     .wa-top-row             { grid-template-columns: 1fr; }
     .wa-stats-grid          { grid-template-columns: repeat(2,1fr); }
-    .campaign-control-actions { grid-template-columns: 1fr; }
     .wa-device-grid,
     .wa-provider-grid       { grid-template-columns: 1fr; }
     .wa-device-select-grid  { grid-template-columns: 1fr; }
@@ -682,8 +630,6 @@ body,
 @media (max-width: 768px) {
     .wa-page                { padding: 12px; }
     .wa-stats-grid          { grid-template-columns: 1fr; }
-    .campaign-search-row,
-    .campaign-control-form  { flex-direction: column; }
     .activity-header-actions { width: 100%; flex-direction: column-reverse; align-items: stretch; }
     .activity-table-header  { display: none; }
     .activity-row           { grid-template-columns: 1fr; gap: 6px; padding: 12px; background: var(--blue-lighter); border-radius: var(--radius-sm); margin-bottom: 8px; }
@@ -706,13 +652,13 @@ body,
             </svg>
         </div>
         <div>
-            <div class="wa-header-title">WhatsApp Blast</div>
-            <div class="wa-header-sub">Kirim pesan massal ke WhatsApp secara efisien</div>
+            <div class="wa-header-title">{{ __('app.blast.whatsapp_title') }}</div>
+            <div class="wa-header-sub">{{ __('app.blast.whatsapp_subtitle') }}</div>
         </div>
         @if($isSuperAdmin)
             <div class="wa-header-actions">
                 <a href="{{ route('admin.blast.whatsapp.manage') }}" class="wa-header-btn">
-                    <i class="fas fa-mobile-alt"></i> Manage Phone
+                    <i class="fas fa-mobile-alt"></i> {{ __('app.blast.manage_devices') }}
                 </a>
             </div>
         @endif
@@ -722,20 +668,20 @@ body,
     <div class="wa-card wa-provider-info" id="waDeviceCard">
         <div class="wa-provider-grid">
             <div>
-                <div class="wa-provider-title">Provider WhatsApp</div>
+                <div class="wa-provider-title">{{ __('app.blast.whatsapp_provider') }}</div>
                 <div class="wa-provider-row" style="margin-top:6px;">
-                    <span class="wa-provider-badge gateway" id="waProviderBadge">Gateway</span>
-                    <span class="wa-device-status-badge init" id="waStatusBadge">Memuat...</span>
+                    <span class="wa-provider-badge gateway" id="waProviderBadge">{{ __('app.blast.gateway') }}</span>
+                    <span class="wa-device-status-badge init" id="waStatusBadge">{{ __('app.blast.loading') }}</span>
                 </div>
-                <div class="wa-provider-note" id="waProviderNote">Menentukan jalur blasting WhatsApp yang aktif.</div>
-                <div class="wa-device-sub" id="waStatusSub">Menunggu data gateway.</div>
+                <div class="wa-provider-note" id="waProviderNote">{{ __('app.blast.provider_note') }}</div>
+                <div class="wa-device-sub" id="waStatusSub">{{ __('app.blast.gateway_waiting') }}</div>
             </div>
             <div class="wa-active-device">
-                <div class="label">Active Device</div>
+                <div class="label">{{ __('app.blast.active_device') }}</div>
                 <div class="value" id="waActiveDevice">-</div>
-                <div class="label">Nomor Terhubung</div>
+                <div class="label">{{ __('app.blast.connected_number') }}</div>
                 <div class="value" id="waDevicePhone">-</div>
-                <div class="label">Terhubung Sejak</div>
+                <div class="label">{{ __('app.blast.connected_since') }}</div>
                 <div class="value" id="waDeviceSince">-</div>
             </div>
         </div>
@@ -755,59 +701,11 @@ body,
         </div>
     @endif
 
-    {{-- ── CAMPAIGN CONTROL ── --}}
-    <div class="wa-card wa-campaign-panel">
-        <div class="campaign-panel-head">
-            <div class="campaign-panel-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-                <div class="campaign-panel-label">Campaign Control</div>
-                <div class="campaign-panel-note">Masukkan Campaign ID untuk pause, resume, atau stop. UUID untuk Pause, Resume, dan Soft Stop bisa berbeda.</div>
-            </div>
-        </div>
-
-        <div class="campaign-search-row">
-            <input type="text" id="campaignSearchInput" class="campaign-control-input" placeholder="Cari Campaign UUID..." value="">
-            <button type="button" id="campaignSearchBtn" class="campaign-btn info">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:5px;vertical-align:middle;"><circle cx="11" cy="11" r="8" stroke="white" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>Search UUID
-            </button>
-        </div>
-        <div id="campaignSearchResults" class="campaign-search-results"></div>
-
-        <div class="campaign-control-actions">
-            <form method="POST" action="{{ route('admin.blast.campaign.pause') }}" class="campaign-control-form" data-action-type="pause">
-                @csrf
-                <div class="campaign-input-wrap">
-                    <input type="text" id="pauseCampaignInput" name="campaign_id" class="campaign-control-input campaign-target-input" data-target-action="pause" placeholder="UUID untuk Pause" required>
-                    <button type="button" class="campaign-clear-btn" data-clear-target="pause" aria-label="Clear">&times;</button>
-                </div>
-                <button type="submit" class="campaign-btn warning">Pause</button>
-            </form>
-            <form method="POST" action="{{ route('admin.blast.campaign.resume') }}" class="campaign-control-form" data-action-type="resume">
-                @csrf
-                <div class="campaign-input-wrap">
-                    <input type="text" id="resumeCampaignInput" name="campaign_id" class="campaign-control-input campaign-target-input" data-target-action="resume" placeholder="UUID untuk Resume" required>
-                    <button type="button" class="campaign-clear-btn" data-clear-target="resume" aria-label="Clear">&times;</button>
-                </div>
-                <button type="submit" class="campaign-btn success">Resume</button>
-            </form>
-            <form method="POST" action="{{ route('admin.blast.campaign.stop') }}" class="campaign-control-form" data-action-type="stop">
-                @csrf
-                <div class="campaign-input-wrap">
-                    <input type="text" id="stopCampaignInput" name="campaign_id" class="campaign-control-input campaign-target-input" data-target-action="stop" placeholder="UUID untuk Soft Stop" required>
-                    <button type="button" class="campaign-clear-btn" data-clear-target="stop" aria-label="Clear">&times;</button>
-                </div>
-                <button type="submit" class="campaign-btn danger">Soft Stop</button>
-            </form>
-        </div>
-    </div>
-
     {{-- ── STATS ── --}}
     <div class="wa-stats-grid">
         <div class="wa-stat-card c-blue">
             <div>
-                <div class="stat-label">Total</div>
+                <div class="stat-label">{{ __('app.blast.total') }}</div>
                 <div class="stat-value" id="statTotal">{{ $activityStats['total'] ?? 0 }}</div>
             </div>
             <div class="stat-icon-box c-blue">
@@ -816,7 +714,7 @@ body,
         </div>
         <div class="wa-stat-card c-green">
             <div>
-                <div class="stat-label">Terkirim</div>
+                <div class="stat-label">{{ __('app.blast.sent') }}</div>
                 <div class="stat-value" id="statSent">{{ $activityStats['sent'] ?? 0 }}</div>
             </div>
             <div class="stat-icon-box c-green">
@@ -825,7 +723,7 @@ body,
         </div>
         <div class="wa-stat-card c-red">
             <div>
-                <div class="stat-label">Gagal</div>
+                <div class="stat-label">{{ __('app.blast.failed') }}</div>
                 <div class="stat-value" id="statFailed">{{ $activityStats['failed'] ?? 0 }}</div>
             </div>
             <div class="stat-icon-box c-red">
@@ -834,7 +732,7 @@ body,
         </div>
         <div class="wa-stat-card c-yellow">
             <div>
-                <div class="stat-label">Pending</div>
+                <div class="stat-label">{{ __('app.blast.pending') }}</div>
                 <div class="stat-value" id="statPending">{{ $activityStats['pending'] ?? 0 }}</div>
             </div>
             <div class="stat-icon-box c-yellow">
@@ -855,41 +753,41 @@ body,
                         <span class="s-icon">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </span>
-                        Penerima
+                        {{ __('app.blast.recipients') }}
                     </div>
 
                     <div class="phone-row">
-                        <input type="text" class="wa-phone-input" placeholder="Contoh: 6281234567890" id="phoneInput">
-                        <button type="button" class="wa-add-btn" id="addPhoneBtn" title="Tambah Nomor">+</button>
+                        <input type="text" class="wa-phone-input" placeholder="6281234567890" id="phoneInput">
+                        <button type="button" class="wa-add-btn" id="addPhoneBtn" title="{{ __('app.blast.add_number') }}">+</button>
                     </div>
 
                     <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
                     <div class="wa-excel-import" id="excelImport">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Impor Excel
+                        {{ __('app.blast.import_excel') }}
                     </div>
 
                     <div class="wa-excel-info" id="excelImportInfo" style="display:none;">
-                        Format Excel harus memiliki kolom: <strong>Nomor WhatsApp</strong> (opsional: Pesan, Nama, Kelas)
+                        {!! __('app.blast.excel_format_whatsapp', ['column' => '<strong>'.e(__('app.blast.whatsapp_number')).'</strong>']) !!}
                     </div>
 
                     <div class="recipient-list" id="recipientList">
-                        <div class="recipient-status">Belum ada penerima</div>
+                        <div class="recipient-status">{{ __('app.blast.no_recipients') }}</div>
                     </div>
 
                     <div class="recipient-db-section">
                         <div class="recipient-db-header">
                             <span class="recipient-db-title">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="margin-right:4px;vertical-align:middle;color:var(--blue-primary);"><ellipse cx="12" cy="5" rx="9" ry="3" stroke="currentColor" stroke-width="2"/><path d="M3 5C3 5 3 12 3 19C3 20.657 7.03 22 12 22C16.97 22 21 20.657 21 19V5" stroke="currentColor" stroke-width="2"/><path d="M3 12C3 13.657 7.03 15 12 15C16.97 15 21 13.657 21 12" stroke="currentColor" stroke-width="2"/></svg>
-                                Recipient List DB
+                {{ __('app.blast.db_recipient_list') }}
                             </span>
-                            <button type="button" class="btn-select-db" id="selectAllRecipientsBtn">Select All</button>
+                            <button type="button" class="btn-select-db" id="selectAllRecipientsBtn">{{ __('app.blast.select_all') }}</button>
                         </div>
-                        <div class="recipient-db-count">Total valid recipient: {{ $recipients->count() }}</div>
+                        <div class="recipient-db-count">{{ __('app.blast.valid_recipient_count', ['count' => $recipients->count()]) }}</div>
                         <div class="recipient-db-filters">
-                            <input type="text" id="recipientDbSearchInput" class="recipient-db-search-input" placeholder="Cari recipient DB...">
+                            <input type="text" id="recipientDbSearchInput" class="recipient-db-search-input" placeholder="{{ __('app.blast.search_db_recipients') }}">
                             <select id="recipientDbClassFilter" class="recipient-db-class-filter">
-                                <option value="">Semua kelas</option>
+                                <option value="">{{ __('app.blast.all_classes') }}</option>
                                 @foreach(($recipientClasses ?? collect()) as $kelas)
                                     <option value="{{ strtolower(trim((string) $kelas)) }}">{{ $kelas }}</option>
                                 @endforeach
@@ -905,7 +803,7 @@ body,
                                     </div>
                                 </label>
                             @empty
-                                <div class="recipient-db-empty">Tidak ada recipient WhatsApp valid.</div>
+                                <div class="recipient-db-empty">{{ __('app.blast.no_valid_whatsapp_recipients') }}</div>
                             @endforelse
                         </div>
                     </div>
@@ -919,49 +817,49 @@ body,
                         <span class="s-icon">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </span>
-                        Kotak Pesan
+                        {{ __('app.blast.message_box') }}
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Nama Siswa</label>
-                        <input type="text" class="form-input" id="studentName" name="student_name" placeholder="Masukkan nama siswa">
+                        <label class="form-label">{{ __('app.blast.student_name') }}</label>
+                        <input type="text" class="form-input" id="studentName" name="student_name" placeholder="{{ __('app.blast.student_name_placeholder') }}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Kelas</label>
-                        <input type="text" class="form-input" id="studentClass" name="student_class" placeholder="Contoh: 5A">
+                        <label class="form-label">{{ __('app.blast.class') }}</label>
+                        <input type="text" class="form-input" id="studentClass" name="student_class" placeholder="{{ __('app.blast.class_placeholder') }}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Nama Wali</label>
-                        <input type="text" class="form-input" id="parentName" name="parent_name" placeholder="Masukkan nama wali">
+                        <label class="form-label">{{ __('app.blast.guardian_name') }}</label>
+                        <input type="text" class="form-input" id="parentName" name="parent_name" placeholder="{{ __('app.blast.guardian_name_placeholder') }}">
                     </div>
 
                     <div class="template-section">
-                        <label class="template-label">Template:</label>
+                        <label class="template-label">{{ __('app.blast.template') }}:</label>
                         <select class="form-input template-select" id="templateSelect">
-                            <option value="">Pilih Template</option>
-                            <option value="reminder">Reminder Tagihan Sekolah</option>
-                            <option value="payment">Informasi Pembayaran Sekolah</option>
-                            <option value="notification">Pemberitahuan Tunggakan</option>
+                            <option value="">{{ __('app.blast.select_template') }}</option>
+                            <option value="reminder">{{ __('app.blast.school_bill_reminder') }}</option>
+                            <option value="payment">{{ __('app.blast.school_payment_info') }}</option>
+                            <option value="notification">{{ __('app.blast.arrears_notification') }}</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Announcement</label>
+                        <label class="form-label">{{ __('app.blast.announcement') }}</label>
                         <select name="announcement_id" id="announcementSelect" class="form-input">
-                            <option value="">Pilih Announcement (opsional)</option>
+                            <option value="">{{ __('app.blast.select_announcement_optional') }}</option>
                             @foreach($announcementOptions as $announcement)
                                 <option value="{{ $announcement->id }}" data-message="{{ e($announcement->message) }}">
                                     {{ \Illuminate\Support\Str::limit($announcement->title, 80) }}
                                 </option>
                             @endforeach
                         </select>
-                        <small style="font-size:11.5px;color:var(--text-muted);margin-top:4px;display:block;">Pilih announcement untuk mengisi isi pesan otomatis.</small>
+                        <small style="font-size:11.5px;color:var(--text-muted);margin-top:4px;display:block;">{{ __('app.blast.announcement_autofill_help') }}</small>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Template Blast DB</label>
+                        <label class="form-label">{{ __('app.blast.db_message_template') }}</label>
                         <select name="template_id" id="dbTemplateSelect" class="form-input">
-                            <option value="">Tanpa template</option>
+                            <option value="">{{ __('app.blast.no_template') }}</option>
                             @foreach($templates as $template)
                                 <option value="{{ $template->id }}" data-content="{{ e($template->content) }}">{{ $template->name }}</option>
                             @endforeach
@@ -971,27 +869,27 @@ body,
                                 href="{{ route('admin.blast.templates.create', ['channel' => 'whatsapp', 'return_to' => url()->full()]) }}"
                                 class="template-action-link"
                             >
-                                + Buat Template
+                                + {{ __('app.blast.create_template') }}
                             </a>
                             <a
                                 href="{{ route('admin.blast.templates.index', ['channel' => 'whatsapp']) }}"
                                 class="template-action-link"
                             >
-                                Kelola Template
+                                {{ __('app.blast.manage_template') }}
                             </a>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Template Preview</label>
-                        <div id="dbTemplatePreview" class="template-preview-box">Pilih template untuk melihat preview.</div>
+                        <label class="form-label">{{ __('app.blast.template_preview') }}</label>
+                        <div id="dbTemplatePreview" class="template-preview-box">{{ __('app.blast.select_template_preview') }}</div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Pesan Khusus Per Penerima</label>
-                        <div class="recipient-message-note">Atur per penerima: pilih mode <b>manual</b>, <b>template</b>, atau <b>global</b>.</div>
+                        <label class="form-label">{{ __('app.blast.custom_message_per_recipient') }}</label>
+                        <div class="recipient-message-note">{!! __('app.blast.recipient_message_mode_note', ['manual' => '<b>'.e(__('app.blast.manual_mode')).'</b>', 'template' => '<b>'.e(__('app.blast.template_mode')).'</b>', 'global' => '<b>'.e(__('app.blast.global_mode')).'</b>']) !!}</div>
                         <div id="recipientMessageMatrix" class="recipient-message-matrix">
-                            <div class="recipient-db-empty">Pilih recipient DB atau tambah nomor WhatsApp manual untuk mengatur pesan khusus.</div>
+                            <div class="recipient-db-empty">{{ __('app.blast.recipient_override_empty') }}</div>
                         </div>
                         <input type="hidden" name="message_overrides" id="messageOverridesField">
                     </div>
@@ -999,41 +897,41 @@ body,
                     <div class="selected-templates" id="selectedTemplates" style="display:none;"></div>
 
                     <div class="message-editor">
-                        <textarea name="message" class="form-textarea" placeholder="Ketik pesan Anda di sini..." id="messageTextarea" rows="5"></textarea>
+                        <textarea name="message" class="form-textarea" placeholder="{{ __('app.blast.global_message_placeholder') }}" id="messageTextarea" rows="5"></textarea>
                         <label class="global-default-toggle">
                             <input type="checkbox" name="use_global_default" id="useGlobalDefaultToggle" value="1" checked>
-                            Gunakan isi pesan global sebagai default penerima.
+                            {{ __('app.blast.use_global_default') }}
                         </label>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Device Pengiriman</label>
-                        <div class="recipient-message-note" style="margin-bottom:0;">Pilih device berbeda untuk siswa & karyawan. Manual akan gunakan device manual jika diisi.</div>
+                        <label class="form-label">{{ __('app.blast.delivery_device') }}</label>
+                        <div class="recipient-message-note" style="margin-bottom:0;">{{ __('app.blast.delivery_device_note') }}</div>
                         <div class="wa-device-select-grid">
                             <div class="wa-device-select-item">
-                                <label for="deviceStudentSelect">Device Siswa/Ortu</label>
+                                <label for="deviceStudentSelect">{{ __('app.blast.student_parent_device') }}</label>
                                 <select id="deviceStudentSelect" name="device_student" class="form-input">
-                                    <option value="">Default</option>
+                                    <option value="">{{ __('app.blast.default') }}</option>
                                 </select>
                             </div>
                             <div class="wa-device-select-item">
-                                <label for="deviceEmployeeSelect">Device Karyawan</label>
+                                <label for="deviceEmployeeSelect">{{ __('app.blast.employee_device') }}</label>
                                 <select id="deviceEmployeeSelect" name="device_employee" class="form-input">
-                                    <option value="">Default</option>
+                                    <option value="">{{ __('app.blast.default') }}</option>
                                 </select>
                             </div>
                             <div class="wa-device-select-item">
-                                <label for="deviceManualSelect">Device Manual</label>
+                                <label for="deviceManualSelect">{{ __('app.blast.manual_device') }}</label>
                                 <select id="deviceManualSelect" name="device_manual" class="form-input">
-                                    <option value="">Ikuti Siswa</option>
+                                    <option value="">{{ __('app.blast.follow_student') }}</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Pengaturan Pengiriman Lanjutan</label>
-                        <div class="recipient-message-note" style="margin-bottom:0;">Pengiriman WhatsApp diproses langsung. Fitur jadwal & delay dinonaktifkan.</div>
+                        <label class="form-label">{{ __('app.blast.advanced_delivery_settings') }}</label>
+                        <div class="recipient-message-note" style="margin-bottom:0;">{{ __('app.blast.delivery_settings_disabled') }}</div>
                         <input type="hidden" name="scheduled_at"          id="scheduledAtInput"    value="">
                         <input type="hidden" name="priority"              id="priorityInput"       value="normal">
                         <input type="hidden" name="rate_limit_per_minute" id="rateLimitInput"      value="5000">
@@ -1047,24 +945,24 @@ body,
                         <div class="attachment-buttons">
                             <button type="button" class="attach-btn" id="attachFile">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59723 21.9983 8.005 21.9983C6.41277 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0991 2.00667 15.16 2.00667C16.2209 2.00667 17.2394 2.42944 17.99 3.18C18.7406 3.93056 19.1633 4.94908 19.1633 6.01C19.1633 7.07092 18.7406 8.08944 17.99 8.84L9.41 17.41C9.03472 17.7853 8.52548 17.9967 7.995 17.9967C7.46452 17.9967 6.95528 17.7853 6.58 17.41C6.20472 17.0347 5.99333 16.5255 5.99333 15.995C5.99333 15.4645 6.20472 14.9553 6.58 14.58L15.07 6.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                Lampirkan File
+                                {{ __('app.blast.attach_file') }}
                             </button>
                         </div>
-                        <div class="char-count" id="charCount">0 karakter</div>
+                        <div class="char-count" id="charCount">{{ __('app.blast.characters', ['count' => 0]) }}</div>
                     </div>
 
                     <div class="attachment-wrap" id="attachmentContainer" style="display:none;">
                         <label>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-right:5px;vertical-align:middle;color:var(--blue-primary);"><path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59723 21.9983 8.005 21.9983C6.41277 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            Lampiran (Opsional)
+                            {{ __('app.blast.attachment_optional') }}
                         </label>
                         <input type="file" name="attachments[]" class="form-input" multiple accept=".pdf,.jpg,.jpeg,.png">
-                        <div class="attachment-hint">Maksimal 5MB per file. PDF / Image.</div>
+                        <div class="attachment-hint">{{ __('app.blast.attachment_hint') }}</div>
                     </div>
 
                     <button type="submit" class="wa-send-btn" id="sendButton">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Kirim Pesan WhatsApp
+                        {{ __('app.blast.send_whatsapp_message') }}
                     </button>
                     <div class="wa-gateway-note" id="waGatewayStatusNote" style="display:none;"></div>
                 </div>
@@ -1078,38 +976,38 @@ body,
                     <span class="s-icon">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
-                    Activity Log
+                    {{ __('app.blast.activity_log') }}
                 </div>
                 <div class="activity-header-actions">
-                    <form method="POST" action="{{ route('admin.blast.activity.clear') }}" class="activity-clear-form" onsubmit="return confirm('Yakin ingin menghapus semua activity log WhatsApp?')">
+                    <form method="POST" action="{{ route('admin.blast.activity.clear') }}" class="activity-clear-form" onsubmit="return confirm(@json(__('app.blast.clear_whatsapp_log_confirm')))">
                         @csrf
                         <input type="hidden" name="channel" value="whatsapp">
                         <button type="submit" class="campaign-btn danger tiny">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="margin-right:4px;vertical-align:middle;"><path d="M3 6H5H21M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            Clear Log
+                            {{ __('app.blast.clear_log') }}
                         </button>
                     </form>
                     <div class="search-small">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="var(--text-light)" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <input type="text" placeholder="Cari aktivitas..." class="search-input-small" id="searchInput">
+                        <input type="text" placeholder="{{ __('app.blast.search_activity') }}" class="search-input-small" id="searchInput">
                     </div>
                 </div>
             </div>
 
             <div class="activity-table">
                 <div class="activity-table-header">
-                    <div>Detail Waktu</div>
-                    <div>Nama Siswa</div>
-                    <div>Kelas</div>
-                    <div>Nama Wali</div>
-                    <div>Nomor WhatsApp</div>
-                    <div>Device</div>
-                    <div>Status</div>
-                    <div>Error</div>
-                    <div>Aksi</div>
+                    <div>{{ __('app.blast.time_detail') }}</div>
+                    <div>{{ __('app.blast.student_name') }}</div>
+                    <div>{{ __('app.blast.class') }}</div>
+                    <div>{{ __('app.blast.guardian_name') }}</div>
+                    <div>{{ __('app.blast.whatsapp_number') }}</div>
+                    <div>{{ __('app.blast.device') }}</div>
+                    <div>{{ __('app.blast.status') }}</div>
+                    <div>{{ __('app.blast.error') }}</div>
+                    <div>{{ __('app.blast.action') }}</div>
                 </div>
                 <div class="activity-table-body" id="activityLog">
-                    <div class="activity-empty">Belum ada aktivitas</div>
+                    <div class="activity-empty">{{ __('app.blast.no_activity') }}</div>
                 </div>
             </div>
         </div>
@@ -1119,11 +1017,11 @@ body,
     <div class="wa-tips">
         <div class="wa-tips-icon">💡</div>
         <div>
-            <div class="tips-title">Tips Pengiriman WhatsApp</div>
+            <div class="tips-title">{{ __('app.blast.whatsapp_sending_tips') }}</div>
             <div class="tips-list">
-                <div class="tip-item">Sertakan kode negara pada nomor telepon (contoh: 6281234567890).</div>
-                <div class="tip-item">Personalisasi pesan menggunakan variabel untuk engagement lebih baik.</div>
-                <div class="tip-item">Hindari mengirim terlalu banyak pesan sekaligus untuk mencegah pemblokiran.</div>
+                <div class="tip-item">{{ __('app.blast.tip_country_code') }}</div>
+                <div class="tip-item">{{ __('app.blast.tip_variables') }}</div>
+                <div class="tip-item">{{ __('app.blast.tip_limit') }}</div>
             </div>
         </div>
     </div>
@@ -1135,6 +1033,93 @@ body,
     document.addEventListener('DOMContentLoaded', function() {
         const flashSuccess = @json(session('success'));
         const flashError = @json(session('error') ?? ($errors->any() ? $errors->first() : null));
+        const blastText = {
+            successTitle: @json(__('app.blast.success_title')),
+            failedTitle: @json(__('app.blast.failed_title')),
+            gateway: @json(__('app.blast.gateway')),
+            defaultLabel: @json(__('app.blast.default')),
+            followStudent: @json(__('app.blast.follow_student')),
+            connectedQrNotNeeded: @json(__('app.blast.connected_qr_not_needed')),
+            qrWaiting: @json(__('app.blast.qr_waiting')),
+            gatewayUnreachable: @json(__('app.blast.gateway_unreachable')),
+            noCustomFiles: @json(__('app.blast.no_custom_files')),
+            deleteFile: @json(__('app.blast.delete_file')),
+            selectVisible: @json(__('app.blast.select_visible')),
+            unselectVisible: @json(__('app.blast.unselect_visible')),
+            dbLabel: @json(__('app.blast.db_label')),
+            manualLabel: @json(__('app.blast.manual_label')),
+            recipientOverrideEmpty: @json(__('app.blast.recipient_override_empty')),
+            template: @json(__('app.blast.template')),
+            manualMode: @json(__('app.blast.manual_label')),
+            templateMode: @json(__('app.blast.template')),
+            globalMode: 'Global',
+            removeRecipient: @json(__('app.blast.remove_recipient')),
+            templateModeHint: @json(__('app.blast.template_mode_hint')),
+            globalModeHint: @json(__('app.blast.global_mode_hint')),
+            manualModeHint: @json(__('app.blast.manual_mode_hint')),
+            templateModePlaceholder: @json(__('app.blast.template_mode_placeholder')),
+            globalModePlaceholder: @json(__('app.blast.global_mode_placeholder')),
+            manualModePlaceholder: @json(__('app.blast.manual_mode_placeholder')),
+            recipientCustomFile: @json(__('app.blast.recipient_custom_file')),
+            invalidPhoneFormat: @json(__('app.blast.invalid_phone_format')),
+            phoneAlreadyAdded: @json(__('app.blast.phone_already_added')),
+            noRecipients: @json(__('app.blast.no_recipients')),
+            unsupportedFileFormat: @json(__('app.blast.unsupported_file_format')),
+            processing: @json(__('app.blast.processing')),
+            emptyExcelFile: @json(__('app.blast.empty_excel_file')),
+            whatsappColumnMissing: @json(__('app.blast.whatsapp_column_missing')),
+            importSuccessMessage: @json(__('app.blast.import_success_message')),
+            duplicateNumbersSkipped: @json(__('app.blast.duplicate_numbers_skipped')),
+            invalidNumbersSkipped: @json(__('app.blast.invalid_numbers_skipped')),
+            customMessagesRead: @json(__('app.blast.custom_messages_read')),
+            importResult: @json(__('app.blast.import_result')),
+            importResultSummary: @json(__('app.blast.import_result_summary')),
+            customMessagesFilled: @json(__('app.blast.custom_messages_filled')),
+            excelReadError: @json(__('app.blast.excel_read_error')),
+            fileReadError: @json(__('app.blast.file_read_error')),
+            importExcel: @json(__('app.blast.import_excel')),
+            selectTemplatePreview: @json(__('app.blast.select_template_preview')),
+            noRecipientSearchResults: @json(__('app.blast.no_recipient_search_results')),
+            noActivity: @json(__('app.blast.no_activity')),
+            noSearchResults: @json(__('app.blast.no_search_results')),
+            sent: @json(__('app.blast.sent')),
+            failed: @json(__('app.blast.failed')),
+            pending: @json(__('app.blast.pending')),
+            sendFailedMessage: @json(__('app.blast.send_failed_message')),
+            retry: @json(__('app.blast.retry')),
+            delete: @json(__('app.blast.delete')),
+            characters: @json(__('app.blast.characters')),
+            providerWablasNote: @json(__('app.blast.provider_wablas_note')),
+            providerGatewayNote: @json(__('app.blast.provider_gateway_note')),
+            wablasActiveNote: @json(__('app.blast.wablas_active_note')),
+            gatewayNotConnectedNote: @json(__('app.blast.gateway_not_connected_note')),
+            statusConnected: @json(__('app.blast.status_connected')),
+            statusQr: @json(__('app.blast.status_qr')),
+            statusDisconnected: @json(__('app.blast.status_disconnected')),
+            statusInit: @json(__('app.blast.status_init')),
+            statusConnectedSub: @json(__('app.blast.status_connected_sub')),
+            statusQrSub: @json(__('app.blast.status_qr_sub')),
+            statusDisconnectedSub: @json(__('app.blast.status_disconnected_sub')),
+            statusInitSub: @json(__('app.blast.status_init_sub')),
+            activityLogProcessFailed: @json(__('app.blast.activity_log_process_failed')),
+            retryLogConfirm: @json(__('app.blast.retry_log_confirm')),
+            deleteLogConfirm: @json(__('app.blast.delete_log_confirm')),
+            retrying: @json(__('app.blast.retrying')),
+            deleting: @json(__('app.blast.deleting')),
+            actionProcessed: @json(__('app.blast.action_processed')),
+            templateModeRequiresDbTemplate: @json(__('app.blast.template_mode_requires_db_template')),
+            globalMessageRequired: @json(__('app.blast.global_message_required')),
+            recipientRequired: @json(__('app.blast.recipient_required')),
+            messageRequired: @json(__('app.blast.message_required')),
+            sendConfirm: @json(__('app.blast.send_confirm')),
+            sending: @json(__('app.blast.sending')),
+        };
+
+        function translateBlastTemplate(template, replacements = {}) {
+            return String(template || '').replace(/:([A-Za-z0-9_]+)/g, (match, key) => {
+                return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match;
+            });
+        }
 
         function showResultAlert(type, message) {
             if (!message) {
@@ -1144,7 +1129,7 @@ body,
             if (window.Swal && typeof window.Swal.fire === 'function') {
                 window.Swal.fire({
                     icon: type === 'success' ? 'success' : 'error',
-                    title: type === 'success' ? 'Berhasil' : 'Gagal',
+                    title: type === 'success' ? blastText.successTitle : blastText.failedTitle,
                     text: message,
                     timer: 2600,
                     showConfirmButton: false,
@@ -1172,15 +1157,9 @@ body,
         const attachFile = document.getElementById('attachFile');
         const activityLog = document.getElementById('activityLog');
         const searchInput = document.getElementById('searchInput');
-        const campaignSearchInput = document.getElementById('campaignSearchInput');
-        const campaignSearchBtn = document.getElementById('campaignSearchBtn');
-        const campaignSearchResults = document.getElementById('campaignSearchResults');
-        const campaignTargetInputs = Array.from(document.querySelectorAll('.campaign-target-input'));
-        const campaignClearButtons = Array.from(document.querySelectorAll('.campaign-clear-btn'));
         const activityApiUrl = @json(route('admin.blast.activity'));
         const activityDeleteApiUrl = @json(route('admin.blast.activity.delete'));
         const activityRetryApiUrl = @json(route('admin.blast.activity.retry'));
-        const campaignApiUrl = @json(route('admin.blast.campaigns'));
         const activityChannel = 'whatsapp';
         const providerState = @json($providerState ?? null);
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
@@ -1290,11 +1269,11 @@ body,
             currentProviderMode = isWablas ? 'wablas' : 'gateway';
             waProviderBadge.classList.toggle('gateway', !isWablas);
             waProviderBadge.classList.toggle('wablas', isWablas);
-            waProviderBadge.textContent = isWablas ? 'Wablas' : 'Gateway';
+            waProviderBadge.textContent = isWablas ? 'Wablas' : blastText.gateway;
             if (waProviderNote) {
                 waProviderNote.textContent = isWablas
-                    ? 'Blasting WhatsApp saat ini memakai server Wablas.'
-                    : 'Blasting WhatsApp saat ini memakai gateway internal.';
+                    ? blastText.providerWablasNote
+                    : blastText.providerGatewayNote;
             }
         }
 
@@ -1330,9 +1309,9 @@ body,
                 if (payload?.success === false) return;
                 const data = payload?.data || {};
                 const devices = Array.isArray(data.devices) ? data.devices : [];
-                populateDeviceSelect(deviceStudentSelect, devices, 'Default');
-                populateDeviceSelect(deviceEmployeeSelect, devices, 'Default');
-                populateDeviceSelect(deviceManualSelect, devices, 'Ikuti Siswa');
+                populateDeviceSelect(deviceStudentSelect, devices, blastText.defaultLabel || @json(__('app.blast.default')));
+                populateDeviceSelect(deviceEmployeeSelect, devices, blastText.defaultLabel || @json(__('app.blast.default')));
+                populateDeviceSelect(deviceManualSelect, devices, blastText.followStudent || @json(__('app.blast.follow_student')));
             } catch (error) {
                 // ignore
             }
@@ -1344,7 +1323,7 @@ body,
                 sendButton.disabled = false;
                 if (waGatewayStatusNote) {
                     waGatewayStatusNote.style.display = 'block';
-                    waGatewayStatusNote.textContent = 'Provider Wablas aktif. Status gateway tidak mempengaruhi pengiriman.';
+                    waGatewayStatusNote.textContent = blastText.wablasActiveNote;
                 }
                 return;
             }
@@ -1356,7 +1335,7 @@ body,
                     waGatewayStatusNote.style.display = 'none';
                 } else {
                     waGatewayStatusNote.style.display = 'block';
-                    waGatewayStatusNote.textContent = 'Gateway belum Connected. Silakan hubungkan WhatsApp terlebih dahulu.';
+                    waGatewayStatusNote.textContent = blastText.gatewayNotConnectedNote;
                 }
             }
         }
@@ -1383,22 +1362,22 @@ body,
             if (!waDeviceCard) return;
             const status = String(data?.status || 'disconnected').toLowerCase();
             const labelMap = {
-                connected: 'Connected',
-                qr: 'Scan QR',
-                disconnected: 'Disconnected',
-                init: 'Inisialisasi'
+                connected: blastText.statusConnected,
+                qr: blastText.statusQr,
+                disconnected: blastText.statusDisconnected,
+                init: blastText.statusInit
             };
             const subMap = {
-                connected: 'WhatsApp siap digunakan.',
-                qr: 'Silakan scan QR menggunakan WhatsApp.',
-                disconnected: 'Tidak terhubung. Pastikan gateway berjalan.',
-                init: 'Menunggu koneksi gateway.'
+                connected: blastText.statusConnectedSub,
+                qr: blastText.statusQrSub,
+                disconnected: blastText.statusDisconnectedSub,
+                init: blastText.statusInitSub
             };
 
             if (waStatusBadge) {
                 waStatusBadge.classList.remove('connected', 'qr', 'disconnected', 'init');
                 waStatusBadge.classList.add(labelMap[status] ? status : 'disconnected');
-                waStatusBadge.textContent = labelMap[status] || 'Disconnected';
+                waStatusBadge.textContent = labelMap[status] || blastText.statusDisconnected;
             }
 
             if (waStatusSub) {
@@ -1427,8 +1406,8 @@ body,
                     waQrImage.style.display = 'none';
                     waQrPlaceholder.style.display = 'block';
                     waQrPlaceholder.textContent = status === 'connected'
-                        ? 'Sudah terhubung. QR tidak diperlukan.'
-                        : 'QR akan muncul di sini jika belum terhubung.';
+                        ? blastText.connectedQrNotNeeded
+                        : blastText.qrWaiting;
                 }
             }
         }
@@ -1440,7 +1419,7 @@ body,
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 if (!response.ok) {
-                    throw new Error('Gateway tidak dapat dihubungi.');
+                    throw new Error(blastText.gatewayUnreachable);
                 }
                 const payload = await response.json();
                 if (payload?.success === false) {
@@ -1451,7 +1430,7 @@ body,
                 updateGatewayUi(payload?.data || {});
             } catch (error) {
                 updateGatewayUi({ status: 'disconnected' });
-                if (waStatusSub) waStatusSub.textContent = 'Gateway tidak dapat dihubungi.';
+                if (waStatusSub) waStatusSub.textContent = blastText.gatewayUnreachable;
             }
         }
 
@@ -1473,8 +1452,8 @@ body,
             const buffer = ensureAttachmentBuffer(key);
             if (!input || !list) return;
             input.files = buffer.files;
-            if (buffer.files.length === 0) { list.innerHTML = '<div class="message-override-file-empty">Tidak ada file khusus</div>'; return; }
-            list.innerHTML = Array.from(buffer.files).map((file, index) => `<div class="message-override-file-item"><span>${escapeHtml(file.name)}</span><button type="button" class="message-override-file-remove" data-index="${index}" title="Hapus file">&times;</button></div>`).join('');
+            if (buffer.files.length === 0) { list.innerHTML = `<div class="message-override-file-empty">${blastText.noCustomFiles}</div>`; return; }
+            list.innerHTML = Array.from(buffer.files).map((file, index) => `<div class="message-override-file-item"><span>${escapeHtml(file.name)}</span><button type="button" class="message-override-file-remove" data-index="${index}" title="${blastText.deleteFile}">&times;</button></div>`).join('');
         }
 
         function removeManualRecipientByNumber(phone) {
@@ -1512,13 +1491,13 @@ body,
             const visibleCheckboxes = getVisibleRecipientDbCheckboxes();
             if (visibleCheckboxes.length === 0) {
                 selectAllRecipientsBtn.disabled = true;
-                selectAllRecipientsBtn.textContent = 'Select Visible';
+                selectAllRecipientsBtn.textContent = blastText.selectVisible;
                 return;
             }
 
             selectAllRecipientsBtn.disabled = false;
             const allVisibleChecked = visibleCheckboxes.every(cb => cb.checked);
-            selectAllRecipientsBtn.textContent = allVisibleChecked ? 'Unselect Visible' : 'Select Visible';
+            selectAllRecipientsBtn.textContent = allVisibleChecked ? blastText.unselectVisible : blastText.selectVisible;
         }
 
         function syncRecipientProfileFromDbSelection(preferredRecipient = null) {
@@ -1536,10 +1515,10 @@ body,
                 if (!cb.checked) return;
                 const key = 'db:' + cb.value;
                 const label = cb.closest('.recipient-db-item')?.querySelector('.recipient-db-name')?.textContent?.trim() || cb.value;
-                recipients.push({ key, label: 'DB - ' + label, kind: 'db', ref: cb.value });
+                recipients.push({ key, label: blastText.dbLabel + ' - ' + label, kind: 'db', ref: cb.value });
             });
             recipientNumbers.forEach(phone => {
-                recipients.push({ key: 'manual:' + phone, label: 'Manual - ' + phone, kind: 'manual', ref: phone });
+                recipients.push({ key: 'manual:' + phone, label: blastText.manualLabel + ' - ' + phone, kind: 'manual', ref: phone });
             });
             return recipients;
         }
@@ -1568,7 +1547,7 @@ body,
             if (!recipientMessageMatrix) return;
             const recipients = getSelectedRecipients();
             if (recipients.length === 0) {
-                recipientMessageMatrix.innerHTML = `<div class="recipient-db-empty">Pilih recipient DB atau tambah nomor WhatsApp manual untuk mengatur pesan khusus.</div>`;
+                recipientMessageMatrix.innerHTML = `<div class="recipient-db-empty">${blastText.recipientOverrideEmpty}</div>`;
                 syncMessageOverridesField();
                 return;
             }
@@ -1583,10 +1562,10 @@ body,
                 const keyToken = keyToToken(key);
                 const radioGroup = 'override_mode_' + key.replace(/[^a-zA-Z0-9_-]/g, '_');
                 const modeClass = 'mode-' + effectiveMode;
-                const badgeText = effectiveMode === 'template' ? 'Template' : (effectiveMode === 'global' ? 'Global' : 'Manual');
-                const hintText = effectiveMode === 'template' ? 'Menggunakan template blast DB untuk penerima ini.' : (effectiveMode === 'global' ? 'Menggunakan isi pesan WA global untuk penerima ini.' : 'Gunakan isi manual khusus untuk penerima ini.');
-                const textPlaceholder = effectiveMode === 'template' ? 'Mode template aktif untuk penerima ini.' : (effectiveMode === 'global' ? 'Mode global aktif untuk penerima ini.' : 'Isi pesan khusus untuk penerima ini...');
-                return `<div class="message-override-item ${modeClass}" data-key="${escapeHtml(key)}" data-kind="${escapeHtml(kind)}" data-ref="${escapeHtml(ref)}"><div class="message-override-head"><div class="message-override-title">${escapeHtml(label)}</div><div class="message-override-actions"><span class="message-override-badge ${modeClass}">${badgeText}</span><button type="button" class="message-override-remove" title="Hapus penerima ini">&times;</button></div></div><div class="message-override-mode"><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="manual" ${manualChecked ? 'checked' : ''}> Manual</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="template" ${templateChecked ? 'checked' : ''}> Template</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="global" ${globalChecked ? 'checked' : ''}> Global</label></div><textarea class="message-override-text" placeholder="${textPlaceholder}" ${(templateChecked || globalChecked) ? 'disabled' : ''}>${message}</textarea><div class="message-override-file-wrap"><div class="message-override-file-label">File Khusus Penerima (opsional)</div><input type="hidden" name="attachment_override_keys[${keyToken}]" value="${escapeHtml(key)}"><input type="file" class="message-override-file-input" name="attachment_overrides[${keyToken}][]" multiple><div class="message-override-file-list"></div></div><div class="message-override-hint">${hintText}</div></div>`;
+                const badgeText = effectiveMode === 'template' ? blastText.templateMode : (effectiveMode === 'global' ? blastText.globalMode : blastText.manualMode);
+                const hintText = effectiveMode === 'template' ? blastText.templateModeHint : (effectiveMode === 'global' ? blastText.globalModeHint : blastText.manualModeHint);
+                const textPlaceholder = effectiveMode === 'template' ? blastText.templateModePlaceholder : (effectiveMode === 'global' ? blastText.globalModePlaceholder : blastText.manualModePlaceholder);
+                return `<div class="message-override-item ${modeClass}" data-key="${escapeHtml(key)}" data-kind="${escapeHtml(kind)}" data-ref="${escapeHtml(ref)}"><div class="message-override-head"><div class="message-override-title">${escapeHtml(label)}</div><div class="message-override-actions"><span class="message-override-badge ${modeClass}">${badgeText}</span><button type="button" class="message-override-remove" title="${blastText.removeRecipient}">&times;</button></div></div><div class="message-override-mode"><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="manual" ${manualChecked ? 'checked' : ''}> ${blastText.manualMode}</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="template" ${templateChecked ? 'checked' : ''}> ${blastText.templateMode}</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="global" ${globalChecked ? 'checked' : ''}> ${blastText.globalMode}</label></div><textarea class="message-override-text" placeholder="${textPlaceholder}" ${(templateChecked || globalChecked) ? 'disabled' : ''}>${message}</textarea><div class="message-override-file-wrap"><div class="message-override-file-label">${blastText.recipientCustomFile}</div><input type="hidden" name="attachment_override_keys[${keyToken}]" value="${escapeHtml(key)}"><input type="file" class="message-override-file-input" name="attachment_overrides[${keyToken}][]" multiple><div class="message-override-file-list"></div></div><div class="message-override-hint">${hintText}</div></div>`;
             }).join('');
             recipientMessageMatrix.querySelectorAll('.message-override-item').forEach(item => {
                 const key = item.getAttribute('data-key');
@@ -1600,21 +1579,21 @@ body,
             const selectedOption = dbTemplateSelect.options[dbTemplateSelect.selectedIndex];
             const content = selectedOption ? selectedOption.getAttribute('data-content') : '';
             const templateName = selectedOption && selectedOption.value ? selectedOption.textContent.trim() : '';
-            dbTemplatePreview.textContent = content && content.trim().length > 0 ? `Template: ${templateName}\n\n${content}` : 'Pilih template untuk melihat preview.';
+            dbTemplatePreview.textContent = content && content.trim().length > 0 ? `${blastText.template}: ${templateName}\n\n${content}` : blastText.selectTemplatePreview;
         }
 
         function addRecipient(phoneNumber = null, showAlert = true) {
             const source = phoneNumber === null ? phoneInput.value : phoneNumber;
             const phone = normalizePhone(source);
-            if (!phone) { if (showAlert) alert('Format nomor telepon tidak valid! Gunakan format: 6281234567890'); return false; }
-            if (recipientNumbers.includes(phone)) { if (showAlert) alert('Nomor ini sudah ditambahkan!'); return false; }
+            if (!phone) { if (showAlert) alert(blastText.invalidPhoneFormat); return false; }
+            if (recipientNumbers.includes(phone)) { if (showAlert) alert(blastText.phoneAlreadyAdded); return false; }
             const statusElement = recipientList.querySelector('.recipient-status');
             if (statusElement) statusElement.remove();
             recipientNumbers.push(phone);
             const recipientItem = document.createElement('div');
             recipientItem.className = 'recipient-item';
             recipientItem.setAttribute('data-phone', phone);
-            recipientItem.innerHTML = `<span class="recipient-number">${escapeHtml(phone)}</span><button type="button" class="remove-recipient" title="Hapus">&times;</button>`;
+            recipientItem.innerHTML = `<span class="recipient-number">${escapeHtml(phone)}</span><button type="button" class="remove-recipient" title="${blastText.delete}">&times;</button>`;
             recipientList.appendChild(recipientItem);
             phoneInput.value = '';
             updateTargetsField();
@@ -1627,7 +1606,7 @@ body,
                 if (recipientList.querySelectorAll('.recipient-item').length === 0) {
                     const newStatus = document.createElement('div');
                     newStatus.className = 'recipient-status';
-                    newStatus.textContent = 'Belum ada penerima';
+                    newStatus.textContent = blastText.noRecipients;
                     recipientList.appendChild(newStatus);
                 }
             });
@@ -1644,8 +1623,8 @@ body,
             if (!file) return;
             const validExtensions = ['.xlsx', '.xls', '.csv'];
             const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            if (!validExtensions.includes(fileExtension)) { alert('Format file tidak didukung! Silakan upload file Excel (.xlsx, .xls) atau CSV.'); excelFileInput.value = ''; return; }
-            excelImport.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/></svg><span>Memproses...</span>`;
+            if (!validExtensions.includes(fileExtension)) { alert(blastText.unsupportedFileFormat); excelFileInput.value = ''; return; }
+            excelImport.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/></svg><span>${blastText.processing}</span>`;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -1654,11 +1633,11 @@ body,
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    if (jsonData.length === 0) { alert('File Excel kosong!'); resetExcelImport(); return; }
+                    if (jsonData.length === 0) { alert(blastText.emptyExcelFile); resetExcelImport(); return; }
                     const headers = jsonData[0].map(h => h ? h.toString().toLowerCase() : '');
                     const whatsappIndex = headers.findIndex(h => h.includes('whatsapp') || h.includes('wa') || h.includes('nomor') || h.includes('no') || h.includes('phone') || h.includes('telepon'));
                     const messageIndex = headers.findIndex(h => h.includes('message') || h.includes('pesan') || h.includes('msg') || h.includes('text') || h.includes('isi'));
-                    if (whatsappIndex === -1) { alert('Tidak ditemukan kolom "Nomor WhatsApp"!'); resetExcelImport(); return; }
+                    if (whatsappIndex === -1) { alert(blastText.whatsappColumnMissing); resetExcelImport(); return; }
                     let importedCount = 0, duplicateCount = 0, invalidCount = 0, messageApplied = 0;
                     for (let i = 1; i < jsonData.length; i++) {
                         const row = jsonData[i];
@@ -1682,31 +1661,31 @@ body,
                     updateTargetsField();
                     renderRecipientMessageMatrix();
                     excelFileInput.value = '';
-                    let resultMessage = `Berhasil mengimpor ${importedCount} nomor WhatsApp.`;
-                    if (duplicateCount > 0) resultMessage += `\n${duplicateCount} nomor duplikat dilewati.`;
-                    if (invalidCount > 0) resultMessage += `\n${invalidCount} nomor tidak valid dilewati.`;
-                    if (messageApplied > 0) resultMessage += `\n${messageApplied} pesan khusus terbaca.`;
+                    let resultMessage = translateBlastTemplate(blastText.importSuccessMessage, { count: importedCount });
+                    if (duplicateCount > 0) resultMessage += `\n${translateBlastTemplate(blastText.duplicateNumbersSkipped, { count: duplicateCount })}`;
+                    if (invalidCount > 0) resultMessage += `\n${translateBlastTemplate(blastText.invalidNumbersSkipped, { count: invalidCount })}`;
+                    if (messageApplied > 0) resultMessage += `\n${translateBlastTemplate(blastText.customMessagesRead, { count: messageApplied })}`;
                     alert(resultMessage);
-                    excelImportInfo.innerHTML = `<strong>Hasil Import:</strong> ${importedCount} nomor berhasil ditambahkan${messageApplied > 0 ? `, ${messageApplied} pesan khusus terisi` : ''}`;
+                    excelImportInfo.innerHTML = `<strong>${blastText.importResult}:</strong> ${translateBlastTemplate(blastText.importResultSummary, { count: importedCount })}${messageApplied > 0 ? `, ${translateBlastTemplate(blastText.customMessagesFilled, { count: messageApplied })}` : ''}`;
                     excelImportInfo.style.display = 'block';
                 } catch (error) {
-                    alert('Terjadi kesalahan saat membaca file Excel.');
+                    alert(blastText.excelReadError);
                 } finally { resetExcelImport(); }
             };
-            reader.onerror = function() { alert('Gagal membaca file!'); resetExcelImport(); };
+            reader.onerror = function() { alert(blastText.fileReadError); resetExcelImport(); };
             reader.readAsArrayBuffer(file);
         }
 
         function updateTargetsField() { targetsField.value = recipientNumbers.join(', '); }
 
         function resetExcelImport() {
-            excelImport.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Impor Excel`;
+            excelImport.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${blastText.importExcel}`;
         }
 
         const templates = {
-            'reminder': { name: 'Reminder Tagihan Sekolah', content: 'Yth. Bapak/Ibu {nama wali},\n\nKami ingin mengingatkan bahwa tagihan sekolah untuk {nama siswa} kelas {kelas} sebesar {tagihan} akan jatuh tempo pada {jatuh tempo}.\n\nMohon segera melakukan pembayaran. Terima kasih.\n\nSalam,\nSOY YPIK PAM JAYA' },
-            'payment': { name: 'Informasi Pembayaran Sekolah', content: 'Kepada Yth. Bapak/Ibu {nama wali},\n\nBerikut informasi pembayaran untuk {nama siswa} kelas {kelas}:\n- Tagihan: {tagihan}\n- Jatuh Tempo: {jatuh tempo}\n\nTerima kasih.' },
-            'notification': { name: 'Pemberitahuan Tunggakan', content: 'Kepada Yth. Bapak/Ibu {nama wali},\n\nTerdapat tunggakan pembayaran untuk {nama siswa} kelas {kelas} sebesar {tagihan}.\n\nBatas: {jatuh tempo}. Mohon segera bayar.\n\nHormat kami,\nSOY YPIK PAM JAYA' }
+            'reminder': { name: @json(__('app.blast.school_bill_reminder')), content: @json(__('app.blast.default_template_reminder_content')) },
+            'payment': { name: @json(__('app.blast.school_payment_info')), content: @json(__('app.blast.default_template_payment_content')) },
+            'notification': { name: @json(__('app.blast.arrears_notification')), content: @json(__('app.blast.default_template_notification_content')) }
         };
 
         function renderSelectedTemplates() {
@@ -1796,7 +1775,7 @@ body,
                     if (recipientList.querySelectorAll('.recipient-item').length === 0) {
                         const newStatus = document.createElement('div');
                         newStatus.className = 'recipient-status';
-                        newStatus.textContent = 'Belum ada penerima';
+                        newStatus.textContent = blastText.noRecipients;
                         recipientList.appendChild(newStatus);
                     }
                 }
@@ -1827,10 +1806,10 @@ body,
                     item.classList.toggle('mode-manual', mode === 'manual');
                     item.classList.toggle('mode-global', isGlobal);
                     const badge = item.querySelector('.message-override-badge');
-                    if (badge) { badge.classList.toggle('mode-template', isTemplate); badge.classList.toggle('mode-manual', mode === 'manual'); badge.classList.toggle('mode-global', isGlobal); badge.textContent = isTemplate ? 'Template' : (isGlobal ? 'Global' : 'Manual'); }
+                    if (badge) { badge.classList.toggle('mode-template', isTemplate); badge.classList.toggle('mode-manual', mode === 'manual'); badge.classList.toggle('mode-global', isGlobal); badge.textContent = isTemplate ? blastText.templateMode : (isGlobal ? blastText.globalMode : blastText.manualMode); }
                     const hint = item.querySelector('.message-override-hint');
-                    if (hint) hint.textContent = isTemplate ? 'Menggunakan template blast DB untuk penerima ini.' : (isGlobal ? 'Menggunakan isi pesan WA global untuk penerima ini.' : 'Gunakan isi manual khusus untuk penerima ini.');
-                    if (textarea) { textarea.disabled = isTemplate || isGlobal; textarea.placeholder = isTemplate ? 'Mode template aktif untuk penerima ini.' : (isGlobal ? 'Mode global aktif untuk penerima ini.' : 'Isi pesan khusus untuk penerima ini...'); }
+                    if (hint) hint.textContent = isTemplate ? blastText.templateModeHint : (isGlobal ? blastText.globalModeHint : blastText.manualModeHint);
+                    if (textarea) { textarea.disabled = isTemplate || isGlobal; textarea.placeholder = isTemplate ? blastText.templateModePlaceholder : (isGlobal ? blastText.globalModePlaceholder : blastText.manualModePlaceholder); }
                 }
                 syncMessageOverridesField();
             });
@@ -1860,7 +1839,7 @@ body,
             });
         });
 
-        function updateCharCount() { charCount.textContent = `${messageTextarea.value.length} karakter`; }
+        function updateCharCount() { charCount.textContent = translateBlastTemplate(blastText.characters, { count: messageTextarea.value.length }); }
         if (messageTextarea) { messageTextarea.addEventListener('input', updateCharCount); updateCharCount(); }
 
         function filterRecipientDbList() {
@@ -1878,7 +1857,7 @@ body,
             });
             let emptySearch = recipientDbList.querySelector('.recipient-db-empty-search');
             if (visibleCount === 0) {
-                if (!emptySearch) { emptySearch = document.createElement('div'); emptySearch.className = 'recipient-db-empty recipient-db-empty-search'; emptySearch.textContent = 'Tidak ada recipient sesuai pencarian.'; recipientDbList.appendChild(emptySearch); }
+                if (!emptySearch) { emptySearch = document.createElement('div'); emptySearch.className = 'recipient-db-empty recipient-db-empty-search'; emptySearch.textContent = blastText.noRecipientSearchResults; recipientDbList.appendChild(emptySearch); }
             } else if (emptySearch) emptySearch.remove();
             updateSelectAllRecipientsBtnLabel();
         }
@@ -1900,20 +1879,20 @@ body,
         function renderActivities(filteredActivities = activities) {
             activityLog.innerHTML = '';
             if (filteredActivities.length === 0) {
-                const el = document.createElement('div'); el.className = 'activity-empty'; el.textContent = activities.length === 0 ? 'Belum ada aktivitas' : 'Tidak ada hasil pencarian'; activityLog.appendChild(el); return;
+                const el = document.createElement('div'); el.className = 'activity-empty'; el.textContent = activities.length === 0 ? blastText.noActivity : blastText.noSearchResults; activityLog.appendChild(el); return;
             }
             filteredActivities.forEach(activity => {
                 const row = document.createElement('div'); row.className = 'activity-row'; row.setAttribute('data-campaign-id', String(activity.campaignId || ''));
                 const statusClass = activity.status === 'success' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending';
-                const statusText = activity.status === 'success' ? 'Terkirim' : activity.status === 'failed' ? 'Gagal' : 'Pending';
+                const statusText = activity.status === 'success' ? blastText.sent : activity.status === 'failed' ? blastText.failed : blastText.pending;
                 const logId = Number(activity.logId || 0);
                 const canRetry = Boolean(activity.canRetry) && activity.status === 'failed' && logId > 0;
                 const errorText = activity.status === 'failed'
-                    ? (activity.errorMessage || activity.responseMessage || 'Gagal mengirim pesan.')
+                    ? (activity.errorMessage || activity.responseMessage || blastText.sendFailedMessage)
                     : '-';
                 const actionButtons = [];
-                if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">Retry</button>`);
-                if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">Hapus</button>`);
+                if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">${blastText.retry}</button>`);
+                if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">${blastText.delete}</button>`);
                 const deviceText = activity.deviceLabel || activity.deviceId || '-';
                 row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa"><div class="siswa-name">${activity.studentName}</div></div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali"><div class="wali-name">${activity.parentName}</div></div><div class="col-wa">${activity.phone}</div><div class="col-device">${deviceText}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-error">${errorText}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
                 activityLog.appendChild(row);
@@ -1932,55 +1911,8 @@ body,
             const response = await fetch(endpoint, { method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify({ channel: activityChannel, log_id: Number(logId) }) });
             let payload = null;
             try { payload = await response.json(); } catch (error) { payload = null; }
-            if (!response.ok) throw new Error(payload?.message || 'Gagal memproses activity log.');
+            if (!response.ok) throw new Error(payload?.message || blastText.activityLogProcessFailed);
             return payload;
-        }
-
-        function syncCampaignClearButtons() {
-            campaignClearButtons.forEach(button => {
-                const target = button.getAttribute('data-clear-target');
-                const input = campaignTargetInputs.find(item => item.getAttribute('data-target-action') === target);
-                button.classList.toggle('visible', input ? input.value.trim() !== '' : false);
-            });
-        }
-
-        function applyCampaignIdToTarget(campaignId, targetAction) {
-            const input = campaignTargetInputs.find(item => item.getAttribute('data-target-action') === targetAction);
-            if (!input) return;
-            input.value = campaignId; syncCampaignClearButtons(); input.focus();
-        }
-
-        function renderCampaignResults(campaigns) {
-            if (!campaignSearchResults) return;
-            campaignSearchResults.innerHTML = '';
-            if (!Array.isArray(campaigns) || campaigns.length === 0) {
-                const empty = document.createElement('div'); empty.className = 'campaign-search-empty'; empty.textContent = 'Campaign tidak ditemukan.'; campaignSearchResults.appendChild(empty); return;
-            }
-            campaigns.forEach(campaign => {
-                const item = document.createElement('div'); item.className = 'campaign-search-item';
-                const meta = document.createElement('div'); meta.className = 'campaign-search-meta';
-                meta.innerHTML = `<div><strong>${campaign.id}</strong></div><div>Status: ${campaign.status} | Priority: ${campaign.priority}</div><div>Total: ${campaign.stats?.total ?? 0} | Sent: ${campaign.stats?.sent ?? 0} | Failed: ${campaign.stats?.failed ?? 0} | Pending: ${campaign.stats?.pending ?? 0}</div>`;
-                const actions = document.createElement('div'); actions.className = 'campaign-result-actions';
-                [{ target: 'pause', label: 'Ke Pause', className: 'warning' }, { target: 'resume', label: 'Ke Resume', className: 'success' }, { target: 'stop', label: 'Ke Soft', className: 'danger' }].forEach(action => {
-                    const button = document.createElement('button'); button.type = 'button'; button.className = `campaign-btn ${action.className} tiny`; button.textContent = action.label;
-                    button.addEventListener('click', () => { const campaignId = String(campaign.id || ''); if (campaignSearchInput) campaignSearchInput.value = campaignId; applyCampaignIdToTarget(campaignId, action.target); if (searchInput) searchInput.value = campaignId; renderActivitiesWithCurrentFilter(); });
-                    actions.appendChild(button);
-                });
-                item.appendChild(meta); item.appendChild(actions); campaignSearchResults.appendChild(item);
-            });
-        }
-
-        async function searchCampaignsByUuid() {
-            if (!campaignApiUrl || !campaignSearchResults) return;
-            const keyword = (campaignSearchInput?.value || '').trim();
-            campaignSearchResults.innerHTML = '<div class="campaign-search-empty">Mencari campaign...</div>';
-            try {
-                const response = await fetch(`${campaignApiUrl}?channel=${encodeURIComponent(activityChannel)}&q=${encodeURIComponent(keyword)}`, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!response.ok) throw new Error('Search failed');
-                const payload = await response.json();
-                renderCampaignResults(payload.campaigns || []);
-                syncCampaignClearButtons();
-            } catch (error) { campaignSearchResults.innerHTML = '<div class="campaign-search-empty">Gagal mencari campaign.</div>'; }
         }
 
         async function refreshActivityLogs() {
@@ -2010,26 +1942,14 @@ body,
                 const action = String(actionBtn.getAttribute('data-action') || '');
                 const logId = Number(actionBtn.getAttribute('data-log-id') || 0);
                 if (!['retry', 'delete'].includes(action) || logId <= 0) return;
-                if (!window.confirm(action === 'retry' ? 'Retry kirim ulang untuk log ini?' : 'Hapus log activity ini?')) return;
+                if (!window.confirm(action === 'retry' ? blastText.retryLogConfirm : blastText.deleteLogConfirm)) return;
                 const originalText = actionBtn.textContent || '';
-                actionBtn.disabled = true; actionBtn.textContent = action === 'retry' ? 'Retry...' : 'Hapus...';
-                try { const payload = await submitActivityLogAction(action, logId); showResultAlert('success', payload?.message || 'Aksi berhasil diproses.'); await refreshActivityLogs(); }
-                catch (error) { showResultAlert('error', error?.message || 'Gagal memproses activity log.'); }
+                actionBtn.disabled = true; actionBtn.textContent = action === 'retry' ? blastText.retrying : blastText.deleting;
+                try { const payload = await submitActivityLogAction(action, logId); showResultAlert('success', payload?.message || blastText.actionProcessed); await refreshActivityLogs(); }
+                catch (error) { showResultAlert('error', error?.message || blastText.activityLogProcessFailed); }
                 finally { actionBtn.disabled = false; actionBtn.textContent = originalText; }
             });
         }
-
-        if (campaignSearchBtn) campaignSearchBtn.addEventListener('click', function() { searchCampaignsByUuid(); });
-        if (campaignSearchInput) campaignSearchInput.addEventListener('keydown', function(event) { if (event.key === 'Enter') { event.preventDefault(); searchCampaignsByUuid(); } });
-        campaignTargetInputs.forEach(input => { input.addEventListener('input', function() { syncCampaignClearButtons(); }); });
-        campaignClearButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const target = button.getAttribute('data-clear-target');
-                const input = campaignTargetInputs.find(item => item.getAttribute('data-target-action') === target);
-                if (!input) return;
-                input.value = ''; syncCampaignClearButtons(); input.focus();
-            });
-        });
 
         const whatsappBlastForm = document.getElementById('whatsappBlastForm');
         if (whatsappBlastForm) {
@@ -2045,10 +1965,10 @@ body,
                 const hasPerRecipientTemplate = overrideValues.some(o => o.mode === 'template');
                 const hasPerRecipientGlobal = overrideValues.some(o => o.mode === 'global');
                 const hasPerRecipientContent = hasPerRecipientManual || (hasPerRecipientTemplate && hasDbTemplate) || (hasPerRecipientGlobal && hasGlobalMessage);
-                if (hasPerRecipientTemplate && !hasDbTemplate) { e.preventDefault(); alert('Pilih "Template Blast DB" jika ada penerima yang menggunakan mode template.'); if (dbTemplateSelect) dbTemplateSelect.focus(); return; }
-                if (hasPerRecipientGlobal && !hasGlobalMessage) { e.preventDefault(); alert('Isi pesan global wajib diisi jika ada penerima dengan mode Global.'); messageTextarea.focus(); return; }
-                if (!hasDbRecipients && !hasManualTargets) { e.preventDefault(); alert('Pilih recipient dari DB atau tambahkan nomor WhatsApp manual terlebih dahulu!'); phoneInput.focus(); return; }
-                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent) { e.preventDefault(); alert('Masukkan isi pesan, pilih template, atau atur pesan khusus per penerima!'); messageTextarea.focus(); return; }
+                if (hasPerRecipientTemplate && !hasDbTemplate) { e.preventDefault(); alert(blastText.templateModeRequiresDbTemplate); if (dbTemplateSelect) dbTemplateSelect.focus(); return; }
+                if (hasPerRecipientGlobal && !hasGlobalMessage) { e.preventDefault(); alert(blastText.globalMessageRequired); messageTextarea.focus(); return; }
+                if (!hasDbRecipients && !hasManualTargets) { e.preventDefault(); alert(blastText.recipientRequired); phoneInput.focus(); return; }
+                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent) { e.preventDefault(); alert(blastText.messageRequired); messageTextarea.focus(); return; }
                 if (scheduledAtInput) scheduledAtInput.value = '';
                 if (priorityInput) priorityInput.value = 'normal';
                 if (rateLimitInput) rateLimitInput.value = '5000';
@@ -2064,10 +1984,10 @@ body,
                         .forEach(phone => dbPhones.push(phone));
                 });
                 const allTargetPhones = Array.from(new Set(recipientNumbers.concat(dbPhones)));
-                const confirmation = confirm(`Campaign dikirim sekarang.\nPriority: normal\nPesan akan diproses ke ${allTargetPhones.length} penerima. Lanjutkan?`);
+                const confirmation = confirm(translateBlastTemplate(blastText.sendConfirm, { count: allTargetPhones.length }));
                 if (!confirmation) { e.preventDefault(); return false; }
                 sendButton.disabled = true;
-                sendButton.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" stroke-dasharray="30" stroke-linecap="round"/></svg> Mengirim...`;
+                sendButton.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" stroke-dasharray="30" stroke-linecap="round"/></svg> ${blastText.sending}`;
                 return true;
             });
         }
@@ -2099,8 +2019,6 @@ body,
         syncRecipientProfileFromDbSelection();
         renderRecipientMessageMatrix();
         syncMessageOverridesField();
-        searchCampaignsByUuid();
-        syncCampaignClearButtons();
         refreshActivityLogs();
 
         if (providerState && providerState.current) {

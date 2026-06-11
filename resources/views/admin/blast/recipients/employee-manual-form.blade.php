@@ -6,13 +6,14 @@
     $dataset = $dataset ?? ($employee?->dataset ?? 'ypik');
 
     $title = $isYpik
-        ? ($dataset === 'pam_jaya' ? 'Recipient Karyawan YPIK Pam Jaya' : 'Recipient Karyawan YPIK')
-        : 'Recipient Karyawan Koperasi Tirta Jatik Utama';
+        ? ($dataset === 'pam_jaya' ? __('app.blast.employee_pamjaya_title') : __('app.blast.employee_ypik_title'))
+        : __('app.blast.employee_koperasi_title');
     $subtitle = $isYpik
         ? ($dataset === 'pam_jaya'
-            ? 'Input dan update data recipient YPIK Pam Jaya secara manual.'
-            : 'Input dan update data recipient karyawan YPIK secara manual.')
-        : 'Input dan update data recipient karyawan koperasi secara manual.';
+            ? __('app.blast.employee_pamjaya_manual_subtitle')
+            : __('app.blast.employee_ypik_manual_subtitle'))
+        : __('app.blast.employee_koperasi_manual_subtitle');
+    $modeTitle = $isEditMode ? __('app.blast.edit_recipient_data') : __('app.blast.manual_recipient_input');
 
     $indexRouteName = $isYpik
         ? ($dataset === 'pam_jaya'
@@ -34,7 +35,7 @@
         : route($storeRouteName);
 @endphp
 
-@section('title', ($isEditMode ? 'Edit ' : 'Input Manual ') . $title)
+@section('title', $modeTitle . ' - ' . $title)
 
 @section('content')
 <style>
@@ -175,7 +176,7 @@
 
 <div class="emp-manual-wrap">
     <div class="emp-manual-head">
-        <h2 class="emp-manual-title">{{ $isEditMode ? 'Edit Data Recipient' : 'Input Manual Recipient' }}</h2>
+        <h2 class="emp-manual-title">{{ $modeTitle }}</h2>
         <p class="emp-manual-sub">{{ $title }}. {{ $subtitle }}</p>
     </div>
 
@@ -196,7 +197,7 @@
 
                 <div class="emp-manual-grid">
                     <div class="emp-manual-field">
-                        <label class="emp-manual-label">Nama Karyawan *</label>
+                        <label class="emp-manual-label">{{ __('app.blast.employee_name_required') }}</label>
                         <input
                             type="text"
                             name="nama_karyawan"
@@ -207,7 +208,7 @@
                     </div>
 
                     <div class="emp-manual-field">
-                        <label class="emp-manual-label">Instansi</label>
+                        <label class="emp-manual-label">{{ __('app.blast.institution') }}</label>
                         <input
                             type="text"
                             name="instansi"
@@ -217,7 +218,7 @@
                     </div>
 
                     <div class="emp-manual-field">
-                        <label class="emp-manual-label">Nama Wali</label>
+                        <label class="emp-manual-label">{{ __('app.blast.guardian_name_field') }}</label>
                         <input
                             type="text"
                             name="nama_wali"
@@ -227,18 +228,18 @@
                     </div>
 
                     <div class="emp-manual-field">
-                        <label class="emp-manual-label">WhatsApp</label>
+                        <label class="emp-manual-label">{{ __('app.blast.whatsapp') }}</label>
                         <input
                             type="text"
                             name="wa_karyawan"
                             class="emp-manual-input"
                             value="{{ old('wa_karyawan', $employee?->wa_karyawan) }}"
-                            placeholder="Contoh: 0812xxxx / 62812xxxx"
+                            placeholder="{{ __('app.blast.phone_placeholder') }}"
                         >
                     </div>
 
                     <div class="emp-manual-field full">
-                        <label class="emp-manual-label">Email</label>
+                        <label class="emp-manual-label">{{ __('app.blast.email') }}</label>
                         <input
                             type="email"
                             name="email_karyawan"
@@ -246,11 +247,11 @@
                             value="{{ old('email_karyawan', $employee?->email_karyawan) }}"
                             placeholder="nama@domain.com"
                         >
-                        <div class="emp-manual-note">Minimal isi salah satu: WhatsApp atau Email.</div>
+                        <div class="emp-manual-note">{{ __('app.blast.contact_minimum_note') }}</div>
                     </div>
 
                     <div class="emp-manual-field full">
-                        <label class="emp-manual-label">Catatan</label>
+                        <label class="emp-manual-label">{{ __('app.blast.notes') }}</label>
                         <textarea name="catatan" class="emp-manual-textarea">{{ old('catatan', $employee?->catatan) }}</textarea>
                     </div>
                 </div>
@@ -258,10 +259,10 @@
                 <div class="emp-manual-actions">
                     <button type="submit" class="emp-manual-btn primary">
                         <i class="fas fa-save"></i>
-                        {{ $isEditMode ? 'Update Data' : 'Simpan Data' }}
+                        {{ $isEditMode ? __('app.blast.update_data') : __('app.blast.save_data') }}
                     </button>
                     <a href="{{ route($indexRouteName) }}" class="emp-manual-btn light">
-                        <i class="fas fa-arrow-left"></i> Kembali
+                        <i class="fas fa-arrow-left"></i> {{ __('app.blast.back') }}
                     </a>
                 </div>
             </form>

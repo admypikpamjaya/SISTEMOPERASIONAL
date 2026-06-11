@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Email Blast')
+@section('title', __('app.blast.email_title'))
 
 @section('content')
 
@@ -160,104 +160,7 @@ body, .content-wrapper {
     flex-shrink: 0;
 }
 
-/* ── CAMPAIGN CONTROL ───────────────────── */
-.eb-campaign-panel {
-    padding: 18px 20px;
-    margin-bottom: 18px;
-}
-.eb-campaign-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-.eb-campaign-icon {
-    width: 40px; height: 40px;
-    background: linear-gradient(135deg, var(--blue-primary), var(--blue-mid));
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(37,99,235,.3);
-}
-.eb-campaign-icon i { color: #fff; font-size: 15px; }
-.eb-campaign-info {}
-.eb-campaign-info h5 {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--navy);
-    margin: 0 0 3px;
-}
-.eb-campaign-info p {
-    font-size: 11.5px;
-    color: var(--text-muted);
-    margin: 0;
-    line-height: 1.4;
-}
-
-.eb-search-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    align-items: center;
-}
-
-.eb-control-grid {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.campaign-search-results {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 12px;
-    max-height: 180px;
-    overflow: auto;
-}
-.campaign-search-empty { font-size: 12px; color: var(--text-muted); }
-.campaign-search-item {
-    border: 1px solid var(--border-blue);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    align-items: center;
-    background: var(--blue-lighter);
-}
-.campaign-search-meta { font-size: 11px; color: var(--text-mid); line-height: 1.4; }
-.campaign-result-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-
-.campaign-control-form { display: flex; gap: 7px; }
-.campaign-input-wrap { position: relative; flex: 1; }
-.campaign-control-input {
-    flex: 1; width: 100%;
-    border: 1px solid var(--border-blue);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-    font-size: 12px;
-    font-family: inherit;
-    background: var(--blue-lighter);
-    color: var(--text-dark);
-    transition: border-color .2s, box-shadow .2s;
-}
-.campaign-control-input:focus {
-    outline: none;
-    border-color: var(--blue-mid);
-    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
-}
-.campaign-target-input { padding-right: 28px; }
-.campaign-clear-btn {
-    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-    width: 20px; height: 20px;
-    border: none; border-radius: 50%;
-    background: var(--border); color: var(--text-mid);
-    font-size: 13px; line-height: 1; cursor: pointer;
-    display: none; align-items: center; justify-content: center; padding: 0;
-}
-.campaign-clear-btn.visible { display: inline-flex; }
-
+/* ── ACTION BUTTONS ───────────────────── */
 /* ── BUTTONS ─────────────────────────────── */
 .campaign-btn {
     border: none;
@@ -762,7 +665,6 @@ body, .content-wrapper {
 @media(max-width:1400px){
     .eb-top-row { grid-template-columns: 1fr; }
     .eb-stats-grid { grid-template-columns: repeat(2,1fr); }
-    .eb-control-grid { grid-template-columns: 1fr; }
     .activity-table-header, .activity-row { grid-template-columns: 100px 1fr 80px 1fr 150px 1fr 90px 90px 120px; font-size: 11px; }
 }
 @media(max-width:768px){
@@ -771,8 +673,6 @@ body, .content-wrapper {
     .eb-page-header { flex-direction: column; align-items: flex-start; }
     .activity-table-header { display: none; }
     .activity-row { grid-template-columns: 1fr; gap: 6px; padding: 12px; background: var(--blue-lighter); border-radius: var(--radius-sm); margin-bottom: 8px; }
-    .eb-search-row { flex-direction: column; }
-    .campaign-control-form { flex-direction: column; }
     .recipient-db-filters { grid-template-columns: 1fr; }
 }
 </style>
@@ -788,8 +688,8 @@ body, .content-wrapper {
                 </svg>
             </div>
             <div class="eb-header-text">
-                <div class="eb-header-title">Email Blast</div>
-                <div class="eb-header-sub">Kirim email ke banyak penerima secara massal</div>
+                <div class="eb-header-title">{{ __('app.blast.email_title') }}</div>
+                <div class="eb-header-sub">{{ __('app.blast.email_subtitle') }}</div>
             </div>
         </div>
     </div>
@@ -806,55 +706,11 @@ body, .content-wrapper {
         </div>
     @endif
 
-    {{-- ── CAMPAIGN CONTROL ── --}}
-    <div class="eb-card eb-campaign-panel" style="margin-bottom:18px;">
-        <div class="eb-campaign-header">
-            <div class="eb-campaign-icon"><i class="fas fa-sliders-h"></i></div>
-            <div class="eb-campaign-info">
-                <h5>Campaign Control</h5>
-                <p>Masukkan Campaign ID untuk pause, resume, atau stop. UUID untuk Pause, Resume, dan Soft Stop bisa berbeda.</p>
-            </div>
-        </div>
-
-        <div class="eb-search-row">
-            <input type="text" id="campaignSearchInput" class="campaign-control-input" placeholder="Cari Campaign UUID..." value="">
-            <button type="button" id="campaignSearchBtn" class="campaign-btn info"><i class="fas fa-search" style="font-size:11px;margin-right:4px;"></i> Search UUID</button>
-        </div>
-        <div id="campaignSearchResults" class="campaign-search-results"></div>
-
-        <div class="eb-control-grid">
-            <form method="POST" action="{{ route('admin.blast.campaign.pause') }}" class="campaign-control-form" data-action-type="pause">
-                @csrf
-                <div class="campaign-input-wrap">
-                    <input type="text" id="pauseCampaignInput" name="campaign_id" class="campaign-control-input campaign-target-input" data-target-action="pause" placeholder="UUID untuk Pause" required>
-                    <button type="button" class="campaign-clear-btn" data-clear-target="pause" aria-label="Clear">&times;</button>
-                </div>
-                <button type="submit" class="campaign-btn warning">Pause</button>
-            </form>
-            <form method="POST" action="{{ route('admin.blast.campaign.resume') }}" class="campaign-control-form" data-action-type="resume">
-                @csrf
-                <div class="campaign-input-wrap">
-                    <input type="text" id="resumeCampaignInput" name="campaign_id" class="campaign-control-input campaign-target-input" data-target-action="resume" placeholder="UUID untuk Resume" required>
-                    <button type="button" class="campaign-clear-btn" data-clear-target="resume" aria-label="Clear">&times;</button>
-                </div>
-                <button type="submit" class="campaign-btn success">Resume</button>
-            </form>
-            <form method="POST" action="{{ route('admin.blast.campaign.stop') }}" class="campaign-control-form" data-action-type="stop">
-                @csrf
-                <div class="campaign-input-wrap">
-                    <input type="text" id="stopCampaignInput" name="campaign_id" class="campaign-control-input campaign-target-input" data-target-action="stop" placeholder="UUID untuk Soft Stop" required>
-                    <button type="button" class="campaign-clear-btn" data-clear-target="stop" aria-label="Clear">&times;</button>
-                </div>
-                <button type="submit" class="campaign-btn danger">Soft Stop</button>
-            </form>
-        </div>
-    </div>
-
     {{-- ── STATS ── --}}
     <div class="eb-stats-grid">
         <div class="eb-stat-card blue">
             <div class="eb-stat-content">
-                <div class="eb-stat-label">Total</div>
+                <div class="eb-stat-label">{{ __('app.blast.total') }}</div>
                 <div class="eb-stat-value" id="statTotal">{{ $activityStats['total'] ?? 0 }}</div>
             </div>
             <div class="eb-stat-icon blue">
@@ -863,7 +719,7 @@ body, .content-wrapper {
         </div>
         <div class="eb-stat-card green">
             <div class="eb-stat-content">
-                <div class="eb-stat-label">Terkirim</div>
+                <div class="eb-stat-label">{{ __('app.blast.sent') }}</div>
                 <div class="eb-stat-value" id="statSent">{{ $activityStats['sent'] ?? 0 }}</div>
             </div>
             <div class="eb-stat-icon green">
@@ -872,7 +728,7 @@ body, .content-wrapper {
         </div>
         <div class="eb-stat-card red">
             <div class="eb-stat-content">
-                <div class="eb-stat-label">Gagal</div>
+                <div class="eb-stat-label">{{ __('app.blast.failed') }}</div>
                 <div class="eb-stat-value" id="statFailed">{{ $activityStats['failed'] ?? 0 }}</div>
             </div>
             <div class="eb-stat-icon red">
@@ -881,7 +737,7 @@ body, .content-wrapper {
         </div>
         <div class="eb-stat-card yellow">
             <div class="eb-stat-content">
-                <div class="eb-stat-label">Pending</div>
+                <div class="eb-stat-label">{{ __('app.blast.pending') }}</div>
                 <div class="eb-stat-value" id="statPending">{{ $activityStats['pending'] ?? 0 }}</div>
             </div>
             <div class="eb-stat-icon yellow">
@@ -898,24 +754,24 @@ body, .content-wrapper {
 
                 {{-- ── LEFT: PENERIMA ── --}}
                 <div class="eb-card eb-recipient-card">
-                    <div class="eb-section-title"><i class="fas fa-users"></i> Penerima Email</div>
+                    <div class="eb-section-title"><i class="fas fa-users"></i> {{ __('app.blast.email_recipients') }}</div>
 
                     <div class="chip-input-section">
                         <div id="emailChips" class="chip-list"></div>
-                        <input type="email" id="emailInput" class="email-input-main" placeholder="Ketik email lalu tekan Enter...">
+                        <input type="email" id="emailInput" class="email-input-main" placeholder="{{ __('app.blast.email_input_placeholder') }}">
                     </div>
-                    <small class="field-hint"><i class="fas fa-info-circle" style="color:var(--blue-primary);margin-right:3px;"></i> Tekan Enter untuk menambahkan email</small>
+                    <small class="field-hint"><i class="fas fa-info-circle" style="color:var(--blue-primary);margin-right:3px;"></i> {{ __('app.blast.email_enter_hint') }}</small>
 
                     <div class="recipient-db-section">
                         <div class="recipient-db-header">
-                            <span class="recipient-db-title"><i class="fas fa-database" style="color:var(--blue-primary);margin-right:4px;font-size:11px;"></i> Recipient List DB</span>
-                            <button type="button" class="btn-select-db" id="selectAllRecipientsBtn">Select All</button>
+                            <span class="recipient-db-title"><i class="fas fa-database" style="color:var(--blue-primary);margin-right:4px;font-size:11px;"></i> {{ __('app.blast.db_recipient_list') }}</span>
+                            <button type="button" class="btn-select-db" id="selectAllRecipientsBtn">{{ __('app.blast.select_all') }}</button>
                         </div>
-                        <div class="recipient-db-count">Total valid recipient: {{ $recipients->count() }}</div>
+                        <div class="recipient-db-count">{{ __('app.blast.valid_recipient_count', ['count' => $recipients->count()]) }}</div>
                         <div class="recipient-db-filters">
-                            <input type="text" id="recipientDbSearchInput" class="recipient-db-search-input" placeholder="Cari recipient DB...">
+                            <input type="text" id="recipientDbSearchInput" class="recipient-db-search-input" placeholder="{{ __('app.blast.search_db_recipients') }}">
                             <select id="recipientDbClassFilter" class="recipient-db-class-filter">
-                                <option value="">Semua kelas</option>
+                                <option value="">{{ __('app.blast.all_classes') }}</option>
                                 @foreach(($recipientClasses ?? collect()) as $kelas)
                                     <option value="{{ strtolower(trim((string) $kelas)) }}">{{ $kelas }}</option>
                                 @endforeach
@@ -931,7 +787,7 @@ body, .content-wrapper {
                                     </div>
                                 </label>
                             @empty
-                                <div class="recipient-db-empty">Tidak ada recipient email valid.</div>
+                                <div class="recipient-db-empty">{{ __('app.blast.no_valid_email_recipients') }}</div>
                             @endforelse
                         </div>
                     </div>
@@ -940,54 +796,54 @@ body, .content-wrapper {
 
                     <div class="excel-import" id="excelImport">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span>Impor Excel</span>
+                        <span>{{ __('app.blast.import_excel') }}</span>
                     </div>
                 </div>
 
                 {{-- ── RIGHT: PESAN ── --}}
                 <div class="eb-card eb-message-card">
-                    <div class="eb-section-title"><i class="fas fa-envelope-open-text"></i> Kotak Pesan Email</div>
+                    <div class="eb-section-title"><i class="fas fa-envelope-open-text"></i> {{ __('app.blast.email_message_box') }}</div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Nama Siswa</label>
-                        <input type="text" name="student_name" id="studentName" class="eb-input" placeholder="Masukkan nama siswa">
+                        <label class="eb-label">{{ __('app.blast.student_name') }}</label>
+                        <input type="text" name="student_name" id="studentName" class="eb-input" placeholder="{{ __('app.blast.student_name_placeholder') }}">
                     </div>
                     <div class="eb-form-group">
-                        <label class="eb-label">Kelas</label>
-                        <input type="text" name="student_class" id="studentClass" class="eb-input" placeholder="Contoh: 5A">
+                        <label class="eb-label">{{ __('app.blast.class') }}</label>
+                        <input type="text" name="student_class" id="studentClass" class="eb-input" placeholder="{{ __('app.blast.class_placeholder') }}">
                     </div>
                     <div class="eb-form-group">
-                        <label class="eb-label">Nama Wali</label>
-                        <input type="text" name="parent_name" id="parentName" class="eb-input" placeholder="Masukkan nama wali">
+                        <label class="eb-label">{{ __('app.blast.guardian_name') }}</label>
+                        <input type="text" name="parent_name" id="parentName" class="eb-input" placeholder="{{ __('app.blast.guardian_name_placeholder') }}">
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Template</label>
+                        <label class="eb-label">{{ __('app.blast.template') }}</label>
                         <select name="template" id="templateSelect" class="eb-select">
-                            <option value="">Pilih Template</option>
-                            <option value="reminder">Reminder Tagihan Sekolah</option>
-                            <option value="payment">Informasi Pembayaran Sekolah</option>
-                            <option value="notification">Pemberitahuan Tunggakan</option>
+                            <option value="">{{ __('app.blast.select_template') }}</option>
+                            <option value="reminder">{{ __('app.blast.school_bill_reminder') }}</option>
+                            <option value="payment">{{ __('app.blast.school_payment_info') }}</option>
+                            <option value="notification">{{ __('app.blast.arrears_notification') }}</option>
                         </select>
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Announcement</label>
+                        <label class="eb-label">{{ __('app.blast.announcement') }}</label>
                         <select name="announcement_id" id="announcementSelect" class="eb-select">
-                            <option value="">Pilih Announcement (opsional)</option>
+                            <option value="">{{ __('app.blast.select_announcement_optional') }}</option>
                             @foreach($announcementOptions as $announcement)
                                 <option value="{{ $announcement->id }}" data-title="{{ e($announcement->title) }}" data-message="{{ e($announcement->message) }}">
                                     {{ \Illuminate\Support\Str::limit($announcement->title, 80) }}
                                 </option>
                             @endforeach
                         </select>
-                        <small class="field-hint">Pilih announcement untuk mengisi subject dan pesan secara otomatis.</small>
+                        <small class="field-hint">{{ __('app.blast.announcement_email_autofill_help') }}</small>
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Template Blast DB</label>
+                        <label class="eb-label">{{ __('app.blast.db_message_template') }}</label>
                         <select name="template_id" id="dbTemplateSelect" class="eb-select">
-                            <option value="">Tanpa template</option>
+                            <option value="">{{ __('app.blast.no_template') }}</option>
                             @foreach($templates as $template)
                                 <option value="{{ $template->id }}" data-content="{{ e($template->content) }}">{{ $template->name }}</option>
                             @endforeach
@@ -997,48 +853,48 @@ body, .content-wrapper {
                                 href="{{ route('admin.blast.templates.create', ['channel' => 'email', 'return_to' => url()->full()]) }}"
                                 class="template-action-link"
                             >
-                                + Buat Template
+                                + {{ __('app.blast.create_template') }}
                             </a>
                             <a
                                 href="{{ route('admin.blast.templates.index', ['channel' => 'email']) }}"
                                 class="template-action-link"
                             >
-                                Kelola Template
+                                {{ __('app.blast.manage_template') }}
                             </a>
                         </div>
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Template Preview</label>
-                        <div id="dbTemplatePreview" class="template-preview-box">Pilih template untuk melihat preview.</div>
+                        <label class="eb-label">{{ __('app.blast.template_preview') }}</label>
+                        <div id="dbTemplatePreview" class="template-preview-box">{{ __('app.blast.select_template_preview') }}</div>
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Pesan Khusus Per Penerima</label>
-                        <div class="recipient-message-note">Atur per penerima: pilih mode <b>manual</b>, <b>template</b>, atau <b>global</b>.</div>
+                        <label class="eb-label">{{ __('app.blast.custom_message_per_recipient') }}</label>
+                        <div class="recipient-message-note">{!! __('app.blast.recipient_message_mode_note', ['manual' => '<b>'.e(__('app.blast.manual_mode')).'</b>', 'template' => '<b>'.e(__('app.blast.template_mode')).'</b>', 'global' => '<b>'.e(__('app.blast.global_mode')).'</b>']) !!}</div>
                         <div id="recipientMessageMatrix" class="recipient-message-matrix">
-                            <div class="recipient-db-empty">Pilih recipient DB atau tambah email manual untuk mengatur pesan khusus.</div>
+                            <div class="recipient-db-empty">{{ __('app.blast.email_override_empty') }}</div>
                         </div>
                         <input type="hidden" name="message_overrides" id="messageOverridesField">
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Subjek Email <span style="color:var(--red);">*</span></label>
-                        <input name="subject" id="emailSubject" class="eb-input" placeholder="Masukkan subjek email" required>
+                        <label class="eb-label">{{ __('app.blast.email_subject') }} <span style="color:var(--red);">*</span></label>
+                        <input name="subject" id="emailSubject" class="eb-input" placeholder="{{ __('app.blast.email_subject_placeholder') }}" required>
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Isi Email</label>
-                        <textarea name="message" id="messageTextarea" class="eb-textarea" placeholder="Tulis isi email di sini..." rows="8"></textarea>
+                        <label class="eb-label">{{ __('app.blast.email_content') }}</label>
+                        <textarea name="message" id="messageTextarea" class="eb-textarea" placeholder="{{ __('app.blast.email_content_placeholder') }}" rows="8"></textarea>
                         <label class="global-default-toggle">
                             <input type="checkbox" name="use_global_default" id="useGlobalDefaultToggle" value="1" checked>
-                            Gunakan isi email global sebagai default penerima.
+                            {{ __('app.blast.use_email_global_default') }}
                         </label>
                     </div>
 
                     <div class="eb-form-group">
-                        <label class="eb-label">Pengaturan Pengiriman Lanjutan</label>
-                        <div class="recipient-message-note" style="margin-bottom:0;">Pengiriman Email diproses langsung. Fitur jadwal & delay dinonaktifkan.</div>
+                        <label class="eb-label">{{ __('app.blast.advanced_delivery_settings') }}</label>
+                        <div class="recipient-message-note" style="margin-bottom:0;">{{ __('app.blast.email_delivery_settings_disabled') }}</div>
                         <input type="hidden" name="scheduled_at" id="scheduledAtInput" value="">
                         <input type="hidden" name="priority" id="priorityInput" value="normal">
                         <input type="hidden" name="rate_limit_per_minute" id="rateLimitInput" value="5000">
@@ -1052,19 +908,19 @@ body, .content-wrapper {
                         <div class="attachment-buttons">
                             <label class="attach-btn" for="fileAttachment">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59723 21.9983 8.005 21.9983C6.41277 21.9983 4.88583 21.3658 3.76 20.24C2.63417 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63417 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42944 14.0991 2.00667 15.16 2.00667C16.2209 2.00667 17.2394 2.42944 17.99 3.18C18.7406 3.93056 19.1633 4.94908 19.1633 6.01C19.1633 7.07092 18.7406 8.08944 17.99 8.84L9.41 17.41C9.03472 17.7853 8.52548 17.9967 7.995 17.9967C7.46452 17.9967 6.95528 17.7853 6.58 17.41C6.20472 17.0347 5.99333 16.5255 5.99333 15.995C5.99333 15.4645 6.20472 14.9553 6.58 14.58L15.07 6.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                Lampirkan File
+                                {{ __('app.blast.attach_file') }}
                             </label>
                             <input type="file" name="attachments[]" id="fileAttachment" class="field-input-file" multiple>
                         </div>
-                        <div class="char-count" id="charCount">0 karakter</div>
+                        <div class="char-count" id="charCount">{{ __('app.blast.characters', ['count' => 0]) }}</div>
                     </div>
 
                     <div id="attachmentPreview"></div>
-                    <div class="form-hint">Anda dapat memilih lebih dari satu file</div>
+                    <div class="form-hint">{{ __('app.blast.multiple_files_hint') }}</div>
 
                     <button type="submit" class="eb-send-btn" id="sendButton">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Kirim Email Blast
+                        {{ __('app.blast.send_bulk_email') }}
                     </button>
                 </div>
             </div>
@@ -1073,34 +929,34 @@ body, .content-wrapper {
         {{-- ── ACTIVITY LOG ── --}}
         <div class="eb-card eb-activity-card">
             <div class="activity-header">
-                <div class="eb-section-title" style="margin-bottom:0;"><i class="fas fa-list-alt"></i> Activity Log</div>
+                <div class="eb-section-title" style="margin-bottom:0;"><i class="fas fa-list-alt"></i> {{ __('app.blast.activity_log') }}</div>
                 <div class="activity-header-actions">
-                    <form method="POST" action="{{ route('admin.blast.activity.clear') }}" class="activity-clear-form" onsubmit="return confirm('Yakin ingin menghapus semua activity log Email?')">
+                    <form method="POST" action="{{ route('admin.blast.activity.clear') }}" class="activity-clear-form" onsubmit="return confirm(@json(__('app.blast.clear_email_log_confirm')))">
                         @csrf
                         <input type="hidden" name="channel" value="email">
-                        <button type="submit" class="campaign-btn danger tiny"><i class="fas fa-trash-alt" style="margin-right:4px;font-size:10px;"></i> Clear Log</button>
+                        <button type="submit" class="campaign-btn danger tiny"><i class="fas fa-trash-alt" style="margin-right:4px;font-size:10px;"></i> {{ __('app.blast.clear_log') }}</button>
                     </form>
                     <div class="search-small">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="var(--text-light)" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <input type="text" placeholder="Cari aktivitas..." class="search-input-small" id="searchInput">
+                        <input type="text" placeholder="{{ __('app.blast.search_activity') }}" class="search-input-small" id="searchInput">
                     </div>
                 </div>
             </div>
 
             <div class="activity-table">
                 <div class="activity-table-header">
-                    <div class="col-waktu">Waktu</div>
-                    <div class="col-siswa">Siswa</div>
-                    <div class="col-kelas">Kelas</div>
-                    <div class="col-wali">Wali</div>
-                    <div class="col-email">Email</div>
-                    <div class="col-subject">Subjek</div>
-                    <div class="col-attachment">Lampiran</div>
-                    <div class="col-status">Status</div>
-                    <div class="col-action">Aksi</div>
+                    <div class="col-waktu">{{ __('app.blast.time') }}</div>
+                    <div class="col-siswa">{{ __('app.blast.student') }}</div>
+                    <div class="col-kelas">{{ __('app.blast.class') }}</div>
+                    <div class="col-wali">{{ __('app.blast.guardian') }}</div>
+                    <div class="col-email">{{ __('app.blast.email') }}</div>
+                    <div class="col-subject">{{ __('app.blast.subject') }}</div>
+                    <div class="col-attachment">{{ __('app.blast.attachment') }}</div>
+                    <div class="col-status">{{ __('app.blast.status') }}</div>
+                    <div class="col-action">{{ __('app.blast.action') }}</div>
                 </div>
                 <div class="activity-table-body" id="activityLog">
-                    <div class="activity-empty">Belum ada aktivitas</div>
+                    <div class="activity-empty">{{ __('app.blast.no_activity') }}</div>
                 </div>
             </div>
         </div>
@@ -1110,12 +966,12 @@ body, .content-wrapper {
     <div class="eb-tips">
         <div class="eb-tips-icon"><i class="fas fa-lightbulb"></i></div>
         <div class="eb-tips-body">
-            <div class="eb-tips-title">Tips Pengiriman Email</div>
+            <div class="eb-tips-title">{{ __('app.blast.email_sending_tips') }}</div>
             <div class="eb-tips-list">
-                <div class="tip-item">Pastikan email yang dimasukkan valid dan aktif sebelum mengirim.</div>
-                <div class="tip-item">Gunakan subjek yang jelas dan menarik untuk meningkatkan tingkat buka.</div>
-                <div class="tip-item">Personalisasi pesan menggunakan variabel untuk engagement yang lebih baik.</div>
-                <div class="tip-item">Hindari penggunaan kata-kata yang masuk spam filter email.</div>
+                <div class="tip-item">{{ __('app.blast.tip_email_valid') }}</div>
+                <div class="tip-item">{{ __('app.blast.tip_email_subject') }}</div>
+                <div class="tip-item">{{ __('app.blast.tip_variables') }}</div>
+                <div class="tip-item">{{ __('app.blast.tip_email_spam') }}</div>
             </div>
         </div>
     </div>
@@ -1126,11 +982,65 @@ body, .content-wrapper {
     document.addEventListener('DOMContentLoaded', () => {
         const flashSuccess = @json(session('success'));
         const flashError = @json(session('error') ?? ($errors->any() ? $errors->first() : null));
+        const blastText = {
+            successTitle: @json(__('app.blast.success_title')),
+            failedTitle: @json(__('app.blast.failed_title')),
+            selectVisible: @json(__('app.blast.select_visible')),
+            unselectVisible: @json(__('app.blast.unselect_visible')),
+            dbLabel: @json(__('app.blast.db_label')),
+            manualLabel: @json(__('app.blast.manual_label')),
+            noCustomFiles: @json(__('app.blast.no_custom_files')),
+            deleteFile: @json(__('app.blast.delete_file')),
+            emailOverrideEmpty: @json(__('app.blast.email_override_empty')),
+            template: @json(__('app.blast.template')),
+            manualMode: @json(__('app.blast.manual_label')),
+            templateMode: @json(__('app.blast.template')),
+            globalMode: 'Global',
+            templateModeHint: @json(__('app.blast.template_mode_hint')),
+            globalModeHint: @json(__('app.blast.global_mode_hint')),
+            manualModeHint: @json(__('app.blast.manual_mode_hint')),
+            templateModePlaceholder: @json(__('app.blast.template_mode_placeholder')),
+            globalModePlaceholder: @json(__('app.blast.global_mode_placeholder')),
+            manualModePlaceholder: @json(__('app.blast.manual_mode_placeholder')),
+            delete: @json(__('app.blast.delete')),
+            recipientCustomFile: @json(__('app.blast.recipient_custom_file')),
+            selectTemplatePreview: @json(__('app.blast.select_template_preview')),
+            announcementSubjectPrefix: @json(__('app.blast.announcement_subject_prefix')),
+            characters: @json(__('app.blast.characters')),
+            importedFileSuccess: @json(__('app.blast.email_imported_file_success')),
+            emailImportSuccess: @json(__('app.blast.email_import_success')),
+            noActivity: @json(__('app.blast.no_activity')),
+            noSearchResults: @json(__('app.blast.no_search_results')),
+            sent: @json(__('app.blast.sent')),
+            failed: @json(__('app.blast.failed')),
+            pending: @json(__('app.blast.pending')),
+            retry: @json(__('app.blast.retry')),
+            activityLogProcessFailed: @json(__('app.blast.activity_log_process_failed')),
+            retryLogConfirm: @json(__('app.blast.retry_log_confirm')),
+            deleteLogConfirm: @json(__('app.blast.delete_log_confirm')),
+            retrying: @json(__('app.blast.retrying')),
+            deleting: @json(__('app.blast.deleting')),
+            actionProcessed: @json(__('app.blast.action_processed')),
+            noRecipientSearchResults: @json(__('app.blast.no_recipient_search_results')),
+            templateModeRequiresDbTemplate: @json(__('app.blast.template_mode_requires_db_template')),
+            emailGlobalMessageRequired: @json(__('app.blast.email_global_message_required')),
+            emailRecipientRequired: @json(__('app.blast.email_recipient_required')),
+            emailSubjectRequired: @json(__('app.blast.email_subject_required')),
+            messageRequired: @json(__('app.blast.message_required')),
+            emailSendConfirm: @json(__('app.blast.email_send_confirm')),
+            sending: @json(__('app.blast.sending')),
+        };
+
+        function translateBlastTemplate(template, replacements = {}) {
+            return String(template || '').replace(/:([A-Za-z0-9_]+)/g, (match, key) => {
+                return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match;
+            });
+        }
 
         function showResultAlert(type, message) {
             if (!message) return;
             if (window.Swal && typeof window.Swal.fire === 'function') {
-                window.Swal.fire({ icon: type === 'success' ? 'success' : 'error', title: type === 'success' ? 'Berhasil' : 'Gagal', text: message, timer: 2600, showConfirmButton: false });
+                window.Swal.fire({ icon: type === 'success' ? 'success' : 'error', title: type === 'success' ? blastText.successTitle : blastText.failedTitle, text: message, timer: 2600, showConfirmButton: false });
                 return;
             }
             alert(message);
@@ -1174,15 +1084,9 @@ body, .content-wrapper {
         const statPending = document.getElementById('statPending');
         const activityLog = document.getElementById('activityLog');
         const searchInput = document.getElementById('searchInput');
-        const campaignSearchInput = document.getElementById('campaignSearchInput');
-        const campaignSearchBtn = document.getElementById('campaignSearchBtn');
-        const campaignSearchResults = document.getElementById('campaignSearchResults');
-        const campaignTargetInputs = Array.from(document.querySelectorAll('.campaign-target-input'));
-        const campaignClearButtons = Array.from(document.querySelectorAll('.campaign-clear-btn'));
         const activityApiUrl = @json(route('admin.blast.activity'));
         const activityDeleteApiUrl = @json(route('admin.blast.activity.delete'));
         const activityRetryApiUrl = @json(route('admin.blast.activity.retry'));
-        const campaignApiUrl = @json(route('admin.blast.campaigns'));
         const activityChannel = 'email';
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value || '';
         let activities = @json($activityLogs ?? []);
@@ -1194,16 +1098,16 @@ body, .content-wrapper {
 
         const templates = {
             reminder: {
-                subject: "Reminder Tagihan Sekolah - {nama_siswa} Kelas {kelas}",
-                message: `Yth. Bapak/Ibu {nama_wali},\n\nKami ingin mengingatkan bahwa tagihan sekolah untuk {nama_siswa} (Kelas {kelas}) akan jatuh tempo pada {jatuh_tempo}.\n\nDetail Tagihan:\n- Jumlah: Rp {tagihan}\n- Jatuh Tempo: {jatuh_tempo}\n- Status: Belum Lunas\n\nMohon untuk segera melakukan pembayaran.\n\nTerima kasih.\n\nHormat kami,\nAdministrasi Sekolah`
+                subject: @json(__('app.blast.default_email_reminder_subject')),
+                message: @json(__('app.blast.default_email_reminder_message'))
             },
             payment: {
-                subject: "Informasi Pembayaran Sekolah - {nama_siswa} Kelas {kelas}",
-                message: `Kepada Yth. Bapak/Ibu {nama_wali},\n\nBerikut informasi pembayaran sekolah:\n\nNama Siswa: {nama_siswa}\nKelas: {kelas}\nTotal: Rp {tagihan}\nBatas Pembayaran: {jatuh_tempo}\n\nTerima kasih.\n\nSalam,\nBendahara Sekolah`
+                subject: @json(__('app.blast.default_email_payment_subject')),
+                message: @json(__('app.blast.default_email_payment_message'))
             },
             notification: {
-                subject: "Pemberitahuan Tunggakan - {nama_siswa} Kelas {kelas}",
-                message: `KEPADA YTH.\nBAPAK/IBU {nama_wali}\n\nTerdapat tunggakan pembayaran:\n- Nama Siswa: {nama_siswa}\n- Kelas: {kelas}\n- Total Tunggakan: Rp {tagihan}\n- Jatuh Tempo: {jatuh_tempo}\n\nMohon segera melakukan pelunasan.\n\nHORMAT KAMI,\nKEPALA SEKOLAH`
+                subject: @json(__('app.blast.default_email_notification_subject')),
+                message: @json(__('app.blast.default_email_notification_message'))
             }
         };
 
@@ -1264,13 +1168,13 @@ body, .content-wrapper {
             const visibleCheckboxes = getVisibleRecipientDbCheckboxes();
             if (visibleCheckboxes.length === 0) {
                 selectAllRecipientsBtn.disabled = true;
-                selectAllRecipientsBtn.textContent = 'Select Visible';
+                selectAllRecipientsBtn.textContent = blastText.selectVisible;
                 return;
             }
 
             selectAllRecipientsBtn.disabled = false;
             const allVisibleChecked = visibleCheckboxes.every(cb => cb.checked);
-            selectAllRecipientsBtn.textContent = allVisibleChecked ? 'Unselect Visible' : 'Select Visible';
+            selectAllRecipientsBtn.textContent = allVisibleChecked ? blastText.unselectVisible : blastText.selectVisible;
         }
 
         function syncRecipientProfileFromDbSelection(preferredRecipient = null) {
@@ -1305,8 +1209,8 @@ body, .content-wrapper {
             const buffer = ensureAttachmentBuffer(key);
             if (!input || !list) return;
             input.files = buffer.files;
-            if (buffer.files.length === 0) { list.innerHTML = '<div class="message-override-file-empty">Tidak ada file khusus</div>'; return; }
-            list.innerHTML = Array.from(buffer.files).map((file, index) => `<div class="message-override-file-item"><span>${escapeHtml(file.name)}</span><button type="button" class="message-override-file-remove" data-index="${index}" title="Hapus file">&times;</button></div>`).join('');
+            if (buffer.files.length === 0) { list.innerHTML = `<div class="message-override-file-empty">${blastText.noCustomFiles}</div>`; return; }
+            list.innerHTML = Array.from(buffer.files).map((file, index) => `<div class="message-override-file-item"><span>${escapeHtml(file.name)}</span><button type="button" class="message-override-file-remove" data-index="${index}" title="${blastText.deleteFile}">&times;</button></div>`).join('');
         }
 
         function escapeHtml(value) { return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -1317,9 +1221,9 @@ body, .content-wrapper {
                 if (!cb.checked) return;
                 const key = `db:${cb.value}`;
                 const label = cb.closest('.recipient-db-item')?.querySelector('.recipient-db-name')?.textContent?.trim() || cb.value;
-                recipients.push({ key, label: `DB - ${label}`, kind: 'db', ref: cb.value });
+                recipients.push({ key, label: `${blastText.dbLabel} - ${label}`, kind: 'db', ref: cb.value });
             });
-            emails.forEach(email => { recipients.push({ key: `manual:${email.trim().toLowerCase()}`, label: `Manual - ${email}`, kind: 'manual', ref: email }); });
+            emails.forEach(email => { recipients.push({ key: `manual:${email.trim().toLowerCase()}`, label: `${blastText.manualLabel} - ${email}`, kind: 'manual', ref: email }); });
             return recipients;
         }
 
@@ -1347,7 +1251,7 @@ body, .content-wrapper {
             if (!recipientMessageMatrix) return;
             const recipients = getSelectedRecipients();
             if (recipients.length === 0) {
-                recipientMessageMatrix.innerHTML = `<div class="recipient-db-empty">Pilih recipient DB atau tambah email manual untuk mengatur pesan khusus.</div>`;
+                recipientMessageMatrix.innerHTML = `<div class="recipient-db-empty">${blastText.emailOverrideEmpty}</div>`;
                 syncMessageOverridesField(); return;
             }
             recipientMessageMatrix.innerHTML = recipients.map(({ key, label, kind, ref }) => {
@@ -1359,10 +1263,10 @@ body, .content-wrapper {
                 const keyToken = keyToToken(key);
                 const radioGroup = `override_mode_${key.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
                 const modeClass = `mode-${effectiveMode}`;
-                const badgeText = effectiveMode === 'template' ? 'Template' : (effectiveMode === 'global' ? 'Global' : 'Manual');
-                const hintText = effectiveMode === 'template' ? 'Menggunakan template blast DB untuk penerima ini.' : (effectiveMode === 'global' ? 'Menggunakan isi email global untuk penerima ini.' : 'Gunakan isi manual khusus untuk penerima ini.');
-                const textPlaceholder = effectiveMode === 'template' ? 'Mode template aktif untuk penerima ini.' : (effectiveMode === 'global' ? 'Mode global aktif untuk penerima ini.' : 'Isi pesan khusus untuk penerima ini...');
-                return `<div class="message-override-item ${modeClass}" data-key="${escapeHtml(key)}" data-kind="${escapeHtml(kind)}" data-ref="${escapeHtml(ref)}"><div class="message-override-head"><div class="message-override-title">${escapeHtml(label)}</div><div class="message-override-actions"><span class="message-override-badge ${modeClass}">${badgeText}</span><button type="button" class="message-override-remove" title="Hapus">&times;</button></div></div><div class="message-override-mode"><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="manual" ${manualChecked ? 'checked' : ''}> Manual</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="template" ${templateChecked ? 'checked' : ''}> Template</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="global" ${globalChecked ? 'checked' : ''}> Global</label></div><textarea class="message-override-text" placeholder="${textPlaceholder}" ${(templateChecked || globalChecked) ? 'disabled' : ''}>${message}</textarea><div class="message-override-file-wrap"><div class="message-override-file-label">File Khusus Penerima (opsional)</div><input type="hidden" name="attachment_override_keys[${keyToken}]" value="${escapeHtml(key)}"><input type="file" class="message-override-file-input" name="attachment_overrides[${keyToken}][]" multiple><div class="message-override-file-list"></div></div><div class="message-override-hint">${hintText}</div></div>`;
+                const badgeText = effectiveMode === 'template' ? blastText.templateMode : (effectiveMode === 'global' ? blastText.globalMode : blastText.manualMode);
+                const hintText = effectiveMode === 'template' ? blastText.templateModeHint : (effectiveMode === 'global' ? blastText.globalModeHint : blastText.manualModeHint);
+                const textPlaceholder = effectiveMode === 'template' ? blastText.templateModePlaceholder : (effectiveMode === 'global' ? blastText.globalModePlaceholder : blastText.manualModePlaceholder);
+                return `<div class="message-override-item ${modeClass}" data-key="${escapeHtml(key)}" data-kind="${escapeHtml(kind)}" data-ref="${escapeHtml(ref)}"><div class="message-override-head"><div class="message-override-title">${escapeHtml(label)}</div><div class="message-override-actions"><span class="message-override-badge ${modeClass}">${badgeText}</span><button type="button" class="message-override-remove" title="${blastText.delete}">&times;</button></div></div><div class="message-override-mode"><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="manual" ${manualChecked ? 'checked' : ''}> ${blastText.manualMode}</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="template" ${templateChecked ? 'checked' : ''}> ${blastText.templateMode}</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="global" ${globalChecked ? 'checked' : ''}> ${blastText.globalMode}</label></div><textarea class="message-override-text" placeholder="${textPlaceholder}" ${(templateChecked || globalChecked) ? 'disabled' : ''}>${message}</textarea><div class="message-override-file-wrap"><div class="message-override-file-label">${blastText.recipientCustomFile}</div><input type="hidden" name="attachment_override_keys[${keyToken}]" value="${escapeHtml(key)}"><input type="file" class="message-override-file-input" name="attachment_overrides[${keyToken}][]" multiple><div class="message-override-file-list"></div></div><div class="message-override-hint">${hintText}</div></div>`;
             }).join('');
             recipientMessageMatrix.querySelectorAll('.message-override-item').forEach(item => {
                 const key = item.getAttribute('data-key');
@@ -1397,7 +1301,7 @@ body, .content-wrapper {
             const selectedOption = dbTemplateSelect.options[dbTemplateSelect.selectedIndex];
             const content = selectedOption ? selectedOption.getAttribute('data-content') : '';
             const templateName = selectedOption && selectedOption.value ? selectedOption.textContent.trim() : '';
-            dbTemplatePreview.textContent = content && content.trim().length > 0 ? `Template: ${templateName}\n\n${content}` : 'Pilih template untuk melihat preview.';
+            dbTemplatePreview.textContent = content && content.trim().length > 0 ? `${blastText.template}: ${templateName}\n\n${content}` : blastText.selectTemplatePreview;
         }
 
         if (dbTemplateSelect) { dbTemplateSelect.addEventListener('change', updateDbTemplatePreview); updateDbTemplatePreview(); }
@@ -1460,10 +1364,10 @@ body, .content-wrapper {
                     item.classList.toggle('mode-manual', mode === 'manual');
                     item.classList.toggle('mode-global', isGlobal);
                     const badge = item.querySelector('.message-override-badge');
-                    if (badge) { badge.classList.toggle('mode-template', isTemplate); badge.classList.toggle('mode-manual', mode === 'manual'); badge.classList.toggle('mode-global', isGlobal); badge.textContent = isTemplate ? 'Template' : (isGlobal ? 'Global' : 'Manual'); }
+                    if (badge) { badge.classList.toggle('mode-template', isTemplate); badge.classList.toggle('mode-manual', mode === 'manual'); badge.classList.toggle('mode-global', isGlobal); badge.textContent = isTemplate ? blastText.templateMode : (isGlobal ? blastText.globalMode : blastText.manualMode); }
                     const hint = item.querySelector('.message-override-hint');
-                    if (hint) hint.textContent = isTemplate ? 'Menggunakan template blast DB untuk penerima ini.' : (isGlobal ? 'Menggunakan isi email global untuk penerima ini.' : 'Gunakan isi manual khusus untuk penerima ini.');
-                    if (textarea) { textarea.disabled = isTemplate || isGlobal; textarea.placeholder = isTemplate ? 'Mode template aktif untuk penerima ini.' : (isGlobal ? 'Mode global aktif untuk penerima ini.' : 'Isi pesan khusus untuk penerima ini...'); }
+                    if (hint) hint.textContent = isTemplate ? blastText.templateModeHint : (isGlobal ? blastText.globalModeHint : blastText.manualModeHint);
+                    if (textarea) { textarea.disabled = isTemplate || isGlobal; textarea.placeholder = isTemplate ? blastText.templateModePlaceholder : (isGlobal ? blastText.globalModePlaceholder : blastText.manualModePlaceholder); }
                 }
                 syncMessageOverridesField();
             });
@@ -1486,7 +1390,7 @@ body, .content-wrapper {
                 if (!selectedOption || !selectedOption.value) return;
                 const title = (selectedOption.getAttribute('data-title') || '').trim();
                 const message = selectedOption.getAttribute('data-message') || '';
-                if (title !== '') emailSubject.value = `[Announcement] ${title}`;
+                if (title !== '') emailSubject.value = `[${blastText.announcementSubjectPrefix}] ${title}`;
                 if (message.trim() !== '') { messageTextarea.value = message; messageTextarea.dispatchEvent(new Event('input')); }
             });
         }
@@ -1532,7 +1436,7 @@ body, .content-wrapper {
         });
 
         if (messageTextarea && charCount) {
-            function updateCharCount() { charCount.textContent = `${messageTextarea.value.length} karakter`; }
+            function updateCharCount() { charCount.textContent = translateBlastTemplate(blastText.characters, { count: messageTextarea.value.length }); }
             messageTextarea.addEventListener('input', updateCharCount);
             updateCharCount();
         }
@@ -1576,11 +1480,11 @@ body, .content-wrapper {
                 fileInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
                         const fileName = e.target.files[0].name;
-                        alert(`File "${fileName}" berhasil diimpor!`);
+                        alert(translateBlastTemplate(blastText.importedFileSuccess, { file: fileName }));
                         const demoEmails = ['wali1@example.com','wali2@example.com','wali3@example.com','wali4@example.com','wali5@example.com'];
                         emails = []; chipList.innerHTML = '';
                         demoEmails.forEach(email => addChip(email));
-                        alert(`${demoEmails.length} email berhasil diimpor dari file Excel!`);
+                        alert(translateBlastTemplate(blastText.emailImportSuccess, { count: demoEmails.length }));
                     }
                 });
                 fileInput.click();
@@ -1601,17 +1505,17 @@ body, .content-wrapper {
         function renderActivities(filteredActivities = activities) {
             activityLog.innerHTML = '';
             if (filteredActivities.length === 0) {
-                const el = document.createElement('div'); el.className = 'activity-empty'; el.textContent = activities.length === 0 ? 'Belum ada aktivitas' : 'Tidak ada hasil pencarian'; activityLog.appendChild(el); return;
+                const el = document.createElement('div'); el.className = 'activity-empty'; el.textContent = activities.length === 0 ? blastText.noActivity : blastText.noSearchResults; activityLog.appendChild(el); return;
             }
             filteredActivities.forEach(activity => {
                 const row = document.createElement('div'); row.className = 'activity-row'; row.setAttribute('data-campaign-id', String(activity.campaignId || ''));
                 const statusClass = activity.status === 'success' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending';
-                const statusText = activity.status === 'success' ? 'Terkirim' : activity.status === 'failed' ? 'Gagal' : 'Pending';
+                const statusText = activity.status === 'success' ? blastText.sent : activity.status === 'failed' ? blastText.failed : blastText.pending;
                 const logId = Number(activity.logId || 0);
                 const canRetry = Boolean(activity.canRetry) && activity.status === 'failed' && logId > 0;
                 const actionButtons = [];
-                if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">Retry</button>`);
-                if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">Hapus</button>`);
+                if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">${blastText.retry}</button>`);
+                if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">${blastText.delete}</button>`);
                 row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa">${activity.studentName}</div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali">${activity.parentName}</div><div class="col-email">${activity.email}</div><div class="col-subject">${activity.subject}</div><div class="col-attachment">${activity.attachments}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
                 activityLog.appendChild(row);
             });
@@ -1629,55 +1533,8 @@ body, .content-wrapper {
             const response = await fetch(endpoint, { method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify({ channel: activityChannel, log_id: Number(logId) }) });
             let payload = null;
             try { payload = await response.json(); } catch (error) { payload = null; }
-            if (!response.ok) throw new Error(payload?.message || 'Gagal memproses activity log.');
+            if (!response.ok) throw new Error(payload?.message || blastText.activityLogProcessFailed);
             return payload;
-        }
-
-        function syncCampaignClearButtons() {
-            campaignClearButtons.forEach(button => {
-                const target = button.getAttribute('data-clear-target');
-                const input = campaignTargetInputs.find(item => item.getAttribute('data-target-action') === target);
-                const hasValue = input ? input.value.trim() !== '' : false;
-                button.classList.toggle('visible', hasValue);
-            });
-        }
-
-        function applyCampaignIdToTarget(campaignId, targetAction) {
-            const input = campaignTargetInputs.find(item => item.getAttribute('data-target-action') === targetAction);
-            if (!input) return;
-            input.value = campaignId;
-            syncCampaignClearButtons();
-            input.focus();
-        }
-
-        function renderCampaignResults(campaigns) {
-            if (!campaignSearchResults) return;
-            campaignSearchResults.innerHTML = '';
-            if (!Array.isArray(campaigns) || campaigns.length === 0) { const empty = document.createElement('div'); empty.className = 'campaign-search-empty'; empty.textContent = 'Campaign tidak ditemukan.'; campaignSearchResults.appendChild(empty); return; }
-            campaigns.forEach(campaign => {
-                const item = document.createElement('div'); item.className = 'campaign-search-item';
-                const meta = document.createElement('div'); meta.className = 'campaign-search-meta'; meta.innerHTML = `<div><strong>${campaign.id}</strong></div><div>Status: ${campaign.status} | Priority: ${campaign.priority}</div><div>Total: ${campaign.stats?.total ?? 0} | Sent: ${campaign.stats?.sent ?? 0} | Failed: ${campaign.stats?.failed ?? 0} | Pending: ${campaign.stats?.pending ?? 0}</div>`;
-                const actions = document.createElement('div'); actions.className = 'campaign-result-actions';
-                [{ target: 'pause', label: 'Ke Pause', className: 'warning' }, { target: 'resume', label: 'Ke Resume', className: 'success' }, { target: 'stop', label: 'Ke Soft Stop', className: 'danger' }].forEach(action => {
-                    const button = document.createElement('button'); button.type = 'button'; button.className = `campaign-btn ${action.className} tiny`; button.textContent = action.label;
-                    button.addEventListener('click', () => { const campaignId = String(campaign.id || ''); if (campaignSearchInput) campaignSearchInput.value = campaignId; applyCampaignIdToTarget(campaignId, action.target); if (searchInput) searchInput.value = campaignId; renderActivitiesWithCurrentFilter(); });
-                    actions.appendChild(button);
-                });
-                item.appendChild(meta); item.appendChild(actions); campaignSearchResults.appendChild(item);
-            });
-        }
-
-        async function searchCampaignsByUuid() {
-            if (!campaignApiUrl || !campaignSearchResults) return;
-            const keyword = (campaignSearchInput?.value || '').trim();
-            campaignSearchResults.innerHTML = '<div class="campaign-search-empty">Mencari campaign...</div>';
-            try {
-                const response = await fetch(`${campaignApiUrl}?channel=${encodeURIComponent(activityChannel)}&q=${encodeURIComponent(keyword)}`, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!response.ok) throw new Error('Search failed');
-                const payload = await response.json();
-                renderCampaignResults(payload.campaigns || []);
-                syncCampaignClearButtons();
-            } catch (error) { campaignSearchResults.innerHTML = '<div class="campaign-search-empty">Gagal mencari campaign.</div>'; }
         }
 
         async function refreshActivityLogs() {
@@ -1707,26 +1564,14 @@ body, .content-wrapper {
                 const action = String(actionBtn.getAttribute('data-action') || '');
                 const logId = Number(actionBtn.getAttribute('data-log-id') || 0);
                 if (!['retry', 'delete'].includes(action) || logId <= 0) return;
-                if (!window.confirm(action === 'retry' ? 'Retry kirim ulang untuk log ini?' : 'Hapus log activity ini?')) return;
+                if (!window.confirm(action === 'retry' ? blastText.retryLogConfirm : blastText.deleteLogConfirm)) return;
                 const originalText = actionBtn.textContent || '';
-                actionBtn.disabled = true; actionBtn.textContent = action === 'retry' ? 'Retry...' : 'Hapus...';
-                try { const payload = await submitActivityLogAction(action, logId); showResultAlert('success', payload?.message || 'Aksi berhasil diproses.'); await refreshActivityLogs(); }
-                catch (error) { showResultAlert('error', error?.message || 'Gagal memproses activity log.'); }
+                actionBtn.disabled = true; actionBtn.textContent = action === 'retry' ? blastText.retrying : blastText.deleting;
+                try { const payload = await submitActivityLogAction(action, logId); showResultAlert('success', payload?.message || blastText.actionProcessed); await refreshActivityLogs(); }
+                catch (error) { showResultAlert('error', error?.message || blastText.activityLogProcessFailed); }
                 finally { actionBtn.disabled = false; actionBtn.textContent = originalText; }
             });
         }
-
-        if (campaignSearchBtn) { campaignSearchBtn.addEventListener('click', function() { searchCampaignsByUuid(); }); }
-        if (campaignSearchInput) { campaignSearchInput.addEventListener('keydown', function(event) { if (event.key === 'Enter') { event.preventDefault(); searchCampaignsByUuid(); } }); }
-        campaignTargetInputs.forEach(input => { input.addEventListener('input', function() { syncCampaignClearButtons(); }); });
-        campaignClearButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const target = button.getAttribute('data-clear-target');
-                const input = campaignTargetInputs.find(item => item.getAttribute('data-target-action') === target);
-                if (!input) return;
-                input.value = ''; syncCampaignClearButtons(); input.focus();
-            });
-        });
 
         function filterRecipientDbList() {
             if (!recipientDbList || recipientDbItems.length === 0) return;
@@ -1742,7 +1587,7 @@ body, .content-wrapper {
                 if (isMatch) visibleCount += 1;
             });
             let emptySearch = recipientDbList.querySelector('.recipient-db-empty-search');
-            if (visibleCount === 0) { if (!emptySearch) { emptySearch = document.createElement('div'); emptySearch.className = 'recipient-db-empty recipient-db-empty-search'; emptySearch.textContent = 'Tidak ada recipient sesuai pencarian.'; recipientDbList.appendChild(emptySearch); } }
+            if (visibleCount === 0) { if (!emptySearch) { emptySearch = document.createElement('div'); emptySearch.className = 'recipient-db-empty recipient-db-empty-search'; emptySearch.textContent = blastText.noRecipientSearchResults; recipientDbList.appendChild(emptySearch); } }
             else if (emptySearch) emptySearch.remove();
             updateSelectAllRecipientsBtnLabel();
         }
@@ -1767,11 +1612,11 @@ body, .content-wrapper {
                 const hasPerRecipientTemplate = overrideValues.some(o => o.mode === 'template');
                 const hasPerRecipientGlobal = overrideValues.some(o => o.mode === 'global');
                 const hasPerRecipientContent = hasPerRecipientManual || (hasPerRecipientTemplate && hasDbTemplate) || (hasPerRecipientGlobal && hasGlobalMessage);
-                if (hasPerRecipientTemplate && !hasDbTemplate) { e.preventDefault(); alert('Pilih "Template Blast DB" jika ada penerima yang menggunakan mode template.'); if (dbTemplateSelect) dbTemplateSelect.focus(); return; }
-                if (hasPerRecipientGlobal && !hasGlobalMessage) { e.preventDefault(); alert('Isi Email global wajib diisi jika ada penerima dengan mode Global.'); messageTextarea.focus(); return; }
-                if (!hasDbRecipients && !hasManualTargets) { e.preventDefault(); alert('Pilih recipient dari DB atau tambahkan email manual terlebih dahulu!'); emailInput.focus(); return; }
-                if (!emailSubject.value.trim()) { e.preventDefault(); alert('Masukkan subject email terlebih dahulu!'); emailSubject.focus(); return; }
-                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent) { e.preventDefault(); alert('Masukkan isi pesan, pilih template, atau atur pesan khusus per penerima!'); messageTextarea.focus(); return; }
+                if (hasPerRecipientTemplate && !hasDbTemplate) { e.preventDefault(); alert(blastText.templateModeRequiresDbTemplate); if (dbTemplateSelect) dbTemplateSelect.focus(); return; }
+                if (hasPerRecipientGlobal && !hasGlobalMessage) { e.preventDefault(); alert(blastText.emailGlobalMessageRequired); messageTextarea.focus(); return; }
+                if (!hasDbRecipients && !hasManualTargets) { e.preventDefault(); alert(blastText.emailRecipientRequired); emailInput.focus(); return; }
+                if (!emailSubject.value.trim()) { e.preventDefault(); alert(blastText.emailSubjectRequired); emailSubject.focus(); return; }
+                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent) { e.preventDefault(); alert(blastText.messageRequired); messageTextarea.focus(); return; }
                 if (scheduledAtInput) scheduledAtInput.value = '';
                 if (priorityInput) priorityInput.value = 'normal';
                 if (rateLimitInput) rateLimitInput.value = '5000';
@@ -1780,18 +1625,16 @@ body, .content-wrapper {
                 if (retryAttemptsInput) retryAttemptsInput.value = '1';
                 if (retryBackoffInput) retryBackoffInput.value = '0';
                 const selectedTargets = hasManualTargets ? [...emails] : selectedDbRecipients.map(cb => cb.getAttribute('data-email') || cb.value);
-                const confirmation = confirm(`Campaign dikirim sekarang.\nEmail akan diproses ke ${selectedTargets.length} penerima. Lanjutkan?`);
+                const confirmation = confirm(translateBlastTemplate(blastText.emailSendConfirm, { count: selectedTargets.length }));
                 if (!confirmation) { e.preventDefault(); return false; }
                 sendButton.disabled = true;
-                sendButton.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Mengirim...';
+                sendButton.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> ${blastText.sending}`;
             });
         }
 
         renderActivitiesWithCurrentFilter();
         updateStats();
         filterRecipientDbList();
-        searchCampaignsByUuid();
-        syncCampaignClearButtons();
         refreshActivityLogs();
         setInterval(() => { if (document.visibilityState !== 'hidden') refreshActivityLogs(); }, 5000);
     });

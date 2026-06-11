@@ -484,15 +484,15 @@
     <div class="coa-title-wrap">
         <div class="coa-title-icon"><i class="fas fa-sitemap"></i></div>
         <div>
-            <h1 class="coa-title">Bagan Akun Finance</h1>
-            <p class="coa-subtitle">Kelola kode akun, jenis akun, dan urutan klasifikasi kiri.</p>
+            <h1 class="coa-title">{{ __('app.finance.chart_of_accounts') }}</h1>
+            <p class="coa-subtitle">{{ __('app.finance.chart_of_accounts_subtitle') }}</p>
         </div>
     </div>
 </div>
 
 @if($errors->any())
     <div class="alert alert-danger coa-alert">
-        <strong>Validasi gagal:</strong>
+        <strong>{{ __('app.finance.validation_failed') }}:</strong>
         <ul class="mb-0 mt-2 pl-3">
             @foreach($errors->all() as $error)
                 <li>{{ $error }}</li>
@@ -504,14 +504,14 @@
 <div class="coa-layout">
     <aside class="coa-card">
         <div class="coa-card-head">
-            <h3>Urutan Klasifikasi Kiri</h3>
+            <h3>{{ __('app.finance.left_classification_order') }}</h3>
         </div>
         <ul class="coa-side-list">
             @forelse($groupOrder as $groupNo)
                 @php
                     $isActiveGroup = $selectedGroup === (int) $groupNo;
                     $groupCount = (int) ($accountCounts[$groupNo] ?? 0);
-                    $groupLabel = $groupLabels[$groupNo] ?? ('Klasifikasi ' . $groupNo);
+                    $groupLabel = $groupLabels[$groupNo] ?? (__('app.finance.classification') . ' ' . $groupNo);
                 @endphp
                 <li>
                     <div class="coa-side-row">
@@ -523,10 +523,10 @@
                             <span class="coa-side-count">{{ $groupCount }}</span>
                         </a>
                         @if($groupCount > 0 && !in_array((int) $groupNo, $coreClassifications, true))
-                            <form method="POST" action="{{ route('finance.accounts.classifications.destroy', $groupNo) }}" onsubmit="return confirm('Hapus klasifikasi {{ $groupNo }} beserta semua akun di dalamnya?');">
+                            <form method="POST" action="{{ route('finance.accounts.classifications.destroy', $groupNo) }}" onsubmit="return confirm(@json(__('app.finance.delete_classification_confirm', ['number' => $groupNo])));">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="coa-side-delete" title="Hapus klasifikasi">
+                                <button type="submit" class="coa-side-delete" title="{{ __('app.finance.delete_classification_title') }}">
                                     <i class="fas fa-trash-alt" style="font-size:.72rem;"></i>
                                 </button>
                             </form>
@@ -534,7 +534,7 @@
                     </div>
                 </li>
             @empty
-                <li class="coa-empty">Belum ada klasifikasi.</li>
+                <li class="coa-empty">{{ __('app.finance.no_classification') }}</li>
             @endforelse
         </ul>
     </aside>
@@ -542,7 +542,7 @@
     <section class="coa-main">
         <div class="coa-card">
             <div class="coa-card-head">
-                <h3>{{ $isEditing ? 'Ubah Akun' : 'Tambah Akun Baru' }}</h3>
+                <h3>{{ $isEditing ? __('app.finance.edit_account') : __('app.finance.add_new_account') }}</h3>
             </div>
             <div class="coa-form">
                 <form method="POST" action="{{ $formAction }}">
@@ -553,7 +553,7 @@
 
                     <div class="coa-form-grid">
                         <div class="coa-field">
-                            <label for="code">Kode Akun</label>
+                            <label for="code">{{ __('app.finance.account_code') }}</label>
                             <input
                                 type="text"
                                 id="code"
@@ -564,7 +564,7 @@
                                 required>
                         </div>
                         <div class="coa-field">
-                            <label for="name">Nama Akun</label>
+                            <label for="name">{{ __('app.finance.account_name') }}</label>
                             <input
                                 type="text"
                                 id="name"
@@ -575,7 +575,7 @@
                                 required>
                         </div>
                         <div class="coa-field">
-                            <label for="type">Jenis</label>
+                            <label for="type">{{ __('app.finance.account_type') }}</label>
                             <input
                                 type="text"
                                 id="type"
@@ -584,11 +584,11 @@
                                 maxlength="64"
                                 list="type_suggestions"
                                 value="{{ $currentType }}"
-                                placeholder="Contoh: PIUTANG / KREDIT"
+                                placeholder="{{ __('app.finance.account_type_placeholder') }}"
                                 required>
                         </div>
                         <div class="coa-field">
-                            <label for="class_no">No Klasifikasi Kiri</label>
+                            <label for="class_no">{{ __('app.finance.left_classification_no') }}</label>
                             <input
                                 type="number"
                                 id="class_no"
@@ -598,7 +598,7 @@
                                 max="255"
                                 list="class_no_suggestions"
                                 value="{{ $currentClassNo }}"
-                                placeholder="Contoh: 6"
+                                placeholder="{{ __('app.finance.classification_no_placeholder') }}"
                                 required>
                         </div>
                     </div>
@@ -611,7 +611,7 @@
                     </datalist>
                     <datalist id="class_no_suggestions">
                         @foreach($classNoSuggestions as $groupNo)
-                            <option value="{{ $groupNo }}">{{ $groupLabels[$groupNo] ?? ('Klasifikasi ' . $groupNo) }}</option>
+                            <option value="{{ $groupNo }}">{{ $groupLabels[$groupNo] ?? (__('app.finance.classification') . ' ' . $groupNo) }}</option>
                         @endforeach
                     </datalist>
 
@@ -623,16 +623,16 @@
                                 name="is_active"
                                 value="1"
                                 {{ old('is_active', $isEditing ? (int) $editAccount->is_active : 1) ? 'checked' : '' }}>
-                            Aktifkan akun
+                            {{ __('app.finance.enable_account') }}
                         </label>
 
                         <button type="submit" class="coa-btn coa-btn-primary">
-                            <i class="fas fa-save"></i> {{ $isEditing ? 'Simpan Perubahan' : 'Simpan Akun' }}
+                            <i class="fas fa-save"></i> {{ $isEditing ? __('app.finance.save_changes') : __('app.finance.save_account') }}
                         </button>
 
                         @if($isEditing)
                             <a href="{{ route('finance.accounts.index', $cancelEditParams) }}" class="coa-btn coa-btn-muted">
-                                Batal Ubah
+                                {{ __('app.finance.cancel_change') }}
                             </a>
                         @endif
                     </div>
@@ -643,55 +643,55 @@
         @if($isDetailActive)
             <div class="coa-card">
                 <div class="coa-card-head">
-                    <h3>Detail Bagan Akun</h3>
+                    <h3>{{ __('app.finance.chart_of_accounts_detail') }}</h3>
                 </div>
                 <div class="coa-detail-body">
                     <div class="coa-detail-grid">
                         <div class="coa-detail-item">
-                            <label>Kode Akun</label>
+                            <label>{{ __('app.finance.account_code') }}</label>
                             <div class="coa-detail-value">{{ $detailAccount->code }}</div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Nama Akun</label>
+                            <label>{{ __('app.finance.account_name') }}</label>
                             <div class="coa-detail-value">{{ $detailAccount->name }}</div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Jenis Akun</label>
+                            <label>{{ __('app.finance.account_type') }}</label>
                             <div class="coa-detail-value">
                                 <span class="coa-type-badge">{{ $detailAccount->type_label }}</span>
                             </div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Klasifikasi Kiri</label>
+                            <label>{{ __('app.finance.left_classification') }}</label>
                             <div class="coa-detail-value">
-                                {{ $detailAccount->class_no }} - {{ $groupLabels[$detailAccount->class_no] ?? ('Klasifikasi ' . $detailAccount->class_no) }}
+                                {{ $detailAccount->class_no }} - {{ $groupLabels[$detailAccount->class_no] ?? (__('app.finance.classification') . ' ' . $detailAccount->class_no) }}
                             </div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Status</label>
+                            <label>{{ __('app.finance.status') }}</label>
                             <div class="coa-detail-value">
                                 <span class="coa-status {{ $detailAccount->is_active ? 'active' : 'inactive' }}">
                                     <i class="fas fa-circle" style="font-size:.5rem;"></i>
-                                    {{ $detailAccount->is_active ? 'Aktif' : 'Nonaktif' }}
+                                    {{ $detailAccount->is_active ? __('app.finance.active') : __('app.finance.inactive') }}
                                 </span>
                             </div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Dibuat Oleh</label>
+                            <label>{{ __('app.finance.created_by') }}</label>
                             <div class="coa-detail-value">{{ $detailAccount->creator?->name ?? '-' }}</div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Tanggal Dibuat</label>
+                            <label>{{ __('app.finance.created_at') }}</label>
                             <div class="coa-detail-value">
                                 {{ $detailAccount->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }} WIB
                             </div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Diubah Oleh</label>
+                            <label>{{ __('app.finance.updated_by') }}</label>
                             <div class="coa-detail-value">{{ $detailAccount->updater?->name ?? '-' }}</div>
                         </div>
                         <div class="coa-detail-item">
-                            <label>Terakhir Diubah</label>
+                            <label>{{ __('app.finance.last_updated_at') }}</label>
                             <div class="coa-detail-value">
                                 {{ $detailAccount->updated_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }} WIB
                             </div>
@@ -702,17 +702,17 @@
                         <a
                             href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no, 'edit' => $detailAccount->id, 'detail' => $detailAccount->id])) }}"
                             class="coa-btn coa-btn-primary">
-                            Ubah Akun Ini
+                            {{ __('app.finance.edit_this_account') }}
                         </a>
                         <a
                             href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no])) }}"
                             class="coa-btn coa-btn-muted">
-                            Tutup Detail
+                            {{ __('app.finance.close_detail') }}
                         </a>
                     </div>
 
                     @if($detailAccountLogs->isNotEmpty())
-                        <div class="coa-detail-subtitle">Riwayat Akun Ini</div>
+                        <div class="coa-detail-subtitle">{{ __('app.finance.account_history') }}</div>
                         <ul class="coa-detail-log-list">
                             @foreach($detailAccountLogs as $detailLog)
                                 @php
@@ -721,8 +721,8 @@
                                 <li class="coa-detail-log-item">
                                     <strong>{{ in_array($detailActionName, ['CREATED', 'UPDATED', 'DELETED'], true) ? $detailActionName : 'UPDATED' }}</strong>
                                     <span style="color:#64748b;">
-                                        oleh {{ $detailLog->actor?->name ?? '-' }}
-                                        pada {{ $detailLog->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }} WIB
+                                        {{ __('app.finance.by_actor', ['actor' => $detailLog->actor?->name ?? '-']) }}
+                                        {{ __('app.finance.at_time', ['time' => $detailLog->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i:s') ?? '-']) }} WIB
                                     </span>
                                 </li>
                             @endforeach
@@ -735,9 +735,9 @@
         <div class="coa-card">
             <div class="coa-card-head">
                 <h3>
-                    Daftar Akun
+                    {{ __('app.finance.account_list') }}
                     {{ $selectedGroup
-                        ? '(' . ($groupLabels[$selectedGroup] ?? ('Klasifikasi ' . $selectedGroup)) . ' - ' . $selectedGroup . ')'
+                        ? '(' . ($groupLabels[$selectedGroup] ?? (__('app.finance.classification') . ' ' . $selectedGroup)) . ' - ' . $selectedGroup . ')'
                         : '' }}
                 </h3>
             </div>
@@ -747,12 +747,12 @@
                     <thead>
                         <tr>
                             <th style="width:52px;">#</th>
-                            <th style="width:140px;">Kode</th>
-                            <th>Nama Akun</th>
-                            <th style="width:200px;">Jenis</th>
-                            <th style="width:92px;">Urutan</th>
-                            <th style="width:110px;">Status</th>
-                            <th style="width:150px;">Aksi</th>
+                            <th style="width:140px;">{{ __('app.finance.code') }}</th>
+                            <th>{{ __('app.finance.account_name') }}</th>
+                            <th style="width:200px;">{{ __('app.finance.account_type') }}</th>
+                            <th style="width:92px;">{{ __('app.finance.sequence') }}</th>
+                            <th style="width:110px;">{{ __('app.finance.status') }}</th>
+                            <th style="width:150px;">{{ __('app.finance.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -771,7 +771,7 @@
                                 <td>
                                     <span class="coa-status {{ $account->is_active ? 'active' : 'inactive' }}">
                                         <i class="fas fa-circle" style="font-size:.5rem;"></i>
-                                        {{ $account->is_active ? 'Aktif' : 'Nonaktif' }}
+                                        {{ $account->is_active ? __('app.finance.active') : __('app.finance.inactive') }}
                                     </span>
                                 </td>
                                 <td>
@@ -779,19 +779,19 @@
                                         <a
                                             href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'detail' => $account->id])) }}"
                                             class="coa-link">
-                                            Detail
+                                            {{ __('app.finance.detail') }}
                                         </a>
                                         <a
                                             href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'edit' => $account->id, 'detail' => $account->id])) }}"
                                             class="coa-link">
-                                            Ubah
+                                            {{ __('app.finance.change') }}
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="coa-empty">Belum ada akun pada klasifikasi ini.</td>
+                                <td colspan="7" class="coa-empty">{{ __('app.finance.no_accounts_in_classification') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -807,7 +807,7 @@
 
         <div class="coa-card">
             <div class="coa-card-head">
-                <h3>Log Aktivitas Bagan Akun</h3>
+                <h3>{{ __('app.finance.chart_account_activity_log') }}</h3>
             </div>
 
             <div class="coa-log-wrap">
@@ -815,11 +815,11 @@
                     <thead>
                         <tr>
                             <th style="width:56px;">#</th>
-                            <th style="width:180px;">Waktu</th>
-                            <th style="width:140px;">Aksi</th>
-                            <th style="width:220px;">Akun</th>
-                            <th style="width:170px;">Pelaku</th>
-                            <th>Ringkasan Perubahan</th>
+                            <th style="width:180px;">{{ __('app.finance.date') }}</th>
+                            <th style="width:140px;">{{ __('app.finance.action') }}</th>
+                            <th style="width:220px;">{{ __('app.finance.accounts') }}</th>
+                            <th style="width:170px;">{{ __('app.finance.created_by') }}</th>
+                            <th>{{ __('app.finance.change_summary') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -873,19 +873,19 @@
                                 </td>
                                 <td>
                                     @if($actionName === 'CREATED')
-                                        <span>Kode <strong>{{ $codeAfter ?? '-' }}</strong> ditambahkan sebagai <strong>{{ $typeAfter ?? '-' }}</strong>.</span>
+                                        <span>{!! __('app.finance.account_added_summary', ['code' => '<strong>'.e($codeAfter ?? '-').'</strong>', 'type' => '<strong>'.e($typeAfter ?? '-').'</strong>']) !!}</span>
                                     @elseif($actionName === 'DELETED')
-                                        <span>Kode <strong>{{ $codeBefore ?? '-' }}</strong> pada jenis <strong>{{ $typeBefore ?? '-' }}</strong> dihapus dari klasifikasi kiri.</span>
+                                        <span>{!! __('app.finance.account_deleted_summary', ['code' => '<strong>'.e($codeBefore ?? '-').'</strong>', 'type' => '<strong>'.e($typeBefore ?? '-').'</strong>']) !!}</span>
                                     @else
-                                        <div>Kode: <strong>{{ $codeBefore ?? '-' }}</strong> -> <strong>{{ $codeAfter ?? '-' }}</strong></div>
-                                        <div>Nama: <strong>{{ $nameBefore ?? '-' }}</strong> -> <strong>{{ $nameAfter ?? '-' }}</strong></div>
-                                        <div>Jenis: <strong>{{ $typeBefore ?? '-' }}</strong> -> <strong>{{ $typeAfter ?? '-' }}</strong></div>
+                                        <div>{!! __('app.finance.field_change', ['field' => __('app.finance.code'), 'before' => '<strong>'.e($codeBefore ?? '-').'</strong>', 'after' => '<strong>'.e($codeAfter ?? '-').'</strong>']) !!}</div>
+                                        <div>{!! __('app.finance.field_change', ['field' => __('app.finance.name'), 'before' => '<strong>'.e($nameBefore ?? '-').'</strong>', 'after' => '<strong>'.e($nameAfter ?? '-').'</strong>']) !!}</div>
+                                        <div>{!! __('app.finance.field_change', ['field' => __('app.finance.account_type'), 'before' => '<strong>'.e($typeBefore ?? '-').'</strong>', 'after' => '<strong>'.e($typeAfter ?? '-').'</strong>']) !!}</div>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="coa-log-empty">Belum ada log aktivitas bagan akun.</td>
+                                <td colspan="6" class="coa-log-empty">{{ __('app.finance.no_chart_account_activity') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

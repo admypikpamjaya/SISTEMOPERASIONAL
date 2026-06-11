@@ -149,7 +149,7 @@ class FinanceTunggakanController extends Controller
             $whatsappDeviceError = $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.';
         }
 
-        return view('finance.tunggakan.index', [
+        return view('admin.blast.tunggakan.index', [
             'records' => $records,
             'editRecord' => $editRecord,
             'whatsappTemplates' => $whatsappTemplates,
@@ -214,7 +214,7 @@ class FinanceTunggakanController extends Controller
 
             if (trim((string) $rawDeviceId) !== '' && $deviceId === null) {
                 return redirect()
-                    ->route('finance.tunggakan.index')
+                    ->route('admin.blast.tunggakan.index')
                     ->with('error', 'Device WhatsApp tidak valid.');
             }
 
@@ -225,7 +225,7 @@ class FinanceTunggakanController extends Controller
 
             if ($blastMode === 'selected' && empty($selectedIds)) {
                 return redirect()
-                    ->route('finance.tunggakan.index')
+                    ->route('admin.blast.tunggakan.index')
                     ->with('error', 'Pilih minimal satu data tunggakan untuk di-blast.');
             }
 
@@ -238,7 +238,7 @@ class FinanceTunggakanController extends Controller
 
             if ((int) ($summary['candidate_records'] ?? 0) === 0) {
                 return redirect()
-                    ->route('finance.tunggakan.index')
+                    ->route('admin.blast.tunggakan.index')
                     ->with(
                         'success',
                         $blastMode === 'selected'
@@ -255,7 +255,7 @@ class FinanceTunggakanController extends Controller
                 : '';
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with(
                     'success',
                     'Blast WA tunggakan selesai. '
@@ -273,7 +273,7 @@ class FinanceTunggakanController extends Controller
             report($exception);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'Blast WA tunggakan gagal: ' . $exception->getMessage());
         }
     }
@@ -284,7 +284,7 @@ class FinanceTunggakanController extends Controller
             $summary = $this->tunggakanService->deleteAllRecords();
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with(
                     'success',
                     'Delete all selesai. Data terhapus: '
@@ -297,7 +297,7 @@ class FinanceTunggakanController extends Controller
             report($exception);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'Delete all tagihan gagal.');
         }
     }
@@ -324,7 +324,7 @@ class FinanceTunggakanController extends Controller
             ], auth()->id() ? (string) auth()->id() : null);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('success', 'Data tunggakan berhasil ditambahkan.');
         } catch (Throwable $exception) {
             report($exception);
@@ -362,7 +362,7 @@ class FinanceTunggakanController extends Controller
             );
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('success', 'Data tunggakan berhasil diperbarui.');
         } catch (Throwable $exception) {
             report($exception);
@@ -380,13 +380,13 @@ class FinanceTunggakanController extends Controller
             $this->tunggakanService->deleteRecord($record);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('success', 'Data tunggakan berhasil dihapus.');
         } catch (Throwable $exception) {
             report($exception);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'Gagal menghapus data tunggakan.');
         }
     }
@@ -400,7 +400,7 @@ class FinanceTunggakanController extends Controller
         $uploadedFile = $request->file('file');
         if ($uploadedFile === null) {
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'File import tidak ditemukan.');
         }
 
@@ -412,7 +412,7 @@ class FinanceTunggakanController extends Controller
             );
 
             $redirect = redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with(
                     'success',
                     'Import selesai. Inserted: ' . $summary['inserted']
@@ -436,7 +436,7 @@ class FinanceTunggakanController extends Controller
             report($exception);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'Import Excel gagal: ' . $exception->getMessage());
         }
     }
@@ -456,7 +456,7 @@ class FinanceTunggakanController extends Controller
             );
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with(
                     'success',
                     'Sinkron DB recipient siswa selesai. Inserted: ' . $summary['inserted']
@@ -468,7 +468,7 @@ class FinanceTunggakanController extends Controller
             report($exception);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'Sinkron DB recipient gagal: ' . $exception->getMessage());
         }
     }
@@ -503,7 +503,7 @@ class FinanceTunggakanController extends Controller
             );
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with(
                     'success',
                     'Template blasting tunggakan berhasil disiapkan: '
@@ -513,7 +513,7 @@ class FinanceTunggakanController extends Controller
             report($exception);
 
             return redirect()
-                ->route('finance.tunggakan.index')
+                ->route('admin.blast.tunggakan.index')
                 ->with('error', 'Gagal menyiapkan template blasting tunggakan.');
         }
     }

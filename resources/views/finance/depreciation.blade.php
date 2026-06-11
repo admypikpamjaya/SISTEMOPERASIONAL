@@ -400,10 +400,10 @@
         </div>
         <div>
             <h1 style="font-size:1.3rem; font-weight:800; color:var(--text); margin:0 0 2px; line-height:1.2;">
-                Asset Depreciation
+                {{ __('app.finance.asset_depreciation') }}
             </h1>
             <p style="font-size:.8rem; color:var(--muted); font-weight:500; margin:0;">
-                Kalkulasi penyusutan aset, histori, dan jurnal otomatis
+                {{ __('app.finance.asset_depreciation_desc') }}
             </p>
         </div>
     </div>
@@ -417,7 +417,7 @@
                 <div class="ad-card-header">
                     <div class="ad-card-header-left">
                         <span class="hicon"><i class="fas fa-calculator"></i></span>
-                        <h3>Kalkulasi Penyusutan Garis Lurus</h3>
+                        <h3>{{ __('app.finance.straight_line_depreciation') }}</h3>
                     </div>
                 </div>
 
@@ -428,10 +428,10 @@
                         {{-- Asset --}}
                         <div class="ad-form-group">
                             <label for="asset_id">
-                                <i class="fas fa-cube"></i> Asset
+                                <i class="fas fa-cube"></i> {{ __('app.finance.asset') }}
                             </label>
                             <select id="asset_id" name="asset_id" class="ad-select" required>
-                                <option value="">Pilih asset dari database</option>
+                                <option value="">{{ __('app.finance.select_asset_from_database') }}</option>
                                 @foreach(($assets ?? collect()) as $asset)
                                     <option
                                         value="{{ $asset->id }}"
@@ -444,14 +444,14 @@
                             </select>
                             <div class="ad-hint">
                                 <i class="fas fa-database"></i>
-                                Total asset tersedia: {{ ($assets ?? collect())->count() }}
+                                {{ __('app.finance.total_assets_available', ['count' => ($assets ?? collect())->count()]) }}
                             </div>
                         </div>
 
                         {{-- Nilai Perolehan --}}
                         <div class="ad-form-group">
                             <label for="acquisition_cost">
-                                <i class="fas fa-money-bill-wave"></i> Nilai Perolehan
+                                <i class="fas fa-money-bill-wave"></i> {{ __('app.finance.acquisition_cost') }}
                             </label>
                             <div class="ad-input-group">
                                 <span class="ad-prefix">Rp</span>
@@ -462,7 +462,7 @@
                             </div>
                             <div class="ad-hint" id="acquisition_cost_hint">
                                 <i class="fas fa-magic"></i>
-                                Akan terisi otomatis dari harga aset jika tersedia, dan masih bisa disesuaikan manual.
+                                {{ __('app.finance.acquisition_cost_help') }}
                             </div>
                         </div>
 
@@ -470,7 +470,7 @@
                         <div class="form-row" style="gap:0 12px;">
                             <div class="ad-form-group col-md-6" style="padding:0;">
                                 <label for="period_start">
-                                    <i class="fas fa-calendar-alt"></i> Periode Dari
+                                    <i class="fas fa-calendar-alt"></i> {{ __('app.finance.period_from') }}
                                 </label>
                                 <input
                                     type="month" id="period_start" name="period_start"
@@ -480,7 +480,7 @@
                             </div>
                             <div class="ad-form-group col-md-6" style="padding:0;">
                                 <label for="period_end">
-                                    <i class="fas fa-calendar-check"></i> Periode Sampai
+                                    <i class="fas fa-calendar-check"></i> {{ __('app.finance.period_to') }}
                                 </label>
                                 <input
                                     type="month" id="period_end" name="period_end"
@@ -493,7 +493,7 @@
                         {{-- Umur Manfaat --}}
                         <div class="ad-form-group">
                             <label for="useful_life_months">
-                                <i class="fas fa-clock"></i> Umur Manfaat (bulan)
+                                <i class="fas fa-clock"></i> {{ __('app.finance.useful_life_months') }}
                             </label>
                             <input
                                 type="number" id="useful_life_months" name="useful_life_months"
@@ -501,7 +501,7 @@
                             >
                             <div class="ad-hint">
                                 <i class="fas fa-magic"></i>
-                                Terisi otomatis berdasarkan rentang periode yang dipilih.
+                                {{ __('app.finance.auto_useful_life_help') }}
                             </div>
                         </div>
 
@@ -510,7 +510,7 @@
                     <div class="ad-card-footer">
                         <button type="submit" class="ad-btn-submit" id="submit-btn">
                             <i class="fas fa-calculator"></i>
-                            <span>Hitung Penyusutan</span>
+                            <span>{{ __('app.finance.calculate_depreciation') }}</span>
                         </button>
                     </div>
                 </form>
@@ -523,7 +523,7 @@
                 <div class="ad-card-header ad-card-header-result">
                     <div class="ad-card-header-left">
                         <span class="hicon"><i class="fas fa-chart-line"></i></span>
-                        <h3>Hasil Perhitungan</h3>
+                        <h3>{{ __('app.finance.calculation_result') }}</h3>
                     </div>
                 </div>
                 <div class="ad-card-body">
@@ -536,7 +536,7 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-cube"></i> Asset
+                                <i class="fas fa-cube"></i> {{ __('app.finance.asset') }}
                             </div>
                             <div class="ad-result-value" id="result-asset-label">
                                 <span class="ad-chip">-</span>
@@ -545,14 +545,14 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-money-bill-wave"></i> Nilai Perolehan
+                                <i class="fas fa-money-bill-wave"></i> {{ __('app.finance.acquisition_cost') }}
                             </div>
                             <div class="ad-result-value" id="result-acquisition-cost">-</div>
                         </div>
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-hourglass-half"></i> Umur Manfaat
+                                <i class="fas fa-hourglass-half"></i> {{ __('app.finance.useful_life') }}
                             </div>
                             <div class="ad-result-value" id="result-useful-life">
                                 <span class="ad-chip">-</span>
@@ -561,14 +561,14 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-divide"></i> Penyusutan / Bulan
+                                <i class="fas fa-divide"></i> {{ __('app.finance.monthly_depreciation') }}
                             </div>
                             <div class="ad-result-value" id="result-depreciation-per-month">-</div>
                         </div>
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-calendar-alt"></i> Periode Manfaat
+                                <i class="fas fa-calendar-alt"></i> {{ __('app.finance.benefit_period') }}
                             </div>
                             <div class="ad-result-value" id="result-period">
                                 <span class="ad-chip">-</span>
@@ -577,14 +577,14 @@
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="far fa-clock"></i> Waktu Hitung (WIB)
+                                <i class="far fa-clock"></i> {{ __('app.finance.calculated_at_wib') }}
                             </div>
                             <div class="ad-result-value" id="result-calculated-at" style="font-size:.84rem;">-</div>
                         </div>
 
                         <div class="ad-result-row">
                             <div class="ad-result-label">
-                                <i class="fas fa-book"></i> Jurnal Penyusutan
+                                <i class="fas fa-book"></i> {{ __('app.finance.depreciation_journal') }}
                             </div>
                             <div class="ad-result-value" id="result-journal-reference" style="font-size:.84rem;">-</div>
                         </div>
@@ -603,7 +603,7 @@
                 <div class="ad-card-header">
                     <div class="ad-card-header-left">
                         <span class="hicon"><i class="fas fa-history"></i></span>
-                        <h3>Log Kalkulasi Penyusutan</h3>
+                        <h3>{{ __('app.finance.depreciation_calculation_log') }}</h3>
                     </div>
                 </div>
 
@@ -612,14 +612,14 @@
                         <thead>
                             <tr>
                                 <th><i class="fas fa-hashtag"></i>#</th>
-                                <th><i class="far fa-clock"></i>Waktu Hitung (WIB)</th>
-                                <th><i class="fas fa-cube"></i>Asset</th>
-                                <th><i class="fas fa-calendar-alt"></i>Periode</th>
-                                <th><i class="fas fa-money-bill-wave"></i>Nilai Perolehan</th>
-                                <th><i class="fas fa-hourglass-half"></i>Umur (Bln)</th>
-                                <th><i class="fas fa-divide"></i>Penyusutan / Bulan</th>
-                                <th><i class="far fa-user"></i>Dihitung Oleh</th>
-                                <th><i class="fas fa-link"></i>Aksi</th>
+                                <th><i class="far fa-clock"></i>{{ __('app.finance.calculated_at_wib') }}</th>
+                                <th><i class="fas fa-cube"></i>{{ __('app.finance.asset') }}</th>
+                                <th><i class="fas fa-calendar-alt"></i>{{ __('app.finance.period') }}</th>
+                                <th><i class="fas fa-money-bill-wave"></i>{{ __('app.finance.acquisition_cost') }}</th>
+                                <th><i class="fas fa-hourglass-half"></i>{{ __('app.finance.useful_life_short') }}</th>
+                                <th><i class="fas fa-divide"></i>{{ __('app.finance.monthly_depreciation') }}</th>
+                                <th><i class="far fa-user"></i>{{ __('app.finance.calculated_by') }}</th>
+                                <th><i class="fas fa-link"></i>{{ __('app.finance.action') }}</th>
                             </tr>
                         </thead>
                         <tbody id="depreciation-log-body">
@@ -658,7 +658,7 @@
                                     <td>
                                         <span class="ad-action-group">
                                             <a class="ad-action-link" href="{{ route('finance.depreciation.logs.show', ['log' => $log->id]) }}">
-                                                <i class="fas fa-eye"></i> Detail
+                                                <i class="fas fa-eye"></i> {{ __('app.finance.detail') }}
                                             </a>
                                             <a class="ad-action-link" href="{{ route('finance.depreciation.logs.download', ['log' => $log->id]) }}">
                                                 <i class="fas fa-file-pdf"></i> PDF
@@ -671,7 +671,7 @@
                                     <td colspan="9">
                                         <div class="ad-empty">
                                             <span class="ei"><i class="fas fa-calculator"></i></span>
-                                            <p>Belum ada log kalkulasi penyusutan.</p>
+                                            <p>{{ __('app.finance.no_depreciation_logs') }}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -701,6 +701,16 @@
         const usefulLifeInput = document.getElementById('useful_life_months');
         const logShowUrlTemplate = @json(route('finance.depreciation.logs.show', ['log' => '__LOG_ID__']));
         const logDownloadUrlTemplate = @json(route('finance.depreciation.logs.download', ['log' => '__LOG_ID__']));
+        const depreciationText = {
+            dateRangeSeparator: @json(__('app.finance.date_range_separator')),
+            invalidPeriod: @json(__('app.finance.period_to_invalid')),
+            acquisitionFromAsset: @json(__('app.finance.acquisition_from_asset_help')),
+            assetPriceMissing: @json(__('app.finance.asset_price_missing_help')),
+            failed: @json(__('app.finance.depreciation_calc_failed')),
+            success: @json(__('app.finance.depreciation_calc_success')),
+            logNotSaved: @json(__('app.finance.depreciation_log_not_saved')),
+            requestError: @json(__('app.finance.request_error')),
+        };
 
         /* ── alert helper ── */
         function setAlert(type, message) {
@@ -756,7 +766,7 @@
                 return '-';
             }
 
-            return `${startLabel} s/d ${endLabel}`;
+            return `${startLabel}${depreciationText.dateRangeSeparator}${endLabel}`;
         }
 
         function syncUsefulLifeMonths() {
@@ -767,7 +777,7 @@
 
             if (months === null && periodStartInput.value && periodEndInput.value) {
                 usefulLifeInput.value = '';
-                periodEndInput.setCustomValidity('Periode sampai harus sama atau setelah periode dari.');
+                periodEndInput.setCustomValidity(depreciationText.invalidPeriod);
                 return;
             }
 
@@ -787,7 +797,7 @@
                 acquisitionCostInput.value = purchasePrice;
                 acquisitionCostHint.innerHTML = `
                     <i class="fas fa-magic"></i>
-                    Nilai perolehan diambil dari harga aset dan tetap bisa Anda ubah manual.
+                    ${escapeHtml(depreciationText.acquisitionFromAsset)}
                 `;
                 return;
             }
@@ -795,7 +805,7 @@
             acquisitionCostInput.value = '';
             acquisitionCostHint.innerHTML = `
                 <i class="fas fa-pen"></i>
-                Harga aset belum tersedia. Isi manual agar sistem bisa merekam jurnal penyusutan.
+                ${escapeHtml(depreciationText.assetPriceMissing)}
             `;
         }
 
@@ -841,7 +851,7 @@
                 <td>
                     <span class="ad-action-group">
                         <a class="ad-action-link" href="${escapeHtml(detailUrl)}">
-                            <i class="fas fa-eye"></i> Detail
+                            <i class="fas fa-eye"></i> {{ __('app.finance.detail') }}
                         </a>
                         <a class="ad-action-link" href="${escapeHtml(downloadUrl)}">
                             <i class="fas fa-file-pdf"></i> PDF
@@ -875,7 +885,7 @@
                 if (!resp.ok) {
                     const err = payload.errors
                         ? Object.values(payload.errors)[0][0]
-                        : (payload.message || 'Gagal menghitung penyusutan.');
+                        : (payload.message || depreciationText.failed);
                     setAlert('danger', err);
                     return;
                 }
@@ -908,13 +918,13 @@
 
                 if (data.log_saved && data.log) {
                     prependLogRow(data.log);
-                    setAlert('success', payload.message || 'Perhitungan berhasil.');
+                    setAlert('success', payload.message || depreciationText.success);
                 } else {
-                    setAlert('warning', payload.message || 'Perhitungan berhasil, tetapi log belum tersimpan.');
+                    setAlert('warning', payload.message || depreciationText.logNotSaved);
                 }
 
             } catch (err) {
-                setAlert('danger', 'Terjadi kesalahan saat mengirim request.');
+                setAlert('danger', depreciationText.requestError);
                 console.error(err);
             } finally {
                 submitBtn.classList.remove('btn-loading');

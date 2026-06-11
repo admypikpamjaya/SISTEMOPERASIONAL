@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Recipient Data')
+@section('title', __('app.blast.recipient_data_title'))
 @section('content')
 
 <style>
@@ -797,8 +797,8 @@
             </svg>
         </div>
         <div class="page-header-text">
-            <h1>Recipient Data</h1>
-            <p>Manajemen data penerima untuk kebutuhan blasting pesan</p>
+            <h1>{{ __('app.blast.recipient_data_title') }}</h1>
+            <p>{{ __('app.blast.recipient_data_subtitle') }}</p>
         </div>
     </div>
 
@@ -811,7 +811,7 @@
                 </svg>
             </div>
             <div class="stat-info">
-                <div class="stat-label">Total Siswa</div>
+                <div class="stat-label">{{ __('app.blast.total_students') }}</div>
                 <div class="stat-number">{{ $totalRecipients ?? $recipients->total() }}</div>
             </div>
         </div>
@@ -822,7 +822,7 @@
                 </svg>
             </div>
             <div class="stat-info">
-                <div class="stat-label">Data Lengkap</div>
+                <div class="stat-label">{{ __('app.blast.complete_data') }}</div>
                 <div class="stat-number">{{ $completeCount ?? $recipients->total() }}</div>
             </div>
         </div>
@@ -833,7 +833,7 @@
                 </svg>
             </div>
             <div class="stat-info">
-                <div class="stat-label">Data Kurang</div>
+                <div class="stat-label">{{ __('app.blast.incomplete_data') }}</div>
                 <div class="stat-number">{{ $incompleteCount ?? 0 }}</div>
             </div>
         </div>
@@ -844,7 +844,7 @@
                 </svg>
             </div>
             <div class="stat-info">
-                <div class="stat-label">Data Tervalidasi</div>
+                <div class="stat-label">{{ __('app.blast.validated_data') }}</div>
                 <div class="stat-number">{{ $validCount ?? $recipients->total() }}</div>
             </div>
         </div>
@@ -861,9 +861,9 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
-                    Daftar Penerima
+                    {{ __('app.blast.recipient_list') }}
                 </div>
-                <span class="count-pill">{{ $recipients->total() }} siswa</span>
+                <span class="count-pill">{{ __('app.blast.student_count', ['count' => $recipients->total()]) }}</span>
             </div>
 
             {{-- Toolbar --}}
@@ -874,22 +874,22 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
-                            <input type="text" class="search-box" placeholder="Cari nama siswa, kelas, atau wali..." id="searchInput" name="q" value="{{ $search ?? '' }}">
+                            <input type="text" class="search-box" placeholder="{{ __('app.blast.search_student_placeholder') }}" id="searchInput" name="q" value="{{ $search ?? '' }}">
                         </div>
-                        <select name="kelas" class="filter-select" aria-label="Filter kelas">
-                            <option value="">Semua Kelas</option>
+                        <select name="kelas" class="filter-select" aria-label="{{ __('app.blast.filter_class_aria') }}">
+                            <option value="">{{ __('app.blast.all_classes') }}</option>
                             @foreach(($kelasOptions ?? collect()) as $kelasOption)
                                 <option value="{{ $kelasOption }}" @selected(($selectedClass ?? '') === $kelasOption)>{{ $kelasOption }}</option>
                             @endforeach
                         </select>
-                        <select name="per_page" class="filter-select" aria-label="Jumlah data">
+                        <select name="per_page" class="filter-select" aria-label="{{ __('app.blast.per_page_aria') }}">
                             @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
-                                <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ $size }}/halaman</option>
+                                <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ __('app.blast.per_page_suffix', ['count' => $size]) }}</option>
                             @endforeach
                         </select>
-                        <button type="submit" class="btn-filter">Terapkan</button>
+                        <button type="submit" class="btn-filter">{{ __('app.blast.apply_filter') }}</button>
                         @if(!empty($search) || !empty($selectedClass))
-                            <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">Reset</a>
+                            <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">{{ __('app.blast.reset') }}</a>
                         @endif
                     </form>
 
@@ -901,20 +901,20 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                 </svg>
-                                Impor Excel
+                                {{ __('app.blast.import_excel') }}
                                 <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
                             </button>
                         </form>
 
                         <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter" style="text-decoration:none;">
-                            Data Koperasi
+                            {{ __('app.blast.data_cooperative') }}
                         </a>
 
                         <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter" style="text-decoration:none;">
-                            Data Karyawan YPIK
+                            {{ __('app.blast.data_ypik_employees') }}
                         </a>
                         <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="btn-filter" style="text-decoration:none;">
-                            YPIK Pam Jaya
+                            {{ __('app.blast.data_ypik_pamjaya') }}
                         </a>
 
                         <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
@@ -922,17 +922,17 @@
                             @method('DELETE')
                         </form>
                         <button type="submit" class="btn-delete-selected" id="bulkDeleteBtn" form="bulk-delete-form" disabled>
-                            Delete Selected
+                            {{ __('app.blast.delete_selected') }}
                         </button>
 
-                        <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" onsubmit="return confirm('Hapus SEMUA recipient siswa? Tindakan ini tidak bisa dibatalkan.')">
+                        <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" data-confirm-message="{{ __('app.blast.delete_all_students_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn-delete-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                 </svg>
-                                Delete All
+                                {{ __('app.blast.delete_all') }}
                             </button>
                         </form>
 
@@ -940,7 +940,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px;height:14px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
-                            Tambah Data
+                            {{ __('app.blast.add_data') }}
                         </a>
                     </div>
                 </div>
@@ -954,14 +954,14 @@
                             <th style="width:48px;">
                                 <input type="checkbox" class="bulk-checkbox" id="selectAllStudents">
                             </th>
-                            <th style="width:90px;">Status</th>
-                            <th style="width:130px;">Nama Siswa</th>
-                            <th style="width:75px;">Kelas</th>
-                            <th style="width:120px;">Nama Wali</th>
-                            <th style="width:170px;">Nomor WA 1 / 2</th>
-                            <th style="width:145px;">Email Wali</th>
-                            <th style="width:110px;">Catatan</th>
-                            <th style="width:120px;">Aksi</th>
+                            <th style="width:90px;">{{ __('app.blast.table_status') }}</th>
+                            <th style="width:130px;">{{ __('app.blast.student_name') }}</th>
+                            <th style="width:75px;">{{ __('app.blast.class') }}</th>
+                            <th style="width:120px;">{{ __('app.blast.guardian') }}</th>
+                            <th style="width:170px;">{{ __('app.blast.guardian_whatsapp') }}</th>
+                            <th style="width:145px;">{{ __('app.blast.guardian_email') }}</th>
+                            <th style="width:110px;">{{ __('app.blast.notes') }}</th>
+                            <th style="width:120px;">{{ __('app.blast.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -985,21 +985,21 @@
                                         <span class="badge {{ $isComplete ? 'badge-lengkap' : 'badge-kurang' }}">
                                             @if($isComplete)
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                LENGKAP
+                                                {{ __('app.blast.complete_upper') }}
                                             @else
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
-                                                KURANG
+                                                {{ __('app.blast.incomplete_upper') }}
                                             @endif
                                         </span>
                                         @if($r->is_valid)
                                             <span class="badge badge-valid">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                                                VALID
+                                                {{ __('app.blast.valid_upper') }}
                                             </span>
                                         @else
                                             <span class="badge badge-invalid">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
-                                                INVALID
+                                                {{ __('app.blast.invalid_upper') }}
                                             </span>
                                         @endif
                                     </div>
@@ -1024,13 +1024,13 @@
                                 </td>
                                 <td>
                                     <div class="actions">
-                                        <a href="{{ route('admin.blast.recipients.edit', $r->id) }}" class="btn-action btn-edit" title="Edit recipient" aria-label="Edit recipient">
+                                        <a href="{{ route('admin.blast.recipients.edit', $r->id) }}" class="btn-action btn-edit" title="{{ __('app.blast.edit_recipient') }}" aria-label="{{ __('app.blast.edit_recipient') }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:10px;height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                                         </a>
-                                        <form method="POST" action="{{ route('admin.blast.recipients.destroy', $r->id) }}" class="d-inline" onsubmit="return confirm('Hapus data ini?')">
+                                        <form method="POST" action="{{ route('admin.blast.recipients.destroy', $r->id) }}" class="d-inline" data-confirm-message="{{ __('app.blast.delete_data_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn-action btn-delete" title="Hapus recipient" aria-label="Hapus recipient">
+                                            <button type="submit" class="btn-action btn-delete" title="{{ __('app.blast.delete_recipient') }}" aria-label="{{ __('app.blast.delete_recipient') }}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:10px;height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                                             </button>
                                         </form>
@@ -1046,8 +1046,8 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                                             </svg>
                                         </div>
-                                        <div class="empty-title">Belum Ada Data Siswa</div>
-                                        <div class="empty-subtitle">Tambahkan data siswa baru dengan menekan tombol "Tambah Data" di atas atau impor dari file Excel.</div>
+                                        <div class="empty-title">{{ __('app.blast.no_student_data_title') }}</div>
+                                        <div class="empty-subtitle">{{ __('app.blast.no_student_data_subtitle', ['button' => __('app.blast.add_data')]) }}</div>
                                     </div>
                                 </td>
                             </tr>
@@ -1079,12 +1079,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                     </svg>
                 </div>
-                <h5 style="font-size:16px;font-weight:700;color:#1a202c;margin-bottom:6px;">Hapus Data Siswa?</h5>
-                <p style="font-size:13px;color:#718096;">Data yang dihapus tidak dapat dikembalikan.</p>
+                <h5 style="font-size:16px;font-weight:700;color:#1a202c;margin-bottom:6px;">{{ __('app.blast.delete_student_title') }}</h5>
+                <p style="font-size:13px;color:#718096;">{{ __('app.blast.delete_student_desc') }}</p>
             </div>
             <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn-modal-danger" id="confirmDeleteBtn">Ya, Hapus</button>
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">{{ __('app.blast.cancel') }}</button>
+                <button type="button" class="btn-modal-danger" id="confirmDeleteBtn">{{ __('app.blast.yes_delete') }}</button>
             </div>
         </div>
     </div>
@@ -1092,6 +1092,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    window.recipientText = {
+        deleteSelected: @json(__('app.blast.delete_selected')),
+        chooseMinOneDelete: @json(__('app.blast.choose_min_one_recipient_delete')),
+        deleteSelectedConfirm: @json(__('app.blast.delete_selected_students_confirm', ['count' => '__COUNT__'])),
+    };
+
     // Import form submission
     const excelFileInput = document.getElementById('excelFileInput');
     if (excelFileInput) {
@@ -1150,9 +1156,10 @@ function initBulkSelection() {
         const totalCount = checkboxes.length;
 
         deleteBtn.disabled = selectedCount === 0;
+        const text = window.recipientText || {};
         deleteBtn.textContent = selectedCount > 0
-            ? `Delete Selected (${selectedCount})`
-            : 'Delete Selected';
+            ? `${text.deleteSelected || 'Delete Selected'} (${selectedCount})`
+            : (text.deleteSelected || 'Delete Selected');
 
         if (selectAll) {
             selectAll.checked = selectedCount > 0 && selectedCount === totalCount;
@@ -1172,13 +1179,14 @@ function initBulkSelection() {
 
     form.addEventListener('submit', (event) => {
         const selected = checkboxes.filter(cb => cb.checked);
+        const text = window.recipientText || {};
         if (selected.length === 0) {
             event.preventDefault();
-            alert('Pilih minimal satu recipient untuk dihapus.');
+            alert(text.chooseMinOneDelete || 'Select at least one recipient to delete.');
             return;
         }
 
-        const confirmText = `Hapus ${selected.length} recipient siswa terpilih?`;
+        const confirmText = (text.deleteSelectedConfirm || 'Delete __COUNT__ selected recipients?').replace('__COUNT__', selected.length);
         if (!confirm(confirmText)) {
             event.preventDefault();
         }

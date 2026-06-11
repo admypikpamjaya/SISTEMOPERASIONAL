@@ -15,7 +15,7 @@ class FinancialStatementDocumentService
         return [
             'content' => $this->renderPdfDocument(
                 'Laporan Lembar Saldo',
-                $this->buildSubtitle('Ringkasan liabilitas, piutang, kas, dan aset.', $filter),
+                $this->buildSubtitle(__('app.finance.balance_sheet_items') . '.', $filter),
                 $this->buildBalanceSheetLines($report)
             ),
             'filename' => $this->buildFilename('laporan-lembar-saldo', $filter),
@@ -31,7 +31,7 @@ class FinancialStatementDocumentService
         return [
             'content' => $this->renderPdfDocument(
                 'Laporan Laba Rugi',
-                $this->buildSubtitle('Ringkasan pemasukan dan pengeluaran.', $filter),
+                $this->buildSubtitle(__('app.finance.profit_loss_items') . '.', $filter),
                 $this->buildProfitLossLines($report)
             ),
             'filename' => $this->buildFilename('laporan-laba-rugi', $filter),
@@ -47,7 +47,7 @@ class FinancialStatementDocumentService
         return [
             'content' => $this->renderPdfDocument(
                 'Buku Besar',
-                $this->buildSubtitle('Rincian jurnal keseluruhan per akun.', $filter),
+                $this->buildSubtitle(__('app.finance.general_ledger_description'), $filter),
                 $this->buildGeneralLedgerLines($report)
             ),
             'filename' => $this->buildFilename('buku-besar', $filter),
@@ -63,7 +63,7 @@ class FinancialStatementDocumentService
         return [
             'content' => $this->renderPdfDocument(
                 'Item Jurnal',
-                $this->buildSubtitle('Rincian item jurnal per akun.', $filter),
+                $this->buildSubtitle(__('app.finance.journal_items_description'), $filter),
                 $this->buildJournalItemLines($report)
             ),
             'filename' => $this->buildFilename('item-jurnal', $filter),
@@ -690,9 +690,9 @@ class FinancialStatementDocumentService
 
     private function buildSubtitle(string $description, StatementFilterDTO $filter): string
     {
-        return $description
-            . ' Periode: ' . $this->resolvePeriodLabel($filter)
-            . ' | Dicetak: ' . now()->format('d/m/Y H:i');
+        return rtrim($description)
+            . ' ' . __('app.finance.period_label') . ': ' . $this->resolvePeriodLabel($filter)
+            . ' | ' . __('app.finance.printed_at') . ': ' . now()->format('d/m/Y H:i');
     }
 
     private function buildFilename(string $prefix, StatementFilterDTO $filter): string
@@ -708,7 +708,8 @@ class FinancialStatementDocumentService
             return $this->formatDateRangeLabel(
                 $filter->startDate,
                 $filter->endDate,
-                'd/m/Y'
+                'd/m/Y',
+                __('app.finance.date_range_separator')
             );
         }
 
@@ -722,15 +723,16 @@ class FinancialStatementDocumentService
                 $filter->startMonth,
                 $filter->endYear,
                 $filter->endMonth,
-                'm/Y'
+                'm/Y',
+                __('app.finance.date_range_separator')
             );
         }
 
         if ($periodType === 'YEARLY' && $filter->startYear !== null) {
-            return $this->formatYearRangeLabel($filter->startYear, $filter->endYear);
+            return $this->formatYearRangeLabel($filter->startYear, $filter->endYear, __('app.finance.date_range_separator'));
         }
 
-        return 'Semua Periode';
+        return __('app.finance.all_periods');
     }
 
     private function resolvePeriodSlug(StatementFilterDTO $filter): string

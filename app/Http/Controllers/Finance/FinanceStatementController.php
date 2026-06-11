@@ -718,7 +718,7 @@ class FinanceStatementController extends Controller
                 return $startDate->translatedFormat('d F Y');
             }
 
-            return $startDate->translatedFormat('d F Y') . ' s.d. ' . $endDate->translatedFormat('d F Y');
+            return $startDate->translatedFormat('d F Y') . __('app.finance.date_range_separator') . $endDate->translatedFormat('d F Y');
         }
 
         if (
@@ -737,7 +737,7 @@ class FinanceStatementController extends Controller
                 return $startMonth->translatedFormat('F Y');
             }
 
-            return $startMonth->translatedFormat('F Y') . ' s.d. ' . $endMonth->translatedFormat('F Y');
+            return $startMonth->translatedFormat('F Y') . __('app.finance.date_range_separator') . $endMonth->translatedFormat('F Y');
         }
 
         if ($periodType === 'YEARLY' && $filter->startYear !== null) {
@@ -745,10 +745,10 @@ class FinanceStatementController extends Controller
                 return (string) $filter->startYear;
             }
 
-            return $filter->startYear . ' s.d. ' . ($filter->endYear ?? $filter->startYear);
+            return $filter->startYear . __('app.finance.date_range_separator') . ($filter->endYear ?? $filter->startYear);
         }
 
-        return 'Semua Periode';
+        return __('app.finance.all_periods');
     }
 
     private function downloadStatementDocument(FinanceStatementFilterRequest $request, string $statementType)

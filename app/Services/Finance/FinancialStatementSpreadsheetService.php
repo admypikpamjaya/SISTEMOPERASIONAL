@@ -70,7 +70,10 @@ class FinancialStatementSpreadsheetService
         $this->prepareSheetHeader(
             $sheet,
             'LAPORAN LEMBAR SALDO',
-            'Ringkasan liabilitas, piutang, kas, dan aset. Periode: ' . $this->resolvePeriodLabel($filter)
+            __('app.finance.balance_sheet_export_summary', [
+                'period' => __('app.finance.period_label'),
+                'value' => $this->resolvePeriodLabel($filter),
+            ])
         );
 
         $summary = $report['summary'] ?? [];
@@ -144,7 +147,10 @@ class FinancialStatementSpreadsheetService
         $this->prepareSheetHeader(
             $sheet,
             'LAPORAN LABA RUGI',
-            'Ringkasan pemasukan dan pengeluaran. Periode: ' . $this->resolvePeriodLabel($filter)
+            __('app.finance.profit_loss_export_summary', [
+                'period' => __('app.finance.period_label'),
+                'value' => $this->resolvePeriodLabel($filter),
+            ])
         );
 
         $totals = $report['totals'] ?? [];
@@ -218,7 +224,10 @@ class FinancialStatementSpreadsheetService
         $this->prepareSheetHeader(
             $sheet,
             'BUKU BESAR',
-            'Rincian jurnal keseluruhan per akun. Periode: ' . $this->resolvePeriodLabel($filter)
+            __('app.finance.general_ledger_export_summary', [
+                'period' => __('app.finance.period_label'),
+                'value' => $this->resolvePeriodLabel($filter),
+            ])
         );
 
         $summary = $report['summary'] ?? [];
@@ -304,7 +313,11 @@ class FinancialStatementSpreadsheetService
         $this->prepareSheetHeader(
             $sheet,
             'ITEM JURNAL',
-            $accountLabel . ' | Periode: ' . $this->resolvePeriodLabel($filter)
+            __('app.finance.journal_items_export_summary', [
+                'account' => $accountLabel,
+                'period' => __('app.finance.period_label'),
+                'value' => $this->resolvePeriodLabel($filter),
+            ])
         );
 
         $summary = $report['summary'] ?? [];
@@ -495,7 +508,7 @@ class FinancialStatementSpreadsheetService
         $periodType = $filter->periodType ?? 'ALL';
 
         if ($periodType === 'DAILY' && !empty($filter->startDate)) {
-            return $this->formatDateRangeLabel($filter->startDate, $filter->endDate, 'd/m/Y');
+            return $this->formatDateRangeLabel($filter->startDate, $filter->endDate, 'd/m/Y', __('app.finance.date_range_separator'));
         }
 
         if (
@@ -508,15 +521,16 @@ class FinancialStatementSpreadsheetService
                 $filter->startMonth,
                 $filter->endYear,
                 $filter->endMonth,
-                'm/Y'
+                'm/Y',
+                __('app.finance.date_range_separator')
             );
         }
 
         if ($periodType === 'YEARLY' && $filter->startYear !== null) {
-            return $this->formatYearRangeLabel($filter->startYear, $filter->endYear);
+            return $this->formatYearRangeLabel($filter->startYear, $filter->endYear, __('app.finance.date_range_separator'));
         }
 
-        return 'Semua Periode';
+        return __('app.finance.all_periods');
     }
 
     private function resolvePeriodSlug(StatementFilterDTO $filter): string

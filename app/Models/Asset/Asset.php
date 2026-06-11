@@ -117,6 +117,26 @@ class Asset extends Model
         return $this->hasMany(ComputerComponent::class);
     }
 
+    public function vehicleDetail()
+    {
+        return $this->hasOne(VehicleDetail::class);
+    }
+
+    public function electronicDetail()
+    {
+        return $this->hasOne(ElectronicDetail::class);
+    }
+
+    public function roomInventoryDetail()
+    {
+        return $this->hasOne(RoomInventoryDetail::class);
+    }
+
+    public function buildingInfrastructureDetail()
+    {
+        return $this->hasOne(BuildingInfrastructureDetail::class);
+    }
+
     public function loadWithRelation()
     {
         $handler = AssetFactory::createHandler($this->category);

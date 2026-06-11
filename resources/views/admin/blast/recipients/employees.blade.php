@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Recipient Karyawan Koperasi Tirta Jatik Utama')
+@section('title', __('app.blast.employee_koperasi_title'))
 
 @section('content')
 <style>
@@ -436,18 +436,18 @@ body.dark-mode .emp-table td form button.emp-btn {
 <div class="emp-page">
     <div class="emp-head">
         <div>
-            <div class="emp-head-title">Recipient Karyawan Koperasi Tirta Jatik Utama</div>
-            <div class="emp-head-sub">Fitur lama khusus koperasi. Sumber data: file <b>recipent data koperasi tirta jatik utama</b>.</div>
+            <div class="emp-head-title">{{ __('app.blast.employee_koperasi_title') }}</div>
+            <div class="emp-head-sub">{!! __('app.blast.employee_koperasi_subtitle', ['file' => '<b>recipent data koperasi tirta jatik utama</b>']) !!}</div>
         </div>
         <div class="emp-head-actions">
             <a href="{{ route('admin.blast.recipients.index') }}" class="emp-btn ghost">
-                <i class="fas fa-user-graduate"></i> Data Siswa
+                <i class="fas fa-user-graduate"></i> {{ __('app.blast.data_students') }}
             </a>
             <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="emp-btn ghost">
-                <i class="fas fa-id-card"></i> Data Karyawan YPIK
+                <i class="fas fa-id-card"></i> {{ __('app.blast.data_ypik_employees') }}
             </a>
             <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="emp-btn ghost">
-                <i class="fas fa-address-book"></i> YPIK Pam Jaya
+                <i class="fas fa-address-book"></i> {{ __('app.blast.data_ypik_pamjaya') }}
             </a>
         </div>
     </div>
@@ -468,15 +468,15 @@ body.dark-mode .emp-table td form button.emp-btn {
 
             <div class="emp-stats">
                 <div class="emp-stat">
-                    <div class="emp-stat-label">Total Karyawan</div>
+                    <div class="emp-stat-label">{{ __('app.blast.total_employees') }}</div>
                     <div class="emp-stat-value">{{ $totalEmployees ?? $employees->total() }}</div>
                 </div>
                 <div class="emp-stat">
-                    <div class="emp-stat-label">Data Valid</div>
+                    <div class="emp-stat-label">{{ __('app.blast.valid_data') }}</div>
                     <div class="emp-stat-value">{{ $validCount ?? 0 }}</div>
                 </div>
                 <div class="emp-stat">
-                    <div class="emp-stat-label">Kontak Belum Lengkap</div>
+                    <div class="emp-stat-label">{{ __('app.blast.incomplete_contact') }}</div>
                     <div class="emp-stat-value">{{ $incompleteCount ?? 0 }}</div>
                 </div>
             </div>
@@ -484,20 +484,20 @@ body.dark-mode .emp-table td form button.emp-btn {
             <div class="emp-toolbar">
                 <form method="GET" action="{{ route('admin.blast.recipients.employees.index') }}" class="emp-filter">
                     <div class="emp-field">
-                        <label class="emp-label">Cari</label>
-                        <input type="text" name="q" value="{{ $search ?? '' }}" class="emp-input" placeholder="Nama / WA / Email">
+                        <label class="emp-label">{{ __('app.blast.search') }}</label>
+                        <input type="text" name="q" value="{{ $search ?? '' }}" class="emp-input" placeholder="{{ __('app.blast.search_name_wa_email') }}">
                     </div>
                     <div class="emp-field">
-                        <label class="emp-label">Instansi</label>
+                        <label class="emp-label">{{ __('app.blast.institution') }}</label>
                         <select name="instansi" class="emp-select">
-                            <option value="">Semua Instansi</option>
+                            <option value="">{{ __('app.blast.all_institutions') }}</option>
                             @foreach(($instansiOptions ?? collect()) as $instansiOption)
                                 <option value="{{ $instansiOption }}" @selected(($selectedInstansi ?? '') === $instansiOption)>{{ $instansiOption }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div style="min-width:120px;">
-                        <label class="emp-label">Per Halaman</label>
+                        <label class="emp-label">{{ __('app.blast.per_page') }}</label>
                         <select name="per_page" class="emp-select">
                             @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
                                 <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ $size }}</option>
@@ -505,10 +505,10 @@ body.dark-mode .emp-table td form button.emp-btn {
                         </select>
                     </div>
                     <button type="submit" class="emp-btn" style="background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;">
-                        <i class="fas fa-filter"></i> Filter
+                        <i class="fas fa-filter"></i> {{ __('app.blast.apply_filter') }}
                     </button>
                     <a href="{{ route('admin.blast.recipients.employees.index') }}" class="emp-btn" style="background:#fff;border-color:var(--emp-border);color:var(--emp-text-700);">
-                        Reset
+                        {{ __('app.blast.reset') }}
                     </a>
                 </form>
 
@@ -519,13 +519,13 @@ body.dark-mode .emp-table td form button.emp-btn {
 
                 <div class="emp-import-wrap">
                     <a href="{{ route('admin.blast.recipients.employees.create') }}" class="emp-btn" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">
-                        <i class="fas fa-plus"></i> Input Manual
+                        <i class="fas fa-plus"></i> {{ __('app.blast.manual_input') }}
                     </a>
                     <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="import_type" value="karyawan">
                         <label class="emp-btn emp-file-btn" style="background:#fff;border-color:#93c5fd;color:#1d4ed8;">
-                            <i class="fas fa-file-import"></i> Import Excel Karyawan
+                            <i class="fas fa-file-import"></i> {{ __('app.blast.import_employee_excel') }}
                             <input
                                 type="file"
                                 name="file"
@@ -537,13 +537,13 @@ body.dark-mode .emp-table td form button.emp-btn {
                         </label>
                     </form>
                     <button type="submit" class="emp-btn outline-danger" id="bulkDeleteEmployeesBtn" form="bulk-delete-employees-form" disabled>
-                        <i class="fas fa-trash-alt"></i> Delete Selected
+                        <i class="fas fa-trash-alt"></i> {{ __('app.blast.delete_selected') }}
                     </button>
-                    <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy-all') }}" onsubmit="return confirm('Hapus SEMUA recipient karyawan koperasi? Tindakan ini tidak bisa dibatalkan.')">
+                    <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy-all') }}" data-confirm-message="{{ __('app.blast.delete_all_koperasi_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="emp-btn danger">
-                            <i class="fas fa-trash"></i> Delete All
+                            <i class="fas fa-trash"></i> {{ __('app.blast.delete_all') }}
                         </button>
                     </form>
                 </div>
@@ -556,15 +556,15 @@ body.dark-mode .emp-table td form button.emp-btn {
                             <th style="width:44px;">
                                 <input type="checkbox" class="emp-checkbox" id="selectAllEmployees">
                             </th>
-                            <th style="width:56px;">No</th>
-                            <th>Nama Karyawan</th>
-                            <th>Instansi</th>
-                            <th>Nama Wali</th>
-                            <th>WhatsApp</th>
-                            <th>Email</th>
-                            <th>Catatan</th>
-                            <th style="width:150px;">Status</th>
-                            <th style="width:140px;">Aksi</th>
+                            <th style="width:56px;">{{ __('app.blast.no') }}</th>
+                            <th>{{ __('app.blast.employee_name') }}</th>
+                            <th>{{ __('app.blast.institution') }}</th>
+                            <th>{{ __('app.blast.guardian_name_field') }}</th>
+                            <th>{{ __('app.blast.whatsapp') }}</th>
+                            <th>{{ __('app.blast.email') }}</th>
+                            <th>{{ __('app.blast.notes') }}</th>
+                            <th style="width:150px;">{{ __('app.blast.table_status') }}</th>
+                            <th style="width:140px;">{{ __('app.blast.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -588,9 +588,9 @@ body.dark-mode .emp-table td form button.emp-btn {
                                 <td>{{ $employee->catatan ?? '-' }}</td>
                                 <td>
                                     @if($employee->is_valid)
-                                        <span class="emp-badge valid">VALID</span>
+                                        <span class="emp-badge valid">{{ __('app.blast.valid_upper') }}</span>
                                     @else
-                                        <span class="emp-badge invalid">INVALID</span>
+                                        <span class="emp-badge invalid">{{ __('app.blast.invalid_upper') }}</span>
                                         @if($employee->validation_error)
                                             <div class="emp-error-detail">{{ $employee->validation_error }}</div>
                                         @endif
@@ -598,13 +598,13 @@ body.dark-mode .emp-table td form button.emp-btn {
                                 </td>
                                 <td>
                                     <div style="display:flex;gap:6px;">
-                                        <a href="{{ route('admin.blast.recipients.employees.edit', $employee->id) }}" class="emp-btn" style="padding:6px 9px;background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;" title="Edit recipient" aria-label="Edit recipient">
+                                        <a href="{{ route('admin.blast.recipients.employees.edit', $employee->id) }}" class="emp-btn" style="padding:6px 9px;background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;" title="{{ __('app.blast.edit_recipient') }}" aria-label="{{ __('app.blast.edit_recipient') }}">
                                             <i class="fas fa-pen"></i>
                                         </a>
-                                        <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data karyawan ini?')">
+                                        <form method="POST" action="{{ route('admin.blast.recipients.employees.destroy', $employee->id) }}" data-confirm-message="{{ __('app.blast.delete_employee_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="emp-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;" title="Hapus recipient" aria-label="Hapus recipient">
+                                            <button class="emp-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;" title="{{ __('app.blast.delete_recipient') }}" aria-label="{{ __('app.blast.delete_recipient') }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -614,7 +614,7 @@ body.dark-mode .emp-table td form button.emp-btn {
                         @empty
                             <tr>
                                 <td colspan="10" class="emp-empty">
-                                    Belum ada data karyawan. Silakan import file <b>recipent data koperasi tirta jatik utama</b>.
+                                    {!! __('app.blast.no_employee_data_koperasi', ['file' => '<b>recipent data koperasi tirta jatik utama</b>']) !!}
                                 </td>
                             </tr>
                         @endforelse
@@ -631,6 +631,11 @@ body.dark-mode .emp-table td form button.emp-btn {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const employeeText = {
+        deleteSelected: @json(__('app.blast.delete_selected')),
+        chooseMinOneDelete: @json(__('app.blast.choose_min_one_employee_delete')),
+        deleteSelectedConfirm: @json(__('app.blast.delete_selected_employees_confirm', ['count' => '__COUNT__'])),
+    };
     const form = document.getElementById('bulk-delete-employees-form');
     const selectAll = document.getElementById('selectAllEmployees');
     const checkboxes = Array.from(document.querySelectorAll('.employee-checkbox'));
@@ -650,8 +655,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         deleteBtn.disabled = selectedCount === 0;
         deleteBtn.textContent = selectedCount > 0
-            ? `Delete Selected (${selectedCount})`
-            : 'Delete Selected';
+            ? `${employeeText.deleteSelected} (${selectedCount})`
+            : employeeText.deleteSelected;
 
         if (selectAll) {
             selectAll.checked = selectedCount > 0 && selectedCount === totalCount;
@@ -673,11 +678,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const selected = checkboxes.filter(cb => cb.checked);
         if (selected.length === 0) {
             event.preventDefault();
-            alert('Pilih minimal satu recipient untuk dihapus.');
+            alert(employeeText.chooseMinOneDelete);
             return;
         }
 
-        const confirmText = `Hapus ${selected.length} recipient karyawan koperasi terpilih?`;
+        const confirmText = employeeText.deleteSelectedConfirm.replace('__COUNT__', selected.length);
         if (!confirm(confirmText)) {
             event.preventDefault();
         }

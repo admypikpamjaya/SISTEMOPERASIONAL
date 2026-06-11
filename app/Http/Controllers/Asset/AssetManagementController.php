@@ -13,6 +13,7 @@ use App\Http\Requests\Asset\RegisterAssetRequest;
 use App\Http\Requests\Asset\RegisterAssetViaFileRequest;
 use App\Services\Asset\AssetService;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 /**
  * Asset master controller.
@@ -28,14 +29,82 @@ class AssetManagementController extends Controller
         private AssetService $service
     ) {}
 
+    private function errorStatusCode(\Throwable $throwable): int
+    {
+        $code = (int) $throwable->getCode();
+
+        return ($code >= 400 && $code <= 599) ? $code : 500;
+    }
+
     public function index(Request $request)
+    {
+        return $this->renderAssetIndex(
+            request: $request,
+            forcedCategory: null,
+            pageMode: 'master',
+            pageRouteName: 'asset-management.index'
+        );
+    }
+
+    public function ac(Request $request): View
+    {
+        return $this->renderCategoryIndex($request, AssetCategory::AC, 'asset-management.ac.index');
+    }
+
+    public function buildingInfrastructure(Request $request): View
+    {
+        return $this->renderCategoryIndex(
+            $request,
+            AssetCategory::BUILDING_INFRASTRUCTURE,
+            'asset-management.building-infrastructure.index'
+        );
+    }
+
+    public function electronic(Request $request): View
+    {
+        return $this->renderCategoryIndex($request, AssetCategory::ELECTRONIC, 'asset-management.electronic.index');
+    }
+
+    public function roomInventory(Request $request): View
+    {
+        return $this->renderCategoryIndex($request, AssetCategory::ROOM_INVENTORY, 'asset-management.room-inventory.index');
+    }
+
+    public function vehicle(Request $request): View
+    {
+        return $this->renderCategoryIndex($request, AssetCategory::VEHICLE, 'asset-management.vehicle.index');
+    }
+
+    public function computer(Request $request): View
+    {
+        return $this->renderCategoryIndex($request, AssetCategory::COMPUTER, 'asset-management.computer.index');
+    }
+
+    private function renderCategoryIndex(Request $request, AssetCategory $category, string $pageRouteName): View
+    {
+        return $this->renderAssetIndex(
+            request: $request,
+            forcedCategory: $category,
+            pageMode: 'category',
+            pageRouteName: $pageRouteName
+        );
+    }
+
+    private function renderAssetIndex(
+        Request $request,
+        ?AssetCategory $forcedCategory,
+        string $pageMode,
+        string $pageRouteName
+    ): View
     {
         $page = $request->input('page', 1);
         $pageSize = $request->input('page_size', 10);
+        $selectedCategory = $forcedCategory
+            ?? ($request->category ? AssetCategory::from($request->category) : null);
 
         $assets = $this->service->getAssets(
             $request->keyword, 
-            ($request->category) ? AssetCategory::from($request->category) : null, 
+            $selectedCategory,
             ($request->unit) ? AssetUnit::from($request->unit) : null,
             $page, 
             $pageSize,
@@ -44,7 +113,10 @@ class AssetManagementController extends Controller
             $request->import_file
         );
         return view('asset-management.index', [
-            'assets' => $assets
+            'assets' => $assets,
+            'assetPageMode' => $pageMode,
+            'assetPageCategory' => $selectedCategory,
+            'assetPageRouteName' => $pageRouteName,
         ]);
     }
 
@@ -103,7 +175,7 @@ class AssetManagementController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => $e->getMessage(),
-            ], $e->getCode() ?: 500);
+            ], $this->errorStatusCode($e));
         }
     }
 
@@ -118,6 +190,22 @@ class AssetManagementController extends Controller
             AssetCategory::COMPUTER->value => [
                 'path' => resource_path('asset-templates/computer/LIST KOMPUTER (REV) (3).xlsx'),
                 'download_name' => 'template-import-komputer-ypik.xlsx',
+            ],
+            AssetCategory::BUILDING_INFRASTRUCTURE->value => [
+                'path' => resource_path('asset-templates/building-infrastructure/template_kategori_bangunan_prasarana_kosong.xlsx'),
+                'download_name' => 'template-import-bangunan-prasarana-ypik.xlsx',
+            ],
+            AssetCategory::ELECTRONIC->value => [
+                'path' => resource_path('asset-templates/electronic/template_kategori_elektronik.xlsx'),
+                'download_name' => 'template-import-elektronik-ypik.xlsx',
+            ],
+            AssetCategory::ROOM_INVENTORY->value => [
+                'path' => resource_path('asset-templates/room-inventory/template_kategori_inventaris_ruangan.xlsx'),
+                'download_name' => 'template-import-inventaris-ruangan-ypik.xlsx',
+            ],
+            AssetCategory::VEHICLE->value => [
+                'path' => resource_path('asset-templates/vehicle/template_kategori_kendaraan.xlsx'),
+                'download_name' => 'template-import-kendaraan-ypik.xlsx',
             ],
         ];
 
@@ -154,7 +242,7 @@ class AssetManagementController extends Controller
         {
             return response()->json([
                 'message' => $e->getMessage()
-            ], $e->getCode() ? $e->getCode() : 500);
+            ], $this->errorStatusCode($e));
         }
     }
 
@@ -171,7 +259,7 @@ class AssetManagementController extends Controller
         {
             return response()->json([
                 'message' => $e->getMessage()
-            ], $e->getCode() ? $e->getCode() : 500);
+            ], $this->errorStatusCode($e));
         }
     }
 
@@ -194,7 +282,7 @@ class AssetManagementController extends Controller
         {
             return response()->json([
                 'message' => $e->getMessage()
-            ], $e->getCode() ? $e->getCode() : 500);
+            ], $this->errorStatusCode($e));
         }
     }
 

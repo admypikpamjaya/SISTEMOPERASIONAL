@@ -153,20 +153,50 @@ class MaintenanceReportController extends Controller
     {
         try 
         {
-            $ids = $request->input('ids', []);
-            if(count($ids) === 0)
-                return redirect()->route('maintenance-report.index')->with('error', 'Tidak ada data yang dipilih');
+            $filters = $this->validatedExportFilters($request);
 
-            $file = $this->service->exportLogToExcel($ids);
+            $file = $this->service->exportLogToExcel(
+                $filters['ids'],
+                $filters['keyword'],
+                $filters['status'],
+                $filters['date_from'],
+                $filters['date_to']
+            );
 
             $response = new StreamedResponse(function() use ($file) {
                 $file->save('php://output');
             });
-                        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            $response->headers->set('Content-Disposition', 'attachment;filename="maintenance_logs.xlsx"');
+            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response->headers->set('Content-Disposition', 'attachment;filename="' . $this->buildExportFilename('xlsx', $filters['date_from'], $filters['date_to']) . '"');
             $response->headers->set('Cache-Control', 'max-age=0');
 
             return $response;
+        }
+        catch(\Throwable $e)
+        {
+            return redirect()->route('maintenance-report.index')->with('error', $e->getMessage());
+        }
+    }
+
+    public function exportPdf(Request $request)
+    {
+        try
+        {
+            $filters = $this->validatedExportFilters($request);
+
+            $pdf = $this->service->exportLogToPdf(
+                $filters['ids'],
+                $filters['keyword'],
+                $filters['status'],
+                $filters['date_from'],
+                $filters['date_to']
+            );
+
+            return response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment;filename="' . $this->buildExportFilename('pdf', $filters['date_from'], $filters['date_to']) . '"',
+                'Cache-Control' => 'max-age=0',
+            ]);
         }
         catch(\Throwable $e)
         {
@@ -195,5 +225,47 @@ class MaintenanceReportController extends Controller
                 'message' => $e->getMessage()
             ], $e->getCode() ? $e->getCode() : 500);
         }
+    }
+
+    private function validatedExportFilters(Request $request): array
+    {
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['string'],
+            'keyword' => ['nullable', 'string'],
+            'status' => [
+                'nullable',
+                'in:' . implode(',', array_column(AssetMaintenanceReportStatus::cases(), 'value'))
+            ],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ], [
+            'date_from.date' => 'Tanggal mulai tidak valid.',
+            'date_to.date' => 'Tanggal akhir tidak valid.',
+            'date_to.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal mulai.',
+            'status.in' => 'Status yang dipilih tidak valid.',
+        ]);
+
+        return [
+            'ids' => $validated['ids'] ?? [],
+            'keyword' => $validated['keyword'] ?? null,
+            'status' => isset($validated['status']) && filled($validated['status'])
+                ? AssetMaintenanceReportStatus::from($validated['status'])
+                : null,
+            'date_from' => $validated['date_from'] ?? null,
+            'date_to' => $validated['date_to'] ?? null,
+        ];
+    }
+
+    private function buildExportFilename(string $extension, ?string $dateFrom = null, ?string $dateTo = null): string
+    {
+        $period = match (true) {
+            filled($dateFrom) && filled($dateTo) => $dateFrom . '_sd_' . $dateTo,
+            filled($dateFrom) => 'mulai_' . $dateFrom,
+            filled($dateTo) => 'sampai_' . $dateTo,
+            default => 'semua_tanggal',
+        };
+
+        return 'maintenance_logs_' . $period . '.' . $extension;
     }
 }

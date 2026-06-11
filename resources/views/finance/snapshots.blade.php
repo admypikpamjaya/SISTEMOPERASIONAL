@@ -434,27 +434,27 @@
     <div class="sfr-header-left">
         <div class="sfr-header-icon"><i class="fas fa-chart-pie"></i></div>
         <div>
-            <h1 class="sfr-header-title">Snapshot Finance Report</h1>
-            <p class="sfr-header-sub">Monitoring &amp; Snapshot Laporan Keuangan</p>
+            <h1 class="sfr-header-title">{{ __('app.finance.snapshot_finance_report') }}</h1>
+            <p class="sfr-header-sub">{{ __('app.finance.monitoring_snapshot_report') }}</p>
         </div>
     </div>
     <div style="display:flex; gap:.55rem; flex-wrap:wrap;">
         <a href="{{ route('finance.report.index') }}" class="btn-sfr-action">
-            <i class="fas fa-plus"></i> Input Finance Report
+            <i class="fas fa-plus"></i> {{ __('app.finance.input_report') }}
         </a>
         @permission('finance_balance_sheet.read')
             <a href="{{ route('finance.report.balance-sheet', $statementRouteParams) }}" class="btn-reset">
-                <i class="fas fa-balance-scale"></i> Lembar Saldo
+                <i class="fas fa-balance-scale"></i> {{ __('app.finance.balance_sheet') }}
             </a>
         @endpermission
         @permission('finance_profit_loss.read')
             <a href="{{ route('finance.report.profit-loss', $statementRouteParams) }}" class="btn-reset">
-                <i class="fas fa-chart-area"></i> Laba Rugi
+                <i class="fas fa-chart-area"></i> {{ __('app.finance.profit_loss') }}
             </a>
         @endpermission
         @permission('finance_general_ledger.read')
             <a href="{{ route('finance.report.general-ledger', $statementRouteParams) }}" class="btn-reset">
-                <i class="fas fa-book-open"></i> Buku Besar
+                <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
             </a>
         @endpermission
     </div>
@@ -465,29 +465,29 @@
     <div class="sfr-filter-header">
         <h3 class="sfr-filter-header-title">
             <span class="fh-icon"><i class="fas fa-filter"></i></span>
-            Filter Snapshot Finance
+            {{ __('app.finance.snapshot_filter') }}
         </h3>
     </div>
     <div class="sfr-filter-body">
         <form method="GET" action="{{ route('finance.report.snapshots') }}" id="snapshot-filter-form">
             <div class="row">
                 <div class="col-md-2 sfr-form-group" id="period_type_col">
-                    <label class="sfr-label"><i class="fas fa-calendar-alt"></i> Periode</label>
+                    <label class="sfr-label"><i class="fas fa-calendar-alt"></i> {{ __('app.finance.period') }}</label>
                     <select name="period_type" id="period_type" class="sfr-control">
-                        <option value="ALL"     {{ $periodType === 'ALL'     ? 'selected' : '' }}>All Report</option>
-                        <option value="DAILY"   {{ $periodType === 'DAILY'   ? 'selected' : '' }}>Harian</option>
-                        <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
-                        <option value="YEARLY"  {{ $periodType === 'YEARLY'  ? 'selected' : '' }}>Tahunan</option>
+                        <option value="ALL"     {{ $periodType === 'ALL'     ? 'selected' : '' }}>{{ __('app.finance.all_periods') }}</option>
+                        <option value="DAILY"   {{ $periodType === 'DAILY'   ? 'selected' : '' }}>{{ __('app.finance.daily') }}</option>
+                        <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>{{ __('app.finance.monthly') }}</option>
+                        <option value="YEARLY"  {{ $periodType === 'YEARLY'  ? 'selected' : '' }}>{{ __('app.finance.yearly') }}</option>
                     </select>
                 </div>
 
                 <div class="col-md-3 sfr-form-group" id="report_date_group">
-                    <label class="sfr-label"><i class="fas fa-calendar-day"></i> Sebagai Tanggal</label>
+                    <label class="sfr-label"><i class="fas fa-calendar-day"></i> {{ __('app.finance.as_of_date') }}</label>
                     <input type="date" name="report_date" id="report_date" class="sfr-control" value="{{ $reportDate }}">
                 </div>
 
                 <div class="col-md-2 sfr-form-group" id="month_group">
-                    <label class="sfr-label"><i class="fas fa-calendar-week"></i> Bulan</label>
+                    <label class="sfr-label"><i class="fas fa-calendar-week"></i> {{ __('app.finance.month') }}</label>
                     <select name="month" id="month" class="sfr-control">
                         @for($m = 1; $m <= 12; $m++)
                             <option value="{{ $m }}" {{ $month === $m ? 'selected' : '' }}>{{ $m }}</option>
@@ -496,34 +496,34 @@
                 </div>
 
                 <div class="col-md-2 sfr-form-group" id="year_group">
-                    <label class="sfr-label"><i class="fas fa-calendar"></i> Tahun</label>
+                    <label class="sfr-label"><i class="fas fa-calendar"></i> {{ __('app.finance.year') }}</label>
                     <input type="number" name="year" id="year" class="sfr-control" min="1900" max="2100" value="{{ $year }}">
                 </div>
 
                 <div class="col-md-3 sfr-form-group">
-                    <label class="sfr-label"><i class="fas fa-code-branch"></i> Perbandingan</label>
+                    <label class="sfr-label"><i class="fas fa-code-branch"></i> {{ __('app.finance.comparison') }}</label>
                     <select name="comparison_type" id="comparison_type" class="sfr-control">
-                        <option value="NONE"                  {{ $comparisonType === 'NONE'                  ? 'selected' : '' }}>Tidak ada</option>
-                        <option value="PREVIOUS_PERIOD"       {{ $comparisonType === 'PREVIOUS_PERIOD'       ? 'selected' : '' }}>Periode Sebelumnya</option>
-                        <option value="SAME_PERIOD_LAST_YEAR" {{ $comparisonType === 'SAME_PERIOD_LAST_YEAR' ? 'selected' : '' }}>Periode Sama Tahun Lalu</option>
-                        <option value="SPECIFIC_DATE"         {{ $comparisonType === 'SPECIFIC_DATE'         ? 'selected' : '' }}>Tanggal Spesifik</option>
+                        <option value="NONE"                  {{ $comparisonType === 'NONE'                  ? 'selected' : '' }}>{{ __('app.finance.none') }}</option>
+                        <option value="PREVIOUS_PERIOD"       {{ $comparisonType === 'PREVIOUS_PERIOD'       ? 'selected' : '' }}>{{ __('app.finance.previous_period') }}</option>
+                        <option value="SAME_PERIOD_LAST_YEAR" {{ $comparisonType === 'SAME_PERIOD_LAST_YEAR' ? 'selected' : '' }}>{{ __('app.finance.same_period_last_year') }}</option>
+                        <option value="SPECIFIC_DATE"         {{ $comparisonType === 'SPECIFIC_DATE'         ? 'selected' : '' }}>{{ __('app.finance.specific_date') }}</option>
                     </select>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-2 sfr-form-group" id="comparison_offset_group">
-                    <label class="sfr-label"><i class="fas fa-arrows-alt-h"></i> Jarak Periode</label>
+                    <label class="sfr-label"><i class="fas fa-arrows-alt-h"></i> {{ __('app.finance.period_distance') }}</label>
                     <input type="number" name="comparison_offset" id="comparison_offset" class="sfr-control" min="1" max="36" value="{{ max(1, $comparisonOffset) }}">
                 </div>
 
                 <div class="col-md-3 sfr-form-group" id="comparison_date_group">
-                    <label class="sfr-label"><i class="fas fa-calendar-check"></i> Tanggal Pembanding</label>
+                    <label class="sfr-label"><i class="fas fa-calendar-check"></i> {{ __('app.finance.comparison_date') }}</label>
                     <input type="date" name="comparison_date" id="comparison_date" class="sfr-control" value="{{ $comparisonDate }}">
                 </div>
 
                 <div class="col-md-2 sfr-form-group">
-                    <label class="sfr-label"><i class="fas fa-list-ol"></i> Per Page</label>
+                    <label class="sfr-label"><i class="fas fa-list-ol"></i> {{ __('app.finance.per_page') }}</label>
                     <select name="per_page" id="per_page" class="sfr-control">
                         @foreach([10, 20, 50, 100] as $size)
                             <option value="{{ $size }}" {{ $perPage === $size ? 'selected' : '' }}>{{ $size }}</option>
@@ -533,10 +533,10 @@
 
                 <div class="col-md-5 sfr-filter-actions">
                     <button type="submit" class="btn-apply">
-                        <i class="fas fa-search"></i> Terapkan Filter
+                        <i class="fas fa-search"></i> {{ __('app.finance.apply_filter') }}
                     </button>
                     <a href="{{ route('finance.report.snapshots', ['period_type' => 'MONTHLY', 'month' => now()->month, 'year' => now()->year]) }}" class="btn-reset">
-                        <i class="fas fa-redo"></i> Reset
+                        <i class="fas fa-redo"></i> {{ __('app.finance.reset') }}
                     </a>
                 </div>
             </div>
@@ -547,19 +547,19 @@
 {{-- ── Summary Cards ────────────────────────────────── --}}
 <div class="sfr-summary-grid">
     <div class="sfr-summary-card sc-count anim-d1">
-        <div class="sc-label"><span class="sc-icon sc-icon-count"><i class="fas fa-layer-group"></i></span> Jumlah Snapshot</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-count"><i class="fas fa-layer-group"></i></span> {{ __('app.finance.snapshot_count') }}</div>
         <div class="sc-value big">{{ number_format($totalCount, 0, ',', '.') }}</div>
     </div>
     <div class="sfr-summary-card sc-opening anim-d2">
-        <div class="sc-label"><span class="sc-icon sc-icon-opening"><i class="fas fa-wallet"></i></span> Total Saldo Awal</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-opening"><i class="fas fa-wallet"></i></span> {{ __('app.finance.total_opening_balance') }}</div>
         <div class="sc-value" style="font-size:1rem;">Rp {{ number_format($totalOpeningBalance, 2, ',', '.') }}</div>
     </div>
     <div class="sfr-summary-card sc-ending anim-d3">
-        <div class="sc-label"><span class="sc-icon sc-icon-ending"><i class="fas fa-wallet"></i></span> Total Saldo Keseluruhan</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-ending"><i class="fas fa-wallet"></i></span> {{ __('app.finance.total_ending_balance') }}</div>
         <div class="sc-value blue" style="font-size:1rem;">Rp {{ number_format($totalEndingBalance, 2, ',', '.') }}</div>
     </div>
     <div class="sfr-summary-card sc-surplus anim-d4">
-        <div class="sc-label"><span class="sc-icon sc-icon-surplus"><i class="fas fa-balance-scale"></i></span> Total Surplus (Defisit)</div>
+        <div class="sc-label"><span class="sc-icon sc-icon-surplus"><i class="fas fa-balance-scale"></i></span> {{ __('app.finance.total_surplus_deficit') }}</div>
         <div class="sc-value {{ $totalNetResult >= 0 ? 'green' : 'red' }}" style="font-size:1rem;">Rp {{ number_format($totalNetResult, 2, ',', '.') }}</div>
     </div>
 </div>
@@ -569,14 +569,14 @@
     <div class="sfr-table-header">
         <h3 class="sfr-table-title">
             <span class="tt-icon"><i class="fas fa-table"></i></span>
-            Daftar Snapshot Laporan
+            {{ __('app.finance.snapshot_report_list') }}
         </h3>
     </div>
 
     @if($reports->total() === 0)
         <div class="sfr-alert-empty">
             <i class="fas fa-exclamation-triangle"></i>
-            Belum ada snapshot laporan untuk filter periode yang dipilih.
+            {{ __('app.finance.no_snapshot_filter') }}
         </div>
     @endif
 
@@ -584,16 +584,16 @@
         <table class="sfr-table">
             <thead>
                 <tr>
-                    <th>Aksi</th>
-                    <th>Periode</th>
-                    <th>Tipe</th>
-                    <th>Versi</th>
-                    <th>Saldo Awal</th>
-                    <th>Saldo Akhir</th>
-                    <th>Surplus (Defisit)</th>
-                    <th>Perbandingan</th>
-                    <th>Generated At</th>
-                    <th>Generated By</th>
+                    <th>{{ __('app.finance.action') }}</th>
+                    <th>{{ __('app.finance.period') }}</th>
+                    <th>{{ __('app.finance.type') }}</th>
+                    <th>{{ __('app.finance.version') }}</th>
+                    <th>{{ __('app.finance.opening_balance') }}</th>
+                    <th>{{ __('app.finance.ending_balance') }}</th>
+                    <th>{{ __('app.finance.total_surplus_deficit') }}</th>
+                    <th>{{ __('app.finance.comparison') }}</th>
+                    <th>{{ __('app.finance.generated_at') }}</th>
+                    <th>{{ __('app.finance.generated_by') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -633,17 +633,17 @@
                         <td>
                             <div class="sfr-actions">
                                 <a href="{{ route('finance.report.show', $report->id) }}" class="btn-preview">
-                                    <i class="fas fa-eye" style="font-size:.65rem;"></i> Preview
+                                    <i class="fas fa-eye" style="font-size:.65rem;"></i> {{ __('app.finance.preview') }}
                                 </a>
                                 @permission('finance_report.generate')
                                     <a href="{{ route('finance.report.edit', $report->id) }}" class="btn-action btn-edit">
-                                        <i class="fas fa-pen" style="font-size:.62rem;"></i> Edit
+                                        <i class="fas fa-pen" style="font-size:.62rem;"></i> {{ __('app.finance.edit') }}
                                     </a>
-                                    <form method="POST" action="{{ route('finance.report.destroy', $report->id) }}" onsubmit="return confirm('Hapus snapshot ini? Tindakan ini tidak bisa dibatalkan.')">
+                                    <form method="POST" action="{{ route('finance.report.destroy', $report->id) }}" onsubmit="return confirm(@json(__('app.finance.delete_snapshot_confirm')))">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn-action btn-delete">
-                                            <i class="fas fa-trash" style="font-size:.62rem;"></i> Delete
+                                            <i class="fas fa-trash" style="font-size:.62rem;"></i> {{ __('app.finance.delete') }}
                                         </button>
                                     </form>
                                 @endpermission
@@ -676,21 +676,21 @@
                             @if(!$comparison)
                                 <span class="comp-none">—</span>
                             @elseif(!data_get($comparison, 'available', false))
-                                <div class="comp-label">{{ data_get($comparison, 'label', 'Perbandingan') }}</div>
-                                <div style="font-size:.72rem;color:var(--text-muted);">{{ data_get($comparison, 'message', 'Data tidak ditemukan.') }}</div>
+                                <div class="comp-label">{{ data_get($comparison, 'label', __('app.finance.comparison_default')) }}</div>
+                                <div style="font-size:.72rem;color:var(--text-muted);">{{ data_get($comparison, 'message', __('app.finance.comparison_not_found')) }}</div>
                             @else
                                 @php
                                     $diffNet     = (float) data_get($comparison, 'difference_net_result', 0);
                                     $diffBalance = (float) data_get($comparison, 'difference_ending_balance', 0);
                                 @endphp
-                                <div class="comp-label">{{ data_get($comparison, 'label', 'Perbandingan') }}</div>
+                                <div class="comp-label">{{ data_get($comparison, 'label', __('app.finance.comparison_default')) }}</div>
                                 <div class="comp-row {{ $diffNet >= 0 ? 'up' : 'down' }}">
                                     <i class="fas fa-{{ $diffNet >= 0 ? 'arrow-up' : 'arrow-down' }}" style="font-size:.6rem;"></i>
-                                    Surplus: {{ $diffNet >= 0 ? '+' : '' }}Rp {{ number_format($diffNet, 2, ',', '.') }}
+                                    {{ __('app.finance.surplus_label') }}: {{ $diffNet >= 0 ? '+' : '' }}Rp {{ number_format($diffNet, 2, ',', '.') }}
                                 </div>
                                 <div class="comp-row {{ $diffBalance >= 0 ? 'up' : 'down' }}">
                                     <i class="fas fa-{{ $diffBalance >= 0 ? 'arrow-up' : 'arrow-down' }}" style="font-size:.6rem;"></i>
-                                    Saldo: {{ $diffBalance >= 0 ? '+' : '' }}Rp {{ number_format($diffBalance, 2, ',', '.') }}
+                                    {{ __('app.finance.balance_label') }}: {{ $diffBalance >= 0 ? '+' : '' }}Rp {{ number_format($diffBalance, 2, ',', '.') }}
                                 </div>
                             @endif
                         </td>
@@ -713,7 +713,7 @@
                         <td colspan="10">
                             <div class="sfr-empty-state">
                                 <div class="sfr-empty-icon"><i class="fas fa-inbox"></i></div>
-                                <div class="sfr-empty-text">Tidak ada snapshot laporan untuk filter ini.</div>
+                                <div class="sfr-empty-text">{{ __('app.finance.snapshot_empty_filter') }}</div>
                             </div>
                         </td>
                     </tr>

@@ -11,4 +11,9 @@ enum ComputerComponent: string
     case STORAGE = 'Storage';
     case GPU = 'GPU';
     case KEYBOARD_MOUSE = 'Keyboard / Mouse';
+
+    public function label(): string
+    {
+        return __('app.asset.computer_components.' . strtolower($this->name));
+    }
 }

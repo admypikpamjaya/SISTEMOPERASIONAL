@@ -58,7 +58,7 @@ class TunggakanService
             $batch = TunggakanImportBatch::query()->create([
                 'source_type' => 'manual',
                 'source_reference' => 'manual-finance-form',
-                'notes' => 'Input manual data tunggakan dari halaman Finance.',
+                'notes' => 'Input manual data tunggakan dari modul Blasting.',
                 'imported_by' => $actorId,
                 'total_rows' => 0,
                 'matched_rows' => 0,
@@ -499,7 +499,7 @@ class TunggakanService
                     'subject' => null,
                     'message' => $templateContent,
                     'meta' => [
-                        'source' => 'finance.tunggakan',
+                        'source' => 'admin.blast.tunggakan',
                         'template_id' => $templateId,
                         'device_id' => $deviceId,
                         'recipient_scope' => 'siswa+direct_phone',
@@ -633,7 +633,7 @@ class TunggakanService
             'total_failed_targets' => $summary['failed_targets'],
             'total_queued_targets' => $summary['queued_targets'],
             'details' => [
-                'source' => 'finance.tunggakan',
+                'source' => 'admin.blast.tunggakan',
                 'device_id' => $deviceId,
                 'group_logs' => $groupLogDetails,
             ],
@@ -666,7 +666,7 @@ class TunggakanService
             $batch = TunggakanImportBatch::query()->create([
                 'source_type' => 'excel',
                 'source_reference' => $originalName,
-                'notes' => 'Import Excel tunggakan dari modul Finance.',
+                'notes' => 'Import Excel tunggakan dari modul Blasting.',
                 'imported_by' => $actorId,
                 'total_rows' => 0,
                 'matched_rows' => 0,

@@ -84,12 +84,12 @@
         'credit' => 0,
     ];
     $pageSubtitle = $isManageMode
-        ? 'Kelola import Excel dan edit manual buku besar.'
+        ? __('app.finance.general_ledger_imported_manage_subtitle')
         : ($isCombinedSource
-            ? 'Rincian buku besar gabungan dari jurnal sistem dan hasil import untuk periode ' . $periodLabel . '.'
+            ? __('app.finance.general_ledger_combined_subtitle', ['period' => $periodLabel])
             : ($isImportedSource
-            ? 'Hasil import buku besar yang sudah tersedia tampil langsung di halaman utama.'
-            : 'Rincian jurnal keseluruhan per akun untuk periode ' . $periodLabel . '.'));
+            ? __('app.finance.general_ledger_imported_subtitle')
+            : __('app.finance.general_ledger_system_subtitle', ['period' => $periodLabel])));
 @endphp
 
 <style>
@@ -894,35 +894,35 @@
     <div class="gl-page-title">
         <div class="gl-title-icon"><i class="fas fa-book-open"></i></div>
         <div>
-            <h1>Buku Besar</h1>
+            <h1>{{ __('app.finance.general_ledger_report_title') }}</h1>
             <p>{{ $pageSubtitle }}</p>
         </div>
     </div>
 
     <div class="gl-nav">
         <a href="{{ route('finance.dashboard') }}" class="gl-nav-link muted">
-            <i class="fas fa-arrow-left"></i> Dashboard
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance.dashboard') }}
         </a>
         <a href="{{ route('finance.report.general-ledger.download', array_merge($filterQuery, ['format' => 'excel'])) }}" class="gl-nav-link muted">
-            <i class="fas fa-file-excel"></i> Download Excel
+            <i class="fas fa-file-excel"></i> {{ __('app.finance.download_excel') }}
         </a>
         <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="gl-nav-link primary">
-            <i class="fas fa-file-pdf"></i> Download PDF
+            <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
         </a>
         <a href="{{ route('finance.report.balance-sheet', $baseFilterQuery) }}" class="gl-nav-link muted">
-            <i class="fas fa-balance-scale"></i> Lembar Saldo
+            <i class="fas fa-balance-scale"></i> {{ __('app.finance.balance_sheet') }}
         </a>
         <a href="{{ route('finance.report.profit-loss', $baseFilterQuery) }}" class="gl-nav-link muted">
-            <i class="fas fa-chart-area"></i> Laba Rugi
+            <i class="fas fa-chart-area"></i> {{ __('app.finance.profit_loss') }}
         </a>
         @if($isManageMode)
             <a href="{{ route($mainLedgerRouteName, $mainPageQuery) }}" class="gl-nav-link muted">
-                <i class="fas fa-book"></i> Halaman Utama
+                <i class="fas fa-book"></i> {{ __('app.finance.main_page') }}
             </a>
         @else
             @permission('finance_report.generate')
                 <a href="{{ route($manageLedgerRouteName, $managePageQuery) }}" class="gl-nav-link muted">
-                    <i class="fas fa-sliders-h"></i> Import & Edit Manual
+                    <i class="fas fa-sliders-h"></i> {{ __('app.finance.import_edit_manual') }}
                 </a>
             @endpermission
         @endif
@@ -933,22 +933,22 @@
     <div class="gl-source-card">
         <div class="gl-panel-title">
             <i class="fas fa-database"></i>
-            <span>Sumber Data Buku Besar</span>
+            <span>{{ __('app.finance.general_ledger_data_source') }}</span>
         </div>
         <div class="gl-source-links">
             @unless($isManageMode)
                 <a href="{{ route($pageRouteName, $combinedSourceQuery) }}" class="gl-source-link {{ $isCombinedSource ? 'is-active' : '' }}">
-                    <strong>Data Gabungan</strong>
-                    <span>Menampilkan jurnal sistem dan hasil import dalam satu buku besar.</span>
+                    <strong>{{ __('app.finance.combined_data') }}</strong>
+                    <span>{{ __('app.finance.general_ledger_combined_note') }}</span>
                 </a>
             @endunless
             <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="gl-source-link {{ !$isImportedSource && !$isCombinedSource ? 'is-active' : '' }}">
-                <strong>Jurnal Sistem</strong>
-                <span>Membaca buku besar dari invoice/jurnal finance yang sudah `POSTED`.</span>
+                <strong>{{ __('app.finance.system_journal') }}</strong>
+                <span>{{ __('app.finance.general_ledger_system_note') }}</span>
             </a>
             <a href="{{ route($pageRouteName, $importedSourceQuery) }}" class="gl-source-link {{ $isImportedSource ? 'is-active' : '' }}">
-                <strong>{{ $isManageMode ? 'Import & Manual' : 'Hasil Import' }}</strong>
-                <span>{{ $isManageMode ? 'Membaca batch Excel buku besar dan baris yang diedit manual.' : 'Menampilkan hasil batch import buku besar langsung dari halaman utama.' }}</span>
+                <strong>{{ $isManageMode ? __('app.finance.import_manual') : __('app.finance.import_result') }}</strong>
+                <span>{{ $isManageMode ? __('app.finance.general_ledger_imported_manage_note') : __('app.finance.general_ledger_imported_note') }}</span>
             </a>
         </div>
     </div>
@@ -957,7 +957,7 @@
         <div class="gl-source-card">
             <div class="gl-panel-title">
                 <i class="fas fa-layer-group"></i>
-                <span>{{ $isManageMode ? 'Pilih Batch Import' : 'Pilih Hasil Import' }}</span>
+                <span>{{ $isManageMode ? __('app.finance.select_import_batch') : __('app.finance.select_import_result') }}</span>
             </div>
             <form method="GET" action="{{ route($pageRouteName) }}" class="gl-batch-form">
                 <input type="hidden" name="ledger_source" value="{{ $ledgerSource }}">
@@ -971,10 +971,10 @@
                 @endforeach
                 <div class="fs-field" style="margin-bottom:0;">
                     <label class="fs-label" for="ledger_batch_id">
-                        <i class="fas fa-box-open"></i> Batch Buku Besar
+                        <i class="fas fa-box-open"></i> {{ __('app.finance.batch') }} {{ __('app.finance.general_ledger') }}
                     </label>
                     <select name="ledger_batch_id" id="ledger_batch_id" class="fs-control" onchange="this.form.submit()">
-                        <option value="">Pilih batch import...</option>
+                        <option value="">{{ __('app.finance.select_import_batch_placeholder') }}</option>
                         @foreach($batchOptions as $batchOption)
                             <option value="{{ $batchOption['id'] }}" {{ $selectedBatchId === $batchOption['id'] ? 'selected' : '' }}>
                                 {{ $batchOption['batch_name'] }}
@@ -987,29 +987,29 @@
                 </div>
                 <div class="gl-panel-help">
                     {{ $isManageMode
-                        ? 'Ganti batch untuk mengelola hasil import Excel yang berbeda tanpa keluar dari halaman kelola.'
+                        ? __('app.finance.general_ledger_batch_manage_help')
                         : ($isCombinedSource
-                            ? 'Ganti batch untuk menentukan data import mana yang digabungkan ke buku besar utama.'
-                            : 'Ganti batch untuk melihat hasil import Excel yang berbeda langsung dari halaman utama buku besar.') }}
+                            ? __('app.finance.general_ledger_batch_combined_help')
+                            : __('app.finance.general_ledger_batch_imported_help')) }}
                 </div>
             </form>
 
             @if(!empty($selectedBatchMeta))
                 <div class="gl-batch-meta">
                     <div class="gl-batch-stat">
-                        <label>Batch</label>
+                        <label>{{ __('app.finance.batch') }}</label>
                         <div>{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
                     </div>
                     <div class="gl-batch-stat">
-                        <label>File Sumber</label>
-                        <div>{{ data_get($selectedBatchMeta, 'source_filename', 'Manual / Tidak ada file') }}</div>
+                        <label>{{ __('app.finance.source_file') }}</label>
+                        <div>{{ data_get($selectedBatchMeta, 'source_filename', __('app.finance.manual_no_file')) }}</div>
                     </div>
                     <div class="gl-batch-stat">
-                        <label>Jumlah Akun</label>
+                        <label>{{ __('app.finance.accounts') }}</label>
                         <div>{{ number_format((int) data_get($selectedBatchMeta, 'account_count', 0), 0, ',', '.') }}</div>
                     </div>
                     <div class="gl-batch-stat">
-                        <label>Baris Manual</label>
+                        <label>{{ __('app.finance.manual_rows') }}</label>
                         <div>{{ number_format((int) data_get($selectedBatchMeta, 'manual_count', 0), 0, ',', '.') }}</div>
                     </div>
                 </div>
@@ -1030,75 +1030,78 @@
             <div class="gl-manage-card">
                 <div class="gl-panel-title">
                     <i class="fas fa-file-import"></i>
-                    <span>Import Excel Buku Besar</span>
+                    <span>{{ __('app.finance.import_excel_general_ledger') }}</span>
                 </div>
                 <form method="POST" action="{{ route('finance.report.general-ledger.import') }}" enctype="multipart/form-data" class="gl-manage-form">
                     @csrf
                     <div class="gl-import-guide">
                         <div class="gl-import-guide-title">
                             <i class="fas fa-circle-info"></i>
-                            <span>Format file yang dibaca parser buku besar</span>
+                            <span>{{ __('app.finance.gl_import_parser_title') }}</span>
                         </div>
                         <div class="gl-panel-help" style="margin-top:0;">
-                            Parser membaca <strong>sheet pertama</strong>. Header akun dibaca dari kolom <strong>A</strong>
-                            dengan format <strong>100.01.01 Nama Akun</strong>. Baris transaksi membaca kolom A-H,
-                            dan baris <strong>Saldo Awal</strong> akan dikenali otomatis.
+                            {!! __('app.finance.gl_import_parser_desc', [
+                                'sheet' => '<strong>'.e(__('app.finance.first_sheet')).'</strong>',
+                                'column_a' => '<strong>A</strong>',
+                                'format' => '<strong>100.01.01 '.e(__('app.finance.account_name')).'</strong>',
+                                'opening_balance' => '<strong>'.e(__('app.finance.opening_balance')).'</strong>',
+                            ]) !!}
                         </div>
                         <div class="gl-import-guide-grid">
                             <div class="gl-import-guide-card">
-                                <label>Header Akun</label>
-                                <div>Kolom A berisi <strong>kode akun + nama akun</strong> tanpa isi di kolom B dan C.</div>
+                                <label>{{ __('app.finance.gl_import_account_header') }}</label>
+                                <div>{{ __('app.finance.gl_import_account_header_desc') }}</div>
                             </div>
                             <div class="gl-import-guide-card">
-                                <label>Baris Transaksi</label>
-                                <div>Kolom A-H dipakai untuk no transaksi, tanggal, komunikasi, rekanan, mata uang, debit, kredit, dan saldo.</div>
+                                <label>{{ __('app.finance.gl_import_transaction_row') }}</label>
+                                <div>{{ __('app.finance.gl_import_transaction_row_desc') }}</div>
                             </div>
                             <div class="gl-import-guide-card">
-                                <label>Saldo Awal</label>
-                                <div>Isi teks <strong>Saldo Awal</strong> di kolom A atau C agar sistem menandainya sebagai opening balance.</div>
+                                <label>{{ __('app.finance.opening_balance') }}</label>
+                                <div>{{ __('app.finance.gl_import_opening_balance_desc') }}</div>
                             </div>
                         </div>
                         <div class="gl-import-chip-row">
-                            <span class="gl-import-chip"><i class="fas fa-hashtag"></i> A: no transaksi / header akun</span>
-                            <span class="gl-import-chip"><i class="fas fa-calendar-day"></i> B: tanggal</span>
-                            <span class="gl-import-chip"><i class="fas fa-wallet"></i> F-G-H: debit, kredit, saldo</span>
+                            <span class="gl-import-chip"><i class="fas fa-hashtag"></i> {{ __('app.finance.gl_import_chip_transaction_header') }}</span>
+                            <span class="gl-import-chip"><i class="fas fa-calendar-day"></i> {{ __('app.finance.gl_import_chip_date') }}</span>
+                            <span class="gl-import-chip"><i class="fas fa-wallet"></i> {{ __('app.finance.gl_import_chip_amounts') }}</span>
                         </div>
                     </div>
                     <div class="fs-field" style="margin-bottom:0;">
                         <label class="fs-label" for="gl_import_file">
-                            <i class="fas fa-file-excel"></i> File Excel
+                            <i class="fas fa-file-excel"></i> {{ __('app.finance.file_excel') }}
                         </label>
                         <input type="file" name="file" id="gl_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
                         <div class="fs-helper-text">
-                            Upload file Excel/CSV buku besar. Sistem membaca struktur akun dan transaksi dari sheet pertama.
+                            {{ __('app.finance.gl_import_file_help') }}
                         </div>
                     </div>
                     <div class="gl-form-grid">
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_import_batch_name">
-                                <i class="fas fa-signature"></i> Nama Batch
+                                <i class="fas fa-signature"></i> {{ __('app.finance.batch_name') }}
                             </label>
-                            <input type="text" name="batch_name" id="gl_import_batch_name" class="fs-control" placeholder="Contoh: Rincian Buku Besar 2025">
+                            <input type="text" name="batch_name" id="gl_import_batch_name" class="fs-control" placeholder="{{ __('app.finance.example_general_ledger_batch') }}">
                             <div class="fs-helper-text">
-                                Kosongkan jika ingin memakai nama file sebagai nama batch import.
+                                {{ __('app.finance.batch_name_help') }}
                             </div>
                         </div>
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_import_notes">
-                                <i class="fas fa-sticky-note"></i> Catatan
+                                <i class="fas fa-sticky-note"></i> {{ __('app.finance.notes') }}
                             </label>
-                            <input type="text" name="notes" id="gl_import_notes" class="fs-control" placeholder="Opsional">
+                            <input type="text" name="notes" id="gl_import_notes" class="fs-control" placeholder="{{ __('app.finance.optional') }}">
                             <div class="fs-helper-text">
-                                Cocok untuk menyimpan sumber file, periode, atau catatan revisi operator.
+                                {{ __('app.finance.gl_import_notes_help') }}
                             </div>
                         </div>
                     </div>
                     <button type="submit" class="fs-btn fs-btn-primary">
                         <i class="fas fa-upload"></i>
-                        <span>Import Sekarang</span>
+                        <span>{{ __('app.finance.import_now') }}</span>
                     </button>
                     <div class="gl-panel-help">
-                        Parser akan membaca format header akun, saldo awal, debit, kredit, dan saldo berjalan seperti file contoh buku besar.
+                        {{ __('app.finance.gl_import_parser_footer') }}
                     </div>
                 </form>
             </div>
@@ -1106,7 +1109,7 @@
             <div class="gl-manage-card">
                 <div class="gl-panel-title">
                     <i class="fas fa-pen-to-square"></i>
-                    <span>{{ $editEntry ? 'Edit Baris Buku Besar' : 'Tambah Baris Buku Besar' }}</span>
+                    <span>{{ $editEntry ? __('app.finance.edit_general_ledger_row') : __('app.finance.add_general_ledger_row') }}</span>
                 </div>
                 <form
                     method="POST"
@@ -1124,76 +1127,76 @@
                     <div class="gl-form-grid">
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_row_type">
-                                <i class="fas fa-stream"></i> Jenis Baris
+                                <i class="fas fa-stream"></i> {{ __('app.finance.row_type') }}
                             </label>
                             <select name="row_type" id="gl_row_type" class="fs-control">
-                                <option value="ENTRY" {{ old('row_type', $entryForm['row_type']) === 'ENTRY' ? 'selected' : '' }}>Transaksi</option>
-                                <option value="OPENING" {{ old('row_type', $entryForm['row_type']) === 'OPENING' ? 'selected' : '' }}>Saldo Awal</option>
+                                <option value="ENTRY" {{ old('row_type', $entryForm['row_type']) === 'ENTRY' ? 'selected' : '' }}>{{ __('app.finance.transaction') }}</option>
+                                <option value="OPENING" {{ old('row_type', $entryForm['row_type']) === 'OPENING' ? 'selected' : '' }}>{{ __('app.finance.opening_balance') }}</option>
                             </select>
                         </div>
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_entry_date">
-                                <i class="fas fa-calendar-day"></i> Tanggal
+                                <i class="fas fa-calendar-day"></i> {{ __('app.finance.date') }}
                             </label>
                             <input type="date" name="entry_date" id="gl_entry_date" class="fs-control" value="{{ old('entry_date', $entryForm['entry_date']) }}">
                         </div>
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_account_code">
-                                <i class="fas fa-hashtag"></i> Kode Akun
+                                <i class="fas fa-hashtag"></i> {{ __('app.finance.account_code') }}
                             </label>
                             <input type="text" name="account_code" id="gl_account_code" class="fs-control" value="{{ old('account_code', $entryForm['account_code']) }}" placeholder="100.02.01">
                         </div>
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_currency">
-                                <i class="fas fa-coins"></i> Mata Uang
+                                <i class="fas fa-coins"></i> {{ __('app.finance.currency') }}
                             </label>
                             <input type="text" name="currency" id="gl_currency" class="fs-control" value="{{ old('currency', $entryForm['currency']) }}" placeholder="IDR">
                         </div>
                         <div class="fs-field gl-col-12" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_account_name">
-                                <i class="fas fa-font"></i> Nama Akun
+                                <i class="fas fa-font"></i> {{ __('app.finance.account_name') }}
                             </label>
-                            <input type="text" name="account_name" id="gl_account_name" class="fs-control" value="{{ old('account_name', $entryForm['account_name']) }}" placeholder="Nama akun buku besar">
+                            <input type="text" name="account_name" id="gl_account_name" class="fs-control" value="{{ old('account_name', $entryForm['account_name']) }}" placeholder="{{ __('app.finance.account_name') }}">
                         </div>
                         <div class="fs-field gl-col-4" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_transaction_no">
-                                <i class="fas fa-receipt"></i> No Transaksi
+                                <i class="fas fa-receipt"></i> {{ __('app.finance.transaction_no') }}
                             </label>
                             <input type="text" name="transaction_no" id="gl_transaction_no" class="fs-control" value="{{ old('transaction_no', $entryForm['transaction_no']) }}">
                         </div>
                         <div class="fs-field gl-col-4" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_communication">
-                                <i class="fas fa-comments"></i> Komunikasi
+                                <i class="fas fa-comments"></i> {{ __('app.finance.communication') }}
                             </label>
                             <input type="text" name="communication" id="gl_communication" class="fs-control" value="{{ old('communication', $entryForm['communication']) }}">
                         </div>
                         <div class="fs-field gl-col-4" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_partner_name">
-                                <i class="fas fa-handshake"></i> Rekanan
+                                <i class="fas fa-handshake"></i> {{ __('app.finance.partner') }}
                             </label>
                             <input type="text" name="partner_name" id="gl_partner_name" class="fs-control" value="{{ old('partner_name', $entryForm['partner_name']) }}">
                         </div>
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_label">
-                                <i class="fas fa-align-left"></i> Uraian
+                                <i class="fas fa-align-left"></i> {{ __('app.finance.description') }}
                             </label>
                             <input type="text" name="label" id="gl_label" class="fs-control" value="{{ old('label', $entryForm['label']) }}">
                         </div>
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_reference">
-                                <i class="fas fa-link"></i> Referensi
+                                <i class="fas fa-link"></i> {{ __('app.finance.reference') }}
                             </label>
                             <input type="text" name="reference" id="gl_reference" class="fs-control" value="{{ old('reference', $entryForm['reference']) }}">
                         </div>
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_analytic_distribution">
-                                <i class="fas fa-project-diagram"></i> Analitik
+                                <i class="fas fa-project-diagram"></i> {{ __('app.finance.analytic') }}
                             </label>
                             <input type="text" name="analytic_distribution" id="gl_analytic_distribution" class="fs-control" value="{{ old('analytic_distribution', $entryForm['analytic_distribution']) }}">
                         </div>
                         <div class="fs-field gl-col-4" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_opening_balance">
-                                <i class="fas fa-wallet"></i> Opening Balance
+                                <i class="fas fa-wallet"></i> {{ __('app.finance.opening_balance') }}
                             </label>
                             <input type="number" step="0.01" name="opening_balance" id="gl_opening_balance" class="fs-control" value="{{ old('opening_balance', $entryForm['opening_balance']) }}">
                         </div>
@@ -1213,12 +1216,12 @@
                     <div class="gl-form-actions">
                         <button type="submit" class="fs-btn fs-btn-primary">
                             <i class="fas fa-save"></i>
-                            <span>{{ $editEntry ? 'Update Baris' : 'Tambah Baris' }}</span>
+                            <span>{{ $editEntry ? __('app.finance.update_row') : __('app.finance.add_row') }}</span>
                         </button>
                         @if($editEntry)
                             <a href="{{ route($pageRouteName, array_merge($filterQuery, ['ledger_source' => 'imported', 'ledger_batch_id' => $selectedBatchId])) }}" class="fs-btn fs-btn-muted">
                                 <i class="fas fa-times-circle"></i>
-                                <span>Batal Edit</span>
+                                <span>{{ __('app.finance.cancel_edit') }}</span>
                             </a>
                         @endif
                     </div>
@@ -1233,49 +1236,49 @@
         <div>
             <span class="gl-filter-badge">
                 <i class="fas fa-filter"></i>
-                Akun {{ $selectedAccountCode }}{{ $selectedAccountName ? ' - ' . $selectedAccountName : '' }}
+                {{ __('app.finance.focused_account', ['account' => $selectedAccountCode . ($selectedAccountName ? ' - ' . $selectedAccountName : '')]) }}
             </span>
-            <small>Tampilan buku besar sedang difokuskan ke satu akun dari lembar saldo atau laba rugi.</small>
+            <small>{{ __('app.finance.focused_account_note') }}</small>
         </div>
         <a href="{{ route($pageRouteName, array_merge($baseFilterQuery, ['ledger_source' => $ledgerSource], $selectedBatchId ? ['ledger_batch_id' => $selectedBatchId] : [])) }}" class="gl-reset-link">
-            <i class="fas fa-times-circle"></i> Lihat Semua Akun
+            <i class="fas fa-times-circle"></i> {{ __('app.finance.view_all_accounts') }}
         </a>
     </div>
 @endif
 
 <div class="gl-summary-grid">
     <div class="gl-summary-card">
-        <div class="gl-summary-label"><i class="fas fa-sitemap"></i> Jumlah Akun</div>
+        <div class="gl-summary-label"><i class="fas fa-sitemap"></i> {{ __('app.finance.account_count') }}</div>
         <div class="gl-summary-value">{{ number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.') }}</div>
-        <div class="gl-summary-help">{{ $isCombinedSource ? 'Akun unik yang muncul dari jurnal sistem dan batch import aktif.' : ($isImportedSource ? 'Akun unik yang terbaca dari batch import/manual aktif.' : 'Akun unik yang muncul dalam jurnal sesuai filter aktif.') }}</div>
+        <div class="gl-summary-help">{{ $isCombinedSource ? __('app.finance.gl_account_count_help_combined') : ($isImportedSource ? __('app.finance.gl_account_count_help_imported') : __('app.finance.gl_account_count_help_system')) }}</div>
     </div>
     <div class="gl-summary-card">
-        <div class="gl-summary-label"><i class="fas fa-list-ul"></i> Baris Jurnal</div>
+        <div class="gl-summary-label"><i class="fas fa-list-ul"></i> {{ __('app.finance.journal_rows') }}</div>
         <div class="gl-summary-value">{{ number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.') }}</div>
-        <div class="gl-summary-help">{{ $isCombinedSource ? 'Total baris transaksi setelah jurnal sistem dan import digabungkan.' : ($isImportedSource ? 'Baris transaksi pada batch import/manual yang aktif.' : 'Total baris debit dan kredit yang masuk ke buku besar.') }}</div>
+        <div class="gl-summary-help">{{ $isCombinedSource ? __('app.finance.gl_journal_rows_help_combined') : ($isImportedSource ? __('app.finance.gl_journal_rows_help_imported') : __('app.finance.gl_journal_rows_help_system')) }}</div>
     </div>
     <div class="gl-summary-card">
-        <div class="gl-summary-label"><i class="fas fa-arrow-up"></i> Total Debit</div>
+        <div class="gl-summary-label"><i class="fas fa-arrow-up"></i> {{ __('app.finance.total_debit') }}</div>
         <div class="gl-summary-value">Rp {{ number_format((float) ($summary['total_debit'] ?? 0), 2, ',', '.') }}</div>
-        <div class="gl-summary-help">Akumulasi sisi debit untuk periode ini.</div>
+        <div class="gl-summary-help">{{ __('app.finance.total_debit_help') }}</div>
     </div>
     <div class="gl-summary-card">
-        <div class="gl-summary-label"><i class="fas fa-arrow-down"></i> Total Kredit</div>
+        <div class="gl-summary-label"><i class="fas fa-arrow-down"></i> {{ __('app.finance.total_credit') }}</div>
         <div class="gl-summary-value">Rp {{ number_format((float) ($summary['total_credit'] ?? 0), 2, ',', '.') }}</div>
-        <div class="gl-summary-help">Akumulasi sisi kredit untuk periode ini.</div>
+        <div class="gl-summary-help">{{ __('app.finance.total_credit_help') }}</div>
     </div>
     <div class="gl-summary-card">
-        <div class="gl-summary-label"><i class="fas fa-scale-balanced"></i> Selisih</div>
+        <div class="gl-summary-label"><i class="fas fa-scale-balanced"></i> {{ __('app.finance.balance_difference') }}</div>
         <div class="gl-summary-value" style="color: {{ (float) ($summary['balance_gap'] ?? 0) === 0.0 ? 'var(--gl-green)' : 'var(--gl-red)' }};">
             Rp {{ number_format((float) ($summary['balance_gap'] ?? 0), 2, ',', '.') }}
         </div>
-        <div class="gl-summary-help">Idealnya bernilai 0 jika buku besar seimbang.</div>
+        <div class="gl-summary-help">{{ __('app.finance.balance_gap_help') }}</div>
     </div>
     @if($usesImportedData && !empty($selectedBatchMeta))
         <div class="gl-summary-card">
-            <div class="gl-summary-label"><i class="fas fa-database"></i> Batch Aktif</div>
+            <div class="gl-summary-label"><i class="fas fa-database"></i> {{ __('app.finance.active_batch') }}</div>
             <div class="gl-summary-value" style="font-size:1rem;">{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
-            <div class="gl-summary-help">{{ data_get($selectedBatchMeta, 'source_filename', 'Manual / tidak ada file') }}</div>
+            <div class="gl-summary-help">{{ data_get($selectedBatchMeta, 'source_filename', __('app.finance.manual_no_file')) }}</div>
         </div>
     @endif
 </div>
@@ -1294,11 +1297,11 @@
                             <div class="gl-ledger-meta">
                                 <span class="gl-badge">
                                     <i class="fas fa-tag"></i>
-                                    {{ $group['finance_type'] !== '' ? str_replace('_', ' ', $group['finance_type']) : 'TANPA TIPE' }}
+                                    {{ $group['finance_type'] !== '' ? str_replace('_', ' ', $group['finance_type']) : __('app.finance.no_type') }}
                                 </span>
                                 <span class="gl-badge {{ $group['normal_side'] === 'CREDIT' ? 'red' : 'green' }}">
                                     <i class="fas fa-arrows-alt-h"></i>
-                                    Saldo Normal {{ $group['normal_side'] }}
+                                    {{ __('app.finance.normal_balance', ['side' => $group['normal_side']]) }}
                                 </span>
                             </div>
                         </div>
@@ -1306,15 +1309,15 @@
 
                     <div class="gl-ledger-totals">
                         <div class="gl-ledger-total">
-                            <label>Total Debit</label>
+                            <label>{{ __('app.finance.total_debit') }}</label>
                             <div>Rp {{ number_format((float) $group['total_debit'], 2, ',', '.') }}</div>
                         </div>
                         <div class="gl-ledger-total">
-                            <label>Total Kredit</label>
+                            <label>{{ __('app.finance.total_credit') }}</label>
                             <div>Rp {{ number_format((float) $group['total_credit'], 2, ',', '.') }}</div>
                         </div>
                         <div class="gl-ledger-total">
-                            <label>Saldo Akhir</label>
+                            <label>{{ __('app.finance.ending_balance') }}</label>
                             <div>Rp {{ number_format((float) $group['closing_balance'], 2, ',', '.') }}</div>
                         </div>
                     </div>
@@ -1324,16 +1327,16 @@
                     <table class="gl-table">
                         <thead>
                             <tr>
-                                <th style="width:120px;">Tanggal</th>
-                                <th style="width:160px;">{{ $isCombinedSource ? 'No Dokumen' : ($isImportedSource ? 'No Transaksi' : 'No Jurnal') }}</th>
-                                <th style="width:190px;">{{ $isCombinedSource ? 'Komunikasi / Jurnal' : ($isImportedSource ? 'Komunikasi' : 'Nama Jurnal') }}</th>
-                                <th>Uraian</th>
-                                <th style="width:150px; text-align:right;">Debit</th>
-                                <th style="width:150px; text-align:right;">Kredit</th>
-                                <th style="width:160px; text-align:right;">Saldo</th>
+                                <th style="width:120px;">{{ __('app.finance.date') }}</th>
+                                <th style="width:160px;">{{ $isCombinedSource ? __('app.finance.document_no') : ($isImportedSource ? __('app.finance.transaction_no') : __('app.finance.journal_no')) }}</th>
+                                <th style="width:190px;">{{ $isCombinedSource ? __('app.finance.communication_journal') : ($isImportedSource ? __('app.finance.communication') : __('app.finance.journal_name')) }}</th>
+                                <th>{{ __('app.finance.description') }}</th>
+                                <th style="width:150px; text-align:right;">{{ __('app.finance.debit') }}</th>
+                                <th style="width:150px; text-align:right;">{{ __('app.finance.credit') }}</th>
+                                <th style="width:160px; text-align:right;">{{ __('app.finance.ending_balance') }}</th>
                                 @if($isImportedSource && $isManageMode)
                                     @permission('finance_report.generate')
-                                        <th style="width:170px; text-align:right;">Aksi</th>
+                                        <th style="width:170px; text-align:right;">{{ __('app.finance.action') }}</th>
                                     @endpermission
                                 @endif
                             </tr>
@@ -1362,18 +1365,18 @@
                                         <strong>{{ $entry['invoice_no'] }}</strong>
                                         @if($entryHasJournalSource && !empty($entry['invoice_id']))
                                             <a href="{{ route('finance.invoice.show', $entry['invoice_id']) }}" class="gl-journal-link">
-                                                <i class="fas fa-folder-open"></i> Item Jurnal
+                                                <i class="fas fa-folder-open"></i> {{ __('app.finance.journal_items') }}
                                             </a>
                                         @endif
                                         @if($entryHasImportedSource)
                                             <div class="gl-chip {{ !empty($entry['is_manual']) ? 'manual' : 'imported' }}">
                                                 <i class="fas {{ !empty($entry['is_manual']) ? 'fa-pen' : 'fa-file-import' }}"></i>
-                                                {{ !empty($entry['is_manual']) ? 'Manual' : 'Import' }}
+                                                {{ !empty($entry['is_manual']) ? __('app.finance.manual') : __('app.finance.import') }}
                                             </div>
                                         @elseif($isCombinedSource)
                                             <div class="gl-chip">
                                                 <i class="fas fa-server"></i>
-                                                Jurnal
+                                                {{ __('app.finance.journal') }}
                                             </div>
                                         @endif
                                     </td>
@@ -1382,22 +1385,22 @@
                                         <div class="gl-entry-title">{{ $entry['label'] }}</div>
                                         <div class="gl-entry-sub">
                                             @if(!empty($entry['partner_name']))
-                                                Partner: {{ $entry['partner_name'] }}<br>
+                                                {{ __('app.finance.partner_label') }}: {{ $entry['partner_name'] }}<br>
                                             @endif
                                             @if(!empty($entry['reference']))
-                                                Ref: {{ $entry['reference'] }}<br>
+                                                {{ __('app.finance.ref_label') }}: {{ $entry['reference'] }}<br>
                                             @endif
                                             @if(!empty($entry['analytic_distribution']))
-                                                Analitik: {{ $entry['analytic_distribution'] }}<br>
+                                                {{ __('app.finance.analytic') }}: {{ $entry['analytic_distribution'] }}<br>
                                             @endif
                                             @if($entryHasImportedSource && !empty($entry['currency']))
-                                                Mata Uang: {{ $entry['currency'] }}
+                                                {{ __('app.finance.currency_label') }}: {{ $entry['currency'] }}
                                             @endif
                                         </div>
                                         @if($isCombinedSource && $entryHasImportedSource)
                                             <div class="mt-2">
                                                 <a href="{{ $entryManageRoute }}" class="gl-row-link">
-                                                    <i class="fas fa-file-import"></i> Kelola Import
+                                                    <i class="fas fa-file-import"></i> {{ __('app.finance.manage_import') }}
                                                 </a>
                                             </div>
                                         @endif
@@ -1414,9 +1417,9 @@
                                                             href="{{ route($pageRouteName, array_merge($filterQuery, ['ledger_source' => 'imported', 'ledger_batch_id' => $selectedBatchId, 'edit_entry' => $entry['entry_id']])) }}"
                                                             class="gl-row-link"
                                                         >
-                                                            <i class="fas fa-pen"></i> Edit
+                                                            <i class="fas fa-pen"></i> {{ __('app.finance.edit') }}
                                                         </a>
-                                                        <form method="POST" action="{{ route('finance.report.general-ledger.entries.destroy', $entry['entry_id']) }}" class="gl-inline-form" onsubmit="return confirm('Hapus baris buku besar ini?')">
+                                                        <form method="POST" action="{{ route('finance.report.general-ledger.entries.destroy', $entry['entry_id']) }}" class="gl-inline-form" onsubmit="return confirm(@json(__('app.finance.delete_general_ledger_row_confirm')))">
                                                             @csrf
                                                             @method('DELETE')
                                                             @foreach($filterQuery as $queryKey => $queryValue)
@@ -1425,7 +1428,7 @@
                                                                 @endif
                                                             @endforeach
                                                             <button type="submit" class="gl-row-btn danger">
-                                                                <i class="fas fa-trash"></i> Hapus
+                                                                <i class="fas fa-trash"></i> {{ __('app.finance.delete') }}
                                                             </button>
                                                         </form>
                                                     </div>
@@ -1436,7 +1439,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ $isImportedSource && $isManageMode ? 8 : 7 }}" style="text-align:center; color:var(--gl-muted);">Belum ada baris jurnal untuk akun ini.</td>
+                                    <td colspan="{{ $isImportedSource && $isManageMode ? 8 : 7 }}" style="text-align:center; color:var(--gl-muted);">{{ __('app.finance.no_journal_rows_for_account') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -1454,15 +1457,15 @@
 @else
     <div class="gl-empty-card">
         <i class="fas fa-book-dead"></i>
-        <h4>Belum ada data buku besar</h4>
+        <h4>{{ __('app.finance.no_general_ledger_data') }}</h4>
         <div>
             {!! $isCombinedSource
-                ? 'Belum ada data jurnal atau hasil import yang bisa digabungkan di buku besar ini. Pastikan jurnal finance sudah <strong>POSTED</strong> atau buka menu <strong>Import & Edit Manual</strong> untuk menambahkan batch import.'
+                ? __('app.finance.no_general_ledger_combined_note', ['status' => '<strong>'.e(__('app.finance.posted')).'</strong>', 'mode' => '<strong>'.e(__('app.finance.import_edit_manual')).'</strong>'])
                 : ($isImportedSource
                 ? ($isManageMode
-                    ? 'Belum ada batch atau baris buku besar manual. Mulai dari <strong>Import Excel</strong> atau tambahkan baris manual di panel atas.'
-                    : 'Belum ada hasil import yang bisa ditampilkan di halaman utama. Buka menu <strong>Import & Edit Manual</strong> untuk menambahkan data buku besar.')
-                : 'Pastikan jurnal finance sudah <strong>POSTED</strong> agar muncul di buku besar.') !!}
+                    ? __('app.finance.no_general_ledger_imported_manage_note', ['import_excel' => '<strong>'.e(__('app.finance.import_excel')).'</strong>'])
+                    : __('app.finance.no_general_ledger_imported_note', ['mode' => '<strong>'.e(__('app.finance.import_edit_manual')).'</strong>']))
+                : __('app.finance.no_general_ledger_system_note', ['status' => '<strong>'.e(__('app.finance.posted')).'</strong>'])) !!}
         </div>
     </div>
 @endif

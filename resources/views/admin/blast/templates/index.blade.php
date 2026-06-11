@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Template Blast')
+@section('title', __('app.blast.templates_title'))
 
 @section('content')
 <style>
@@ -316,18 +316,18 @@
 <div class="tpl-page">
     <div class="tpl-head">
         <div>
-            <div class="tpl-head-title">Template Blast</div>
-            <div class="tpl-head-sub">Kelola template WhatsApp dan Email agar siap dipakai di halaman blasting.</div>
+            <div class="tpl-head-title">{{ __('app.blast.templates_title') }}</div>
+            <div class="tpl-head-sub">{{ __('app.blast.templates_subtitle') }}</div>
         </div>
         <div class="tpl-head-actions">
             <a href="{{ route('admin.blast.whatsapp') }}" class="tpl-btn ghost">
-                <i class="fab fa-whatsapp"></i> WhatsApp Blast
+                <i class="fab fa-whatsapp"></i> {{ __('app.blast.send_whatsapp') }}
             </a>
             <a href="{{ route('admin.blast.email') }}" class="tpl-btn ghost">
-                <i class="fas fa-envelope"></i> Email Blast
+                <i class="fas fa-envelope"></i> {{ __('app.blast.send_email') }}
             </a>
             <a href="{{ route('admin.blast.templates.create', ['channel' => $channel ?: 'whatsapp']) }}" class="tpl-btn primary">
-                <i class="fas fa-plus"></i> Tambah Template
+                <i class="fas fa-plus"></i> {{ __('app.blast.add_template') }}
             </a>
         </div>
     </div>
@@ -344,18 +344,18 @@
 
             <form method="GET" action="{{ route('admin.blast.templates.index') }}" class="tpl-filter">
                 <div class="tpl-field">
-                    <label for="channelFilter" class="tpl-label">Channel</label>
+                    <label for="channelFilter" class="tpl-label">{{ __('app.blast.channel') }}</label>
                     <select id="channelFilter" name="channel" class="tpl-input">
-                        <option value="">Semua Channel</option>
-                        <option value="whatsapp" {{ $channel === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
-                        <option value="email" {{ $channel === 'email' ? 'selected' : '' }}>Email</option>
+                        <option value="">{{ __('app.blast.all_channels') }}</option>
+                        <option value="whatsapp" {{ $channel === 'whatsapp' ? 'selected' : '' }}>{{ __('app.blast.whatsapp') }}</option>
+                        <option value="email" {{ $channel === 'email' ? 'selected' : '' }}>{{ __('app.blast.email') }}</option>
                     </select>
                 </div>
                 <button type="submit" class="tpl-btn primary">
-                    <i class="fas fa-filter"></i> Filter
+                    <i class="fas fa-filter"></i> {{ __('app.blast.apply_filter') }}
                 </button>
                 <a href="{{ route('admin.blast.templates.index') }}" class="tpl-btn" style="background:#fff;border-color:var(--tpl-border);color:var(--tpl-text-700);">
-                    Reset
+                    {{ __('app.blast.reset') }}
                 </a>
             </form>
 
@@ -363,12 +363,12 @@
                 <table class="tpl-table">
                     <thead>
                         <tr>
-                            <th style="width:56px;">No</th>
-                            <th style="width:210px;">Nama Template</th>
-                            <th style="width:120px;">Channel</th>
-                            <th style="width:120px;">Status</th>
-                            <th>Isi Template</th>
-                            <th style="width:160px;">Aksi</th>
+                            <th style="width:56px;">{{ __('app.blast.no') }}</th>
+                            <th style="width:210px;">{{ __('app.blast.template_name') }}</th>
+                            <th style="width:120px;">{{ __('app.blast.channel') }}</th>
+                            <th style="width:120px;">{{ __('app.blast.status') }}</th>
+                            <th>{{ __('app.blast.template_content') }}</th>
+                            <th style="width:160px;">{{ __('app.blast.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -380,16 +380,16 @@
                                 </td>
                                 <td>
                                     @if(strtolower((string) $template->channel) === 'whatsapp')
-                                        <span class="tpl-badge info">WhatsApp</span>
+                                        <span class="tpl-badge info">{{ __('app.blast.whatsapp') }}</span>
                                     @else
-                                        <span class="tpl-badge info">Email</span>
+                                        <span class="tpl-badge info">{{ __('app.blast.email') }}</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($template->is_active)
-                                        <span class="tpl-badge success">Aktif</span>
+                                        <span class="tpl-badge success">{{ __('app.blast.active') }}</span>
                                     @else
-                                        <span class="tpl-badge muted">Nonaktif</span>
+                                        <span class="tpl-badge muted">{{ __('app.blast.inactive') }}</span>
                                     @endif
                                 </td>
                                 <td>
@@ -397,28 +397,28 @@
                                 </td>
                                 <td>
                                     <div class="tpl-row-actions">
-                                        <a href="{{ route('admin.blast.templates.edit', ['id' => $template->id]) }}" class="tpl-icon-btn edit" title="Edit">
+                                        <a href="{{ route('admin.blast.templates.edit', ['id' => $template->id]) }}" class="tpl-icon-btn edit" title="{{ __('app.blast.edit') }}">
                                             <i class="fas fa-pen"></i>
                                         </a>
                                         <form
                                             method="POST"
                                             action="{{ route('admin.blast.templates.toggle', ['id' => $template->id]) }}"
-                                            onsubmit="return confirm('{{ $template->is_active ? 'Nonaktifkan template ini?' : 'Aktifkan kembali template ini?' }}')"
+                                            onsubmit="return confirm(@json($template->is_active ? __('app.blast.deactivate_template_confirm') : __('app.blast.activate_template_confirm')))"
                                         >
                                             @csrf
                                             <input type="hidden" name="is_active" value="{{ $template->is_active ? 0 : 1 }}">
                                             <button
                                                 type="submit"
                                                 class="tpl-icon-btn {{ $template->is_active ? 'toggle-off' : 'toggle-on' }}"
-                                                title="{{ $template->is_active ? 'Nonaktifkan Template' : 'Aktifkan Template' }}"
+                                                title="{{ $template->is_active ? __('app.blast.deactivate_template') : __('app.blast.activate_template') }}"
                                             >
                                                 <i class="fas {{ $template->is_active ? 'fa-pause' : 'fa-play' }}"></i>
                                             </button>
                                         </form>
-                                        <form method="POST" action="{{ route('admin.blast.templates.destroy', ['id' => $template->id]) }}" onsubmit="return confirm('Hapus template ini?')">
+                                        <form method="POST" action="{{ route('admin.blast.templates.destroy', ['id' => $template->id]) }}" onsubmit="return confirm(@json(__('app.blast.delete_template_confirm')))">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="tpl-icon-btn delete" title="Hapus">
+                                            <button type="submit" class="tpl-icon-btn delete" title="{{ __('app.blast.delete') }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -427,7 +427,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="tpl-empty">Belum ada template pada channel ini.</td>
+                                <td colspan="6" class="tpl-empty">{{ __('app.blast.no_templates') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

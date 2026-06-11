@@ -10,8 +10,8 @@
     $formAction = $isEditMode
         ? route('finance.report.update', $editReportId)
         : route('finance.report.store');
-    $formTitle = $isEditMode ? 'Edit Snapshot Laba Rugi' : 'Input Laporan Laba Rugi';
-    $submitLabel = $isEditMode ? 'Simpan Perubahan Snapshot' : 'Simpan Snapshot Laba Rugi';
+    $formTitle = $isEditMode ? __('app.finance.edit_profit_loss_snapshot') : __('app.finance.input_profit_loss_report');
+    $submitLabel = $isEditMode ? __('app.finance.save_changes') : __('app.finance.save_profit_loss_snapshot');
 
     $defaultPeriodType = old('report_type', $defaults['period_type'] ?? 'MONTHLY');
     $defaultReportDate = old('report_date', $defaults['report_date'] ?? now()->toDateString());
@@ -471,10 +471,10 @@
         </div>
         <div>
             <h1 style="font-size:1.3rem; font-weight:800; color:var(--text); margin:0 0 2px; line-height:1.2;">
-                Input Finance Report
+                {{ __('app.finance.input_report') }}
             </h1>
             <p style="font-size:.8rem; color:var(--muted); font-weight:500; margin:0;">
-                Input & simpan snapshot laporan laba rugi
+                {{ __('app.finance.profit_loss_input_subtitle') }}
             </p>
         </div>
     </div>
@@ -496,24 +496,24 @@
                             class="fr-btn fr-btn-light"
                         >
                             <i class="fas fa-list"></i>
-                            <span>Buka Snapshot</span>
+                            <span>{{ __('app.finance.open_snapshot') }}</span>
                         </a>
                         @permission('finance_balance_sheet.read')
                             <a href="{{ route('finance.report.balance-sheet', $statementRouteParams) }}" class="fr-btn fr-btn-light">
                                 <i class="fas fa-balance-scale"></i>
-                                <span>Lembar Saldo</span>
+                                <span>{{ __('app.finance.balance_sheet') }}</span>
                             </a>
                         @endpermission
                         @permission('finance_profit_loss.read')
                             <a href="{{ route('finance.report.profit-loss', $statementRouteParams) }}" class="fr-btn fr-btn-light">
                                 <i class="fas fa-chart-area"></i>
-                                <span>Laba Rugi</span>
+                                <span>{{ __('app.finance.profit_loss') }}</span>
                             </a>
                         @endpermission
                         @permission('finance_general_ledger.read')
                             <a href="{{ route('finance.report.general-ledger', $statementRouteParams) }}" class="fr-btn fr-btn-light">
                                 <i class="fas fa-book-open"></i>
-                                <span>Buku Besar</span>
+                                <span>{{ __('app.finance.general_ledger') }}</span>
                             </a>
                         @endpermission
                     </div>
@@ -534,7 +534,7 @@
                         {{-- Validation errors --}}
                         @if($errors->any())
                             <div class="fr-alert-danger">
-                                <strong>⚠ Validasi gagal:</strong>
+                                <strong>{{ __('app.finance.validation_failed') }}:</strong>
                                 <ul style="margin:8px 0 0; padding-left:18px;">
                                     @foreach($errors->all() as $error)
                                         <li>{{ $error }}</li>
@@ -548,18 +548,18 @@
 
                             <div class="fr-form-group col-md-2" style="padding:0;">
                                 <label for="report_type_create">
-                                    <i class="fas fa-layer-group"></i> Periode
+                                    <i class="fas fa-layer-group"></i> {{ __('app.finance.period') }}
                                 </label>
                                 <select name="report_type" id="report_type_create" class="fr-select" {{ $isEditMode ? 'disabled' : '' }} required>
-                                    <option value="DAILY"   {{ $defaultPeriodType === 'DAILY'   ? 'selected' : '' }}>Harian</option>
-                                    <option value="MONTHLY" {{ $defaultPeriodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
-                                    <option value="YEARLY"  {{ $defaultPeriodType === 'YEARLY'  ? 'selected' : '' }}>Tahunan</option>
+                                    <option value="DAILY"   {{ $defaultPeriodType === 'DAILY'   ? 'selected' : '' }}>{{ __('app.finance.daily') }}</option>
+                                    <option value="MONTHLY" {{ $defaultPeriodType === 'MONTHLY' ? 'selected' : '' }}>{{ __('app.finance.monthly') }}</option>
+                                    <option value="YEARLY"  {{ $defaultPeriodType === 'YEARLY'  ? 'selected' : '' }}>{{ __('app.finance.yearly') }}</option>
                                 </select>
                             </div>
 
                             <div class="fr-form-group col-md-2" id="report_date_group" style="padding:0;">
                                 <label for="report_date_create">
-                                    <i class="fas fa-calendar-day"></i> Tanggal
+                                    <i class="fas fa-calendar-day"></i> {{ __('app.finance.date') }}
                                 </label>
                                 <input
                                     type="date" name="report_date" id="report_date_create"
@@ -569,18 +569,18 @@
 
                             <div class="fr-form-group col-md-2" id="month_group" style="padding:0;">
                                 <label for="month_create">
-                                    <i class="fas fa-calendar-alt"></i> Bulan
+                                    <i class="fas fa-calendar-alt"></i> {{ __('app.finance.month') }}
                                 </label>
                                 <select name="month" id="month_create" class="fr-select" {{ $isEditMode ? 'disabled' : '' }}>
                                     @for($m = 1; $m <= 12; $m++)
-                                        <option value="{{ $m }}" {{ $defaultMonth === $m ? 'selected' : '' }}>{{ $m }}</option>
+                                        <option value="{{ $m }}" {{ $defaultMonth === $m ? 'selected' : '' }}>{{ __('app.finance.months.' . $m) }}</option>
                                     @endfor
                                 </select>
                             </div>
 
                             <div class="fr-form-group col-md-2" id="year_group" style="padding:0;">
                                 <label for="year_create">
-                                    <i class="fas fa-calendar-check"></i> Tahun
+                                    <i class="fas fa-calendar-check"></i> {{ __('app.finance.year') }}
                                 </label>
                                 <input
                                     type="number" name="year" id="year_create"
@@ -591,7 +591,7 @@
 
                             <div class="fr-form-group col-md-4" style="padding:0;">
                                 <label for="opening_balance_create">
-                                    <i class="fas fa-wallet"></i> Saldo Awal
+                                    <i class="fas fa-wallet"></i> {{ __('app.finance.opening_balance') }}
                                 </label>
                                 <div class="fr-input-group">
                                     <span class="fr-prefix">Rp</span>
@@ -609,26 +609,26 @@
                         <div class="fr-balance-box">
                             <div class="bal-icon"><i class="fas fa-coins"></i></div>
                             <div>
-                                <div class="bal-label">Estimasi Saldo Akhir</div>
+                                <div class="bal-label">{{ __('app.finance.estimated_ending_balance') }}</div>
                                 <div class="bal-value" id="estimated-ending-balance">Rp 0,00</div>
                             </div>
                         </div>
 
                         {{-- Entry lines table --}}
                         <div style="font-size:.78rem;color:var(--muted);margin:0 0 10px;">
-                            Kode akun, nama akun, dan nomor faktur tersedia dari database melalui dropdown, tetap bisa diketik manual.
+                            {{ __('app.finance.account_invoice_dropdown_help') }}
                         </div>
                         <div class="fr-table-wrap">
                             <table class="fr-table" id="profit-loss-lines-table">
                                 <thead>
                                     <tr>
-                                        <th style="width:120px;"><i class="fas fa-exchange-alt"></i>Jenis</th>
-                                        <th style="width:130px;"><i class="fas fa-barcode"></i>Kode Akun</th>
-                                        <th style="width:200px;"><i class="fas fa-tag"></i>Nama Akun</th>
-                                        <th style="width:180px;"><i class="fas fa-file-invoice"></i>Nomor Faktur</th>
-                                        <th><i class="fas fa-align-left"></i>Keterangan</th>
-                                        <th style="width:160px;"><i class="fas fa-money-bill-wave"></i>Nominal</th>
-                                        <th style="width:110px; text-align:center;"><i class="fas fa-chart-line"></i>Penyusutan</th>
+                                        <th style="width:120px;"><i class="fas fa-exchange-alt"></i>{{ __('app.finance.type') }}</th>
+                                        <th style="width:130px;"><i class="fas fa-barcode"></i>{{ __('app.finance.account_code') }}</th>
+                                        <th style="width:200px;"><i class="fas fa-tag"></i>{{ __('app.finance.account_name') }}</th>
+                                        <th style="width:180px;"><i class="fas fa-file-invoice"></i>{{ __('app.finance.invoice_number') }}</th>
+                                        <th><i class="fas fa-align-left"></i>{{ __('app.finance.remarks') }}</th>
+                                        <th style="width:160px;"><i class="fas fa-money-bill-wave"></i>{{ __('app.finance.nominal') }}</th>
+                                        <th style="width:110px; text-align:center;"><i class="fas fa-chart-line"></i>{{ __('app.finance.depreciation') }}</th>
                                         <th style="width:60px; text-align:center;"><i class="fas fa-cog"></i></th>
                                     </tr>
                                 </thead>
@@ -637,8 +637,8 @@
                                         <tr>
                                             <td>
                                                 <select name="entries[{{ $index }}][type]" class="td-select" required>
-                                                    <option value="INCOME"  {{ ($entry['type'] ?? 'INCOME') === 'INCOME'  ? 'selected' : '' }}>INCOME</option>
-                                                    <option value="EXPENSE" {{ ($entry['type'] ?? null)     === 'EXPENSE' ? 'selected' : '' }}>EXPENSE</option>
+                                                    <option value="INCOME"  {{ ($entry['type'] ?? 'INCOME') === 'INCOME'  ? 'selected' : '' }}>{{ __('app.finance.income_type') }}</option>
+                                                    <option value="EXPENSE" {{ ($entry['type'] ?? null)     === 'EXPENSE' ? 'selected' : '' }}>{{ __('app.finance.expense_type') }}</option>
                                                 </select>
                                             </td>
                                             <td>
@@ -646,7 +646,7 @@
                                                     class="td-input js-line-code"
                                                     value="{{ $entry['line_code'] ?? '' }}"
                                                     list="finance-line-code-options"
-                                                    placeholder="Pilih kode akun / ketik manual"
+                                                    placeholder="{{ __('app.finance.account_code_input_placeholder') }}"
                                                     required>
                                             </td>
                                             <td>
@@ -654,7 +654,7 @@
                                                     class="td-input js-line-label"
                                                     value="{{ $entry['line_label'] ?? '' }}"
                                                     list="finance-line-label-options"
-                                                    placeholder="Pilih nama akun / ketik manual"
+                                                    placeholder="{{ __('app.finance.account_name_input_placeholder') }}"
                                                     required>
                                             </td>
                                             <td>
@@ -662,13 +662,13 @@
                                                     class="td-input js-invoice-number"
                                                     value="{{ $entry['invoice_number'] ?? '' }}"
                                                     list="finance-invoice-number-options"
-                                                    placeholder="Pilih no faktur / ketik manual"
+                                                    placeholder="{{ __('app.finance.invoice_number_input_placeholder') }}"
                                                     maxlength="100">
                                             </td>
                                             <td>
                                                 <input type="text" name="entries[{{ $index }}][description]"
                                                     class="td-input" value="{{ $entry['description'] ?? '' }}"
-                                                    placeholder="Detail pemasukan/pengeluaran">
+                                                    placeholder="{{ __('app.finance.description_input_placeholder') }}">
                                             </td>
                                             <td>
                                                 <input type="number" name="entries[{{ $index }}][amount]"
@@ -719,7 +719,7 @@
                     <div class="fr-card-footer">
                         <button type="button" class="fr-btn fr-btn-add" id="add-profit-loss-line">
                             <i class="fas fa-plus"></i>
-                            <span>Tambah Baris</span>
+                            <span>{{ __('app.finance.add_row') }}</span>
                         </button>
                         <button type="submit" class="fr-btn fr-btn-success">
                             <i class="fas fa-save"></i>
@@ -753,6 +753,14 @@
         const estimatedEndingBalance = document.getElementById('estimated-ending-balance');
         const accountByCode        = new Map();
         const accountByName        = new Map();
+        const reportText = {
+            income: @json(__('app.finance.income_type')),
+            expense: @json(__('app.finance.expense_type')),
+            accountCodePlaceholder: @json(__('app.finance.account_code_input_placeholder')),
+            accountNamePlaceholder: @json(__('app.finance.account_name_input_placeholder')),
+            invoiceNumberPlaceholder: @json(__('app.finance.invoice_number_input_placeholder')),
+            descriptionPlaceholder: @json(__('app.finance.description_input_placeholder')),
+        };
 
         if (!tableBody || !addButton || !reportTypeSelect || !openingBalanceInput || !estimatedEndingBalance) {
             return;
@@ -888,14 +896,14 @@
             row.innerHTML = `
                 <td>
                     <select name="entries[0][type]" class="td-select" required>
-                        <option value="INCOME">INCOME</option>
-                        <option value="EXPENSE">EXPENSE</option>
+                        <option value="INCOME">${reportText.income}</option>
+                        <option value="EXPENSE">${reportText.expense}</option>
                     </select>
                 </td>
-                <td><input type="text" name="entries[0][line_code]" class="td-input js-line-code" list="finance-line-code-options" placeholder="Pilih kode akun / ketik manual" required></td>
-                <td><input type="text" name="entries[0][line_label]" class="td-input js-line-label" list="finance-line-label-options" placeholder="Pilih nama akun / ketik manual" required></td>
-                <td><input type="text" name="entries[0][invoice_number]" class="td-input js-invoice-number" list="finance-invoice-number-options" placeholder="Pilih no faktur / ketik manual" maxlength="100"></td>
-                <td><input type="text" name="entries[0][description]" class="td-input" placeholder="Detail pemasukan/pengeluaran"></td>
+                <td><input type="text" name="entries[0][line_code]" class="td-input js-line-code" list="finance-line-code-options" placeholder="${reportText.accountCodePlaceholder}" required></td>
+                <td><input type="text" name="entries[0][line_label]" class="td-input js-line-label" list="finance-line-label-options" placeholder="${reportText.accountNamePlaceholder}" required></td>
+                <td><input type="text" name="entries[0][invoice_number]" class="td-input js-invoice-number" list="finance-invoice-number-options" placeholder="${reportText.invoiceNumberPlaceholder}" maxlength="100"></td>
+                <td><input type="text" name="entries[0][description]" class="td-input" placeholder="${reportText.descriptionPlaceholder}"></td>
                 <td><input type="number" name="entries[0][amount]" class="td-input" min="0" step="0.01" required></td>
                 <td style="text-align:center;">
                     <input type="checkbox" name="entries[0][is_depreciation]" value="1"

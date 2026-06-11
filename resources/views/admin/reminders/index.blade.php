@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('app.reminder.plan_title'))
+
 @section('content')
 @php
     $isEdit = (bool) ($editingReminder ?? null);
@@ -349,10 +351,10 @@
         </div>
         <div>
             <h1 style="font-size:1.3rem; font-weight:800; color:var(--text); margin:0 0 2px; line-height:1.2;">
-                Reminder Plan
+                {{ __('app.reminder.plan_title') }}
             </h1>
             <p style="font-size:.8rem; color:var(--muted); font-weight:500; margin:0;">
-                Kelola & pantau jadwal reminder pengumuman
+                {{ __('app.reminder.subtitle') }}
             </p>
         </div>
     </div>
@@ -360,7 +362,7 @@
     {{-- ── Validation errors ── --}}
     @if ($errors->any())
         <div class="rp-alert">
-            <strong>⚠ Terjadi kesalahan validasi:</strong>
+            <strong>{{ __('app.reminder.validation_error') }}</strong>
             <ul style="margin: 8px 0 0; padding-left: 18px;">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -381,7 +383,7 @@
                         <span class="hicon">
                             <i class="fas {{ $isEdit ? 'fa-edit' : 'fa-bell' }}"></i>
                         </span>
-                        <h3>{{ $isEdit ? 'Edit Reminder' : 'Buat Reminder Baru' }}</h3>
+                         <h3>{{ $isEdit ? __('app.reminder.edit_title') : __('app.reminder.create_title') }}</h3>
                     </div>
                 </div>
 
@@ -395,13 +397,13 @@
                         <div class="rp-form-group">
                             <label for="title">
                                 <i class="fas fa-tag"></i>
-                                Judul Reminder
+                                {{ __('app.reminder.title_label') }}
                             </label>
                             <input
                                 type="text" id="title" name="title"
                                 class="rp-input @error('title') is-invalid @enderror"
                                 value="{{ old('title', $editingReminder->title ?? '') }}"
-                                placeholder="Contoh: Reminder Pengumuman Ujian"
+                                placeholder="{{ __('app.reminder.title_placeholder') }}"
                                 required
                             >
                         </div>
@@ -410,13 +412,13 @@
                         <div class="rp-form-group">
                             <label for="description">
                                 <i class="fas fa-align-left"></i>
-                                Deskripsi
-                                <span class="opt-label">(opsional)</span>
+                                {{ __('app.reminder.description') }}
+                                <span class="opt-label">{{ __('app.reminder.optional') }}</span>
                             </label>
                             <textarea
                                 id="description" name="description"
                                 class="rp-textarea @error('description') is-invalid @enderror"
-                                placeholder="Detail reminder atau catatan tambahan..."
+                                placeholder="{{ __('app.reminder.description_placeholder') }}"
                             >{{ old('description', $editingReminder->description ?? '') }}</textarea>
                         </div>
 
@@ -424,7 +426,7 @@
                         <div class="rp-form-group">
                             <label for="remind_at">
                                 <i class="fas fa-calendar-alt"></i>
-                                Tanggal &amp; Jam Reminder
+                                {{ __('app.reminder.date_time') }}
                             </label>
                             <input
                                 type="datetime-local" id="remind_at" name="remind_at"
@@ -432,14 +434,14 @@
                                 value="{{ old('remind_at', $defaultRemindAt) }}"
                                 required
                             >
-                            <span class="rp-hint">Bisa untuk hari ini juga, termasuk jam dan menit.</span>
+                            <span class="rp-hint">{{ __('app.reminder.date_time_hint') }}</span>
                         </div>
 
                         {{-- Alert menit --}}
                         <div class="rp-form-group">
                             <label for="alert_before_minutes">
                                 <i class="fas fa-clock"></i>
-                                Alert Menjelang (menit)
+                                {{ __('app.reminder.alert_before_minutes') }}
                             </label>
                             <input
                                 type="number" min="1" max="10080"
@@ -454,14 +456,14 @@
                         <div class="rp-form-group">
                             <label for="type">
                                 <i class="fas fa-layer-group"></i>
-                                Tipe Reminder
+                                {{ __('app.reminder.type') }}
                             </label>
                             <select
                                 id="type" name="type"
                                 class="rp-select @error('type') is-invalid @enderror"
                             >
-                                <option value="GENERAL"      @selected($selectedType === 'GENERAL')>Umum</option>
-                                <option value="ANNOUNCEMENT" @selected($selectedType === 'ANNOUNCEMENT')>Announcement</option>
+                                <option value="GENERAL"      @selected($selectedType === 'GENERAL')>{{ __('app.reminder.general') }}</option>
+                                <option value="ANNOUNCEMENT" @selected($selectedType === 'ANNOUNCEMENT')>{{ __('app.reminder.announcement') }}</option>
                             </select>
                         </div>
 
@@ -469,14 +471,14 @@
                         <div class="rp-form-group" id="announcement-link-group">
                             <label for="announcement_id">
                                 <i class="fas fa-bullhorn"></i>
-                                Kaitkan ke Announcement
-                                <span class="opt-label">(opsional)</span>
+                                {{ __('app.reminder.link_announcement') }}
+                                <span class="opt-label">{{ __('app.reminder.optional') }}</span>
                             </label>
                             <select
                                 id="announcement_id" name="announcement_id"
                                 class="rp-select @error('announcement_id') is-invalid @enderror"
                             >
-                                <option value="">Tanpa pilih announcement (ingatkan buat pengumuman baru)</option>
+                                <option value="">{{ __('app.reminder.no_announcement_selected') }}</option>
                                 @foreach ($announcements as $announcement)
                                     <option
                                         value="{{ $announcement->id }}"
@@ -493,12 +495,12 @@
                     <div class="rp-card-footer">
                         <button type="submit" class="rp-btn rp-btn-primary">
                             <i class="fas {{ $isEdit ? 'fa-save' : 'fa-plus-circle' }}"></i>
-                            <span>{{ $isEdit ? 'Update Reminder' : 'Simpan Reminder' }}</span>
+                            <span>{{ $isEdit ? __('app.reminder.update') : __('app.reminder.save') }}</span>
                         </button>
                         @if ($isEdit)
                             <a href="{{ route('admin.reminders.index') }}" class="rp-btn rp-btn-secondary">
                                 <i class="fas fa-times"></i>
-                                <span>Batal Edit</span>
+                                <span>{{ __('app.reminder.cancel_edit') }}</span>
                             </a>
                         @endif
                     </div>
@@ -516,7 +518,7 @@
                         <span class="hicon">
                             <i class="fas fa-list-ul"></i>
                         </span>
-                        <h3>Daftar Reminder</h3>
+                         <h3>{{ __('app.reminder.list_title') }}</h3>
                     </div>
                 </div>
 
@@ -525,11 +527,11 @@
                         <thead>
                             <tr>
                                 <th style="width:50px;"><i class="fas fa-hashtag"></i>ID</th>
-                                <th><i class="fas fa-bell"></i>Reminder</th>
-                                <th style="width:148px;"><i class="far fa-calendar"></i>Jadwal</th>
-                                <th style="width:148px;"><i class="fas fa-circle"></i>Status</th>
-                                <th style="width:175px;"><i class="fas fa-bullhorn"></i>Announcement</th>
-                                <th style="width:132px;"><i class="fas fa-cog"></i>Aksi</th>
+                                <th><i class="fas fa-bell"></i>{{ __('app.reminder.title_label') }}</th>
+                                <th style="width:148px;"><i class="far fa-calendar"></i>{{ __('app.reminder.schedule') }}</th>
+                                <th style="width:148px;"><i class="fas fa-circle"></i>{{ __('app.reminder.status') }}</th>
+                                <th style="width:175px;"><i class="fas fa-bullhorn"></i>{{ __('app.reminder.announcement') }}</th>
+                                <th style="width:132px;"><i class="fas fa-cog"></i>{{ __('app.reminder.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -537,7 +539,7 @@
                             @forelse ($reminders as $reminder)
                                 @php
                                     $alertState = $reminder->alertState($now);
-                                    $typeLabel  = $reminder->isAnnouncementType() ? 'Announcement' : 'Umum';
+                                     $typeLabel  = $reminder->isAnnouncementType() ? __('app.reminder.announcement') : __('app.reminder.general');
                                 @endphp
                                 <tr>
                                     {{-- ID --}}
@@ -554,7 +556,7 @@
                                         <div class="cell-meta">
                                             <i class="fas fa-tag"></i> {{ $typeLabel }}
                                             &nbsp;·&nbsp;
-                                            <i class="fas fa-clock"></i> {{ $reminder->alert_before_minutes }} mnt
+                                             <i class="fas fa-clock"></i> {{ $reminder->alert_before_minutes }} {{ __('app.reminder.minute_short') }}
                                             <br>
                                             <i class="fas fa-user"></i> {{ $reminder->creator?->name ?? '-' }}
                                         </div>
@@ -566,29 +568,29 @@
                                             {{ $reminder->remind_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? '-' }}
                                         </div>
                                         <div class="sched-sub">
-                                            Dibuat: {{ $reminder->created_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? '-' }}
+                                             {{ __('app.reminder.created_at', ['time' => $reminder->created_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? '-']) }}
                                         </div>
                                     </td>
 
                                     {{-- Status --}}
                                     <td>
                                         @if ($reminder->is_active)
-                                            <span class="rp-badge b-aktif"><span class="bdot"></span>Aktif</span>
+                                             <span class="rp-badge b-aktif"><span class="bdot"></span>{{ __('app.reminder.active') }}</span>
                                         @else
-                                            <span class="rp-badge b-nonaktif"><span class="bdot"></span>Nonaktif</span>
+                                             <span class="rp-badge b-nonaktif"><span class="bdot"></span>{{ __('app.reminder.inactive') }}</span>
                                         @endif
                                         <br>
                                         @if ($alertState === 'due')
-                                            <span class="rp-badge b-due"><span class="bdot"></span>Hari-H / Due</span>
+                                             <span class="rp-badge b-due"><span class="bdot"></span>{{ __('app.reminder.due_today') }}</span>
                                         @elseif ($alertState === 'upcoming')
-                                            <span class="rp-badge b-upcoming"><span class="bdot"></span>Mendekati</span>
+                                             <span class="rp-badge b-upcoming"><span class="bdot"></span>{{ __('app.reminder.upcoming') }}</span>
                                         @else
-                                            <span class="rp-badge b-belum"><span class="bdot"></span>Belum Alert</span>
+                                             <span class="rp-badge b-belum"><span class="bdot"></span>{{ __('app.reminder.not_alerted') }}</span>
                                         @endif
 
                                         @if (! $reminder->is_active && $reminder->deactivated_at)
                                             <div class="deact-text">
-                                                Nonaktif: {{ $reminder->deactivated_at->timezone('Asia/Jakarta')->format('d/m/Y H:i') }}
+                                                 {{ __('app.reminder.inactive_at', ['time' => $reminder->deactivated_at->timezone('Asia/Jakarta')->format('d/m/Y H:i')]) }}
                                             </div>
                                         @endif
                                     </td>
@@ -603,15 +605,15 @@
                                                     href="{{ route('admin.announcements.edit', ['id' => $reminder->announcement->id, 'focus_reminder' => $reminder->id, 'focus_announcement' => $reminder->announcement->id]) }}"
                                                     class="rp-btn-outline"
                                                 >
-                                                    <i class="fas fa-external-link-alt"></i> Buka
+                                                     <i class="fas fa-external-link-alt"></i> {{ __('app.reminder.open') }}
                                                 </a>
                                             @else
-                                                <div class="cell-desc" style="margin-bottom:6px;">Buat pengumuman baru.</div>
+                                                 <div class="cell-desc" style="margin-bottom:6px;">{{ __('app.reminder.create_new_announcement') }}</div>
                                                 <a
                                                     href="{{ route('admin.announcements.index', ['focus_reminder' => $reminder->id]) }}"
                                                     class="rp-btn-outline"
                                                 >
-                                                    <i class="fas fa-plus"></i> Buat
+                                                     <i class="fas fa-plus"></i> {{ __('app.reminder.create') }}
                                                 </a>
                                             @endif
                                         @else
@@ -627,7 +629,7 @@
                                             style="margin-bottom:5px; display:inline-flex;"
                                         >
                                             <i class="fas fa-pencil-alt"></i>
-                                            <span>Edit</span>
+                                             <span>{{ __('app.reminder.edit') }}</span>
                                         </a>
                                         <form method="POST" action="{{ route('admin.reminders.toggle', $reminder->id) }}">
                                             @csrf
@@ -638,10 +640,10 @@
                                             >
                                                 @if ($reminder->is_active)
                                                     <i class="fas fa-pause-circle"></i>
-                                                    <span>Nonaktifkan</span>
+                                                     <span>{{ __('app.reminder.deactivate') }}</span>
                                                 @else
                                                     <i class="fas fa-play-circle"></i>
-                                                    <span>Aktifkan</span>
+                                                     <span>{{ __('app.reminder.activate') }}</span>
                                                 @endif
                                             </button>
                                         </form>
@@ -652,7 +654,7 @@
                                     <td colspan="6">
                                         <div class="rp-empty">
                                             <span class="ei"><i class="fas fa-bell-slash"></i></span>
-                                            <p>Belum ada reminder plan.</p>
+                                             <p>{{ __('app.reminder.empty') }}</p>
                                         </div>
                                     </td>
                                 </tr>

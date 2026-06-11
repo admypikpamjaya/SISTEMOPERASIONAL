@@ -36,13 +36,14 @@
         ['statement_data_source' => 'imported', 'period_type' => $isImportedSource ? (data_get($filters, 'period_type', 'ALL') ?: 'ALL') : 'ALL'],
         $selectedBatchId ? ['statement_batch_id' => $selectedBatchId] : []
     );
+    $statementLabel = \Illuminate\Support\Str::lower(__('app.finance.profit_loss'));
     $pageSubtitle = $isManageMode
-        ? 'Kelola import Excel dan edit manual laba rugi.'
+        ? __('app.finance.statement_manage_subtitle', ['statement' => $statementLabel])
         : ($isCombinedSource
-            ? 'Hasil import dan data jurnal tampil dalam satu laporan laba rugi untuk periode ' . $periodLabel . '.'
+            ? __('app.finance.statement_combined_subtitle', ['statement' => $statementLabel, 'period' => $periodLabel])
             : ($isImportedSource
-            ? 'Hasil import laba rugi tampil langsung di halaman utama.'
-            : 'Ringkasan pemasukan dan pengeluaran pada periode ' . $periodLabel . '.'));
+            ? __('app.finance.statement_imported_subtitle', ['statement' => $statementLabel])
+            : __('app.finance.statement_system_subtitle', ['items' => __('app.finance.profit_loss_items'), 'period' => $periodLabel])));
 @endphp
 
 <style>
@@ -647,35 +648,35 @@
     <div class="pl-page-title">
         <div class="pl-title-icon"><i class="fas fa-chart-area"></i></div>
         <div>
-            <h1>Laporan Laba Rugi</h1>
+            <h1>{{ __('app.finance.profit_loss_report_title') }}</h1>
             <p>{{ $pageSubtitle }}</p>
         </div>
     </div>
 
     <div class="pl-nav">
         <a href="{{ route('finance.dashboard') }}" class="pl-nav-link muted">
-            <i class="fas fa-arrow-left"></i> Dashboard
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance.dashboard') }}
         </a>
         @if($isManageMode)
             <a href="{{ route($mainStatementRouteName, array_filter(array_merge($filterQuery ?? [], ['statement_data_source' => $statementDataSource, 'statement_batch_id' => $selectedBatchId]), static fn ($value): bool => $value !== null && $value !== '')) }}" class="pl-nav-link muted">
-                <i class="fas fa-table-columns"></i> Halaman Utama
+                <i class="fas fa-table-columns"></i> {{ __('app.finance.main_page') }}
             </a>
         @else
             <a href="{{ route($manageStatementRouteName, array_filter(array_merge($filterQuery ?? [], ['statement_data_source' => 'imported', 'statement_batch_id' => $selectedBatchId]), static fn ($value): bool => $value !== null && $value !== '')) }}" class="pl-nav-link muted">
-                <i class="fas fa-sliders-h"></i> Import & Edit Manual
+                <i class="fas fa-sliders-h"></i> {{ __('app.finance.import_edit_manual') }}
             </a>
         @endif
         <a href="{{ route('finance.report.profit-loss.download', array_merge($filterQuery, ['format' => 'excel'])) }}" class="pl-nav-link muted">
-            <i class="fas fa-file-excel"></i> Download Excel
+            <i class="fas fa-file-excel"></i> {{ __('app.finance.download_excel') }}
         </a>
         <a href="{{ route('finance.report.profit-loss.download', $filterQuery) }}" class="pl-nav-link primary">
-            <i class="fas fa-file-pdf"></i> Download PDF
+            <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
         </a>
         <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="pl-nav-link muted">
-            <i class="fas fa-balance-scale"></i> Lembar Saldo
+            <i class="fas fa-balance-scale"></i> {{ __('app.finance.balance_sheet') }}
         </a>
         <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="pl-nav-link muted">
-            <i class="fas fa-book-open"></i> Buku Besar
+            <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
         </a>
     </div>
 </div>
@@ -690,34 +691,34 @@
     <div class="pl-section-head d-flex justify-content-between align-items-center flex-wrap" style="gap:.8rem;">
         <div class="pl-section-title">
             <span class="pl-section-icon"><i class="fas fa-database"></i></span>
-            <span>{{ $isManageMode ? 'Import & Manual' : 'Sumber Data Laporan' }}</span>
+            <span>{{ $isManageMode ? __('app.finance.import_manual') : __('app.finance.report_data_source') }}</span>
         </div>
         @if($usesImportedData && $selectedBatchMeta)
             <span class="pl-pill">
-                <i class="fas fa-layer-group"></i> {{ $selectedBatchMeta['batch_name'] ?? 'Batch Import' }}
+                <i class="fas fa-layer-group"></i> {{ $selectedBatchMeta['batch_name'] ?? __('app.finance.batch_import') }}
             </span>
         @endif
     </div>
     <div class="p-3">
         <div class="pl-soft-copy">
             {{ $isCombinedSource
-                ? 'Halaman utama sedang menggabungkan data jurnal sistem dengan hasil import laba rugi.'
+                ? __('app.finance.combined_source_note', ['statement' => $statementLabel])
                 : ($isImportedSource
                 ? ($isManageMode
-                    ? 'Kelola batch hasil import dan baris manual untuk laba rugi.'
-                    : 'Halaman utama sedang membaca hasil import laba rugi.')
-                : 'Halaman ini sedang membaca data jurnal sistem yang sudah diposting.') }}
+                    ? __('app.finance.imported_manage_source_note', ['statement' => $statementLabel])
+                    : __('app.finance.imported_source_note', ['statement' => $statementLabel]))
+                : __('app.finance.system_source_note')) }}
         </div>
         @unless($isManageMode)
             <div class="pl-source-switch mt-3">
                 <a href="{{ route($pageRouteName, $combinedSourceQuery) }}" class="pl-switch-link {{ $isCombinedSource ? 'active' : '' }}">
-                    <i class="fas fa-layer-group"></i> Data Gabungan
+                    <i class="fas fa-layer-group"></i> {{ __('app.finance.combined_data') }}
                 </a>
                 <a href="{{ route($pageRouteName, $systemSourceQuery) }}" class="pl-switch-link {{ !$isImportedSource && !$isCombinedSource ? 'active' : '' }}">
-                    <i class="fas fa-server"></i> Data Sistem
+                    <i class="fas fa-server"></i> {{ __('app.finance.system_data') }}
                 </a>
                 <a href="{{ route($pageRouteName, $importedSourceQuery) }}" class="pl-switch-link {{ $isImportedSource ? 'active' : '' }}">
-                    <i class="fas fa-file-import"></i> Hasil Import
+                    <i class="fas fa-file-import"></i> {{ __('app.finance.import_result') }}
                 </a>
             </div>
         @endunless
@@ -737,10 +738,10 @@
                 @endforeach
                 <div class="fs-field">
                     <label class="fs-label" for="profit_statement_batch_id">
-                        <i class="fas fa-copy"></i> Pilih Batch Import
+                        <i class="fas fa-copy"></i> {{ __('app.finance.select_import_batch') }}
                     </label>
                     <select name="statement_batch_id" id="profit_statement_batch_id" class="fs-control" onchange="this.form.submit()">
-                        <option value="">Pilih batch...</option>
+                        <option value="">{{ __('app.finance.select_batch_placeholder') }}</option>
                         @foreach($batchOptions as $batchOption)
                             <option value="{{ $batchOption['id'] }}" {{ $selectedBatchId === $batchOption['id'] ? 'selected' : '' }}>
                                 {{ $batchOption['batch_name'] }}{{ !empty($batchOption['imported_year']) ? ' | ' . $batchOption['imported_year'] : '' }}
@@ -751,23 +752,23 @@
                 @if($selectedBatchMeta)
                     <div class="pl-batch-meta">
                         <div class="pl-batch-stat">
-                            <label>Batch Aktif</label>
+                            <label>{{ __('app.finance.active_batch') }}</label>
                             <div>{{ data_get($selectedBatchMeta, 'batch_name', '-') }}</div>
                         </div>
                         <div class="pl-batch-stat">
-                            <label>File Sumber</label>
-                            <div>{{ data_get($selectedBatchMeta, 'source_filename', 'Manual / Tidak ada file') }}</div>
+                            <label>{{ __('app.finance.source_file') }}</label>
+                            <div>{{ data_get($selectedBatchMeta, 'source_filename', __('app.finance.manual_no_file')) }}</div>
                         </div>
                         <div class="pl-batch-stat">
-                            <label>Total Baris</label>
+                            <label>{{ __('app.finance.total_rows') }}</label>
                             <div>{{ number_format((int) data_get($selectedBatchMeta, 'row_count', 0), 0, ',', '.') }}</div>
                         </div>
                         <div class="pl-batch-stat">
-                            <label>Baris Manual</label>
+                            <label>{{ __('app.finance.manual_rows') }}</label>
                             <div>{{ number_format((int) data_get($selectedBatchMeta, 'manual_count', 0), 0, ',', '.') }}</div>
                         </div>
                         <div class="pl-batch-stat">
-                            <label>Tahun Import</label>
+                            <label>{{ __('app.finance.import_year') }}</label>
                             <div>{{ data_get($selectedBatchMeta, 'imported_year', '-') }}</div>
                         </div>
                     </div>
@@ -794,66 +795,68 @@
             <div class="pl-section-head">
                 <div class="pl-section-title">
                     <span class="pl-section-icon"><i class="fas fa-file-import"></i></span>
-                    <span>Import Excel Laba Rugi</span>
+                    <span>{{ __('app.finance.import_excel_profit_loss') }}</span>
                 </div>
             </div>
             <div class="p-3">
                 <div class="pl-import-guide">
                     <div class="pl-import-guide-title">
                         <i class="fas fa-circle-info"></i>
-                        <span>Format file yang dibaca parser laba rugi</span>
+                        <span>{{ __('app.finance.profit_import_parser_title') }}</span>
                     </div>
                     <div class="pl-soft-copy">
-                        Sistem membaca <strong>sheet pertama</strong>. Kolom <strong>A</strong> dipakai untuk label grup dan akun,
-                        kolom <strong>B</strong> untuk nominal. Judul seperti <strong>Laba Rugi</strong>, <strong>Saldo</strong>,
-                        tahun saja, <strong>Laba Bruto</strong>, dan <strong>Surplus (Defisit)</strong> akan dilewati otomatis.
+                        {!! __('app.finance.profit_import_parser_desc', [
+                            'sheet' => '<strong>'.e(__('app.finance.first_sheet')).'</strong>',
+                            'column_a' => '<strong>A</strong>',
+                            'column_b' => '<strong>B</strong>',
+                        ]) !!}
                     </div>
                     <div class="pl-import-guide-grid">
                         <div class="pl-import-guide-card">
-                            <label>Header Bagian</label>
-                            <div>Gunakan label <strong>Penghasilan</strong> atau <strong>Pengeluaran</strong> untuk memulai bagian utama.</div>
+                            <label>{{ __('app.finance.profit_import_header_section') }}</label>
+                            <div>{{ __('app.finance.profit_import_header_section_desc') }}</div>
                         </div>
                         <div class="pl-import-guide-card">
-                            <label>Baris Akun</label>
-                            <div>Isi kolom A dengan format seperti <strong>410.01 Pendapatan SPP</strong> lalu nominalnya di kolom B.</div>
+                            <label>{{ __('app.finance.profit_import_account_row') }}</label>
+                            <div>{{ __('app.finance.profit_import_account_row_desc') }}</div>
                         </div>
                         <div class="pl-import-guide-card">
-                            <label>Grup Tambahan</label>
-                            <div>Baris tanpa nominal akan dianggap sebagai nama grup sampai parser menemukan akun berikutnya.</div>
+                            <label>{{ __('app.finance.profit_import_extra_group') }}</label>
+                            <div>{{ __('app.finance.profit_import_extra_group_desc') }}</div>
                         </div>
                     </div>
                     <div class="pl-import-chip-row">
-                        <span class="pl-import-chip"><i class="fas fa-table-columns"></i> Kolom A: label / akun</span>
-                        <span class="pl-import-chip"><i class="fas fa-money-bill-wave"></i> Kolom B: nominal</span>
-                        <span class="pl-import-chip"><i class="fas fa-file-import"></i> Otomatis pilih batch hasil import</span>
+                        <span class="pl-import-chip"><i class="fas fa-table-columns"></i> {{ __('app.finance.profit_import_chip_label_account') }}</span>
+                        <span class="pl-import-chip"><i class="fas fa-money-bill-wave"></i> {{ __('app.finance.profit_import_chip_amount') }}</span>
+                        <span class="pl-import-chip"><i class="fas fa-file-import"></i> {{ __('app.finance.profit_import_chip_auto_batch') }}</span>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('finance.report.profit-loss.import') }}" enctype="multipart/form-data" class="pl-manage-form">
                     @csrf
                     <div class="fs-field full">
-                        <label class="fs-label" for="profit_import_file"><i class="fas fa-file-excel"></i> File Excel</label>
+                        <label class="fs-label" for="profit_import_file"><i class="fas fa-file-excel"></i> {{ __('app.finance.file_excel') }}</label>
                         <input type="file" name="file" id="profit_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
                         <div class="fs-helper-text">
-                            Upload file Excel/CSV laba rugi. Parser akan membaca sheet pertama dan fokus pada kolom A-B.
+                            {{ __('app.finance.profit_import_file_help') }}
                         </div>
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_import_batch_name"><i class="fas fa-tag"></i> Nama Batch</label>
+                        <label class="fs-label" for="profit_import_batch_name"><i class="fas fa-tag"></i> {{ __('app.finance.batch_name') }}</label>
                         <input type="text" name="batch_name" id="profit_import_batch_name" class="fs-control" value="{{ old('batch_name') }}">
                         <div class="fs-helper-text">
-                            Kosongkan jika ingin memakai nama file sebagai nama batch import.
+                            {{ __('app.finance.batch_name_help') }}
                         </div>
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_import_notes"><i class="fas fa-sticky-note"></i> Catatan</label>
+                        <label class="fs-label" for="profit_import_notes"><i class="fas fa-sticky-note"></i> {{ __('app.finance.notes') }}</label>
                         <input type="text" name="notes" id="profit_import_notes" class="fs-control" value="{{ old('notes') }}">
                         <div class="fs-helper-text">
-                            Opsional, cocok untuk menandai periode, sumber file, atau revisi data.
+                            {{ __('app.finance.notes_help') }}
                         </div>
                     </div>
                     <div class="fs-field full pl-manage-actions">
                         <button type="submit" class="fs-btn fs-btn-primary">
-                            <i class="fas fa-upload"></i> Import Excel
+                            <i class="fas fa-upload"></i> {{ __('app.finance.import_excel') }}
                         </button>
                     </div>
                 </form>
@@ -863,7 +866,7 @@
             <div class="pl-section-head">
                 <div class="pl-section-title">
                     <span class="pl-section-icon"><i class="fas fa-pen"></i></span>
-                    <span>{{ $editImportedRow ? 'Edit Baris Laba Rugi' : 'Tambah Baris Laba Rugi' }}</span>
+                    <span>{{ $editImportedRow ? __('app.finance.edit_profit_loss_row') : __('app.finance.add_profit_loss_row') }}</span>
                 </div>
             </div>
             <div class="p-3">
@@ -876,40 +879,40 @@
                     <input type="hidden" name="batch_id" value="{{ old('batch_id', $profitRowForm['batch_id'] ?? $selectedBatchId) }}">
                     <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_section_key"><i class="fas fa-folder-tree"></i> Kategori</label>
+                        <label class="fs-label" for="profit_section_key"><i class="fas fa-folder-tree"></i> {{ __('app.finance.category') }}</label>
                         <select name="section_key" id="profit_section_key" class="fs-control" required>
-                            @foreach(['income' => 'Pemasukan', 'expense' => 'Pengeluaran'] as $sectionKey => $sectionLabel)
+                            @foreach(['income' => __('app.finance.income'), 'expense' => __('app.finance.expense')] as $sectionKey => $sectionLabel)
                                 <option value="{{ $sectionKey }}" {{ old('section_key', $profitRowForm['section_key']) === $sectionKey ? 'selected' : '' }}>{{ $sectionLabel }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_group_label"><i class="fas fa-layer-group"></i> Grup</label>
+                        <label class="fs-label" for="profit_group_label"><i class="fas fa-layer-group"></i> {{ __('app.finance.group') }}</label>
                         <input type="text" name="group_label" id="profit_group_label" class="fs-control" value="{{ old('group_label', $profitRowForm['group_label']) }}">
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_account_code"><i class="fas fa-hashtag"></i> Kode Akun</label>
+                        <label class="fs-label" for="profit_account_code"><i class="fas fa-hashtag"></i> {{ __('app.finance.account_code') }}</label>
                         <input type="text" name="account_code" id="profit_account_code" class="fs-control" value="{{ old('account_code', $profitRowForm['account_code']) }}">
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_finance_type"><i class="fas fa-tag"></i> Tipe Finance</label>
+                        <label class="fs-label" for="profit_finance_type"><i class="fas fa-tag"></i> {{ __('app.finance.finance_type') }}</label>
                         <input type="text" name="finance_type" id="profit_finance_type" class="fs-control" value="{{ old('finance_type', $profitRowForm['finance_type']) }}">
                     </div>
                     <div class="fs-field full">
-                        <label class="fs-label" for="profit_account_name"><i class="fas fa-font"></i> Nama Baris</label>
+                        <label class="fs-label" for="profit_account_name"><i class="fas fa-font"></i> {{ __('app.finance.row_name') }}</label>
                         <input type="text" name="account_name" id="profit_account_name" class="fs-control" value="{{ old('account_name', $profitRowForm['account_name']) }}" required>
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_amount"><i class="fas fa-money-bill-wave"></i> Nominal</label>
+                        <label class="fs-label" for="profit_amount"><i class="fas fa-money-bill-wave"></i> {{ __('app.finance.amount') }}</label>
                         <input type="number" step="0.01" name="amount" id="profit_amount" class="fs-control" value="{{ old('amount', $profitRowForm['amount']) }}" required>
                     </div>
                     <div class="fs-field full pl-manage-actions">
                         <button type="submit" class="fs-btn fs-btn-primary">
-                            <i class="fas fa-save"></i> {{ $editImportedRow ? 'Update Baris' : 'Tambah Baris' }}
+                            <i class="fas fa-save"></i> {{ $editImportedRow ? __('app.finance.update_row') : __('app.finance.add_row') }}
                         </button>
                         @if($editImportedRow)
                             <a href="{{ route($pageRouteName, array_filter(array_merge($filterQuery ?? [], ['statement_data_source' => 'imported', 'statement_batch_id' => $selectedBatchId]), static fn ($value): bool => $value !== null && $value !== '')) }}" class="fs-btn fs-btn-muted">
-                                <i class="fas fa-times"></i> Batal Edit
+                                <i class="fas fa-times"></i> {{ __('app.finance.cancel_edit') }}
                             </a>
                         @endif
                     </div>
@@ -923,20 +926,20 @@
             <div class="pl-section-head d-flex justify-content-between align-items-center flex-wrap" style="gap:.8rem;">
                 <div class="pl-section-title">
                     <span class="pl-section-icon"><i class="fas fa-list"></i></span>
-                    <span>Baris Import & Manual</span>
+                    <span>{{ __('app.finance.imported_manual_rows') }}</span>
                 </div>
-                <span class="pl-pill">{{ number_format(count($importedRows), 0, ',', '.') }} baris</span>
+                <span class="pl-pill">{{ number_format(count($importedRows), 0, ',', '.') }} {{ __('app.finance.rows') }}</span>
             </div>
             <div class="table-responsive">
                 <table class="pl-table">
                     <thead>
                         <tr>
-                            <th style="width:120px;">Kategori</th>
-                            <th style="width:140px;">Kode</th>
-                            <th>Nama</th>
-                            <th style="width:180px;">Grup</th>
-                            <th style="width:170px; text-align:right;">Nominal</th>
-                            <th style="width:170px;">Aksi</th>
+                            <th style="width:120px;">{{ __('app.finance.category') }}</th>
+                            <th style="width:140px;">{{ __('app.finance.code') }}</th>
+                            <th>{{ __('app.finance.name') }}</th>
+                            <th style="width:180px;">{{ __('app.finance.group') }}</th>
+                            <th style="width:170px; text-align:right;">{{ __('app.finance.amount') }}</th>
+                            <th style="width:170px;">{{ __('app.finance.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -947,7 +950,7 @@
                                 <td>
                                     <div>{{ $row['account_name'] }}</div>
                                     @if(!empty($row['is_manual']))
-                                        <div class="pl-soft-copy">Input manual</div>
+                                        <div class="pl-soft-copy">{{ __('app.finance.manual_input') }}</div>
                                     @endif
                                 </td>
                                 <td>{{ $row['group_label'] ?? '-' }}</td>
@@ -957,16 +960,16 @@
                                 <td>
                                     <div class="pl-manage-actions">
                                         <a href="{{ route($pageRouteName, array_filter(array_merge($filterQuery ?? [], ['statement_data_source' => 'imported', 'statement_batch_id' => $selectedBatchId, 'edit_row' => $row['id']]), static fn ($value): bool => $value !== null && $value !== '')) }}" class="pl-switch-link">
-                                            <i class="fas fa-pen"></i> Edit
+                                            <i class="fas fa-pen"></i> {{ __('app.finance.edit') }}
                                         </a>
-                                        <form method="POST" action="{{ route('finance.report.profit-loss.rows.destroy', $row['id']) }}" onsubmit="return confirm('Hapus baris laba rugi ini?')">
+                                        <form method="POST" action="{{ route('finance.report.profit-loss.rows.destroy', $row['id']) }}" onsubmit="return confirm(@json(__('app.finance.delete_profit_loss_row_confirm')))">
                                             @csrf
                                             @method('DELETE')
                                             <input type="hidden" name="statement_data_source" value="imported">
                                             <input type="hidden" name="statement_batch_id" value="{{ $selectedBatchId }}">
                                             <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
                                             <button type="submit" class="pl-switch-link" style="color:var(--pl-red); border-color:rgba(239,68,68,.2);">
-                                                <i class="fas fa-trash"></i> Hapus
+                                                <i class="fas fa-trash"></i> {{ __('app.finance.delete') }}
                                             </button>
                                         </form>
                                     </div>
@@ -982,21 +985,21 @@
 
 <div class="pl-summary-grid">
     <div class="pl-summary-card">
-        <div class="pl-summary-label"><i class="fas fa-arrow-trend-up"></i> Total Pemasukan</div>
+        <div class="pl-summary-label"><i class="fas fa-arrow-trend-up"></i> {{ __('app.finance.total_income') }}</div>
         <div class="pl-summary-value positive">Rp {{ number_format((float) ($totals['income'] ?? 0), 2, ',', '.') }}</div>
-        <div class="pl-summary-help">{{ number_format(count($incomeRows), 0, ',', '.') }} akun penghasilan masuk ke periode ini.</div>
+        <div class="pl-summary-help">{{ __('app.finance.income_summary_help', ['count' => number_format(count($incomeRows), 0, ',', '.')]) }}</div>
     </div>
     <div class="pl-summary-card">
-        <div class="pl-summary-label"><i class="fas fa-arrow-trend-down"></i> Total Pengeluaran</div>
+        <div class="pl-summary-label"><i class="fas fa-arrow-trend-down"></i> {{ __('app.finance.total_expense') }}</div>
         <div class="pl-summary-value negative">Rp {{ number_format((float) ($totals['expense'] ?? 0), 2, ',', '.') }}</div>
-        <div class="pl-summary-help">{{ number_format(count($expenseRows), 0, ',', '.') }} akun pengeluaran tercatat di laporan ini.</div>
+        <div class="pl-summary-help">{{ __('app.finance.expense_summary_help', ['count' => number_format(count($expenseRows), 0, ',', '.')]) }}</div>
     </div>
     <div class="pl-summary-card">
-        <div class="pl-summary-label"><i class="fas fa-scale-balanced"></i> Laba / Rugi Bersih</div>
+        <div class="pl-summary-label"><i class="fas fa-scale-balanced"></i> {{ __('app.finance.net_profit_loss') }}</div>
         <div class="pl-summary-value {{ (float) ($totals['net_result'] ?? 0) >= 0 ? 'positive' : 'negative' }}">
             Rp {{ number_format((float) ($totals['net_result'] ?? 0), 2, ',', '.') }}
         </div>
-        <div class="pl-summary-help">Hasil selisih pemasukan dan pengeluaran untuk filter yang aktif.</div>
+        <div class="pl-summary-help">{{ __('app.finance.net_result_help') }}</div>
     </div>
 </div>
 
@@ -1008,16 +1011,16 @@
                     <span class="pl-section-icon" style="background:var(--pl-green-soft);color:var(--pl-green);">
                         <i class="fas fa-arrow-up"></i>
                     </span>
-                    <span>Pemasukan</span>
+                    <span>{{ __('app.finance.income') }}</span>
                 </div>
             </div>
             <div class="table-responsive">
                 <table class="pl-table">
                     <thead>
                         <tr>
-                            <th style="width:140px;">Kode</th>
-                            <th>Nama Akun</th>
-                            <th style="width:180px; text-align:right;">Nominal</th>
+                            <th style="width:140px;">{{ __('app.finance.code') }}</th>
+                            <th>{{ __('app.finance.account_name') }}</th>
+                            <th style="width:180px; text-align:right;">{{ __('app.finance.amount') }}</th>
                         </tr>
                     </thead>
                         <tbody>
@@ -1066,15 +1069,15 @@
                                             <div class="dropdown-menu dropdown-menu-right pl-row-menu">
                                                 @if($canOpenJournalDetail)
                                                     <a class="dropdown-item" href="{{ $journalItemsRoute }}">
-                                                        <i class="fas fa-table"></i> Item Jurnal
+                                                        <i class="fas fa-table"></i> {{ __('app.finance.journal_items') }}
                                                     </a>
                                                     <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
-                                                        <i class="fas fa-book-open"></i> Buku Besar
+                                                        <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
                                                     </a>
                                                 @endif
                                                 @if($rowHasImportedSource)
                                                     <a class="dropdown-item" href="{{ $manageIncomeRowRoute }}">
-                                                        <i class="fas fa-pen"></i> {{ $isImportedSource ? 'Edit Baris' : 'Kelola Import' }}
+                                                        <i class="fas fa-pen"></i> {{ $isImportedSource ? __('app.finance.edit_row') : __('app.finance.manage_import') }}
                                                     </a>
                                                 @endif
                                             </div>
@@ -1093,11 +1096,11 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" style="text-align:center; color:var(--pl-muted);">Belum ada pemasukan pada periode ini.</td>
+                                <td colspan="3" style="text-align:center; color:var(--pl-muted);">{{ __('app.finance.no_income_period') }}</td>
                             </tr>
                         @endforelse
                         <tr class="pl-total-row">
-                            <td colspan="2">Total Pemasukan</td>
+                            <td colspan="2">{{ __('app.finance.total_income') }}</td>
                             <td class="pl-amount income">Rp {{ number_format((float) ($totals['income'] ?? 0), 2, ',', '.') }}</td>
                         </tr>
                     </tbody>
@@ -1111,16 +1114,16 @@
                     <span class="pl-section-icon" style="background:var(--pl-red-soft);color:var(--pl-red);">
                         <i class="fas fa-arrow-down"></i>
                     </span>
-                    <span>Pengeluaran</span>
+                    <span>{{ __('app.finance.expense') }}</span>
                 </div>
             </div>
             <div class="table-responsive">
                 <table class="pl-table">
                     <thead>
                         <tr>
-                            <th style="width:140px;">Kode</th>
-                            <th>Nama Akun</th>
-                            <th style="width:180px; text-align:right;">Nominal</th>
+                            <th style="width:140px;">{{ __('app.finance.code') }}</th>
+                            <th>{{ __('app.finance.account_name') }}</th>
+                            <th style="width:180px; text-align:right;">{{ __('app.finance.amount') }}</th>
                         </tr>
                     </thead>
                         <tbody>
@@ -1169,15 +1172,15 @@
                                             <div class="dropdown-menu dropdown-menu-right pl-row-menu">
                                                 @if($canOpenJournalDetail)
                                                     <a class="dropdown-item" href="{{ $journalItemsRoute }}">
-                                                        <i class="fas fa-table"></i> Item Jurnal
+                                                        <i class="fas fa-table"></i> {{ __('app.finance.journal_items') }}
                                                     </a>
                                                     <a class="dropdown-item" href="{{ route('finance.report.general-ledger', array_merge($baseFilterQuery, ['account_code' => $row['account_code']])) }}">
-                                                        <i class="fas fa-book-open"></i> Buku Besar
+                                                        <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
                                                     </a>
                                                 @endif
                                                 @if($rowHasImportedSource)
                                                     <a class="dropdown-item" href="{{ $manageExpenseRowRoute }}">
-                                                        <i class="fas fa-pen"></i> {{ $isImportedSource ? 'Edit Baris' : 'Kelola Import' }}
+                                                        <i class="fas fa-pen"></i> {{ $isImportedSource ? __('app.finance.edit_row') : __('app.finance.manage_import') }}
                                                     </a>
                                                 @endif
                                             </div>
@@ -1196,11 +1199,11 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" style="text-align:center; color:var(--pl-muted);">Belum ada pengeluaran pada periode ini.</td>
+                                <td colspan="3" style="text-align:center; color:var(--pl-muted);">{{ __('app.finance.no_expense_period') }}</td>
                             </tr>
                         @endforelse
                         <tr class="pl-total-row">
-                            <td colspan="2">Total Pengeluaran</td>
+                            <td colspan="2">{{ __('app.finance.total_expense') }}</td>
                             <td class="pl-amount expense">Rp {{ number_format((float) ($totals['expense'] ?? 0), 2, ',', '.') }}</td>
                         </tr>
                     </tbody>
@@ -1211,8 +1214,8 @@
 @else
     <div class="pl-empty-card">
         <i class="fas fa-chart-line"></i>
-        <h4>Belum ada data laba rugi</h4>
-        <div>Pastikan jurnal sudah <strong>POSTED</strong> dan akun pemasukan atau pengeluaran sudah dipetakan di bagan akun.</div>
+        <h4>{{ __('app.finance.no_profit_loss_data') }}</h4>
+        <div>{!! __('app.finance.no_profit_loss_data_note', ['status' => '<strong>'.e(__('app.finance.posted')).'</strong>']) !!}</div>
     </div>
 @endif
 @endsection

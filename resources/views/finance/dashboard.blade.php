@@ -189,13 +189,13 @@
         <div class="fd-head-main">
             <div class="fd-head-icon"><i class="fas fa-chart-pie"></i></div>
             <div>
-                <h1>Finance Dashboard</h1>
-                <p>Ringkasan snapshot, lembar saldo, laba rugi, dan buku besar dalam satu tampilan.</p>
+                <h1>{{ __('app.finance.dashboard_title') }}</h1>
+                <p>{{ __('app.finance.dashboard_subtitle') }}</p>
             </div>
         </div>
         <div class="fd-actions-top">
-            <a href="{{ route('finance.report.index') }}" class="fd-btn fd-btn-primary"><i class="fas fa-plus"></i> Input Finance Report</a>
-            <a href="{{ route('finance.invoice.index') }}" class="fd-btn fd-btn-muted"><i class="fas fa-file-invoice-dollar"></i> Faktur / Jurnal</a>
+            <a href="{{ route('finance.report.index') }}" class="fd-btn fd-btn-primary"><i class="fas fa-plus"></i> {{ __('app.finance.input_report') }}</a>
+            <a href="{{ route('finance.invoice.index') }}" class="fd-btn fd-btn-muted"><i class="fas fa-file-invoice-dollar"></i> {{ __('app.finance.invoices_journals') }}</a>
         </div>
     </div>
 
@@ -203,26 +203,26 @@
         <div class="col-lg-8">
             <div class="fd-card">
                 <div class="fd-card-head">
-                    <div class="fd-card-title"><span class="fd-card-icon"><i class="fas fa-filter"></i></span><span>Filter Periode Finance</span></div>
+                    <div class="fd-card-title"><span class="fd-card-icon"><i class="fas fa-filter"></i></span><span>{{ __('app.finance.period_filter') }}</span></div>
                 </div>
                 <div class="fd-card-body">
                     <form method="GET" action="{{ route('finance.dashboard') }}">
                         <div class="row">
                             <div class="col-md-2 fd-field">
-                                <label class="fd-label" for="dashboard_period_type"><i class="fas fa-layer-group"></i> Periode</label>
+                                <label class="fd-label" for="dashboard_period_type"><i class="fas fa-layer-group"></i> {{ __('app.finance.period') }}</label>
                                 <select name="period_type" id="dashboard_period_type" class="fd-control">
-                                    <option value="ALL" {{ $periodType === 'ALL' ? 'selected' : '' }}>Semua</option>
-                                    <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>Harian</option>
-                                    <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
-                                    <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>Tahunan</option>
+                                    <option value="ALL" {{ $periodType === 'ALL' ? 'selected' : '' }}>{{ __('app.finance.all') }}</option>
+                                    <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>{{ __('app.finance.daily') }}</option>
+                                    <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>{{ __('app.finance.monthly') }}</option>
+                                    <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>{{ __('app.finance.yearly') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-3 fd-field" id="dashboard_report_date_group">
-                                <label class="fd-label" for="dashboard_report_date"><i class="fas fa-calendar-day"></i> Tanggal</label>
+                                <label class="fd-label" for="dashboard_report_date"><i class="fas fa-calendar-day"></i> {{ __('app.finance.date') }}</label>
                                 <input type="date" name="report_date" id="dashboard_report_date" class="fd-control" value="{{ $reportDate }}">
                             </div>
                             <div class="col-md-2 fd-field" id="dashboard_month_group">
-                                <label class="fd-label" for="dashboard_month"><i class="fas fa-calendar-week"></i> Bulan</label>
+                                <label class="fd-label" for="dashboard_month"><i class="fas fa-calendar-week"></i> {{ __('app.finance.month') }}</label>
                                 <select name="month" id="dashboard_month" class="fd-control">
                                     @for($m = 1; $m <= 12; $m++)
                                         <option value="{{ $m }}" {{ (int) $month === $m ? 'selected' : '' }}>{{ str_pad((string) $m, 2, '0', STR_PAD_LEFT) }}</option>
@@ -230,11 +230,11 @@
                                 </select>
                             </div>
                             <div class="col-md-2 fd-field" id="dashboard_year_group">
-                                <label class="fd-label" for="dashboard_year"><i class="fas fa-calendar-alt"></i> Tahun</label>
+                                <label class="fd-label" for="dashboard_year"><i class="fas fa-calendar-alt"></i> {{ __('app.finance.year') }}</label>
                                 <input type="number" name="year" id="dashboard_year" class="fd-control" min="1900" max="2100" value="{{ $year }}">
                             </div>
                             <div class="col-md-2 fd-field">
-                                <label class="fd-label" for="dashboard_per_page"><i class="fas fa-list-ol"></i> Snapshot</label>
+                                <label class="fd-label" for="dashboard_per_page"><i class="fas fa-list-ol"></i> {{ __('app.finance.snapshot') }}</label>
                                 <select name="per_page" id="dashboard_per_page" class="fd-control">
                                     @foreach([5, 10, 20, 50] as $size)
                                         <option value="{{ $size }}" {{ $perPage === $size ? 'selected' : '' }}>{{ $size }}</option>
@@ -242,8 +242,8 @@
                                 </select>
                             </div>
                             <div class="col-md-1 fd-actions">
-                                <button type="submit" class="fd-btn fd-btn-primary"><i class="fas fa-search"></i> Filter</button>
-                                <a href="{{ route('finance.dashboard') }}" class="fd-btn fd-btn-muted"><i class="fas fa-redo"></i> Reset</a>
+                                <button type="submit" class="fd-btn fd-btn-primary"><i class="fas fa-search"></i> {{ __('app.finance.filter') }}</button>
+                                <a href="{{ route('finance.dashboard') }}" class="fd-btn fd-btn-muted"><i class="fas fa-redo"></i> {{ __('app.finance.reset') }}</a>
                             </div>
                         </div>
                     </form>
@@ -252,14 +252,15 @@
         </div>
         <div class="col-lg-4">
             <div class="fd-hero">
-                <small><i class="fas fa-file-invoice-dollar"></i> Total Nominal Invoice Posted</small>
+                <small><i class="fas fa-file-invoice-dollar"></i> {{ __('app.finance.total_posted_invoice_amount') }}</small>
                 <strong>Rp {{ number_format((float) data_get($journalOverview, 'total_posted_nominal', 0), 2, ',', '.') }}</strong>
                 <p>
-                    {{ number_format((int) data_get($journalOverview, 'posted_invoice_count', 0), 0, ',', '.') }}
-                    invoice posted untuk filter aktif. Update jurnal terakhir:
-                    {{ $journalOverviewLatestPostedAt }}.
+                    {{ __('app.finance.posted_invoice_summary', [
+                        'count' => number_format((int) data_get($journalOverview, 'posted_invoice_count', 0), 0, ',', '.'),
+                        'date' => $journalOverviewLatestPostedAt,
+                    ]) }}
                 </p>
-                <a href="{{ route('finance.invoice.index') }}"><i class="fas fa-arrow-right"></i> Buka Faktur / Jurnal</a>
+                <a href="{{ route('finance.invoice.index') }}"><i class="fas fa-arrow-right"></i> {{ __('app.finance.open_invoices_journals') }}</a>
             </div>
         </div>
     </div>
@@ -267,23 +268,23 @@
     <div class="fd-feature-grid">
         <div class="fd-feature-card">
             <div class="fd-feature-top">
-                <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-blue);"><i class="fas fa-wallet"></i></span><span>Ringkasan Jurnal</span></div>
-                <span class="fd-badge"><i class="fas fa-book-open"></i> Journal Based</span>
+                <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-blue);"><i class="fas fa-wallet"></i></span><span>{{ __('app.finance.journal_summary') }}</span></div>
+                <span class="fd-badge"><i class="fas fa-book-open"></i> {{ __('app.finance.journal_based') }}</span>
             </div>
             <div class="fd-mini-grid">
-                <div class="fd-mini-item"><div class="fd-mini-label">Saldo Jurnal</div><div class="fd-mini-value blue">Rp {{ number_format((float) data_get($journalOverview, 'journal_balance', 0), 2, ',', '.') }}</div></div>
-                <div class="fd-mini-item"><div class="fd-mini-label">Total Nominal</div><div class="fd-mini-value">Rp {{ number_format((float) data_get($journalOverview, 'total_posted_nominal', 0), 2, ',', '.') }}</div></div>
-                <div class="fd-mini-item"><div class="fd-mini-label">Invoice Posted</div><div class="fd-mini-value">{{ number_format((int) data_get($journalOverview, 'posted_invoice_count', 0), 0, ',', '.') }}</div></div>
-                <div class="fd-mini-item"><div class="fd-mini-label">Update Terakhir</div><div class="fd-mini-value" style="font-size:.76rem;">{{ $journalOverviewLatestPostedAt }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.journal_balance') }}</div><div class="fd-mini-value blue">Rp {{ number_format((float) data_get($journalOverview, 'journal_balance', 0), 2, ',', '.') }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.total_nominal') }}</div><div class="fd-mini-value">Rp {{ number_format((float) data_get($journalOverview, 'total_posted_nominal', 0), 2, ',', '.') }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.posted_invoices') }}</div><div class="fd-mini-value">{{ number_format((int) data_get($journalOverview, 'posted_invoice_count', 0), 0, ',', '.') }}</div></div>
+                <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.last_updated') }}</div><div class="fd-mini-value" style="font-size:.76rem;">{{ $journalOverviewLatestPostedAt }}</div></div>
             </div>
-            <div class="fd-mini-note">Nilai diambil dari jurnal finance berstatus POSTED agar saldo dashboard selaras dengan buku besar.</div>
+            <div class="fd-mini-note">{{ __('app.finance.journal_values_note') }}</div>
             <div class="fd-feature-actions">
                 <a href="{{ route('finance.invoice.index') }}" class="fd-feature-btn primary">
-                    <i class="fas fa-file-invoice-dollar"></i> Buka Jurnal
+                    <i class="fas fa-file-invoice-dollar"></i> {{ __('app.finance.open_journal') }}
                 </a>
                 @if(!empty($featureAccess['general_ledger']))
                     <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-feature-btn muted">
-                        <i class="fas fa-book-open"></i> Buku Besar
+                        <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
                     </a>
                 @endif
             </div>
@@ -292,22 +293,27 @@
         @if(!empty($featureAccess['balance_sheet']))
             <div class="fd-feature-card">
                 <div class="fd-feature-top">
-                    <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-amber);"><i class="fas fa-balance-scale"></i></span><span>Lembar Saldo</span></div>
-                    <span class="fd-badge"><i class="fas fa-check-circle"></i> Tersedia</span>
+                    <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-amber);"><i class="fas fa-balance-scale"></i></span><span>{{ __('app.finance.balance_sheet') }}</span></div>
+                    <span class="fd-badge"><i class="fas fa-check-circle"></i> {{ __('app.finance.available') }}</span>
                 </div>
                 <div class="fd-mini-grid">
-                    <div class="fd-mini-item"><div class="fd-mini-label">Liabilitas</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['liabilitas_total'] ?? 0), 2, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Piutang</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['piutang_total'] ?? 0), 2, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Kas</div><div class="fd-mini-value green">Rp {{ number_format((float) ($balanceSheetSummary['kas_total'] ?? 0), 2, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Aset</div><div class="fd-mini-value blue">Rp {{ number_format((float) ($balanceSheetSummary['aset_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.liabilities') }}</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['liabilitas_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.receivables') }}</div><div class="fd-mini-value">Rp {{ number_format((float) ($balanceSheetSummary['piutang_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.cash') }}</div><div class="fd-mini-value green">Rp {{ number_format((float) ($balanceSheetSummary['kas_total'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.assets') }}</div><div class="fd-mini-value blue">Rp {{ number_format((float) ($balanceSheetSummary['aset_total'] ?? 0), 2, ',', '.') }}</div></div>
                 </div>
-                <div class="fd-mini-note">{{ number_format((int) ($balanceSheetSummary['account_count'] ?? 0), 0, ',', '.') }} akun terpetakan. @if($balanceSheetUncategorized > 0) {{ number_format($balanceSheetUncategorized, 0, ',', '.') }} akun belum masuk kategori lembar saldo. @endif</div>
+                <div class="fd-mini-note">
+                    {{ __('app.finance.mapped_accounts', ['count' => number_format((int) ($balanceSheetSummary['account_count'] ?? 0), 0, ',', '.')]) }}
+                    @if($balanceSheetUncategorized > 0)
+                        {{ __('app.finance.uncategorized_balance_sheet', ['count' => number_format($balanceSheetUncategorized, 0, ',', '.')]) }}
+                    @endif
+                </div>
                 <div class="fd-feature-actions">
                     <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-feature-btn primary">
-                        <i class="fas fa-eye"></i> Lihat Detail
+                        <i class="fas fa-eye"></i> {{ __('app.finance.view_detail') }}
                     </a>
                     <a href="{{ route('finance.report.balance-sheet.download', $filterQuery) }}" class="fd-feature-btn muted">
-                        <i class="fas fa-file-pdf"></i> Download PDF
+                        <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
                     </a>
                 </div>
             </div>
@@ -316,21 +322,21 @@
         @if(!empty($featureAccess['profit_loss']))
             <div class="fd-feature-card">
                 <div class="fd-feature-top">
-                    <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-green);"><i class="fas fa-chart-area"></i></span><span>Laba Rugi</span></div>
-                    <span class="fd-badge"><i class="fas fa-check-circle"></i> Tersedia</span>
+                    <div class="fd-feature-title"><span class="fd-feature-icon" style="color:var(--fd-green);"><i class="fas fa-chart-area"></i></span><span>{{ __('app.finance.profit_loss') }}</span></div>
+                    <span class="fd-badge"><i class="fas fa-check-circle"></i> {{ __('app.finance.available') }}</span>
                 </div>
                 <div class="fd-mini-grid">
-                    <div class="fd-mini-item"><div class="fd-mini-label">Pemasukan</div><div class="fd-mini-value green">Rp {{ number_format((float) ($profitLossSummary['income'] ?? 0), 2, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Pengeluaran</div><div class="fd-mini-value red">Rp {{ number_format((float) ($profitLossSummary['expense'] ?? 0), 2, ',', '.') }}</div></div>
-                    <div class="fd-mini-item" style="grid-column: span 2;"><div class="fd-mini-label">Laba / Rugi Bersih</div><div class="fd-mini-value {{ (float) ($profitLossSummary['net_result'] ?? 0) >= 0 ? 'green' : 'red' }}">Rp {{ number_format((float) ($profitLossSummary['net_result'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.income') }}</div><div class="fd-mini-value green">Rp {{ number_format((float) ($profitLossSummary['income'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.expense') }}</div><div class="fd-mini-value red">Rp {{ number_format((float) ($profitLossSummary['expense'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item" style="grid-column: span 2;"><div class="fd-mini-label">{{ __('app.finance.net_profit_loss') }}</div><div class="fd-mini-value {{ (float) ($profitLossSummary['net_result'] ?? 0) >= 0 ? 'green' : 'red' }}">Rp {{ number_format((float) ($profitLossSummary['net_result'] ?? 0), 2, ',', '.') }}</div></div>
                 </div>
-                <div class="fd-mini-note">Laporan ini hanya menampilkan akun pemasukan dan pengeluaran.</div>
+                <div class="fd-mini-note">{{ __('app.finance.profit_loss_note') }}</div>
                 <div class="fd-feature-actions">
                     <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-feature-btn primary">
-                        <i class="fas fa-eye"></i> Lihat Detail
+                        <i class="fas fa-eye"></i> {{ __('app.finance.view_detail') }}
                     </a>
                     <a href="{{ route('finance.report.profit-loss.download', $filterQuery) }}" class="fd-feature-btn muted">
-                        <i class="fas fa-file-pdf"></i> Download PDF
+                        <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
                     </a>
                 </div>
             </div>
@@ -339,22 +345,22 @@
         @if(!empty($featureAccess['general_ledger']))
             <div class="fd-feature-card">
                 <div class="fd-feature-top">
-                    <div class="fd-feature-title"><span class="fd-feature-icon"><i class="fas fa-book-open"></i></span><span>Buku Besar</span></div>
-                    <span class="fd-badge"><i class="fas fa-check-circle"></i> Tersedia</span>
+                    <div class="fd-feature-title"><span class="fd-feature-icon"><i class="fas fa-book-open"></i></span><span>{{ __('app.finance.general_ledger') }}</span></div>
+                    <span class="fd-badge"><i class="fas fa-check-circle"></i> {{ __('app.finance.available') }}</span>
                 </div>
                 <div class="fd-mini-grid">
-                    <div class="fd-mini-item"><div class="fd-mini-label">Akun</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['account_count'] ?? 0), 0, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Baris Jurnal</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['entry_count'] ?? 0), 0, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Debit</div><div class="fd-mini-value green">Rp {{ number_format((float) ($generalLedgerSummary['total_debit'] ?? 0), 2, ',', '.') }}</div></div>
-                    <div class="fd-mini-item"><div class="fd-mini-label">Kredit</div><div class="fd-mini-value red">Rp {{ number_format((float) ($generalLedgerSummary['total_credit'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.accounts') }}</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['account_count'] ?? 0), 0, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.journal_rows') }}</div><div class="fd-mini-value">{{ number_format((int) ($generalLedgerSummary['entry_count'] ?? 0), 0, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.debit') }}</div><div class="fd-mini-value green">Rp {{ number_format((float) ($generalLedgerSummary['total_debit'] ?? 0), 2, ',', '.') }}</div></div>
+                    <div class="fd-mini-item"><div class="fd-mini-label">{{ __('app.finance.credit') }}</div><div class="fd-mini-value red">Rp {{ number_format((float) ($generalLedgerSummary['total_credit'] ?? 0), 2, ',', '.') }}</div></div>
                 </div>
-                <div class="fd-mini-note">Buku besar mencakup seluruh baris jurnal finance yang sudah diposting.</div>
+                <div class="fd-mini-note">{{ __('app.finance.general_ledger_note') }}</div>
                 <div class="fd-feature-actions">
                     <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-feature-btn primary">
-                        <i class="fas fa-eye"></i> Lihat Detail
+                        <i class="fas fa-eye"></i> {{ __('app.finance.view_detail') }}
                     </a>
                     <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="fd-feature-btn muted">
-                        <i class="fas fa-file-pdf"></i> Download PDF
+                        <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
                     </a>
                 </div>
             </div>
@@ -363,16 +369,16 @@
 
     <div class="fd-card">
         <div class="fd-card-head">
-            <div class="fd-card-title"><span class="fd-card-icon"><i class="fas fa-history"></i></span><span>Snapshot Laporan Finance</span></div>
+            <div class="fd-card-title"><span class="fd-card-icon"><i class="fas fa-history"></i></span><span>{{ __('app.finance.finance_report_snapshots') }}</span></div>
             <div class="fd-actions-top">
                 @permission('finance_balance_sheet.read')
-                    <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-balance-scale"></i> Lembar Saldo</a>
+                    <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-balance-scale"></i> {{ __('app.finance.balance_sheet') }}</a>
                 @endpermission
                 @permission('finance_profit_loss.read')
-                    <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-chart-area"></i> Laba Rugi</a>
+                    <a href="{{ route('finance.report.profit-loss', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-chart-area"></i> {{ __('app.finance.profit_loss') }}</a>
                 @endpermission
                 @permission('finance_general_ledger.read')
-                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-book-open"></i> Buku Besar</a>
+                    <a href="{{ route('finance.report.general-ledger', $filterQuery) }}" class="fd-btn fd-btn-muted"><i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}</a>
                 @endpermission
             </div>
         </div>
@@ -381,13 +387,13 @@
             <table class="fd-table">
                 <thead>
                     <tr>
-                        <th>Periode</th>
-                        <th>Tipe</th>
-                        <th>Versi</th>
-                        <th>Saldo Awal</th>
-                        <th>Saldo Akhir</th>
-                        <th>Generated At</th>
-                        <th>Generated By</th>
+                        <th>{{ __('app.finance.period') }}</th>
+                        <th>{{ __('app.finance.type') }}</th>
+                        <th>{{ __('app.finance.version') }}</th>
+                        <th>{{ __('app.finance.opening_balance') }}</th>
+                        <th>{{ __('app.finance.ending_balance') }}</th>
+                        <th>{{ __('app.finance.generated_at') }}</th>
+                        <th>{{ __('app.finance.generated_by') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -425,8 +431,8 @@
                             <td colspan="7">
                                 <div class="fd-empty">
                                     <i class="fas fa-inbox"></i>
-                                    <div style="font-weight:700;color:var(--fd-text);margin-bottom:.35rem;">Belum ada snapshot laporan finance.</div>
-                                    <div>Mulai dari input finance report atau ubah filter periode yang sedang aktif.</div>
+                                    <div style="font-weight:700;color:var(--fd-text);margin-bottom:.35rem;">{{ __('app.finance.no_finance_snapshots') }}</div>
+                                    <div>{{ __('app.finance.no_finance_snapshots_note') }}</div>
                                 </div>
                             </td>
                         </tr>

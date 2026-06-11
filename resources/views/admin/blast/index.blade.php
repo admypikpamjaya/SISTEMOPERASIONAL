@@ -4,25 +4,25 @@
 <div class="blast-menu-page">
 
     <div class="blast-menu-card">
-        <h2 class="blast-menu-title">Blast Message</h2>
+        <h2 class="blast-menu-title">{{ __('app.blast.menu_title') }}</h2>
         <p class="blast-menu-subtitle">
-            Pilih jenis pesan yang ingin Anda kirim
+            {{ __('app.blast.menu_subtitle') }}
         </p>
 
         <div class="blast-menu-actions">
             <a href="{{ route('admin.blast.whatsapp') }}" class="blast-btn whatsapp">
                 <span class="icon">💬</span>
                 <div class="text">
-                    <strong>WhatsApp Blast</strong>
-                    <small>Kirim pesan WhatsApp massal</small>
+                    <strong>{{ __('app.blast.whatsapp_mass_send') }}</strong>
+                    <small>{{ __('app.blast.whatsapp_mass_desc') }}</small>
                 </div>
             </a>
 
             <a href="{{ route('admin.blast.email') }}" class="blast-btn email">
                 <span class="icon">📧</span>
                 <div class="text">
-                    <strong>Email Blast</strong>
-                    <small>Kirim email ke banyak penerima</small>
+                    <strong>{{ __('app.blast.email_mass_send') }}</strong>
+                    <small>{{ __('app.blast.email_mass_desc') }}</small>
                 </div>
             </a>
         </div>

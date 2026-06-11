@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Laba Rugi</title>
+    <title>{{ __('app.finance.profit_loss_report_title') }}</title>
     <style>
         body {
             margin: 0;
@@ -134,21 +134,21 @@
 
     <div class="document-shell">
         <div class="header">
-            <h1>LABA DAN RUGI</h1>
+            <h1>{{ __('app.finance.profit_and_loss_upper') }}</h1>
             <p>YPIK PAM JAYA</p>
         </div>
 
         <table class="meta">
             <tr>
-                <td class="label">Periode</td>
+                <td class="label">{{ __('app.finance.period') }}</td>
                 <td>: {{ $periodLabel }}</td>
-                <td class="label">Jenis</td>
+                <td class="label">{{ __('app.finance.type') }}</td>
                 <td>: {{ $report->reportType }}</td>
             </tr>
             <tr>
-                <td class="label">Disusun Oleh</td>
+                <td class="label">{{ __('app.finance.prepared_by') }}</td>
                 <td>: {{ $report->generatedByName ?? '-' }}</td>
-                <td class="label">Generated At</td>
+                <td class="label">{{ __('app.finance.generated_at') }}</td>
                 <td>: {{ $report->generatedAt->format('Y-m-d H:i:s') }}</td>
             </tr>
         </table>
@@ -156,14 +156,14 @@
         <table class="report-table">
             <thead>
                 <tr>
-                    <th style="width: 170px;">Kode</th>
-                    <th>Uraian</th>
-                    <th class="amount">Nominal</th>
+                    <th style="width: 170px;">{{ __('app.finance.code') }}</th>
+                    <th>{{ __('app.finance.description') }}</th>
+                    <th class="amount">{{ __('app.finance.nominal') }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr class="section-row">
-                    <td colspan="3">Penghasilan</td>
+                    <td colspan="3">{{ __('app.finance.income') }}</td>
                 </tr>
                 @forelse($report->incomeLines as $line)
                     <tr>
@@ -172,7 +172,7 @@
                             {{ $line->lineLabel }}
                             @if($line->invoiceNumber)
                                 <div style="font-size: 10px; color: #b9c6d8; margin-top: 2px;">
-                                    Faktur: {{ $line->invoiceNumber }}
+                                    {{ __('app.finance.invoice_label') }}: {{ $line->invoiceNumber }}
                                 </div>
                             @endif
                         </td>
@@ -180,16 +180,16 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3">Tidak ada item penghasilan.</td>
+                        <td colspan="3">{{ __('app.finance.no_income_items') }}</td>
                     </tr>
                 @endforelse
                 <tr class="total-row">
-                    <td colspan="2">Total Penghasilan</td>
+                    <td colspan="2">{{ __('app.finance.total_income') }}</td>
                     <td class="amount">{{ number_format($report->totalIncome, 2, ',', '.') }}</td>
                 </tr>
 
                 <tr class="section-row">
-                    <td colspan="3">Pengeluaran</td>
+                    <td colspan="3">{{ __('app.finance.expense') }}</td>
                 </tr>
                 @forelse($report->expenseLines as $line)
                     <tr>
@@ -198,7 +198,7 @@
                             {{ $line->lineLabel }}
                             @if($line->invoiceNumber)
                                 <div style="font-size: 10px; color: #b9c6d8; margin-top: 2px;">
-                                    Faktur: {{ $line->invoiceNumber }}
+                                    {{ __('app.finance.invoice_label') }}: {{ $line->invoiceNumber }}
                                 </div>
                             @endif
                         </td>
@@ -206,16 +206,16 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3">Tidak ada item pengeluaran.</td>
+                        <td colspan="3">{{ __('app.finance.no_expense_items') }}</td>
                     </tr>
                 @endforelse
                 <tr class="total-row">
-                    <td colspan="2">Total Pengeluaran (non-penyusutan)</td>
+                    <td colspan="2">{{ __('app.finance.total_expense_non_depreciation') }}</td>
                     <td class="amount">{{ number_format($report->totalExpense, 2, ',', '.') }}</td>
                 </tr>
 
                 <tr class="section-row">
-                    <td colspan="3">Penyusutan</td>
+                    <td colspan="3">{{ __('app.finance.depreciation') }}</td>
                 </tr>
                 @forelse($report->depreciationLines as $line)
                     <tr>
@@ -224,7 +224,7 @@
                             {{ $line->lineLabel }}
                             @if($line->invoiceNumber)
                                 <div style="font-size: 10px; color: #b9c6d8; margin-top: 2px;">
-                                    Faktur: {{ $line->invoiceNumber }}
+                                    {{ __('app.finance.invoice_label') }}: {{ $line->invoiceNumber }}
                                 </div>
                             @endif
                         </td>
@@ -232,16 +232,16 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3">Tidak ada item penyusutan.</td>
+                        <td colspan="3">{{ __('app.finance.no_depreciation_items') }}</td>
                     </tr>
                 @endforelse
                 <tr class="total-row">
-                    <td colspan="2">Total Penyusutan</td>
+                    <td colspan="2">{{ __('app.finance.total_depreciation') }}</td>
                     <td class="amount">{{ number_format($report->totalDepreciation, 2, ',', '.') }}</td>
                 </tr>
 
                 <tr class="surplus-row">
-                    <td colspan="2">Surplus (Defisit)</td>
+                    <td colspan="2">{{ __('app.finance.surplus_deficit') }}</td>
                     <td class="amount">{{ number_format($report->surplusDeficit, 2, ',', '.') }}</td>
                 </tr>
             </tbody>
@@ -249,8 +249,8 @@
 
         <table class="signature">
             <tr>
-                <td>Diperiksa,</td>
-                <td>Mengetahui,</td>
+                <td>{{ __('app.finance.checked_by') }}</td>
+                <td>{{ __('app.finance.approved_by') }}</td>
             </tr>
         </table>
     </div>

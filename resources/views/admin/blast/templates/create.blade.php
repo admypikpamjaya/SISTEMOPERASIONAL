@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Template Blast')
+@section('title', __('app.blast.create_template_title'))
 
 @section('content')
 @php
@@ -195,11 +195,11 @@
 <div class="tplf-page">
     <div class="tplf-head">
         <div>
-            <div class="tplf-title">Buat Template Blast</div>
-            <div class="tplf-sub">Tambahkan template baru untuk WhatsApp atau Email.</div>
+            <div class="tplf-title">{{ __('app.blast.create_template_title') }}</div>
+            <div class="tplf-sub">{{ __('app.blast.create_template_subtitle') }}</div>
         </div>
         <a href="{{ $cancelUrl }}" class="tplf-back">
-            <i class="fas fa-arrow-left"></i> Kembali
+            <i class="fas fa-arrow-left"></i> {{ __('app.blast.back') }}
         </a>
     </div>
 
@@ -217,15 +217,15 @@
 
                 <div class="tplf-grid">
                     <div>
-                        <label for="channel" class="tplf-label">Channel <span class="text-danger">*</span></label>
+                        <label for="channel" class="tplf-label">{{ __('app.blast.channel') }} <span class="text-danger">*</span></label>
                         <select name="channel" id="channel" class="tplf-select" required>
-                            <option value="whatsapp" {{ old('channel', $channel) === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
-                            <option value="email" {{ old('channel', $channel) === 'email' ? 'selected' : '' }}>Email</option>
+                            <option value="whatsapp" {{ old('channel', $channel) === 'whatsapp' ? 'selected' : '' }}>{{ __('app.blast.whatsapp') }}</option>
+                            <option value="email" {{ old('channel', $channel) === 'email' ? 'selected' : '' }}>{{ __('app.blast.email') }}</option>
                         </select>
                     </div>
 
                     <div>
-                        <label for="name" class="tplf-label">Nama Template <span class="text-danger">*</span></label>
+                        <label for="name" class="tplf-label">{{ __('app.blast.template_name') }} <span class="text-danger">*</span></label>
                         <input
                             type="text"
                             id="name"
@@ -233,22 +233,22 @@
                             class="tplf-input"
                             maxlength="150"
                             value="{{ old('name') }}"
-                            placeholder="Contoh: Reminder Tagihan Bulanan"
+                            placeholder="{{ __('app.blast.template_name_placeholder') }}"
                             required
                         >
                     </div>
 
                     <div class="tplf-field-full">
-                        <label for="content" class="tplf-label">Isi Template <span class="text-danger">*</span></label>
+                        <label for="content" class="tplf-label">{{ __('app.blast.template_content') }} <span class="text-danger">*</span></label>
                         <textarea
                             id="content"
                             name="content"
                             class="tplf-textarea"
-                            placeholder="Isi template pesan..."
+                            placeholder="{{ __('app.blast.template_content_placeholder') }}"
                             required
                         >{{ old('content') }}</textarea>
                         <div class="tplf-hint">
-                            Placeholder: <code>{nama_siswa}</code>, <code>{kelas}</code>, <code>{nama_wali}</code>, <code>{email}</code>, <code>{wa}</code>, <code>{wa_2}</code>, <code>{nama_karyawan}</code>, <code>{instansi}</code>.
+                            {{ __('app.blast.placeholder_hint') }}: <code>{nama_siswa}</code>, <code>{kelas}</code>, <code>{nama_wali}</code>, <code>{email}</code>, <code>{wa}</code>, <code>{wa_2}</code>, <code>{nama_karyawan}</code>, <code>{instansi}</code>.
                         </div>
                     </div>
                 </div>
@@ -262,19 +262,18 @@
                             name="is_active"
                             {{ $isActiveChecked ? 'checked' : '' }}
                         >
-                        Template aktif
+                        {{ __('app.blast.template_active') }}
                     </label>
                 </div>
             </div>
 
             <div class="tplf-footer">
                 <button type="submit" class="tplf-btn primary">
-                    <i class="fas fa-save"></i> Simpan Template
+                    <i class="fas fa-save"></i> {{ __('app.blast.save_template') }}
                 </button>
-                <a href="{{ $cancelUrl }}" class="tplf-btn light">Batal</a>
+                <a href="{{ $cancelUrl }}" class="tplf-btn light">{{ __('app.blast.cancel') }}</a>
             </div>
         </form>
     </div>
 </div>
 @endsection
-

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', __('app.announcement.title'))
+
 @section('content')
 @php
     $isEdit = (bool) $editingAnnouncement;
@@ -432,10 +434,10 @@
         </div>
         <div>
             <h1 style="font-size:1.3rem; font-weight:800; color:var(--text); margin:0 0 2px; line-height:1.2;">
-                Announcement
+                {{ __('app.announcement.title') }}
             </h1>
             <p style="font-size:.8rem; color:var(--muted); font-weight:500; margin:0;">
-                Kelola & publikasikan pengumuman ke semua channel
+                {{ __('app.announcement.subtitle') }}
             </p>
         </div>
     </div>
@@ -443,7 +445,7 @@
     {{-- ── Validation errors ── --}}
     @if ($errors->any())
         <div class="an-alert-danger">
-            <strong>⚠ Terjadi kesalahan validasi:</strong>
+            <strong>{{ __('app.announcement.validation_error') }}</strong>
             <ul style="margin:8px 0 0; padding-left:18px;">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -466,7 +468,7 @@
                         <span class="hicon">
                             <i class="fas {{ $isEdit ? 'fa-edit' : 'fa-plus-circle' }}"></i>
                         </span>
-                        <h3>{{ $isEdit ? 'Edit Announcement' : 'Buat Announcement' }}</h3>
+                        <h3>{{ $isEdit ? __('app.announcement.edit_title') : __('app.announcement.create_title') }}</h3>
                     </div>
                 </div>
 
@@ -482,14 +484,14 @@
                         {{-- Focused reminder info box --}}
                         @if (! $isEdit && $focusedReminder)
                             <div class="an-info-box">
-                                <strong><i class="fas fa-bell" style="font-size:.8rem;margin-right:5px;color:#D97706;"></i>Reminder Sumber:</strong>
+                                <strong><i class="fas fa-bell" style="font-size:.8rem;margin-right:5px;color:#D97706;"></i>{{ __('app.announcement.source_reminder') }}</strong>
                                 #{{ $focusedReminder->id }} — {{ $focusedReminder->title }}
-                                <small>Jadwal: {{ $focusedReminder->remind_at?->format('d/m/Y H:i') ?? '-' }} · Oleh: {{ $focusedReminder->creator?->name ?? '-' }}</small>
-                                <small>Saat publish, reminder ini akan otomatis ditautkan.</small>
+                                <small>{{ __('app.announcement.source_schedule_by', ['schedule' => $focusedReminder->remind_at?->format('d/m/Y H:i') ?? '-', 'creator' => $focusedReminder->creator?->name ?? '-']) }}</small>
+                                <small>{{ __('app.announcement.source_auto_link_note') }}</small>
                                 <div style="margin-top:10px;">
                                     <a href="{{ route('admin.announcements.index') }}" class="an-btn an-btn-lepas">
                                         <i class="fas fa-unlink" style="font-size:.76rem !important; color:var(--muted) !important;"></i>
-                                        <span>Lepas Fokus Reminder</span>
+                                        <span>{{ __('app.announcement.detach_reminder_focus') }}</span>
                                     </a>
                                 </div>
                             </div>
@@ -498,7 +500,7 @@
                         {{-- Judul --}}
                         <div class="an-form-group">
                             <label for="title">
-                                <i class="fas fa-heading"></i> Judul
+                                <i class="fas fa-heading"></i> {{ __('app.announcement.title_label') }}
                             </label>
                             <input
                                 type="text" id="title" name="title"
@@ -511,7 +513,7 @@
                         {{-- Isi Pengumuman --}}
                         <div class="an-form-group">
                             <label for="message">
-                                <i class="fas fa-align-left"></i> Isi Pengumuman
+                                <i class="fas fa-align-left"></i> {{ __('app.announcement.message_label') }}
                             </label>
                             <textarea
                                 id="message" name="message"
@@ -524,7 +526,7 @@
                         <div class="an-form-group">
                             <label for="attachment">
                                 <i class="fas fa-paperclip"></i>
-                                Attachment <span class="opt-label">(opsional)</span>
+                                {{ __('app.announcement.attachment_label') }} <span class="opt-label">{{ __('app.announcement.optional') }}</span>
                             </label>
                             <input
                                 type="file" id="attachment" name="attachment"
@@ -532,10 +534,10 @@
                             >
                             @if ($isEdit && !empty($editingAnnouncement->attachment_path))
                                 <span class="an-file-hint">
-                                    File saat ini:
+                                    {{ __('app.announcement.current_file') }}
                                     <a href="{{ asset('storage/' . $editingAnnouncement->attachment_path) }}" target="_blank">
                                         <i class="fas fa-external-link-alt" style="font-size:.7rem !important; color:var(--p1) !important;"></i>
-                                        Lihat attachment
+                                        {{ __('app.announcement.view_attachment') }}
                                     </a>
                                 </span>
                             @endif
@@ -543,7 +545,7 @@
 
                         {{-- Channel blasting --}}
                         <div class="an-form-group">
-                            <label><i class="fas fa-paper-plane"></i> Kirim ke Blasting</label>
+                            <label><i class="fas fa-paper-plane"></i> {{ __('app.announcement.send_to_blast') }}</label>
                             <div class="an-check-group">
                                 <label class="an-check-row" for="channel_email">
                                     <input
@@ -552,8 +554,8 @@
                                         @checked(in_array('email', (array) $selectedChannels, true))
                                     >
                                     <div>
-                                        <div class="ch-label">Email</div>
-                                        <div class="ch-sub">{{ $emailRecipientCount }} recipient valid</div>
+                                        <div class="ch-label">{{ __('app.announcement.email_channel') }}</div>
+                                        <div class="ch-sub">{{ __('app.announcement.valid_recipient_count', ['count' => $emailRecipientCount]) }}</div>
                                     </div>
                                 </label>
                                 <label class="an-check-row" for="channel_whatsapp">
@@ -563,15 +565,15 @@
                                         @checked(in_array('whatsapp', (array) $selectedChannels, true))
                                     >
                                     <div>
-                                        <div class="ch-label">WhatsApp</div>
-                                        <div class="ch-sub">{{ $whatsappRecipientCount }} recipient valid</div>
+                                        <div class="ch-label">{{ __('app.announcement.whatsapp_channel') }}</div>
+                                        <div class="ch-sub">{{ __('app.announcement.valid_recipient_count', ['count' => $whatsappRecipientCount]) }}</div>
                                     </div>
                                 </label>
                             </div>
                             <span class="an-check-hint">
                                 {{ $isEdit
-                                    ? 'Kosongkan channel jika hanya ingin update data tanpa kirim ulang.'
-                                    : 'Pilih channel untuk menghubungkan announcement ke modul blasting.' }}
+                                    ? __('app.announcement.channel_update_hint')
+                                    : __('app.announcement.channel_publish_hint') }}
                             </span>
                         </div>
 
@@ -580,12 +582,12 @@
                     <div class="an-card-footer">
                         <button type="submit" class="an-btn an-btn-primary">
                             <i class="fas {{ $isEdit ? 'fa-save' : 'fa-paper-plane' }}"></i>
-                            <span>{{ $isEdit ? 'Update Announcement' : 'Publikasikan Announcement' }}</span>
+                            <span>{{ $isEdit ? __('app.announcement.update') : __('app.announcement.publish') }}</span>
                         </button>
                         @if ($isEdit)
                             <a href="{{ route('admin.announcements.index') }}" class="an-btn an-btn-secondary">
                                 <i class="fas fa-times"></i>
-                                <span>Batal Edit</span>
+                                <span>{{ __('app.announcement.cancel_edit') }}</span>
                             </a>
                         @endif
                     </div>
@@ -599,7 +601,7 @@
                     <div class="an-card-header">
                         <div class="an-card-header-left">
                             <span class="hicon"><i class="fas fa-bell"></i></span>
-                            <h3>Reminder Terkait</h3>
+                            <h3>{{ __('app.announcement.related_reminders') }}</h3>
                         </div>
                     </div>
                     <div class="an-card-body-p0" style="overflow-x:auto;">
@@ -607,9 +609,9 @@
                             <thead>
                                 <tr>
                                     <th style="width:46px;"><i class="fas fa-hashtag"></i>ID</th>
-                                    <th><i class="fas fa-bell"></i>Reminder</th>
-                                    <th style="width:90px;"><i class="fas fa-circle"></i>Status</th>
-                                    <th style="width:120px;"><i class="far fa-calendar"></i>Jadwal</th>
+                                    <th><i class="fas fa-bell"></i>{{ __('app.announcement.reminder') }}</th>
+                                    <th style="width:90px;"><i class="fas fa-circle"></i>{{ __('app.announcement.status') }}</th>
+                                    <th style="width:120px;"><i class="far fa-calendar"></i>{{ __('app.announcement.schedule') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -622,9 +624,9 @@
                                         </td>
                                         <td>
                                             @if ($reminder->is_active)
-                                                <span class="an-badge ab-success">Aktif</span>
+                                                <span class="an-badge ab-success">{{ __('app.announcement.active') }}</span>
                                             @else
-                                                <span class="an-badge ab-gray">Nonaktif</span>
+                                                <span class="an-badge ab-gray">{{ __('app.announcement.inactive') }}</span>
                                             @endif
                                         </td>
                                         <td style="font-size:.8rem;">{{ $reminder->remind_at?->format('d/m/Y H:i') ?? '-' }}</td>
@@ -634,7 +636,7 @@
                                         <td colspan="4">
                                             <div class="an-empty" style="padding:24px;">
                                                 <span class="ei"><i class="fas fa-bell-slash"></i></span>
-                                                <p>Belum ada reminder terhubung.</p>
+                                                 <p>{{ __('app.announcement.no_related_reminders') }}</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -704,7 +706,7 @@
                     <div class="an-card-header an-card-header-warn">
                         <div class="an-card-header-left">
                             <span class="hicon"><i class="fas fa-exclamation-triangle"></i></span>
-                            <h3>Reminder Announcement Belum Ditautkan</h3>
+                             <h3>{{ __('app.announcement.pending_reminders') }}</h3>
                         </div>
                     </div>
                     <div class="an-card-body-p0" style="overflow-x:auto;">
@@ -712,9 +714,9 @@
                             <thead>
                                 <tr>
                                     <th style="width:46px;"><i class="fas fa-hashtag"></i>ID</th>
-                                    <th><i class="fas fa-bell"></i>Reminder</th>
-                                    <th style="width:140px;"><i class="far fa-calendar"></i>Jadwal</th>
-                                    <th style="width:82px; text-align:center;"><i class="fas fa-cog"></i>Aksi</th>
+                                    <th><i class="fas fa-bell"></i>{{ __('app.announcement.reminder') }}</th>
+                                    <th style="width:140px;"><i class="far fa-calendar"></i>{{ __('app.announcement.schedule') }}</th>
+                                    <th style="width:82px; text-align:center;"><i class="fas fa-cog"></i>{{ __('app.announcement.action') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -731,8 +733,8 @@
                                                 <a
                                                     href="{{ route('admin.announcements.index', ['focus_reminder' => $pendingReminder->id]) }}"
                                                     class="an-icon-btn warn"
-                                                    title="Gunakan reminder ini"
-                                                    aria-label="Gunakan reminder ini"
+                                                    title="{{ __('app.announcement.use_reminder') }}"
+                                                    aria-label="{{ __('app.announcement.use_reminder') }}"
                                                 >
                                                     <i class="fas fa-link"></i>
                                                 </a>
@@ -751,7 +753,7 @@
                 <div class="an-card-header">
                     <div class="an-card-header-left">
                         <span class="hicon"><i class="fas fa-list-ul"></i></span>
-                        <h3>Data Announcement Yang Sudah Dibuat</h3>
+                         <h3>{{ __('app.announcement.data_title') }}</h3>
                     </div>
                     {{-- Search bar in header --}}
                     <form method="GET" action="{{ route('admin.announcements.index') }}">
@@ -759,7 +761,7 @@
                             <input
                                 type="text" name="search"
                                 class="an-search-input"
-                                placeholder="Cari judul, isi, pembuat..."
+                                placeholder="{{ __('app.announcement.search_placeholder') }}"
                                 value="{{ $search ?? '' }}"
                             >
                             <button type="submit" class="an-btn an-btn-sm" style="background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.28);">
@@ -779,11 +781,11 @@
                         <thead>
                             <tr>
                                 <th style="width:46px;"><i class="fas fa-hashtag"></i>ID</th>
-                                <th><i class="fas fa-bullhorn"></i>Judul / Pesan</th>
-                                <th style="width:140px;"><i class="far fa-user"></i>Dibuat Oleh</th>
-                                <th style="width:220px;"><i class="fas fa-paper-plane"></i>Log Blasting</th>
-                                <th style="width:190px;"><i class="fas fa-bell"></i>Reminder</th>
-                                <th style="width:92px; text-align:center;"><i class="fas fa-cog"></i>Aksi</th>
+                                <th><i class="fas fa-bullhorn"></i>{{ __('app.announcement.title_message') }}</th>
+                                <th style="width:140px;"><i class="far fa-user"></i>{{ __('app.announcement.created_by') }}</th>
+                                <th style="width:220px;"><i class="fas fa-paper-plane"></i>{{ __('app.announcement.blast_log') }}</th>
+                                <th style="width:190px;"><i class="fas fa-bell"></i>{{ __('app.announcement.reminder') }}</th>
+                                <th style="width:92px; text-align:center;"><i class="fas fa-cog"></i>{{ __('app.announcement.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -819,7 +821,7 @@
                                             <div class="cell-attach">
                                                 <a href="{{ asset('storage/' . $announcement->attachment_path) }}" target="_blank">
                                                     <i class="fas fa-paperclip" style="font-size:.7rem !important; color:var(--p1) !important;"></i>
-                                                    Lihat attachment
+                                                     {{ __('app.announcement.view_attachment') }}
                                                 </a>
                                             </div>
                                         @endif
@@ -827,10 +829,10 @@
 
                                     {{-- Log Blasting --}}
                                     <td>
-                                        <span class="an-badge ab-info">Total: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="total">{{ $announcement->logs_total_count }}</strong></span>
-                                        <span class="an-badge ab-success">SENT: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="sent">{{ $announcement->logs_sent_count }}</strong></span>
-                                        <span class="an-badge ab-danger">FAILED: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="failed">{{ $announcement->logs_failed_count }}</strong></span>
-                                        <span class="an-badge ab-warn">PENDING: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="pending">{{ $announcement->logs_pending_count }}</strong></span>
+                                        <span class="an-badge ab-info">{{ __('app.announcement.total') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="total">{{ $announcement->logs_total_count }}</strong></span>
+                                        <span class="an-badge ab-success">{{ __('app.announcement.sent') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="sent">{{ $announcement->logs_sent_count }}</strong></span>
+                                        <span class="an-badge ab-danger">{{ __('app.announcement.failed') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="failed">{{ $announcement->logs_failed_count }}</strong></span>
+                                        <span class="an-badge ab-warn">{{ __('app.announcement.pending') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="pending">{{ $announcement->logs_pending_count }}</strong></span>
                                         <div style="margin-top:6px;">
                                             <span class="an-badge ab-info">{{ __('app.announcement.email_opened') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="email_opened">{{ $announcement->logs_email_opened_count ?? 0 }}</strong></span>
                                             <span class="an-badge ab-gray">{{ __('app.announcement.open_rate') }}: <strong data-stat-for="{{ $announcement->id }}" data-stat-key="open_rate">{{ number_format(($announcement->logs_email_total_count ?? 0) > 0 ? (($announcement->logs_email_opened_count ?? 0) / $announcement->logs_email_total_count) * 100 : 0, 1) }}</strong>%</span>
@@ -839,14 +841,14 @@
 
                                     {{-- Reminder Terkait --}}
                                     <td>
-                                        <span class="an-badge ab-info">Total: {{ $announcement->reminders_total_count ?? 0 }}</span>
-                                        <span class="an-badge ab-success">Aktif: {{ $announcement->reminders_active_count ?? 0 }}</span>
+                                        <span class="an-badge ab-info">{{ __('app.announcement.total') }}: {{ $announcement->reminders_total_count ?? 0 }}</span>
+                                        <span class="an-badge ab-success">{{ __('app.announcement.active_count', ['count' => $announcement->reminders_active_count ?? 0]) }}</span>
                                         <div style="margin-top:5px; font-size:.76rem; color:var(--muted);">
                                             @if ($nextActiveReminder)
                                                 <i class="fas fa-clock" style="font-size:.68rem !important; color:var(--p1) !important;"></i>
                                                 {{ $nextActiveReminder->remind_at?->format('d/m/Y H:i') ?? '-' }}
                                             @else
-                                                <span style="color:#94A3B8;">Belum ada reminder aktif.</span>
+                                                 <span style="color:#94A3B8;">{{ __('app.announcement.no_active_reminder') }}</span>
                                             @endif
                                         </div>
                                         @if ($announcementReminders->isNotEmpty())
@@ -859,7 +861,7 @@
                                                 @endforeach
                                                 @if ($announcementReminders->count() > 2)
                                                     <div style="font-size:.74rem; color:var(--muted); margin-top:2px;">
-                                                        +{{ $announcementReminders->count() - 2 }} reminder lainnya
+                                                         {{ __('app.announcement.more_reminders', ['count' => $announcementReminders->count() - 2]) }}
                                                     </div>
                                                 @endif
                                             </div>
@@ -872,19 +874,20 @@
                                             <a
                                                 href="{{ route('admin.announcements.edit', $announcement->id) }}"
                                                 class="an-icon-btn info"
-                                                title="Edit announcement"
-                                                aria-label="Edit announcement"
+                                                 title="{{ __('app.announcement.edit_announcement') }}"
+                                                 aria-label="{{ __('app.announcement.edit_announcement') }}"
                                             >
                                                 <i class="fas fa-pencil-alt"></i>
                                             </a>
                                             <form
                                                 action="{{ route('admin.announcements.destroy', $announcement->id) }}"
                                                 method="POST"
-                                                onsubmit="return confirm('Hapus announcement ini?')"
+                                                 data-confirm-message="{{ __('app.announcement.delete_announcement_confirm') }}"
+                                                 onsubmit="return confirm(this.dataset.confirmMessage)"
                                             >
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="an-icon-btn danger" title="Hapus announcement" aria-label="Hapus announcement">
+                                                 <button type="submit" class="an-icon-btn danger" title="{{ __('app.announcement.delete_announcement') }}" aria-label="{{ __('app.announcement.delete_announcement') }}">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
@@ -896,7 +899,7 @@
                                     <td colspan="6">
                                         <div class="an-empty">
                                             <span class="ei"><i class="fas fa-bullhorn"></i></span>
-                                            <p>Belum ada data announcement.</p>
+                                             <p>{{ __('app.announcement.empty_data') }}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -917,7 +920,7 @@
                 <div class="an-card-header">
                     <div class="an-card-header-left">
                         <span class="hicon"><i class="fas fa-history"></i></span>
-                        <h3>Log Announcement</h3>
+                         <h3>{{ __('app.announcement.log_title') }}</h3>
                     </div>
                 </div>
 
@@ -926,21 +929,26 @@
                         <thead>
                             <tr>
                                 <th style="width:46px;"><i class="fas fa-hashtag"></i>ID</th>
-                                <th><i class="fas fa-bullhorn"></i>Announcement</th>
-                                <th style="width:100px;"><i class="fas fa-satellite-dish"></i>Channel</th>
-                                <th><i class="fas fa-user-tag"></i>Target</th>
-                                <th style="width:90px; text-align:center;"><i class="fas fa-circle"></i>Status</th>
-                                <th><i class="fas fa-reply"></i>Response</th>
-                                <th style="width:140px;"><i class="far fa-clock"></i>Sent At</th>
+                                <th><i class="fas fa-bullhorn"></i>{{ __('app.announcement.title') }}</th>
+                                <th style="width:100px;"><i class="fas fa-satellite-dish"></i>{{ __('app.announcement.channel') }}</th>
+                                <th><i class="fas fa-user-tag"></i>{{ __('app.announcement.target') }}</th>
+                                <th style="width:90px; text-align:center;"><i class="fas fa-circle"></i>{{ __('app.announcement.status') }}</th>
+                                <th><i class="fas fa-reply"></i>{{ __('app.announcement.response') }}</th>
+                                <th style="width:140px;"><i class="far fa-clock"></i>{{ __('app.announcement.sent_at') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($announcementLogs as $log)
                                 @php
-                                    $status = strtoupper((string) $log->status);
-                                    $badgeClass = $status === 'SENT'
-                                        ? 'ab-sent'
-                                        : ($status === 'FAILED' ? 'ab-failed' : 'ab-pending');
+                                     $status = strtoupper((string) $log->status);
+                                     $badgeClass = $status === 'SENT'
+                                         ? 'ab-sent'
+                                         : ($status === 'FAILED' ? 'ab-failed' : 'ab-pending');
+                                     $statusLabels = [
+                                         'SENT' => __('app.announcement.sent'),
+                                         'FAILED' => __('app.announcement.failed'),
+                                         'PENDING' => __('app.announcement.pending'),
+                                     ];
                                 @endphp
                                 <tr>
                                     <td style="font-weight:700; color:var(--p1);">#{{ $log->id }}</td>
@@ -963,7 +971,7 @@
                                     </td>
                                     <td style="font-size:.83rem;">{{ $log->target }}</td>
                                     <td style="text-align:center;">
-                                        <span class="an-badge {{ $badgeClass }}">{{ $status }}</span>
+                                        <span class="an-badge {{ $badgeClass }}">{{ $statusLabels[$status] ?? $status }}</span>
                                     </td>
                                     <td style="font-size:.8rem; color:var(--muted);">
                                         <div class="an-log-response">
@@ -981,7 +989,7 @@
                                     <td colspan="7">
                                         <div class="an-empty">
                                             <span class="ei"><i class="fas fa-history"></i></span>
-                                            <p>Belum ada log announcement.</p>
+                                             <p>{{ __('app.announcement.empty_log') }}</p>
                                         </div>
                                     </td>
                                 </tr>

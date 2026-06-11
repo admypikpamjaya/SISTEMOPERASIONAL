@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Recipient Karyawan YPIK Pam Jaya')
+@section('title', __('app.blast.employee_pamjaya_title'))
 
 @section('content')
 <style>
@@ -330,18 +330,18 @@
 <div class="ypk-page">
     <div class="ypk-head">
         <div>
-            <div class="ypk-head-title">Recipient Karyawan YPIK Pam Jaya</div>
-            <div class="ypk-head-sub">Khusus data legacy YPIK Pam Jaya. Untuk data karyawan YPIK terbaru silakan ke halaman YPIK.</div>
+            <div class="ypk-head-title">{{ __('app.blast.employee_pamjaya_title') }}</div>
+            <div class="ypk-head-sub">{{ __('app.blast.employee_pamjaya_subtitle') }}</div>
         </div>
         <div class="ypk-head-actions">
             <a href="{{ route('admin.blast.recipients.index') }}" class="ypk-btn ghost">
-                <i class="fas fa-user-graduate"></i> Data Siswa
+                <i class="fas fa-user-graduate"></i> {{ __('app.blast.data_students') }}
             </a>
             <a href="{{ route('admin.blast.recipients.employees.index') }}" class="ypk-btn ghost">
-                <i class="fas fa-building"></i> Data Koperasi
+                <i class="fas fa-building"></i> {{ __('app.blast.data_cooperative') }}
             </a>
             <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="ypk-btn ghost">
-                <i class="fas fa-id-card"></i> Karyawan YPIK
+                <i class="fas fa-id-card"></i> {{ __('app.blast.employee_ypik_short') }}
             </a>
         </div>
     </div>
@@ -362,15 +362,15 @@
 
             <div class="ypk-stats">
                 <div class="ypk-stat">
-                    <div class="ypk-stat-label">Total Karyawan</div>
+                    <div class="ypk-stat-label">{{ __('app.blast.total_employees') }}</div>
                     <div class="ypk-stat-value">{{ $totalEmployees ?? $employees->total() }}</div>
                 </div>
                 <div class="ypk-stat">
-                    <div class="ypk-stat-label">Data Valid</div>
+                    <div class="ypk-stat-label">{{ __('app.blast.valid_data') }}</div>
                     <div class="ypk-stat-value">{{ $validCount ?? 0 }}</div>
                 </div>
                 <div class="ypk-stat">
-                    <div class="ypk-stat-label">Kontak Belum Lengkap</div>
+                    <div class="ypk-stat-label">{{ __('app.blast.incomplete_contact') }}</div>
                     <div class="ypk-stat-value">{{ $incompleteCount ?? 0 }}</div>
                 </div>
             </div>
@@ -378,28 +378,28 @@
             <div class="ypk-toolbar">
                 <form method="GET" action="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="ypk-filter">
                     <div class="ypk-field">
-                        <label class="ypk-label">Cari</label>
-                        <input type="text" name="q" value="{{ $search ?? '' }}" class="ypk-input" placeholder="Nama / WA / Email">
+                        <label class="ypk-label">{{ __('app.blast.search') }}</label>
+                        <input type="text" name="q" value="{{ $search ?? '' }}" class="ypk-input" placeholder="{{ __('app.blast.search_name_wa_email') }}">
                     </div>
                     <div class="ypk-field">
-                        <label class="ypk-label">Instansi</label>
+                        <label class="ypk-label">{{ __('app.blast.institution') }}</label>
                         <select name="instansi" class="ypk-select">
-                            <option value="">Semua Instansi</option>
+                            <option value="">{{ __('app.blast.all_institutions') }}</option>
                             @foreach(($instansiOptions ?? collect()) as $instansiOption)
                                 <option value="{{ $instansiOption }}" @selected(($selectedInstansi ?? '') === $instansiOption)>{{ $instansiOption }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="ypk-field">
-                        <label class="ypk-label">Status</label>
+                        <label class="ypk-label">{{ __('app.blast.table_status') }}</label>
                         <select name="status" class="ypk-select">
-                            <option value="all" @selected(($selectedStatus ?? 'all') === 'all')>Semua</option>
-                            <option value="valid" @selected(($selectedStatus ?? 'all') === 'valid')>Valid</option>
-                            <option value="invalid" @selected(($selectedStatus ?? 'all') === 'invalid')>Invalid</option>
+                            <option value="all" @selected(($selectedStatus ?? 'all') === 'all')>{{ __('app.blast.all_statuses') }}</option>
+                            <option value="valid" @selected(($selectedStatus ?? 'all') === 'valid')>{{ __('app.blast.valid_upper') }}</option>
+                            <option value="invalid" @selected(($selectedStatus ?? 'all') === 'invalid')>{{ __('app.blast.invalid_upper') }}</option>
                         </select>
                     </div>
                     <div style="min-width:120px;">
-                        <label class="ypk-label">Per Halaman</label>
+                        <label class="ypk-label">{{ __('app.blast.per_page') }}</label>
                         <select name="per_page" class="ypk-select">
                             @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
                                 <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ $size }}</option>
@@ -407,10 +407,10 @@
                         </select>
                     </div>
                     <button type="submit" class="ypk-btn" style="background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;">
-                        <i class="fas fa-filter"></i> Filter
+                        <i class="fas fa-filter"></i> {{ __('app.blast.apply_filter') }}
                     </button>
                     <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="ypk-btn" style="background:#fff;border-color:var(--ypk-border);color:var(--ypk-text-700);">
-                        Reset
+                        {{ __('app.blast.reset') }}
                     </a>
                 </form>
 
@@ -421,13 +421,13 @@
 
                 <div class="ypk-import-wrap">
                     <a href="{{ route('admin.blast.recipients.employees-ypik.create', ['dataset' => 'pam_jaya']) }}" class="ypk-btn" style="background:#ccfbf1;border-color:#99f6e4;color:#0f766e;">
-                        <i class="fas fa-plus"></i> Input Manual
+                        <i class="fas fa-plus"></i> {{ __('app.blast.manual_input') }}
                     </a>
                     <form action="{{ route('admin.blast.recipients.employees-ypik.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="dataset" value="pam_jaya">
                         <label class="ypk-btn ypk-file-btn" style="background:#fff;border-color:#99f6e4;color:#0f766e;">
-                            <i class="fas fa-file-import"></i> Import Excel Pam Jaya
+                            <i class="fas fa-file-import"></i> {{ __('app.blast.import_pamjaya_excel') }}
                             <input
                                 type="file"
                                 name="file"
@@ -439,13 +439,13 @@
                         </label>
                     </form>
                     <button type="submit" class="ypk-btn outline-danger" id="bulkDeleteYpikPamJayaBtn" form="bulk-delete-ypik-pamjaya-form" disabled>
-                        <i class="fas fa-trash-alt"></i> Delete Selected
+                        <i class="fas fa-trash-alt"></i> {{ __('app.blast.delete_selected') }}
                     </button>
-                    <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik-pamjaya.destroy-all') }}" onsubmit="return confirm('Hapus SEMUA recipient YPIK Pam Jaya? Tindakan ini tidak bisa dibatalkan.')">
+                    <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik-pamjaya.destroy-all') }}" data-confirm-message="{{ __('app.blast.delete_all_pamjaya_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="ypk-btn danger">
-                            <i class="fas fa-trash"></i> Delete All
+                            <i class="fas fa-trash"></i> {{ __('app.blast.delete_all') }}
                         </button>
                     </form>
                 </div>
@@ -458,15 +458,15 @@
                             <th style="width:44px;">
                                 <input type="checkbox" class="ypk-checkbox" id="selectAllYpikPamJaya">
                             </th>
-                            <th style="width:56px;">No</th>
-                            <th>Nama Karyawan</th>
-                            <th>Instansi</th>
-                            <th>Nama Wali</th>
-                            <th>WhatsApp</th>
-                            <th>Email</th>
-                            <th>Catatan</th>
-                            <th style="width:150px;">Status</th>
-                            <th style="width:140px;">Aksi</th>
+                            <th style="width:56px;">{{ __('app.blast.no') }}</th>
+                            <th>{{ __('app.blast.employee_name') }}</th>
+                            <th>{{ __('app.blast.institution') }}</th>
+                            <th>{{ __('app.blast.guardian_name_field') }}</th>
+                            <th>{{ __('app.blast.whatsapp') }}</th>
+                            <th>{{ __('app.blast.email') }}</th>
+                            <th>{{ __('app.blast.notes') }}</th>
+                            <th style="width:150px;">{{ __('app.blast.table_status') }}</th>
+                            <th style="width:140px;">{{ __('app.blast.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -490,9 +490,9 @@
                                 <td>{{ $employee->catatan ?? '-' }}</td>
                                 <td>
                                     @if($employee->is_valid)
-                                        <span class="ypk-badge valid">VALID</span>
+                                        <span class="ypk-badge valid">{{ __('app.blast.valid_upper') }}</span>
                                     @else
-                                        <span class="ypk-badge invalid">INVALID</span>
+                                        <span class="ypk-badge invalid">{{ __('app.blast.invalid_upper') }}</span>
                                         @if($employee->validation_error)
                                             <div class="ypk-error-detail">{{ $employee->validation_error }}</div>
                                         @endif
@@ -500,13 +500,13 @@
                                 </td>
                                 <td>
                                     <div style="display:flex;gap:6px;">
-                                        <a href="{{ route('admin.blast.recipients.employees-ypik.edit', $employee->id) }}" class="ypk-btn" style="padding:6px 9px;background:#f0fdfa;border-color:#99f6e4;color:#0f766e;" title="Edit recipient" aria-label="Edit recipient">
+                                        <a href="{{ route('admin.blast.recipients.employees-ypik.edit', $employee->id) }}" class="ypk-btn" style="padding:6px 9px;background:#f0fdfa;border-color:#99f6e4;color:#0f766e;" title="{{ __('app.blast.edit_recipient') }}" aria-label="{{ __('app.blast.edit_recipient') }}">
                                             <i class="fas fa-pen"></i>
                                         </a>
-                                        <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik.destroy', $employee->id) }}" onsubmit="return confirm('Hapus data YPIK Pam Jaya ini?')">
+                                        <form method="POST" action="{{ route('admin.blast.recipients.employees-ypik.destroy', $employee->id) }}" data-confirm-message="{{ __('app.blast.delete_employee_pamjaya_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="ypk-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;" title="Hapus recipient" aria-label="Hapus recipient">
+                                            <button class="ypk-btn" type="submit" style="padding:6px 9px;background:#fff1f2;border-color:#fecaca;color:#b91c1c;" title="{{ __('app.blast.delete_recipient') }}" aria-label="{{ __('app.blast.delete_recipient') }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -516,7 +516,7 @@
                         @empty
                             <tr>
                                 <td colspan="10" class="ypk-empty">
-                                    Belum ada data karyawan YPIK Pam Jaya. Silakan import file legacy jika diperlukan.
+                                    {{ __('app.blast.no_employee_data_pamjaya') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -533,6 +533,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const employeeText = {
+        deleteSelected: @json(__('app.blast.delete_selected')),
+        chooseMinOneDelete: @json(__('app.blast.choose_min_one_employee_delete')),
+        deleteSelectedConfirm: @json(__('app.blast.delete_selected_employees_confirm', ['count' => '__COUNT__'])),
+    };
     const form = document.getElementById('bulk-delete-ypik-pamjaya-form');
     const selectAll = document.getElementById('selectAllYpikPamJaya');
     const checkboxes = Array.from(document.querySelectorAll('.ypk-employee-checkbox'));
@@ -552,8 +557,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         deleteBtn.disabled = selectedCount === 0;
         deleteBtn.textContent = selectedCount > 0
-            ? `Delete Selected (${selectedCount})`
-            : 'Delete Selected';
+            ? `${employeeText.deleteSelected} (${selectedCount})`
+            : employeeText.deleteSelected;
 
         if (selectAll) {
             selectAll.checked = selectedCount > 0 && selectedCount === totalCount;
@@ -575,11 +580,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const selected = checkboxes.filter(cb => cb.checked);
         if (selected.length === 0) {
             event.preventDefault();
-            alert('Pilih minimal satu recipient untuk dihapus.');
+            alert(employeeText.chooseMinOneDelete);
             return;
         }
 
-        const confirmText = `Hapus ${selected.length} recipient YPIK Pam Jaya terpilih?`;
+        const confirmText = employeeText.deleteSelectedConfirm.replace('__COUNT__', selected.length);
         if (!confirm(confirmText)) {
             event.preventDefault();
         }

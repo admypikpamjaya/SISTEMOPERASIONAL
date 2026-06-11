@@ -267,7 +267,7 @@
                                             <img src="<?php echo e(asset('images/logo-si.png')); ?>" alt="Logo SI" class="sidebar-app-meta-logo" style="width:auto;height:auto;max-width:68px;max-height:36px;object-fit:contain;">
                                             <img src="<?php echo e(asset('images/logo-pradita.png')); ?>" alt="Logo Pradita" class="sidebar-app-meta-logo is-pradita" style="width:auto;height:auto;max-width:86px;max-height:36px;object-fit:contain;">
                                         </div>
-                                        <span class="sidebar-app-meta-version">Versi Web 1.1</span>
+                                        <span class="sidebar-app-meta-version">{{ __('app.web_version', ['version' => '1.1']) }}</span>
                                     </div>
                                 <?php else: ?>
                                     <a href="<?php echo e(route($menu['route'])); ?>"

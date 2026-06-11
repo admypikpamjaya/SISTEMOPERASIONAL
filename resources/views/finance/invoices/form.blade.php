@@ -411,6 +411,11 @@
         'CANCELLED' => 'fa-times-circle',
         default     => 'fa-clock',
     };
+    $statusLabel = match($status) {
+        'POSTED' => __('app.finance.posted'),
+        'CANCELLED' => __('app.finance.cancelled'),
+        default => __('app.finance.draft'),
+    };
 @endphp
 
 {{-- ── Page Header ──────────────────────────────────── --}}
@@ -421,22 +426,22 @@
         </div>
         <div>
             <h1 class="ivf-header-title">
-                {{ $isEdit ? 'Ubah Faktur / Jurnal' : 'Draft Faktur / Jurnal Baru' }}
+                {{ $isEdit ? __('app.finance.edit_invoice_journal') : __('app.finance.new_invoice_journal_draft') }}
             </h1>
             <p class="ivf-header-sub">
-                {{ $isEdit ? 'Faktur: ' . $invoice->invoice_no : 'Nomor faktur akan dibuat otomatis saat disimpan' }}
+                {{ $isEdit ? __('app.finance.invoice_no') . ': ' . $invoice->invoice_no : __('app.finance.invoice_number_auto') }}
             </p>
         </div>
     </div>
     <div class="ivf-header-actions">
         <a href="{{ route('finance.invoice.index') }}" class="btn-ivf-back">
-            <i class="fas fa-arrow-left"></i> Kembali
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance.back') }}
         </a>
         @if($isEdit && $invoice->status === 'POSTED')
             <form action="{{ route('finance.invoice.set-draft', $invoice->id) }}" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="btn-ivf-reset">
-                    <i class="fas fa-undo"></i> Reset ke Rancangan
+                    <i class="fas fa-undo"></i> {{ __('app.finance.reset_to_draft') }}
                 </button>
             </form>
         @endif
@@ -448,7 +453,7 @@
     <div class="ivf-alert danger">
         <div class="al-icon"><i class="fas fa-exclamation-triangle"></i></div>
         <div>
-            <strong>Validasi gagal:</strong>
+            <strong>{{ __('app.finance.validation_failed') }}:</strong>
             <ul>
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -465,15 +470,15 @@
     <div class="ivf-meta-banner">
         <div>
             <div class="ivf-meta-no">
-                {{ $isEdit ? $invoice->invoice_no : 'Draft' }}
+                {{ $isEdit ? $invoice->invoice_no : __('app.finance.draft') }}
             </div>
             <div class="ivf-meta-sub">
-                {{ $isEdit ? 'Edit entri jurnal yang sudah ada' : 'Buat entri jurnal & faktur baru' }}
+                {{ $isEdit ? __('app.finance.edit_existing_journal_entry') : __('app.finance.create_journal_invoice') }}
             </div>
         </div>
         <span class="badge-status-lg {{ $statusBadge }}">
             <i class="fas {{ $statusIcon }}" style="font-size:.6rem;"></i>
-            {{ $status }}
+            {{ $statusLabel }}
         </span>
     </div>
 
@@ -481,7 +486,7 @@
     @if($isReadOnly)
         <div class="ivf-alert info" style="margin: 1rem 1.4rem 0; animation:none;">
             <div class="al-icon"><i class="fas fa-lock"></i></div>
-            <div>Faktur ini sudah <strong>terekam</strong>. Klik <strong>Reset ke Rancangan</strong> di atas untuk mengedit isi jurnal.</div>
+            <div>{!! __('app.finance.posted_invoice_locked_note', ['status' => '<strong>'.e(__('app.finance.posted')).'</strong>', 'reset' => '<strong>'.e(__('app.finance.reset_to_draft')).'</strong>']) !!}</div>
         </div>
     @endif
 
@@ -493,32 +498,32 @@
         <div class="ivf-form-body">
 
             {{-- ── Info Utama ── --}}
-            <div class="ivf-section-label"><i class="fas fa-info-circle" style="font-size:.65rem;color:var(--blue-primary);"></i> Informasi Faktur</div>
+            <div class="ivf-section-label"><i class="fas fa-info-circle" style="font-size:.65rem;color:var(--blue-primary);"></i> {{ __('app.finance.invoice_information') }}</div>
 
             <div class="row">
                 <div class="col-md-3 ivf-form-group">
-                    <label class="ivf-label"><i class="fas fa-calendar-alt"></i> Tanggal Akuntansi</label>
+                    <label class="ivf-label"><i class="fas fa-calendar-alt"></i> {{ __('app.finance.accounting_date') }}</label>
                     <input type="date" name="accounting_date" id="accounting_date"
                         class="ivf-control" value="{{ $defaultDate }}"
                         {{ $isReadOnly ? 'disabled' : '' }} required>
                 </div>
                 <div class="col-md-3 ivf-form-group">
-                    <label class="ivf-label"><i class="fas fa-tags"></i> Jenis</label>
+                    <label class="ivf-label"><i class="fas fa-tags"></i> {{ __('app.finance.type') }}</label>
                     <select name="entry_type" id="entry_type" class="ivf-control"
                         {{ $isReadOnly ? 'disabled' : '' }} required>
-                        <option value="INCOME"  {{ $defaultEntryType === 'INCOME'  ? 'selected' : '' }}>Pemasukan</option>
-                        <option value="EXPENSE" {{ $defaultEntryType === 'EXPENSE' ? 'selected' : '' }}>Pengeluaran</option>
+                        <option value="INCOME"  {{ $defaultEntryType === 'INCOME'  ? 'selected' : '' }}>{{ __('app.finance.income') }}</option>
+                        <option value="EXPENSE" {{ $defaultEntryType === 'EXPENSE' ? 'selected' : '' }}>{{ __('app.finance.expense') }}</option>
                     </select>
                 </div>
                 <div class="col-md-6 ivf-form-group">
-                    <label class="ivf-label"><i class="fas fa-book"></i> Jurnal</label>
+                    <label class="ivf-label"><i class="fas fa-book"></i> {{ __('app.finance.journal') }}</label>
                     <input type="text"
                         name="journal_name"
                         id="journal_name"
                         class="ivf-control"
                         value="{{ $defaultJournalName }}"
                         list="journal_name_options"
-                        placeholder="Pilih dari daftar atau ketik nama jurnal sendiri"
+                        placeholder="{{ __('app.finance.journal_name_placeholder') }}"
                         autocomplete="off"
                         {{ $isReadOnly ? 'disabled' : '' }}
                         required>
@@ -529,31 +534,31 @@
                     </datalist>
                 </div>
                 <div class="col-12 ivf-form-group">
-                    <label class="ivf-label"><i class="fas fa-link"></i> Referensi</label>
+                    <label class="ivf-label"><i class="fas fa-link"></i> {{ __('app.finance.reference') }}</label>
                     <input type="text" name="reference" id="reference"
-                        class="ivf-control" placeholder="Contoh: Pembayaran SPP Februari 2026"
+                        class="ivf-control" placeholder="{{ __('app.finance.reference_placeholder') }}"
                         value="{{ $defaultReference }}"
                         {{ $isReadOnly ? 'disabled' : '' }}>
                 </div>
             </div>
 
             {{-- ── Baris Jurnal ── --}}
-            <div class="ivf-section-label"><i class="fas fa-table" style="font-size:.65rem;color:var(--blue-primary);"></i> Baris Jurnal</div>
+            <div class="ivf-section-label"><i class="fas fa-table" style="font-size:.65rem;color:var(--blue-primary);"></i> {{ __('app.finance.journal_rows') }}</div>
             <div style="font-size:0.76rem;color:var(--text-muted);margin:-0.35rem 0 0.75rem;">
-                Pilih kode akun dari fitur <strong>Bagan Akun</strong> (boleh ketik manual bila diperlukan).
+                {!! __('app.finance.journal_rows_account_help', ['accounts' => '<strong>'.e(__('app.finance.accounts')).'</strong>']) !!}
             </div>
 
             <div class="ivf-items-wrap">
                 <table class="ivf-items-table" id="invoice-items-table">
                     <thead>
                         <tr>
-                            <th style="width:130px;">Asset Category</th>
-                            <th style="width:260px;">Akun <span style="color:var(--accent-red);">*</span></th>
-                            <th style="width:150px;">Rekanan</th>
-                            <th style="width:200px;">Label <span style="color:var(--accent-red);">*</span></th>
-                            <th>Analisa Distribusi</th>
-                            <th style="width:148px;text-align:right;">Debit</th>
-                            <th style="width:148px;text-align:right;">Kredit</th>
+                            <th style="width:130px;">{{ __('app.finance.asset_category') }}</th>
+                            <th style="width:260px;">{{ __('app.finance.accounts') }} <span style="color:var(--accent-red);">*</span></th>
+                            <th style="width:150px;">{{ __('app.finance.partner_name') }}</th>
+                            <th style="width:200px;">{{ __('app.finance.label') }} <span style="color:var(--accent-red);">*</span></th>
+                            <th>{{ __('app.finance.analytic_distribution') }}</th>
+                            <th style="width:148px;text-align:right;">{{ __('app.finance.debit') }}</th>
+                            <th style="width:148px;text-align:right;">{{ __('app.finance.credit') }}</th>
                             <th style="width:52px;text-align:center;"></th>
                         </tr>
                     </thead>
@@ -579,7 +584,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="5" style="text-align:right;color:var(--text-muted);">Total</th>
+                            <th colspan="5" style="text-align:right;color:var(--text-muted);">{{ __('app.finance.total') }}</th>
                             <th class="total-amount" id="total-debit-text">Rp 0,00</th>
                             <th class="total-amount" id="total-credit-text">Rp 0,00</th>
                             <th></th>
@@ -596,11 +601,11 @@
                     </option>
                 @endforeach
             </datalist>
-            <div class="ivf-section-label"><i class="fas fa-sticky-note" style="font-size:.65rem;color:var(--blue-primary);"></i> Catatan</div>
+            <div class="ivf-section-label"><i class="fas fa-sticky-note" style="font-size:.65rem;color:var(--blue-primary);"></i> {{ __('app.finance.notes') }}</div>
             <div class="ivf-form-group">
-                <label class="ivf-label"><i class="fas fa-comment-alt"></i> Catatan Awal <span style="font-weight:400;text-transform:none;letter-spacing:0;">(opsional)</span></label>
+                <label class="ivf-label"><i class="fas fa-comment-alt"></i> {{ __('app.finance.initial_note') }} <span style="font-weight:400;text-transform:none;letter-spacing:0;">({{ __('app.finance.optional') }})</span></label>
                 <textarea name="initial_note" id="initial_note" class="ivf-control"
-                    placeholder="Catatan untuk log faktur (bisa ditambah lagi di halaman detail)."
+                    placeholder="{{ __('app.finance.initial_note_placeholder') }}"
                     {{ $isReadOnly ? 'disabled' : '' }}>{{ old('initial_note') }}</textarea>
             </div>
 
@@ -609,15 +614,15 @@
         {{-- ── Footer ── --}}
         <div class="ivf-card-footer">
             <button type="button" id="add-item-row" class="btn-add-row" {{ $isReadOnly ? 'disabled' : '' }}>
-                <i class="fas fa-plus"></i> Tambahkan Baris
+                <i class="fas fa-plus"></i> {{ __('app.finance.add_row_button') }}
             </button>
             @if(!$isReadOnly)
                 <div class="ivf-footer-right">
                     <button type="submit" class="btn-draft js-submit-action" data-action="save_draft">
-                        <i class="fas fa-save"></i> Simpan Draft
+                        <i class="fas fa-save"></i> {{ __('app.finance.save_draft') }}
                     </button>
                     <button type="submit" class="btn-post js-submit-action" data-action="post">
-                        <i class="fas fa-check-circle"></i> Rekam
+                        <i class="fas fa-check-circle"></i> {{ __('app.finance.record') }}
                     </button>
                 </div>
             @endif

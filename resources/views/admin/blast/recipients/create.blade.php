@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Tambah Data Siswa')
+@section('title', __('app.blast.add_student_data_title'))
 @section('content')
 
 <style>
@@ -511,12 +511,12 @@
 </style>
 
 <div class="recipient-form-wrapper">
-    {{-- Back Button --}}
+    {{-- Tombol Kembali --}}
     <a href="{{ route('admin.blast.recipients.index') }}" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>
-        Kembali ke Recipient Data
+        {{ __('app.blast.back_to_recipient_data') }}
     </a>
 
     {{-- Page Header --}}
@@ -527,8 +527,8 @@
             </svg>
         </div>
         <div class="header-content">
-            <h1>Tambah Data Siswa</h1>
-            <p>Input data penerima WhatsApp & Email secara manual atau impor melalui file Excel</p>
+            <h1>{{ __('app.blast.add_student_data_title') }}</h1>
+            <p>{{ __('app.blast.add_student_data_subtitle') }}</p>
         </div>
     </div>
 
@@ -536,8 +536,8 @@
         {{-- FORM MANUAL --}}
         <div class="form-card">
             <div class="card-header">
-                <strong>Form Input Manual</strong>
-                <div class="subtitle">Isi semua informasi yang diperlukan untuk menambahkan data penerima baru</div>
+                <strong>{{ __('app.blast.manual_input_form') }}</strong>
+                <div class="subtitle">{{ __('app.blast.manual_input_subtitle') }}</div>
             </div>
 
             <div class="card-body">
@@ -551,12 +551,12 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                 </svg>
-                                Nama Siswa
+                                {{ __('app.blast.student_name_field') }}
                             </label>
                             <input type="text" 
                                    name="nama_siswa" 
                                    id="nama_siswa" 
-                                   placeholder="Masukkan nama siswa"
+                                   placeholder="{{ __('app.blast.student_name_placeholder') }}"
                                    value="{{ old('nama_siswa') }}"
                                    required>
                             @if($errors->has('nama_siswa'))
@@ -571,7 +571,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                                 </svg>
-                                Contoh: Audy Sava
+                                {{ __('app.blast.example_student_name') }}
                             </div>
                         </div>
 
@@ -581,12 +581,12 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
                                 </svg>
-                                Kelas
+                                {{ __('app.blast.class') }}
                             </label>
                             <input type="text" 
                                    name="kelas" 
                                    id="kelas" 
-                                   placeholder="Contoh: 3A"
+                                    placeholder="{{ __('app.blast.class_placeholder') }}"
                                    value="{{ old('kelas') }}"
                                    required>
                             @if($errors->has('kelas'))
@@ -598,7 +598,7 @@
                                 </div>
                             @endif
                             <div class="form-hint">
-                                Format: Tingkat Kelas
+                                {{ __('app.blast.class_format_hint') }}
                             </div>
                         </div>
 
@@ -608,12 +608,12 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                                 </svg>
-                                Nama Wali
+                                {{ __('app.blast.guardian_name_field') }}
                             </label>
                             <input type="text" 
                                    name="nama_wali" 
                                    id="nama_wali" 
-                                   placeholder="Masukkan nama wali"
+                                   placeholder="{{ __('app.blast.guardian_name_placeholder') }}"
                                    value="{{ old('nama_wali') }}"
                                    required>
                             @if($errors->has('nama_wali'))
@@ -632,7 +632,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                                 </svg>
-                                WhatsApp Wali
+                                {{ __('app.blast.guardian_whatsapp_1') }}
                             </label>
                             <input type="text" 
                                    name="wa_wali" 
@@ -648,7 +648,7 @@
                                 </div>
                             @endif
                             <div class="form-hint">
-                                Gunakan format: +62 812 3456 789 (maksimal 13 digit setelah +62)
+                                {{ __('app.blast.phone_format_hint') }}
                             </div>
                         </div>
 
@@ -658,7 +658,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                                 </svg>
-                                WhatsApp Wali 2 (Opsional)
+                                {{ __('app.blast.guardian_whatsapp_2_optional') }}
                             </label>
                             <input type="text"
                                    name="wa_wali_2"
@@ -674,7 +674,7 @@
                                 </div>
                             @endif
                             <div class="form-hint">
-                                Isi bila ada nomor WhatsApp cadangan
+                                {{ __('app.blast.backup_whatsapp_hint') }}
                             </div>
                         </div>
 
@@ -684,12 +684,12 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                                 </svg>
-                                Email Wali
+                                {{ __('app.blast.guardian_email_field') }}
                             </label>
                             <input type="email" 
                                    name="email_wali" 
                                    id="email_wali" 
-                                   placeholder="email@contoh.com"
+                                   placeholder="{{ __('app.blast.guardian_email_placeholder') }}"
                                    value="{{ old('email_wali') }}">
                             @if($errors->has('email_wali'))
                                 <div class="error-message">
@@ -700,7 +700,7 @@
                                 </div>
                             @endif
                             <div class="form-hint">
-                                Pastikan email aktif untuk menerima blasting
+                                {{ __('app.blast.email_active_hint') }}
                             </div>
                         </div>
 
@@ -710,11 +710,11 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                                 </svg>
-                                Catatan (Opsional)
+                                {{ __('app.blast.notes_optional') }}
                             </label>
                             <textarea name="catatan" 
                                       id="catatan" 
-                                      placeholder="Tambahkan catatan jika diperlukan...">{{ old('catatan') }}</textarea>
+                                      placeholder="{{ __('app.blast.notes_placeholder') }}">{{ old('catatan') }}</textarea>
                             @if($errors->has('catatan'))
                                 <div class="error-message">
                                     <svg xmlns="http://www.w3.org2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14">
@@ -728,13 +728,13 @@
 
                     <div class="form-actions">
                         <a href="{{ route('admin.blast.recipients.index') }}" class="btn btn-secondary">
-                            Batal
+                            {{ __('app.blast.cancel') }}
                         </a>
                         <button type="submit" class="btn btn-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
-                            Tambah Data
+                            {{ __('app.blast.add_data') }}
                         </button>
                     </div>
                 </form>
@@ -748,9 +748,9 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    Import Data via Excel
+                    {{ __('app.blast.import_data_excel') }}
                 </strong>
-                <div class="subtitle">Unggah file Excel untuk impor data secara massal</div>
+                <div class="subtitle">{{ __('app.blast.import_data_excel_subtitle') }}</div>
             </div>
             <div style="margin-bottom: 14px; font-size: 14px;">
     <a href="https://drive.google.com/drive/u/3/folders/1_dySG9XdJB3GPiVATUzAvzjSvoDNvIBC"
@@ -768,7 +768,7 @@
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M13.5 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5h10.5A2.25 2.25 0 0019.5 17.25V10.5m-6-6l6 6m-6-6v6h6" />
         </svg>
-        Klik di sini untuk melihat template Excel
+        {{ __('app.blast.view_excel_template') }}
     </a>
 </div>
 
@@ -784,10 +784,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
-                        <h4>Unggah File Excel</h4>
-                        <p>Klik untuk memilih file atau tarik file ke sini</p>
+                        <h4>{{ __('app.blast.upload_excel_file') }}</h4>
+                        <p>{{ __('app.blast.click_or_drag_file') }}</p>
                         <div style="font-size: 12px; color: #94a3b8;">
-                            Format yang didukung: .xlsx, .xls, .csv
+                            {{ __('app.blast.supported_formats') }}
                         </div>
                         <input type="file" name="file" id="excelFile" accept=".xlsx,.xls,.csv" required>
                     </div>
@@ -796,7 +796,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Impor Excel
+                        {{ __('app.blast.import_excel') }}
                     </button>
                 </form>
 
@@ -806,50 +806,50 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                         </svg>
-                        Format Excel yang Disarankan
+                        {{ __('app.blast.recommended_excel_format') }}
                     </h5>
                     <ul>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 1: Nama Siswa
+                            {{ __('app.blast.column_1_student_name') }}
                         </li>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 2: Kelas
+                            {{ __('app.blast.column_2_class') }}
                         </li>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 3: Nama Wali
+                            {{ __('app.blast.column_3_guardian_name') }}
                         </li>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 4: WhatsApp Wali
+                            {{ __('app.blast.column_4_guardian_whatsapp') }}
                         </li>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 5: WhatsApp Wali 2 (opsional)
+                            {{ __('app.blast.column_5_guardian_whatsapp_2') }}
                         </li>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 6: Email Wali
+                            {{ __('app.blast.column_6_guardian_email') }}
                         </li>
                         <li>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
-                            Kolom 7: Catatan (opsional)
+                            {{ __('app.blast.column_7_notes') }}
                         </li>
                     </ul>
                 </div>
@@ -860,6 +860,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const recipientText = {
+        importNamedFile: @json(__('app.blast.import_named_file', ['file' => '__FILE__'])),
+        requiredFieldsError: @json(__('app.blast.required_fields_error')),
+        formErrorReview: @json(__('app.blast.form_error_review')),
+    };
+
     // File drop zone functionality
     const fileDropZone = document.getElementById('fileDropZone');
     const excelFile = document.getElementById('excelFile');
@@ -941,13 +947,12 @@ document.addEventListener('DOMContentLoaded', function() {
             fileName.classList.add('file-name-display');
             fileDropZone.appendChild(fileName);
             
-            // Update import button text
             if (importBtn) {
                 importBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Import "${file.name}"
+                    ${recipientText.importNamedFile.replace('__FILE__', file.name)}
                 `;
             }
         }
@@ -977,7 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!isValid) {
                 e.preventDefault();
-                showToast('Harap isi semua field yang wajib diisi', 'error');
+                showToast(recipientText.requiredFieldsError, 'error');
             }
         });
     }
@@ -1070,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show validation errors from server
     @if($errors->any())
         setTimeout(() => {
-            showToast('Terdapat kesalahan dalam pengisian form. Harap periksa kembali.', 'error');
+            showToast(recipientText.formErrorReview, 'error');
         }, 500);
     @endif
 

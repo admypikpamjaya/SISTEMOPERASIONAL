@@ -1032,7 +1032,7 @@
                     </div>
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
                         <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.refresh_data') }}</div>
-                        <div style="font-size:1.1rem;font-weight:800;">60 Seconds</div>
+                        <div style="font-size:1.1rem;font-weight:800;">{{ __('app.dashboard.refresh_interval') }}</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:.55rem .9rem;flex:1;backdrop-filter:blur(6px);">
                         <div style="font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.15rem;">{{ __('app.dashboard.status') }}</div>
@@ -1046,7 +1046,7 @@
 @if($isSuperAdmin)
     <div class="section-label">
         <i class="fas fa-user-shield" style="color:var(--blue-primary);font-size:.7rem;"></i>
-        Superadmin Tools
+        {{ __('app.dashboard.superadmin_tools') }}
     </div>
 
     <div class="row">
@@ -1056,13 +1056,13 @@
                     <div class="maintenance-hub-hero">
                         <div class="maintenance-hub-kicker">
                             <span class="dot"></span>
-                            Superadmin Maintenance
+                            {{ __('app.dashboard.superadmin_maintenance') }}
                         </div>
 
                         <div class="saldo-icon mb-3"><i class="fas fa-envelope-open-text"></i></div>
-                        <h3 class="maintenance-hub-title">Distribusi Report Maintenance</h3>
+                        <h3 class="maintenance-hub-title">{{ __('app.dashboard.maintenance_distribution') }}</h3>
                         <div class="maintenance-hub-description">
-                            Kelola email penerima report maintenance langsung dari dashboard superadmin. Email master tetap aktif, sementara email tambahan bisa ditambah atau dihapus kapan saja dengan tampilan yang lebih cepat dan rapi.
+                            {{ __('app.dashboard.maintenance_distribution_desc') }}
                         </div>
 
                         <div class="maintenance-hub-actions">
@@ -1072,7 +1072,7 @@
                                 class="maintenance-hub-btn maintenance-hub-btn-primary"
                             >
                                 <i class="fas fa-plus"></i>
-                                Tambah Email
+                                {{ __('app.dashboard.add_email') }}
                             </button>
                             <button
                                 type="button"
@@ -1080,14 +1080,14 @@
                                 class="maintenance-hub-btn maintenance-hub-btn-secondary"
                             >
                                 <i class="fas fa-sliders-h"></i>
-                                Kelola Daftar
+                                {{ __('app.dashboard.manage_list') }}
                             </button>
                         </div>
 
                         <div class="maintenance-hub-master">
                             <span class="maintenance-hub-master-badge">
                                 <i class="fas fa-lock"></i>
-                                Master Aktif
+                                {{ __('app.dashboard.master_active') }}
                             </span>
                             <span class="maintenance-hub-master-email" id="maintenance-recipient-master-email">
                                 {{ data_get($maintenanceNotificationRecipients, 'master') }}
@@ -1098,31 +1098,31 @@
                     <div class="maintenance-hub-panel">
                         <div class="maintenance-hub-stats">
                             <div class="maintenance-hub-stat">
-                                <div class="maintenance-hub-stat-label">Total Tujuan</div>
+                                <div class="maintenance-hub-stat-label">{{ __('app.dashboard.total_destinations') }}</div>
                                 <div class="maintenance-hub-stat-value" id="maintenance-recipient-total">
                                     {{ data_get($maintenanceNotificationRecipients, 'totalCount', 1) }}
                                 </div>
                                 <div class="maintenance-hub-stat-meta" id="maintenance-recipient-summary-text">
-                                    Master tetap aktif, {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email tambahan tersimpan
+                                    {{ __('app.dashboard.additional_email_saved', ['count' => data_get($maintenanceNotificationRecipients, 'additionalCount', 0)]) }}
                                 </div>
                             </div>
 
                             <div class="maintenance-hub-stat">
-                                <div class="maintenance-hub-stat-label">Email Master</div>
+                                <div class="maintenance-hub-stat-label">{{ __('app.dashboard.master_email') }}</div>
                                 <div class="maintenance-hub-stat-value" style="font-size:1rem; line-height:1.45; word-break:break-word;">
-                                    Terkunci
+                                    {{ __('app.dashboard.locked') }}
                                 </div>
                                 <div class="maintenance-hub-stat-meta">
-                                    Email master di sisi kiri selalu menerima report maintenance dan tidak dapat dihapus.
+                                    {{ __('app.dashboard.master_email_note') }}
                                 </div>
                             </div>
                         </div>
 
                         <div class="maintenance-hub-preview-card">
                             <div class="maintenance-hub-preview-header">
-                                <h4 class="maintenance-hub-preview-title">Email Tambahan Aktif</h4>
+                                <h4 class="maintenance-hub-preview-title">{{ __('app.dashboard.active_additional_email') }}</h4>
                                 <span class="maintenance-hub-count-badge" id="maintenance-recipient-count-badge">
-                                    {{ data_get($maintenanceNotificationRecipients, 'additionalCount', 0) }} email
+                                    {{ __('app.dashboard.email_count', ['count' => data_get($maintenanceNotificationRecipients, 'additionalCount', 0)]) }}
                                 </span>
                             </div>
 
@@ -1134,13 +1134,16 @@
                                     </div>
                                 @empty
                                     <div class="maintenance-hub-empty">
-                                        Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">Tambah Email</strong> untuk menambahkan penerima baru.
+                                        {!! __('app.dashboard.no_additional_email', ['button' => '<strong class="ml-1 mr-1">' . e(__('app.dashboard.add_email')) . '</strong>']) !!}
                                     </div>
                                 @endforelse
                             </div>
 
                             <div class="maintenance-hub-note">
-                                Tombol <strong>Tambah Email</strong> membuka form penambahan cepat, sedangkan <strong>Kelola Daftar</strong> menampilkan daftar lengkap untuk tambah dan hapus email.
+                                {!! __('app.dashboard.maintenance_hub_note', [
+                                    'add' => '<strong>' . e(__('app.dashboard.add_email')) . '</strong>',
+                                    'manage' => '<strong>' . e(__('app.dashboard.manage_list')) . '</strong>',
+                                ]) !!}
                             </div>
                         </div>
                     </div>
@@ -1159,7 +1162,7 @@
     @foreach($assetStatisticsByUnit as $stat)
         @php
             $unitValue = $stat->unit;
-            $unitLabel = $unitValue ?? 'Belum Di-assign';
+            $unitLabel = $unitValue ?? __('app.dashboard.unassigned');
         @endphp
 
         <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
@@ -1299,12 +1302,58 @@
         const refreshIntervalMs = 60000;
         let isRefreshing = false;
         let maintenanceNotificationRecipients = @json($maintenanceNotificationRecipients ?? null);
+        const appLocale = @json(app()->getLocale());
+        const numberLocale = appLocale === 'en' ? 'en-US' : 'id-ID';
+        const dashboardText = {
+            additionalEmailSaved: @json(__('app.dashboard.additional_email_saved')),
+            emailCount: @json(__('app.dashboard.email_count')),
+            noAdditionalEmail: @json(__('app.dashboard.no_additional_email', ['button' => '<strong class="ml-1 mr-1">' . e(__('app.dashboard.add_email')) . '</strong>'])),
+            noName: @json(__('app.dashboard.no_name')),
+            noAdditionalEmailTitle: @json(__('app.dashboard.no_additional_email_title')),
+            noAdditionalEmailModalNote: @json(__('app.dashboard.no_additional_email_modal_note', ['button' => '<strong>+ ' . e(__('app.dashboard.add_email')) . '</strong>'])),
+            emailMaintenance: @json(__('app.dashboard.email_maintenance')),
+            manageMaintenanceRecipients: @json(__('app.dashboard.manage_maintenance_recipients')),
+            maintenanceModalDesc: @json(__('app.dashboard.maintenance_modal_desc')),
+            masterEmailActive: @json(__('app.dashboard.master_email_active')),
+            additionalEmailBadge: @json(__('app.dashboard.additional_email_badge')),
+            quickAddMode: @json(__('app.dashboard.quick_add_mode')),
+            manageListMode: @json(__('app.dashboard.manage_list_mode')),
+            addNewEmail: @json(__('app.dashboard.add_new_email')),
+            addNewEmailDesc: @json(__('app.dashboard.add_new_email_desc')),
+            masterEmail: @json(__('app.dashboard.master_email')),
+            masterEmailAutoNote: @json(__('app.dashboard.master_email_auto_note')),
+            nameOrNote: @json(__('app.dashboard.name_or_note')),
+            nameOrNotePlaceholder: @json(__('app.dashboard.name_or_note_placeholder')),
+            recipientEmail: @json(__('app.dashboard.recipient_email')),
+            addEmail: @json(__('app.dashboard.add_email')),
+            additionalEmailList: @json(__('app.dashboard.additional_email_list')),
+            additionalEmailListDesc: @json(__('app.dashboard.additional_email_list_desc')),
+            activeEmailCount: @json(__('app.dashboard.active_email_count')),
+            addMaintenanceEmailModalTitle: @json(__('app.dashboard.add_maintenance_email_modal_title')),
+            manageMaintenanceEmailModalTitle: @json(__('app.dashboard.manage_maintenance_email_modal_title')),
+            maintenanceEmailLoadWarning: @json(__('app.dashboard.maintenance_email_load_warning')),
+            maintenanceEmailAdded: @json(__('app.dashboard.maintenance_email_added')),
+            maintenanceEmailDeleted: @json(__('app.dashboard.maintenance_email_deleted')),
+            deleteMaintenanceEmailConfirm: @json(__('app.dashboard.delete_maintenance_email_confirm')),
+            thisEmail: @json(__('app.dashboard.this_email')),
+            chartIncome: @json(__('app.dashboard.chart_income')),
+            chartExpense: @json(__('app.dashboard.chart_expense')),
+            chartDepreciation: @json(__('app.dashboard.chart_depreciation')),
+            chartWa: @json(__('app.dashboard.chart_wa')),
+            chartEmail: @json(__('app.dashboard.chart_email')),
+        };
 
-        const numberFormatter = new Intl.NumberFormat('id-ID', {
+        function translateTemplate(template, replacements = {}) {
+            return Object.entries(replacements).reduce((text, [key, value]) => {
+                return text.replaceAll(`:${key}`, String(value));
+            }, String(template || ''));
+        }
+
+        const numberFormatter = new Intl.NumberFormat(numberLocale, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
         });
-        const currencyFormatter = new Intl.NumberFormat('id-ID', {
+        const currencyFormatter = new Intl.NumberFormat(numberLocale, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
@@ -1381,7 +1430,9 @@
             }
 
             if (maintenanceRecipientSummaryElement) {
-                maintenanceRecipientSummaryElement.textContent = `Master tetap aktif, ${payload.additionalCount ?? 0} email tambahan tersimpan`;
+                maintenanceRecipientSummaryElement.textContent = translateTemplate(dashboardText.additionalEmailSaved, {
+                    count: payload.additionalCount ?? 0
+                });
             }
 
             if (maintenanceRecipientMasterElement) {
@@ -1389,7 +1440,9 @@
             }
 
             if (maintenanceRecipientCountBadgeElement) {
-                maintenanceRecipientCountBadgeElement.textContent = `${payload.additionalCount ?? 0} email`;
+                maintenanceRecipientCountBadgeElement.textContent = translateTemplate(dashboardText.emailCount, {
+                    count: payload.additionalCount ?? 0
+                });
             }
 
             if (maintenanceRecipientPreviewElement) {
@@ -1397,7 +1450,7 @@
 
                 maintenanceRecipientPreviewElement.innerHTML = storedRecipients.length > 0
                     ? storedRecipients.map((recipient) => buildMaintenanceRecipientChip(recipient.label || recipient.email || '')).join('')
-                    : buildMaintenanceRecipientEmptyState('Belum ada email tambahan. Gunakan tombol <strong class="ml-1 mr-1">Tambah Email</strong> untuk menambahkan penerima baru.');
+                    : buildMaintenanceRecipientEmptyState(dashboardText.noAdditionalEmail);
             }
         }
 
@@ -1416,7 +1469,7 @@
                 ? storedRecipients.map((recipient) => `
                     <div class="maintenance-modal-item">
                         <div>
-                            <div class="maintenance-modal-item-name">${escapeHtml(recipient.name || 'Tanpa nama')}</div>
+                            <div class="maintenance-modal-item-name">${escapeHtml(recipient.name || dashboardText.noName)}</div>
                             <div class="maintenance-modal-item-email">${escapeHtml(recipient.email || '')}</div>
                             ${buildMaintenanceRecipientChip(recipient.label || recipient.email || '')}
                         </div>
@@ -1434,9 +1487,9 @@
                 : `
                     <div class="maintenance-modal-empty">
                         <i class="fas fa-envelope-open-text"></i>
-                        <div class="font-weight-bold mb-2">Belum ada email tambahan</div>
+                        <div class="font-weight-bold mb-2">${dashboardText.noAdditionalEmailTitle}</div>
                         <div style="max-width:320px; line-height:1.7;">
-                            Klik tombol <strong>+ Tambah Email</strong> untuk menambahkan penerima report maintenance selain email master.
+                            ${dashboardText.noAdditionalEmailModalNote}
                         </div>
                     </div>
                 `;
@@ -1447,23 +1500,23 @@
                         <div>
                             <div class="maintenance-modal-hero-kicker">
                                 <i class="fas fa-paper-plane"></i>
-                                Email Maintenance
+                                ${dashboardText.emailMaintenance}
                             </div>
                             <div class="maintenance-modal-hero-title">
-                                Kelola penerima report maintenance
+                                ${dashboardText.manageMaintenanceRecipients}
                             </div>
                             <p class="maintenance-modal-hero-text">
-                                Email master akan selalu ikut menerima report. Gunakan form di bawah untuk menambahkan email tambahan yang bisa dipanggil otomatis dari halaman maintenance report.
+                                ${dashboardText.maintenanceModalDesc}
                             </p>
                             <div class="maintenance-modal-hero-badges">
                                 <span class="maintenance-soft-badge master">
-                                    <i class="fas fa-lock"></i>Email master aktif
+                                    <i class="fas fa-lock"></i>${dashboardText.masterEmailActive}
                                 </span>
                                 <span class="maintenance-soft-badge count">
-                                    <i class="fas fa-users"></i>${escapeHtml(config.additionalCount ?? 0)} email tambahan
+                                    <i class="fas fa-users"></i>${escapeHtml(translateTemplate(dashboardText.additionalEmailBadge, { count: config.additionalCount ?? 0 }))}
                                 </span>
                                 <span class="maintenance-soft-badge count">
-                                    <i class="fas fa-window-restore"></i>${mode === 'add' ? 'Mode tambah cepat' : 'Mode kelola daftar'}
+                                    <i class="fas fa-window-restore"></i>${mode === 'add' ? dashboardText.quickAddMode : dashboardText.manageListMode}
                                 </span>
                             </div>
                         </div>
@@ -1472,29 +1525,29 @@
                     <div class="maintenance-modal-content">
                         <div class="maintenance-modal-grid">
                             <div class="maintenance-modal-panel">
-                                <div class="maintenance-modal-panel-title">Tambah Email Baru</div>
+                                <div class="maintenance-modal-panel-title">${dashboardText.addNewEmail}</div>
                                 <div class="maintenance-modal-panel-text">
-                                    Tambahkan email penerima report maintenance dengan nama PIC atau keterangan agar daftar lebih mudah dibaca.
+                                    ${dashboardText.addNewEmailDesc}
                                 </div>
 
                                 <div class="maintenance-modal-master-box">
-                                    <div class="maintenance-modal-master-label">Email Master</div>
+                                    <div class="maintenance-modal-master-label">${dashboardText.masterEmail}</div>
                                     <div class="maintenance-modal-master-email">${escapeHtml(config.master || '-')}</div>
-                                    <div class="maintenance-modal-master-note">Email ini tetap aktif otomatis dan tidak dapat dihapus.</div>
+                                    <div class="maintenance-modal-master-note">${dashboardText.masterEmailAutoNote}</div>
                                 </div>
 
                                 <form id="maintenance-recipient-form">
                                     <div class="form-group">
-                                        <label for="maintenance-recipient-name">Nama / Keterangan</label>
-                                        <input type="text" id="maintenance-recipient-name" name="name" class="form-control" placeholder="Contoh: Kepala Sekolah TK">
+                                        <label for="maintenance-recipient-name">${dashboardText.nameOrNote}</label>
+                                        <input type="text" id="maintenance-recipient-name" name="name" class="form-control" placeholder="${dashboardText.nameOrNotePlaceholder}">
                                     </div>
                                     <div class="form-group">
-                                        <label for="maintenance-recipient-email">Email Penerima</label>
+                                        <label for="maintenance-recipient-email">${dashboardText.recipientEmail}</label>
                                         <input type="email" id="maintenance-recipient-email" name="email" class="form-control" placeholder="nama@email.com" required>
                                     </div>
                                     <button type="submit" class="maintenance-hub-btn maintenance-hub-btn-primary w-100" style="min-width:100%;">
                                         <i class="fas fa-plus"></i>
-                                        Tambah Email
+                                        ${dashboardText.addEmail}
                                     </button>
                                 </form>
                             </div>
@@ -1502,13 +1555,13 @@
                             <div class="maintenance-modal-panel">
                                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-2" style="gap:.75rem;">
                                     <div>
-                                        <div class="maintenance-modal-panel-title mb-1">Daftar Email Tambahan</div>
+                                        <div class="maintenance-modal-panel-title mb-1">${dashboardText.additionalEmailList}</div>
                                         <div class="maintenance-modal-panel-text mb-0">
-                                            Daftar ini dipanggil otomatis dari halaman maintenance report dan tetap bisa ditambah atau dihapus kapan saja.
+                                            ${dashboardText.additionalEmailListDesc}
                                         </div>
                                     </div>
                                     <span class="maintenance-soft-badge count">
-                                        <i class="fas fa-envelope"></i>${escapeHtml(config.additionalCount ?? 0)} email aktif
+                                        <i class="fas fa-envelope"></i>${escapeHtml(translateTemplate(dashboardText.activeEmailCount, { count: config.additionalCount ?? 0 }))}
                                     </span>
                                 </div>
 
@@ -1539,7 +1592,7 @@
 
         function showMaintenanceRecipientManager(mode = 'manage') {
             modal.show(
-                mode === 'add' ? 'Tambah Email Maintenance' : 'Kelola Email Maintenance',
+                mode === 'add' ? dashboardText.addMaintenanceEmailModalTitle : dashboardText.manageMaintenanceEmailModalTitle,
                 buildMaintenanceRecipientManagerBody(mode),
                 '',
                 {
@@ -1629,7 +1682,7 @@
                 data: {
                     labels: @json(data_get($incomeChart, 'labels', [])),
                     datasets: [{
-                        label: 'Income',
+                        label: dashboardText.chartIncome,
                         data: @json(data_get($incomeChart, 'values', [])),
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.12)',
@@ -1656,7 +1709,7 @@
                     labels: @json(data_get($expenseChart, 'labels', [])),
                     datasets: [
                         {
-                            label: 'Pengeluaran',
+                            label: dashboardText.chartExpense,
                             data: @json(data_get($expenseChart, 'expenseValues', [])),
                             borderColor: '#ef4444',
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -1664,7 +1717,7 @@
                             pointBackgroundColor: '#ef4444'
                         },
                         {
-                            label: 'Penyusutan',
+                            label: dashboardText.chartDepreciation,
                             data: @json(data_get($expenseChart, 'depreciationValues', [])),
                             borderColor: '#f59e0b',
                             backgroundColor: 'rgba(245, 158, 11, 0.1)',
@@ -1688,7 +1741,7 @@
                 data: {
                     labels: @json(data_get($waChart, 'labels', [])),
                     datasets: [{
-                        label: 'Blast WA',
+                        label: dashboardText.chartWa,
                         data: @json(data_get($waChart, 'values', [])),
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.12)',
@@ -1711,7 +1764,7 @@
                 data: {
                     labels: @json(data_get($emailChart, 'labels', [])),
                     datasets: [{
-                        label: 'Blast Email',
+                        label: dashboardText.chartEmail,
                         data: @json(data_get($emailChart, 'values', [])),
                         borderColor: '#06b6d4',
                         backgroundColor: 'rgba(6, 182, 212, 0.12)',
@@ -1834,7 +1887,7 @@
                         showMaintenanceRecipientManager(mode);
                     }
                 } catch (error) {
-                    Notification.warning('Popup tetap dibuka, tetapi daftar email terbaru belum berhasil dimuat dari server.');
+                    Notification.warning(dashboardText.maintenanceEmailLoadWarning);
                 } finally {
                     Loading.hide();
                 }
@@ -1859,7 +1912,7 @@
 
                     updateMaintenanceRecipientSummary(response?.data ?? null);
                     showMaintenanceRecipientManager('add');
-                    Notification.success(response?.message || 'Email maintenance berhasil ditambahkan.');
+                    Notification.success(response?.message || dashboardText.maintenanceEmailAdded);
                 } catch (error) {
                     Notification.error(error);
                 } finally {
@@ -1869,10 +1922,10 @@
 
             $(document).on('click', '.delete-maintenance-recipient-button', async function () {
                 const recipientId = $(this).data('id');
-                const recipientLabel = $(this).data('label') || 'email ini';
+                const recipientLabel = $(this).data('label') || dashboardText.thisEmail;
 
                 const confirmation = await Notification.confirmation(
-                    `Hapus ${recipientLabel} dari daftar email maintenance?`
+                    translateTemplate(dashboardText.deleteMaintenanceEmailConfirm, { email: recipientLabel })
                 );
                 if (!confirmation.isConfirmed) {
                     return;
@@ -1887,7 +1940,7 @@
 
                     updateMaintenanceRecipientSummary(response?.data ?? null);
                     showMaintenanceRecipientManager('manage');
-                    Notification.success(response?.message || 'Email maintenance berhasil dihapus.');
+                    Notification.success(response?.message || dashboardText.maintenanceEmailDeleted);
                 } catch (error) {
                     Notification.error(error);
                 } finally {

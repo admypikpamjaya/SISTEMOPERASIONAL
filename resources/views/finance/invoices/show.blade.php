@@ -372,6 +372,11 @@
         'CANCELLED' => 'fa-times-circle',
         default     => 'fa-clock',
     };
+    $statusLabel = match($status) {
+        'POSTED' => __('app.finance.posted'),
+        'CANCELLED' => __('app.finance.cancelled'),
+        default => __('app.finance.draft'),
+    };
 @endphp
 
 {{-- ── Validation Errors ────────────────────────────── --}}
@@ -379,7 +384,7 @@
     <div class="ivd-alert danger">
         <div class="al-icon"><i class="fas fa-exclamation-triangle"></i></div>
         <div>
-            <strong>Validasi gagal:</strong>
+            <strong>{{ __('app.finance.validation_failed') }}:</strong>
             <ul>
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -395,12 +400,12 @@
         <div class="ivd-header-icon"><i class="fas fa-file-invoice-dollar"></i></div>
         <div>
             <h1 class="ivd-header-title">{{ $invoice->invoice_no }}</h1>
-            <p class="ivd-header-sub">Detail Faktur &amp; Entri Jurnal</p>
+            <p class="ivd-header-sub">{{ __('app.finance.invoice_detail_subtitle') }}</p>
         </div>
     </div>
     <div class="ivd-header-actions">
         <a href="{{ route('finance.invoice.index') }}" class="btn-ivd btn-ivd-back">
-            <i class="fas fa-arrow-left"></i> Kembali
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance.back') }}
         </a>
         <a href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'pdf']) }}"
             class="btn-ivd btn-ivd-pdf">
@@ -411,27 +416,27 @@
             <i class="fas fa-file-excel"></i> Excel
         </a>
         <a href="{{ route('finance.invoice.edit', $invoice->id) }}" class="btn-ivd btn-ivd-edit">
-            <i class="fas fa-pen"></i> Edit
+            <i class="fas fa-pen"></i> {{ __('app.finance.edit') }}
         </a>
         @if($invoice->status === 'DRAFT')
             <form action="{{ route('finance.invoice.post', $invoice->id) }}" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="btn-ivd btn-ivd-post">
-                    <i class="fas fa-check-circle"></i> Rekam
+                    <i class="fas fa-check-circle"></i> {{ __('app.finance.record') }}
                 </button>
             </form>
             <form action="{{ route('finance.invoice.destroy', $invoice->id) }}" method="POST" class="d-inline"
-                onsubmit="return confirm('Hapus faktur ini?');">
+                onsubmit="return confirm(@json(__('app.finance.delete_invoice_confirm')));">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn-ivd btn-ivd-delete">
-                    <i class="fas fa-trash"></i> Hapus
+                    <i class="fas fa-trash"></i> {{ __('app.finance.delete') }}
                 </button>
             </form>
         @elseif($invoice->status === 'POSTED')
             <form action="{{ route('finance.invoice.set-draft', $invoice->id) }}" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="btn-ivd btn-ivd-reset">
-                    <i class="fas fa-undo"></i> Reset ke Rancangan
+                    <i class="fas fa-undo"></i> {{ __('app.finance.reset_to_draft') }}
                 </button>
             </form>
         @endif
@@ -444,19 +449,19 @@
     {{-- ── Summary Strip ── --}}
     <div class="ivd-summary-strip">
         <div class="ivd-sum-item si-debit">
-            <div class="ivd-sum-label"><i class="fas fa-arrow-up" style="font-size:.6rem;color:var(--blue-primary);"></i> Total Debit</div>
+            <div class="ivd-sum-label"><i class="fas fa-arrow-up" style="font-size:.6rem;color:var(--blue-primary);"></i> {{ __('app.finance.total_debit') }}</div>
             <div class="ivd-sum-value blue">Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}</div>
         </div>
         <div class="ivd-sum-item si-credit">
-            <div class="ivd-sum-label"><i class="fas fa-arrow-down" style="font-size:.6rem;color:var(--accent-red);"></i> Total Kredit</div>
+            <div class="ivd-sum-label"><i class="fas fa-arrow-down" style="font-size:.6rem;color:var(--accent-red);"></i> {{ __('app.finance.total_credit') }}</div>
             <div class="ivd-sum-value red">Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}</div>
         </div>
         <div class="ivd-sum-item si-creator">
-            <div class="ivd-sum-label"><i class="fas fa-user" style="font-size:.6rem;color:var(--accent-green);"></i> Dibuat Oleh</div>
+            <div class="ivd-sum-label"><i class="fas fa-user" style="font-size:.6rem;color:var(--accent-green);"></i> {{ __('app.finance.created_by') }}</div>
             <div class="ivd-sum-value" style="font-size:.85rem;">{{ $invoice->creator?->name ?? '-' }}</div>
         </div>
         <div class="ivd-sum-item si-posted">
-            <div class="ivd-sum-label"><i class="fas fa-stamp" style="font-size:.6rem;color:var(--accent-purple);"></i> Terekam Oleh</div>
+            <div class="ivd-sum-label"><i class="fas fa-stamp" style="font-size:.6rem;color:var(--accent-purple);"></i> {{ __('app.finance.posted_by') }}</div>
             <div class="ivd-sum-value" style="font-size:.85rem;">{{ $invoice->poster?->name ?? '—' }}</div>
             @if($invoice->posted_at)
                 <div class="ivd-sum-sub" style="font-family:'Plus Jakarta Sans',sans-serif;">{{ $invoice->posted_at->format('d/m/Y H:i') }}</div>
@@ -469,29 +474,29 @@
         {{-- Kiri --}}
         <div class="ivd-meta-col">
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-hashtag"></i> Nomor Faktur</div>
+                <div class="ivd-meta-key"><i class="fas fa-hashtag"></i> {{ __('app.finance.invoice_no') }}</div>
                 <div class="ivd-meta-val mono">{{ $invoice->invoice_no }}</div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-calendar-alt"></i> Tanggal Akuntansi</div>
+                <div class="ivd-meta-key"><i class="fas fa-calendar-alt"></i> {{ __('app.finance.accounting_date') }}</div>
                 <div class="ivd-meta-val mono">{{ optional($invoice->accounting_date)->format('d/m/Y') ?? '-' }}</div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-tags"></i> Jenis</div>
+                <div class="ivd-meta-key"><i class="fas fa-tags"></i> {{ __('app.finance.type') }}</div>
                 <div class="ivd-meta-val">
                     @if($invoice->entry_type === 'INCOME')
-                        <span class="badge-ivd badge-income-ivd"><i class="fas fa-arrow-up" style="font-size:.55rem;"></i> Pemasukan</span>
+                        <span class="badge-ivd badge-income-ivd"><i class="fas fa-arrow-up" style="font-size:.55rem;"></i> {{ __('app.finance.income') }}</span>
                     @else
-                        <span class="badge-ivd badge-expense-ivd"><i class="fas fa-arrow-down" style="font-size:.55rem;"></i> Pengeluaran</span>
+                        <span class="badge-ivd badge-expense-ivd"><i class="fas fa-arrow-down" style="font-size:.55rem;"></i> {{ __('app.finance.expense') }}</span>
                     @endif
                 </div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-book"></i> Jurnal</div>
+                <div class="ivd-meta-key"><i class="fas fa-book"></i> {{ __('app.finance.journal') }}</div>
                 <div class="ivd-meta-val">{{ $invoice->journal_name }}</div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-link"></i> Referensi</div>
+                <div class="ivd-meta-key"><i class="fas fa-link"></i> {{ __('app.finance.reference') }}</div>
                 <div class="ivd-meta-val" style="{{ !$invoice->reference ? 'color:var(--text-muted);' : '' }}">
                     {{ $invoice->reference ?: '—' }}
                 </div>
@@ -500,28 +505,28 @@
         {{-- Kanan --}}
         <div class="ivd-meta-col">
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-toggle-on"></i> Status</div>
+                <div class="ivd-meta-key"><i class="fas fa-toggle-on"></i> {{ __('app.finance.status') }}</div>
                 <div class="ivd-meta-val">
                     <span class="badge-ivd {{ $statusBadge }}">
                         <i class="fas {{ $statusIcon }}" style="font-size:.55rem;"></i>
-                        {{ $status }}
+                        {{ $statusLabel }}
                     </span>
                 </div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-wallet"></i> Total Debit</div>
+                <div class="ivd-meta-key"><i class="fas fa-wallet"></i> {{ __('app.finance.total_debit') }}</div>
                 <div class="ivd-meta-val mono" style="color:var(--blue-primary);">Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}</div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-wallet"></i> Total Kredit</div>
+                <div class="ivd-meta-key"><i class="fas fa-wallet"></i> {{ __('app.finance.total_credit') }}</div>
                 <div class="ivd-meta-val mono" style="color:var(--accent-red);">Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}</div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-user-edit"></i> Dibuat Oleh</div>
+                <div class="ivd-meta-key"><i class="fas fa-user-edit"></i> {{ __('app.finance.created_by') }}</div>
                 <div class="ivd-meta-val">{{ $invoice->creator?->name ?? '-' }}</div>
             </div>
             <div class="ivd-meta-row">
-                <div class="ivd-meta-key"><i class="fas fa-stamp"></i> Terekam Oleh</div>
+                <div class="ivd-meta-key"><i class="fas fa-stamp"></i> {{ __('app.finance.posted_by') }}</div>
                 <div class="ivd-meta-val">
                     {{ $invoice->poster?->name ?? '—' }}
                     @if($invoice->posted_at)
@@ -539,7 +544,7 @@
                 <a class="ivd-tab-link {{ $activeTab === 'items' ? 'active' : '' }}"
                    data-target="ivd-pane-items" href="#" onclick="switchTab(event,'ivd-pane-items')">
                     <i class="fas fa-table" style="font-size:.7rem;"></i>
-                    Item Jurnal
+                    {{ __('app.finance.journal_items') }}
                     <span class="tab-badge">{{ $invoice->items->count() }}</span>
                 </a>
             </li>
@@ -547,7 +552,7 @@
                 <a class="ivd-tab-link {{ $activeTab === 'notes' ? 'active' : '' }}"
                    data-target="ivd-pane-notes" href="#" onclick="switchTab(event,'ivd-pane-notes')">
                     <i class="fas fa-comment-dots" style="font-size:.7rem;"></i>
-                    Log Catatan
+                    {{ __('app.finance.log_notes') }}
                     <span class="tab-badge">{{ $invoice->notes->count() }}</span>
                 </a>
             </li>
@@ -564,13 +569,13 @@
                     <thead>
                         <tr>
                             <th style="width:44px;text-align:center;">#</th>
-                            <th style="width:130px;">Asset Category</th>
-                            <th style="width:115px;">Akun</th>
-                            <th style="width:140px;">Rekanan</th>
-                            <th>Label</th>
-                            <th style="width:180px;">Analisa Distribusi</th>
-                            <th style="width:148px;text-align:right;">Debit</th>
-                            <th style="width:148px;text-align:right;">Kredit</th>
+                            <th style="width:130px;">{{ __('app.finance.asset_category') }}</th>
+                            <th style="width:115px;">{{ __('app.finance.accounts') }}</th>
+                            <th style="width:140px;">{{ __('app.finance.partner_name') }}</th>
+                            <th>{{ __('app.finance.label') }}</th>
+                            <th style="width:180px;">{{ __('app.finance.analytic_distribution') }}</th>
+                            <th style="width:148px;text-align:right;">{{ __('app.finance.debit') }}</th>
+                            <th style="width:148px;text-align:right;">{{ __('app.finance.credit') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -586,12 +591,12 @@
                                 <td class="cell-amount-td">Rp {{ number_format((float) $item->credit, 2, ',', '.') }}</td>
                             </tr>
                         @empty
-                            <tr class="empty-row"><td colspan="8">Belum ada item jurnal.</td></tr>
+                            <tr class="empty-row"><td colspan="8">{{ __('app.finance.no_journal_items') }}</td></tr>
                         @endforelse
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="6" style="text-align:right;color:var(--text-muted);">Total</th>
+                            <th colspan="6" style="text-align:right;color:var(--text-muted);">{{ __('app.finance.total') }}</th>
                             <th class="cell-amount-th blue">Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}</th>
                             <th class="cell-amount-th red">Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}</th>
                         </tr>
@@ -606,12 +611,12 @@
             <div class="ivd-note-form-card">
                 <form method="POST" action="{{ route('finance.invoice.notes.store', $invoice->id) }}">
                     @csrf
-                    <div class="ivd-note-label"><i class="fas fa-plus-circle"></i> Tambahkan Catatan</div>
+                    <div class="ivd-note-label"><i class="fas fa-plus-circle"></i> {{ __('app.finance.add_note') }}</div>
                     <textarea name="note" id="note" class="ivd-note-textarea"
-                        placeholder="Finance atau IT Support bisa menuliskan catatan tindak lanjut di sini."
+                        placeholder="{{ __('app.finance.note_placeholder') }}"
                         required>{{ old('note') }}</textarea>
                     <button type="submit" class="btn-ivd-note">
-                        <i class="fas fa-paper-plane"></i> Simpan Catatan
+                        <i class="fas fa-paper-plane"></i> {{ __('app.finance.save_note') }}
                     </button>
                 </form>
             </div>
@@ -644,7 +649,7 @@
             @else
                 <div class="ivd-notes-empty">
                     <i class="fas fa-comment-slash"></i>
-                    Belum ada catatan pada faktur ini.
+                    {{ __('app.finance.no_invoice_notes') }}
                 </div>
             @endif
         </div>

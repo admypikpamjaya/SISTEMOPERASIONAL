@@ -349,30 +349,30 @@
     <div class="plr-header-left">
         <div class="plr-header-icon"><i class="fas fa-file-invoice-dollar"></i></div>
         <div>
-            <h1 class="plr-header-title">Preview Laporan Laba &amp; Rugi</h1>
-            <p class="plr-header-sub">Dokumen Keuangan &mdash; {{ $periodLabel }} &mdash; {{ $report->reportType }}</p>
+            <h1 class="plr-header-title">{{ __('app.finance.preview_profit_loss_report') }}</h1>
+            <p class="plr-header-sub">{{ __('app.finance.finance_document') }} - {{ $periodLabel }} - {{ $report->reportType }}</p>
         </div>
     </div>
 
     <div class="plr-actions">
         <a href="{{ route('finance.report.snapshots', ['year' => $report->year]) }}" class="btn-plr-back">
-            <i class="fas fa-arrow-left"></i> Kembali
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance.back') }}
         </a>
         @permission('finance_report.generate')
             <a href="{{ route('finance.report.edit', $report->reportId) }}" class="btn-plr-edit">
-                <i class="fas fa-pen"></i> Edit Snapshot
+                <i class="fas fa-pen"></i> {{ __('app.finance.edit_snapshot') }}
             </a>
-            <form method="POST" action="{{ route('finance.report.destroy', $report->reportId) }}" onsubmit="return confirm('Hapus snapshot ini? Tindakan ini tidak bisa dibatalkan.')">
+            <form method="POST" action="{{ route('finance.report.destroy', $report->reportId) }}" onsubmit="return confirm(@json(__('app.finance.delete_snapshot_confirm')))">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn-plr-delete">
-                    <i class="fas fa-trash"></i> Delete Snapshot
+                    <i class="fas fa-trash"></i> {{ __('app.finance.delete_snapshot') }}
                 </button>
             </form>
         @endpermission
         <div class="btn-group">
             <button type="button" class="btn-plr-download dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-download"></i> Download Laporan
+                <i class="fas fa-download"></i> {{ __('app.finance.download_report') }}
             </button>
             <div class="dropdown-menu dropdown-menu-right">
                 <a class="dropdown-item" href="{{ route('finance.report.download', ['id' => $report->reportId, 'format' => 'docx']) }}">
@@ -392,24 +392,24 @@
 {{-- ── Alert Banners ────────────────────────────────── --}}
 <div class="plr-alert info">
     <div class="alert-icon"><i class="fas fa-eye"></i></div>
-    <div>Ini adalah halaman <strong>preview</strong>. Pastikan data sudah sesuai, lalu pilih format dokumen untuk diunduh.</div>
+    <div>{!! __('app.finance.preview_notice', ['preview' => '<strong>'.e(__('app.finance.preview')).'</strong>']) !!}</div>
 </div>
 
 @if($hasNoDetailLines)
     <div class="plr-alert warning">
         <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
-        <div>Belum ada detail pemasukan, pengeluaran, atau penyusutan pada snapshot ini.</div>
+        <div>{{ __('app.finance.no_snapshot_detail') }}</div>
     </div>
 @endif
 
 {{-- ── Meta Info Grid ───────────────────────────────── --}}
 <div class="plr-meta-grid">
     <div class="plr-meta-item">
-        <div class="plr-meta-label"><i class="fas fa-calendar-alt"></i> Periode</div>
+        <div class="plr-meta-label"><i class="fas fa-calendar-alt"></i> {{ __('app.finance.period') }}</div>
         <div class="plr-meta-value">{{ $periodLabel }}</div>
     </div>
     <div class="plr-meta-item">
-        <div class="plr-meta-label"><i class="fas fa-tag"></i> Jenis Laporan</div>
+        <div class="plr-meta-label"><i class="fas fa-tag"></i> {{ __('app.finance.report_type') }}</div>
         <div class="plr-meta-value">
             <span style="background:rgba(37,99,235,0.1);color:var(--blue-primary);padding:.2rem .6rem;border-radius:999px;font-size:.78rem;">
                 {{ $report->reportType }}
@@ -417,19 +417,19 @@
         </div>
     </div>
     <div class="plr-meta-item">
-        <div class="plr-meta-label"><i class="fas fa-wallet"></i> Saldo Awal</div>
+        <div class="plr-meta-label"><i class="fas fa-wallet"></i> {{ __('app.finance.opening_balance') }}</div>
         <div class="plr-meta-value mono">Rp {{ number_format($report->openingBalance, 2, ',', '.') }}</div>
     </div>
     <div class="plr-meta-item">
-        <div class="plr-meta-label"><i class="fas fa-wallet"></i> Saldo Akhir</div>
+        <div class="plr-meta-label"><i class="fas fa-wallet"></i> {{ __('app.finance.ending_balance') }}</div>
         <div class="plr-meta-value mono green">Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</div>
     </div>
     <div class="plr-meta-item">
-        <div class="plr-meta-label"><i class="fas fa-user"></i> Disusun Oleh</div>
+        <div class="plr-meta-label"><i class="fas fa-user"></i> {{ __('app.finance.prepared_by') }}</div>
         <div class="plr-meta-value">{{ $report->generatedByName ?? '-' }}</div>
     </div>
     <div class="plr-meta-item">
-        <div class="plr-meta-label"><i class="fas fa-clock"></i> Generated At</div>
+        <div class="plr-meta-label"><i class="fas fa-clock"></i> {{ __('app.finance.generated_at') }}</div>
         <div class="plr-meta-value mono" style="font-size:.8rem;">{{ $report->generatedAt->format('Y-m-d H:i:s') }}</div>
     </div>
 </div>
@@ -440,10 +440,10 @@
         <table class="plr-table">
             <thead>
                 <tr>
-                    <th class="col-code">Kode</th>
-                    <th class="col-label">Uraian</th>
-                    <th>Keterangan</th>
-                    <th class="col-amount">Nominal</th>
+                    <th class="col-code">{{ __('app.finance.code') }}</th>
+                    <th class="col-label">{{ __('app.finance.description') }}</th>
+                    <th>{{ __('app.finance.remarks') }}</th>
+                    <th class="col-amount">{{ __('app.finance.nominal') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -455,7 +455,7 @@
                             <span class="sh-icon sh-income">
                                 <i class="fas fa-arrow-up"></i>
                             </span>
-                            Penghasilan
+                            {{ __('app.finance.income') }}
                         </div>
                     </td>
                 </tr>
@@ -465,7 +465,7 @@
                         <td class="col-label">{{ $line->lineLabel }}</td>
                         <td>
                             @if($line->invoiceNumber)
-                                <span class="faktur-badge"><i class="fas fa-receipt" style="font-size:.6rem;"></i> Faktur: {{ $line->invoiceNumber }}</span><br>
+                                <span class="faktur-badge"><i class="fas fa-receipt" style="font-size:.6rem;"></i> {{ __('app.finance.invoice_label') }}: {{ $line->invoiceNumber }}</span><br>
                             @endif
                             @if($line->description)
                                 {{ $line->description }}
@@ -477,11 +477,11 @@
                     </tr>
                 @empty
                     <tr class="row-empty">
-                        <td colspan="4" class="text-center">Tidak ada item penghasilan.</td>
+                        <td colspan="4" class="text-center">{{ __('app.finance.no_income_items') }}</td>
                     </tr>
                 @endforelse
                 <tr class="row-subtotal">
-                    <td colspan="3">Total Penghasilan</td>
+                    <td colspan="3">{{ __('app.finance.total_income') }}</td>
                     <td class="col-amount">Rp {{ number_format($report->totalIncome, 2, ',', '.') }}</td>
                 </tr>
 
@@ -494,7 +494,7 @@
                             <span class="sh-icon sh-expense">
                                 <i class="fas fa-arrow-down"></i>
                             </span>
-                            Pengeluaran
+                            {{ __('app.finance.expense') }}
                         </div>
                     </td>
                 </tr>
@@ -504,7 +504,7 @@
                         <td class="col-label">{{ $line->lineLabel }}</td>
                         <td>
                             @if($line->invoiceNumber)
-                                <span class="faktur-badge"><i class="fas fa-receipt" style="font-size:.6rem;"></i> Faktur: {{ $line->invoiceNumber }}</span><br>
+                                <span class="faktur-badge"><i class="fas fa-receipt" style="font-size:.6rem;"></i> {{ __('app.finance.invoice_label') }}: {{ $line->invoiceNumber }}</span><br>
                             @endif
                             @if($line->description)
                                 {{ $line->description }}
@@ -516,11 +516,11 @@
                     </tr>
                 @empty
                     <tr class="row-empty">
-                        <td colspan="4" class="text-center">Tidak ada item pengeluaran.</td>
+                        <td colspan="4" class="text-center">{{ __('app.finance.no_expense_items') }}</td>
                     </tr>
                 @endforelse
                 <tr class="row-subtotal">
-                    <td colspan="3">Total Pengeluaran <span style="font-weight:500;color:var(--text-muted);font-size:.78rem;">(non-penyusutan)</span></td>
+                    <td colspan="3">{{ __('app.finance.total_expense_non_depreciation') }}</td>
                     <td class="col-amount">Rp {{ number_format($report->totalExpense, 2, ',', '.') }}</td>
                 </tr>
 
@@ -533,7 +533,7 @@
                             <span class="sh-icon sh-deprec">
                                 <i class="fas fa-chart-line"></i>
                             </span>
-                            Penyusutan
+                            {{ __('app.finance.depreciation') }}
                         </div>
                     </td>
                 </tr>
@@ -543,7 +543,7 @@
                         <td class="col-label">{{ $line->lineLabel }}</td>
                         <td>
                             @if($line->invoiceNumber)
-                                <span class="faktur-badge"><i class="fas fa-receipt" style="font-size:.6rem;"></i> Faktur: {{ $line->invoiceNumber }}</span><br>
+                                <span class="faktur-badge"><i class="fas fa-receipt" style="font-size:.6rem;"></i> {{ __('app.finance.invoice_label') }}: {{ $line->invoiceNumber }}</span><br>
                             @endif
                             @if($line->description)
                                 {{ $line->description }}
@@ -555,11 +555,11 @@
                     </tr>
                 @empty
                     <tr class="row-empty">
-                        <td colspan="4" class="text-center">Tidak ada item penyusutan.</td>
+                        <td colspan="4" class="text-center">{{ __('app.finance.no_depreciation_items') }}</td>
                     </tr>
                 @endforelse
                 <tr class="row-subtotal">
-                    <td colspan="3">Total Penyusutan</td>
+                    <td colspan="3">{{ __('app.finance.total_depreciation') }}</td>
                     <td class="col-amount">Rp {{ number_format($report->totalDepreciation, 2, ',', '.') }}</td>
                 </tr>
 
@@ -570,7 +570,7 @@
                             <span style="width:20px;height:20px;border-radius:6px;background:rgba(16,185,129,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;">
                                 <i class="fas fa-balance-scale" style="color:var(--accent-green);"></i>
                             </span>
-                            Surplus (Defisit)
+                            {{ __('app.finance.surplus_deficit') }}
                         </span>
                     </td>
                     <td class="col-amount">Rp {{ number_format($report->surplusDeficit, 2, ',', '.') }}</td>
@@ -581,7 +581,7 @@
                             <span style="width:20px;height:20px;border-radius:6px;background:rgba(37,99,235,0.15);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;">
                                 <i class="fas fa-wallet" style="color:var(--blue-primary);"></i>
                             </span>
-                            Saldo Akhir
+                            {{ __('app.finance.ending_balance') }}
                         </span>
                     </td>
                     <td class="col-amount">Rp {{ number_format($report->endingBalance, 2, ',', '.') }}</td>

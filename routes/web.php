@@ -22,7 +22,6 @@ use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\Finance\FinanceStatementController;
-use App\Http\Controllers\Finance\FinanceTunggakanController;
 use App\Enums\User\UserRole;
 
 // ADMIN
@@ -31,6 +30,7 @@ use App\Http\Controllers\Admin\ReminderController;
 use App\Http\Controllers\Admin\BlastController;
 use App\Http\Controllers\Admin\BlastRecipientController;
 use App\Http\Controllers\Admin\BlastMessageTemplateController;
+use App\Http\Controllers\Admin\BlastTunggakanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +127,12 @@ Route::prefix('asset-management')
     ->controller(AssetManagementController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('/ac', 'ac')->name('ac.index');
+        Route::get('/bangunan-sarana-prasarana', 'buildingInfrastructure')->name('building-infrastructure.index');
+        Route::get('/elektronik', 'electronic')->name('electronic.index');
+        Route::get('/inventaris-ruangan', 'roomInventory')->name('room-inventory.index');
+        Route::get('/kendaraan', 'vehicle')->name('vehicle.index');
+        Route::get('/komputer', 'computer')->name('computer.index');
         Route::get('/register', 'showRegisterForm')
             ->middleware('check_access:asset_management.write')
             ->name('register-form');
@@ -166,6 +172,8 @@ Route::prefix('maintenance-report')
             Route::get('/{id}', 'show')->name('detail');
             Route::get('/export/excel', 'exportExcel')
                 ->name('export-excel');
+            Route::get('/export/pdf', 'exportPdf')
+                ->name('export-pdf');
             Route::put('/', 'update')
                 ->middleware('check_access:maintenance_report.update')
                 ->name('update');
@@ -445,51 +453,59 @@ Route::prefix('finance')
                     ->name('notes.store');
             });
 
-        Route::prefix('tunggakan')
-            ->name('tunggakan.')
-            ->group(function () {
-                Route::get('/', [FinanceTunggakanController::class, 'index'])
-                    ->middleware('check_access:finance_report.read')
-                    ->name('index');
+    });
 
-                Route::get('/version', [FinanceTunggakanController::class, 'version'])
-                    ->middleware('check_access:finance_report.read')
-                    ->name('version');
+/*
+|--------------------------------------------------------------------------
+| Legacy Tunggakan Routes
+|--------------------------------------------------------------------------
+| Tunggakan now belongs to the Blasting module. These route names keep older
+| cached menus, compiled views, and bookmarks from failing while pointing users
+| and post-action redirects back to the new module location.
+*/
+Route::prefix('finance/tunggakan')
+    ->name('finance.tunggakan.')
+    ->middleware(['auth', 'check_access:admin_blast.read'])
+    ->group(function () {
+        Route::get('/', fn () => redirect()->route('admin.blast.tunggakan.index'))
+            ->name('index');
 
-                Route::post('/manual', [FinanceTunggakanController::class, 'storeManual'])
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('manual.store');
+        Route::get('/version', [BlastTunggakanController::class, 'version'])
+            ->name('version');
 
-                Route::post('/import', [FinanceTunggakanController::class, 'importExcel'])
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('import');
+        Route::post('/manual', [BlastTunggakanController::class, 'storeManual'])
+            ->middleware('check_access:admin_blast.send')
+            ->name('manual.store');
 
-                Route::post('/sync-db', [FinanceTunggakanController::class, 'syncDatabase'])
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('sync-db');
+        Route::post('/import', [BlastTunggakanController::class, 'importExcel'])
+            ->middleware('check_access:admin_blast.send')
+            ->name('import');
 
-                Route::post('/template-default', [FinanceTunggakanController::class, 'createDefaultTemplate'])
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('template-default');
+        Route::post('/sync-db', [BlastTunggakanController::class, 'syncDatabase'])
+            ->middleware('check_access:admin_blast.send')
+            ->name('sync-db');
 
-                Route::post('/blast-whatsapp', [FinanceTunggakanController::class, 'blastWhatsapp'])
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('blast-whatsapp');
+        Route::post('/template-default', [BlastTunggakanController::class, 'createDefaultTemplate'])
+            ->middleware('check_access:admin_blast.send')
+            ->name('template-default');
 
-                Route::delete('/delete-all', [FinanceTunggakanController::class, 'destroyAll'])
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('destroy-all');
+        Route::post('/blast-whatsapp', [BlastTunggakanController::class, 'blastWhatsapp'])
+            ->middleware('check_access:admin_blast.send')
+            ->name('blast-whatsapp');
 
-                Route::put('/{record}', [FinanceTunggakanController::class, 'update'])
-                    ->whereUuid('record')
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('update');
+        Route::delete('/delete-all', [BlastTunggakanController::class, 'destroyAll'])
+            ->middleware('check_access:admin_blast.send')
+            ->name('destroy-all');
 
-                Route::delete('/{record}', [FinanceTunggakanController::class, 'destroy'])
-                    ->whereUuid('record')
-                    ->middleware('check_access:finance_report.generate')
-                    ->name('destroy');
-            });
+        Route::put('/{record}', [BlastTunggakanController::class, 'update'])
+            ->whereUuid('record')
+            ->middleware('check_access:admin_blast.send')
+            ->name('update');
+
+        Route::delete('/{record}', [BlastTunggakanController::class, 'destroy'])
+            ->whereUuid('record')
+            ->middleware('check_access:admin_blast.send')
+            ->name('destroy');
     });
 
 /*
@@ -609,6 +625,50 @@ Route::prefix('admin')
                     ->name('whatsapp.provider-status');
                 Route::post('/whatsapp/provider-update', [BlastController::class, 'whatsappProviderUpdate'])
                     ->name('whatsapp.provider-update');
+
+                Route::prefix('tunggakan')
+                    ->name('tunggakan.')
+                    ->group(function () {
+                        Route::get('/', [BlastTunggakanController::class, 'index'])
+                            ->name('index');
+
+                        Route::get('/version', [BlastTunggakanController::class, 'version'])
+                            ->name('version');
+
+                        Route::post('/manual', [BlastTunggakanController::class, 'storeManual'])
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('manual.store');
+
+                        Route::post('/import', [BlastTunggakanController::class, 'importExcel'])
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('import');
+
+                        Route::post('/sync-db', [BlastTunggakanController::class, 'syncDatabase'])
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('sync-db');
+
+                        Route::post('/template-default', [BlastTunggakanController::class, 'createDefaultTemplate'])
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('template-default');
+
+                        Route::post('/blast-whatsapp', [BlastTunggakanController::class, 'blastWhatsapp'])
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('blast-whatsapp');
+
+                        Route::delete('/delete-all', [BlastTunggakanController::class, 'destroyAll'])
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('destroy-all');
+
+                        Route::put('/{record}', [BlastTunggakanController::class, 'update'])
+                            ->whereUuid('record')
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('update');
+
+                        Route::delete('/{record}', [BlastTunggakanController::class, 'destroy'])
+                            ->whereUuid('record')
+                            ->middleware('check_access:admin_blast.send')
+                            ->name('destroy');
+                    });
 
                 // Email
                 Route::get('/email', [BlastController::class, 'email'])->name('email');

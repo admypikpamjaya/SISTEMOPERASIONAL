@@ -1,5 +1,4 @@
 @php 
-use Carbon\Carbon;
 use App\Enums\Portal\PortalPermission;
 use App\Services\AccessControl\PermissionService;
 use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
@@ -88,12 +87,12 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
         font-size: .84rem;
         font-weight: 700;
         line-height: 1.45;
-        color: #e2e8f0;
+        color: var(--app-text);
         word-break: break-word;
     }
     .maintenance-recipient-option-email {
         font-size: .76rem;
-        color: #93c5fd;
+        color: var(--app-accent);
         line-height: 1.5;
         word-break: break-word;
     }
@@ -102,141 +101,112 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
     }
     .maintenance-recipient-preview-meta {
         font-size: .78rem;
-        color: #94a3b8;
+        color: var(--app-text-muted);
         line-height: 1.6;
     }
 </style>
-<form class="card">
-    <div class="card-header">
-        <div class="row justify-content-between align-items-center">
-            <div class="col-md-6">
-                <span class="card-title">Laporan Pemeliharaan</span>
-                <div class="small text-muted mt-2">
-                    Notifikasi email maintenance baru dikirim otomatis ke email master <strong>{{ $maintenanceNotificationMasterRecipient }}</strong>
-                    @if($maintenanceNotificationAdditionalCount > 0)
-                        dan <strong>{{ $maintenanceNotificationAdditionalCount }}</strong> email tambahan dari dashboard superadmin.
-                    @else
-                        dan saat ini belum ada email tambahan dari dashboard superadmin.
-                    @endif
-                    Jika perlu kirim ulang, buka detail laporan lalu klik <strong>Kirim Notifikasi</strong>; dari sana Anda bisa memilih email dashboard yang ikut dikirim dan tetap bisa menambahkan email manual.
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="d-flex align-items-center input-group input-group-sm">
-                            <input 
-                                type="date" 
-                                name="date_from" 
-                                value="{{ request('date_from') ?? Carbon::now()->toDateString() }}" 
-                                class="form-control mr-2"
-                            />
-                            <span class="mr-2">s/d</span>
-                            <input 
-                                type="date" 
-                                name="date_to" 
-                                value="{{ request('date_to') ?? Carbon::now()->toDateString() }}" 
-                                class="form-control"
-                            />
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <div class="input-group input-group-sm">
-                            <select name="status" id="filter-status-select" class="form-control">
-                                <option value="">Semua Status</option>
-                                @foreach (AssetMaintenanceReportStatus::cases() as $status)
-                                    <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="input-group input-group-sm">
-                            <input 
-                                type="text" 
-                                name="keyword" 
-                                value="{{ request('keyword') }}" 
-                                class="form-control float-right" 
-                                placeholder="Cari laporan..."
-                            />
-
-                            <div class="input-group-append">
-                            <button type="submit" class="btn btn-default">
-                                <i class="fas fa-search"></i>
-                            </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-1">
-                        <div class="d-flex justify-content-around">
-                            <a id="download-bulk-report-anchor" href="#" class="d-none"></a>
-                            <button id="download-bulk-report-button" type="button" class="btn btn-sm btn-primary" title="Download Laporan Pemeliharaan">
-                                <i class="fas fa-file-excel"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> 
-    </div>
-    <div class="card-body p-0">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">
-                        <input id="root-checkbox" type="checkbox">
-                    </th>
-                    <th scope="col">#</th>
-                    <th scope="col">KODE ASET</th>
-                    <th scope="col">PIC</th>
-                    <th scope="col">STATUS</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($reports as $report)
-                    <tr>
-                        <td><input class="child-checkbox" type="checkbox" value="{{ $report->id }}"></td>
-                        <th scope="row">{{ $loop->iteration }}</th>
-                        <td class="text-left">
-                            <a href="{{ \App\Support\AssetPublicUrl::detailUrl((string) $report->asset->id) }}" target="_blank">{{ $report->asset->account_code }}</a>
-                        </td>
-                        <td>
-                            <span>
-                                {{ $report->pic }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge badge-{{ $badgeMap[$report->status->value] ?? 'secondary' }}">
-                                {{ $report->status }}
-                            </span>
-                        </td>
-                        <td>
-                            <button id="toggle-maintenance-report-detail-button" type="button" class="btn btn-sm btn-outline-info" data-url="{{ route('maintenance-report.detail', $report->id) }}">
-                                <div class="fas fa-eye"></div>
-                            </button>
-                            <a href="{{ route('maintenance-report.export-excel', ['ids' => [$report->id]]) }}" class="btn btn-sm btn-outline-success">
-                                <i class="fas fa-file-excel"></i>
-                            </a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="text-center">Tidak ada data laporan</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    <div class="card-footer">
-        {{ $reports->links() }}
-    </div>
-</form>
+@include('maintenance-report.partials.index-content')
 @stop
 
 @section('js')
 <script>
     const isUserCanUpdate = "{{ $isUserCanUpdate }}";
     let maintenanceNotificationConfig = @json($maintenanceNotificationConfig);
+    const maintenanceExportRoutes = {
+        excel: @json(route('maintenance-report.export-excel')),
+        pdf: @json(route('maintenance-report.export-pdf')),
+    };
+    const maintenanceText = {
+        noAdditionalEmail: @json(__('app.maintenance.no_additional_email')),
+        noDashboardEmail: @json(__('app.maintenance.no_dashboard_email')),
+        dashboardEmail: @json(__('app.maintenance.dashboard_email')),
+        emailCount: @json(__('app.maintenance.email_count')),
+        selectedCount: @json(__('app.maintenance.selected_count')),
+        accountCode: @json(__('app.maintenance.account_code')),
+        category: @json(__('app.maintenance.category')),
+        location: @json(__('app.maintenance.location')),
+        dimension: @json(__('app.maintenance.dimension')),
+        workerName: @json(__('app.maintenance.worker_name')),
+        workerNamePlaceholder: @json(__('app.maintenance.worker_name_placeholder')),
+        workingDate: @json(__('app.maintenance.working_date')),
+        datePlaceholder: @json(__('app.maintenance.date_placeholder')),
+        assetIssue: @json(__('app.maintenance.asset_issue')),
+        workDescription: @json(__('app.maintenance.work_description')),
+        picName: @json(__('app.maintenance.pic_name')),
+        picPlaceholder: @json(__('app.maintenance.pic_placeholder')),
+        cost: @json(__('app.maintenance.cost')),
+        costPlaceholder: @json(__('app.maintenance.cost_placeholder')),
+        evidencePhotos: @json(__('app.maintenance.evidence_photos')),
+        masterEmail: @json(__('app.maintenance.master_email')),
+        superadminDashboardEmail: @json(__('app.maintenance.superadmin_dashboard_email')),
+        selectAll: @json(__('app.maintenance.select_all')),
+        clear: @json(__('app.maintenance.clear')),
+        masterEmailRequiredNote: @json(__('app.maintenance.master_email_required_note')),
+        deliveryRecipients: @json(__('app.maintenance.delivery_recipients')),
+        recipientPreviewNote: @json(__('app.maintenance.recipient_preview_note')),
+        manualAdditionalEmail: @json(__('app.maintenance.manual_additional_email')),
+        manualEmailPlaceholder: @json(__('app.maintenance.manual_email_placeholder')),
+        manualEmailHelp: @json(__('app.maintenance.manual_email_help')),
+        sendNotification: @json(__('app.maintenance.send_notification')),
+        approve: @json(__('app.maintenance.approve')),
+        reject: @json(__('app.maintenance.reject')),
+        delete: @json(__('app.maintenance.delete')),
+        save: @json(__('app.maintenance.save')),
+        maintenanceDetailFormTitle: @json(__('app.maintenance.maintenance_detail_form_title')),
+        notSelectedReportError: @json(__('app.maintenance.not_selected_report_error')),
+        filteredExportNote: @json(__('app.maintenance.filtered_export_note')),
+        selectedReportCount: @json(__('app.maintenance.selected_report_count')),
+        updateStatusConfirm: @json(__('app.maintenance.update_status_confirm')),
+        saveChangesConfirm: @json(__('app.maintenance.save_changes_confirm')),
+        deleteReportConfirm: @json(__('app.maintenance.delete_report_confirm')),
+        notifyMasterOnlyConfirm: @json(__('app.maintenance.notify_master_only_confirm')),
+        notifyWithDashboardManualConfirm: @json(__('app.maintenance.notify_with_dashboard_manual_confirm')),
+        notifyWithDashboardConfirm: @json(__('app.maintenance.notify_with_dashboard_confirm')),
+        notifyWithManualConfirm: @json(__('app.maintenance.notify_with_manual_confirm')),
+        statuses: {
+            Pending: @json(__('app.maintenance.statuses.pending')),
+            Approved: @json(__('app.maintenance.statuses.approved')),
+            Rejected: @json(__('app.maintenance.statuses.rejected')),
+        },
+    };
+
+    function formatText(template, replacements = {}) {
+        return Object.entries(replacements).reduce(
+            (text, [key, value]) => text.split(`:${key}`).join(value),
+            String(template ?? '')
+        );
+    }
+
+    function buildMaintenanceExportUrl(baseUrl) {
+        const ids = $('.child-checkbox:checked')
+            .map((_, el) => el.value)
+            .toArray();
+        const params = new URLSearchParams();
+
+        if (ids.length > 0) {
+            ids.forEach(id => params.append('ids[]', id));
+        } else {
+            const filterForm = document.getElementById('maintenance-report-filter-form');
+            ['date_from', 'date_to', 'status', 'keyword'].forEach((field) => {
+                const input = filterForm?.querySelector(`[name="${field}"]`);
+                const value = String(input?.value ?? '').trim();
+
+                if (value !== '') {
+                    params.append(field, value);
+                }
+            });
+        }
+
+        return params.toString()
+            ? `${baseUrl}?${params.toString()}`
+            : baseUrl;
+    }
+
+    function triggerMaintenanceDownload(url) {
+        $('#download-bulk-report-anchor')
+            .attr('href', url)[0]
+            .click();
+    }
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -249,7 +219,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
 
     function renderMaintenanceRecipientBadges(recipients, formatter = (recipient) => recipient) {
         if (!Array.isArray(recipients) || recipients.length === 0) {
-            return '<span class="badge badge-secondary mr-1 mb-1">Belum ada email tambahan</span>';
+            return `<span class="badge badge-secondary mr-1 mb-1">${escapeHtml(maintenanceText.noAdditionalEmail)}</span>`;
         }
 
         return recipients
@@ -296,7 +266,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
 
     function renderMaintenanceDashboardRecipientOptions(recipients, selectedIds, selectable = true) {
         if (!Array.isArray(recipients) || recipients.length === 0) {
-            return '<div class="text-muted small">Belum ada email dashboard tambahan yang aktif.</div>';
+            return `<div class="text-muted small">${escapeHtml(maintenanceText.noDashboardEmail)}</div>`;
         }
 
         const selectedRecipientIds = new Set(
@@ -316,7 +286,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                             ${selectable ? '' : 'disabled'}
                         >
                         <span class="maintenance-recipient-option-copy">
-                            <span class="maintenance-recipient-option-name">${escapeHtml(recipient?.name || 'Email Dashboard')}</span>
+                            <span class="maintenance-recipient-option-name">${escapeHtml(recipient?.name || maintenanceText.dashboardEmail)}</span>
                             <span class="maintenance-recipient-option-email">${escapeHtml(recipient?.email || '-')}</span>
                         </span>
                     </label>
@@ -375,18 +345,37 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
         }
 
         if (previewCountBadge) {
-            previewCountBadge.textContent = `${allSelectedRecipients.length} email`;
+            previewCountBadge.textContent = formatText(maintenanceText.emailCount, { count: allSelectedRecipients.length });
         }
 
         if (dashboardCountBadge) {
-            dashboardCountBadge.textContent = `${selectedDashboardRecipients.length} dipilih`;
+            dashboardCountBadge.textContent = formatText(maintenanceText.selectedCount, { count: selectedDashboardRecipients.length });
         }
     }
 
     function resetState()
     {
-        $('#root-checkbox').prop('checked', false);
+        $('#root-checkbox').prop('checked', false).prop('indeterminate', false);
         $('.child-checkbox').prop('checked', false);
+        updateMaintenanceSelectionState();
+    }
+
+    function updateMaintenanceSelectionState()
+    {
+        const totalCheckboxes = $('.child-checkbox').length;
+        const selectedCount = $('.child-checkbox:checked').length;
+        const rootCheckbox = $('#root-checkbox');
+
+        rootCheckbox
+            .prop('checked', totalCheckboxes > 0 && selectedCount === totalCheckboxes)
+            .prop('indeterminate', selectedCount > 0 && selectedCount < totalCheckboxes);
+
+        $('#maintenance-selected-count-value').text(selectedCount);
+        $('#maintenance-selected-export-note').text(
+            selectedCount > 0
+                ? formatText(maintenanceText.selectedReportCount, { count: selectedCount })
+                : maintenanceText.filteredExportNote
+        );
     }
 
     function constructMaintenanceReportForm(data, recipientConfig) 
@@ -428,45 +417,45 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
         return `
             <form id="maintenance-report">
                 <div class="form-group">
-                    <label>Kode Akun</label>
+                    <label>${maintenanceText.accountCode}</label>
                     <input type="text" class="form-control" value="${data.asset.accountCode}" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Kategori</label>
+                    <label>${maintenanceText.category}</label>
                     <input type="text" class="form-control" value="${data.asset.category}" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Lokasi</label>
+                    <label>${maintenanceText.location}</label>
                     <input type="text" class="form-control" value="${data.asset.location}" readonly>
                 </div>
                 ${data.asset.category === 'AC' && `
                     <div class="form-group">
-                        <label>Ukuran / Dimensi</label>
+                        <label>${maintenanceText.dimension}</label>
                         <input type="text" class="form-control" value="${data.asset.detail.dimension ?? '-'}" readonly>
                     </div>
                 `}
                 <div class="form-group">
-                    <label for="name">Nama Pekerja</label>
-                    <input type="text" name="worker_name" class="form-control" placeholder="Masukkan nama pekerja" value="${data.workerName}" ${!isUserCanUpdate ? 'readonly' : ''} required>
+                    <label for="name">${maintenanceText.workerName}</label>
+                    <input type="text" name="worker_name" class="form-control" placeholder="${maintenanceText.workerNamePlaceholder}" value="${data.workerName}" ${!isUserCanUpdate ? 'readonly' : ''} required>
                 </div>
                 <div class="form-group">
-                    <label for="name">Tanggal Pengerjaan</label>
-                    <input type="date" name="working_date" class="form-control" placeholder="Pilih tanggal" value="${formatDateForInput(data.workingDate)}" ${!isUserCanUpdate ? 'readonly' : ''} required>
+                    <label for="name">${maintenanceText.workingDate}</label>
+                    <input type="date" name="working_date" class="form-control" placeholder="${maintenanceText.datePlaceholder}" value="${formatDateForInput(data.workingDate)}" ${!isUserCanUpdate ? 'readonly' : ''} required>
                 </div>
                 <div class="form-group">
-                    <label for="name">Kondisi / Masalah Aset</label>
+                    <label for="name">${maintenanceText.assetIssue}</label>
                     <textarea name="issue_description" class="form-control" rows='3' ${!isUserCanUpdate ? 'readonly' : ''} required>${data.issueDescription}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="name">Deskripsi Pengerjaan</label>
+                    <label for="name">${maintenanceText.workDescription}</label>
                     <textarea name="working_description" class="form-control" rows='3' ${!isUserCanUpdate ? 'readonly' : ''} required>${data.workingDescription}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="pic">Nama PIC (Pemanggil Pekerja)</label>
-                    <input type="text" name="pic" class="form-control" placeholder="Masukkan nama PIC / pemanggil pekerja" value="${data.pic}" ${!isUserCanUpdate ? 'readonly' : ''} required>
+                    <label for="pic">${maintenanceText.picName}</label>
+                    <input type="text" name="pic" class="form-control" placeholder="${maintenanceText.picPlaceholder}" value="${data.pic}" ${!isUserCanUpdate ? 'readonly' : ''} required>
                 </div>
                 <div class="form-group">
-                    <label for="cost">Biaya</label>
+                    <label for="cost">${maintenanceText.cost}</label>
                     ${!isUserCanUpdate 
                         ? `
                             <input
@@ -483,7 +472,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                                 min="0"
                                 step="0.01"
                                 class="form-control"
-                                placeholder="Masukkan biaya"
+                                placeholder="${maintenanceText.costPlaceholder}"
                                 value="${data.cost}"
                                 required
                             >
@@ -492,12 +481,12 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                 </div>
                 <div class="form-group">
                     <details>
-                        <summary class="font-weight-bold">Gambar Dokumentasi Pengerjaan</summary>
+                        <summary class="font-weight-bold">${maintenanceText.evidencePhotos}</summary>
                         ${constructEvidencePhoto()}
                     </details>
                 </div>
                 <div class="form-group">
-                    <label>Email Master</label>
+                    <label>${maintenanceText.masterEmail}</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
@@ -507,13 +496,13 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                 </div>
                 <div class="form-group">
                     <div class="maintenance-recipient-selection-toolbar">
-                        <label class="mb-0">Email Dashboard Superadmin</label>
+                        <label class="mb-0">${maintenanceText.superadminDashboardEmail}</label>
                         ${isUserCanUpdate && storedRecipients.length > 0 ? `
                             <div class="maintenance-recipient-selection-actions">
-                                <button type="button" class="btn btn-link btn-sm p-0 maintenance-select-all-dashboard-recipients">Pilih semua</button>
+                                <button type="button" class="btn btn-link btn-sm p-0 maintenance-select-all-dashboard-recipients">${maintenanceText.selectAll}</button>
                                 <span class="text-muted">•</span>
-                                <button type="button" class="btn btn-link btn-sm p-0 maintenance-clear-dashboard-recipients">Kosongkan</button>
-                                <span class="badge badge-info" id="maintenance-selected-dashboard-count">${selectedStoredRecipients.length} dipilih</span>
+                                <button type="button" class="btn btn-link btn-sm p-0 maintenance-clear-dashboard-recipients">${maintenanceText.clear}</button>
+                                <span class="badge badge-info" id="maintenance-selected-dashboard-count">${formatText(maintenanceText.selectedCount, { count: selectedStoredRecipients.length })}</span>
                             </div>
                         ` : ''}
                     </div>
@@ -521,27 +510,27 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                         ${storedRecipientsHtml}
                     </div>
                     <small class="form-text text-muted">
-                        Email master tetap wajib terkirim. Dari daftar dashboard di atas, Anda bisa memilih siapa saja yang ikut dikirim untuk pengiriman kali ini.
+                        ${maintenanceText.masterEmailRequiredNote}
                     </small>
                 </div>
                 <div class="form-group">
                     <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;">
-                        <label class="mb-0">Tujuan Yang Akan Dikirim</label>
-                        <span class="badge badge-primary" id="maintenance-selected-recipient-count">${1 + selectedStoredRecipients.length} email</span>
+                        <label class="mb-0">${maintenanceText.deliveryRecipients}</label>
+                        <span class="badge badge-primary" id="maintenance-selected-recipient-count">${formatText(maintenanceText.emailCount, { count: 1 + selectedStoredRecipients.length })}</span>
                     </div>
                     <div id="maintenance-selected-recipient-preview" class="border rounded p-2 maintenance-recipient-preview-box" style="min-height:44px;">
                         ${selectedRecipientsHtml}
                     </div>
                     <small class="form-text maintenance-recipient-preview-meta">
-                        Preview ini akan berubah saat Anda memilih email dashboard atau menambahkan email manual tambahan.
+                        ${maintenanceText.recipientPreviewNote}
                     </small>
                 </div>
                 ${isUserCanUpdate ? `
                     <div class="form-group mb-0">
-                        <label>Email Manual Tambahan</label>
-                        <textarea name="manual_recipients" class="form-control" rows="2" placeholder="Pisahkan dengan koma, enter, atau titik koma"></textarea>
+                        <label>${maintenanceText.manualAdditionalEmail}</label>
+                        <textarea name="manual_recipients" class="form-control" rows="2" placeholder="${maintenanceText.manualEmailPlaceholder}"></textarea>
                         <small class="form-text text-muted">
-                            Kolom ini hanya dipakai sekali saat klik <strong>Kirim Notifikasi</strong>, tidak disimpan ke dashboard, dan email duplikat akan diabaikan otomatis.
+                            ${formatText(maintenanceText.manualEmailHelp, { button: `<strong>${maintenanceText.sendNotification}</strong>` })}
                         </small>
                     </div>
                 ` : ''}
@@ -552,39 +541,22 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
     $(function() {
         resetState();
 
-        $('#filter-status-select').on('change', function() {
-            $(this).closest('form').submit(); 
-        });
-
-        $('input[name="date_from"], input[name="date_to"]').on('change', function() {
-            $(this).closest('form').submit();
-        });
-
         $('#root-checkbox').on('click', function() {
             const checkboxes = $('.child-checkbox');
             checkboxes.prop('checked', this.checked);
+            updateMaintenanceSelectionState();
         });
 
-        $(document).on('click', '#download-bulk-report-button', async function() {
-            const ids = $('.child-checkbox:checked')
-                .map((_, el) => el.value)
-                .toArray();
+        $(document).on('change', '.child-checkbox', function() {
+            updateMaintenanceSelectionState();
+        });
 
-            if(ids.length === 0)
-                return Notification.error('Anda belum memilih laporan');
+        $(document).on('click', '#download-bulk-report-excel-button', async function() {
+            triggerMaintenanceDownload(buildMaintenanceExportUrl(maintenanceExportRoutes.excel));
+        });
 
-            const baseUrl = "{{ route('maintenance-report.export-excel') }}";
-            const params = new URLSearchParams();
-
-            ids.forEach(id => params.append('ids[]', id));
-
-            const url = params.toString()
-                ? `${baseUrl}?${params.toString()}`
-                : baseUrl;
-
-            $('#download-bulk-report-anchor')
-                .attr('href', url)[0]
-                .click();
+        $(document).on('click', '#download-bulk-report-pdf-button', async function() {
+            triggerMaintenanceDownload(buildMaintenanceExportUrl(maintenanceExportRoutes.pdf));
         });
 
         $(document).on('click', '#toggle-maintenance-report-detail-button', async function() {
@@ -601,30 +573,30 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                     @permission('maintenance_report.update_status')
                         <button id="update-maintenance-report-status-button" type="button" class="btn btn-sm ${(isStatusPendingOrRejected) ? 'btn-success' : 'btn-danger'}" data-status="${(isStatusPendingOrRejected) ? 'Approved' : 'Rejected'}" data-id="${data.id}">
                             <i class="fas fa-check-circle"></i>
-                            ${(isStatusPendingOrRejected) ? 'Approve' : 'Reject'}
+                            ${(isStatusPendingOrRejected) ? maintenanceText.approve : maintenanceText.reject}
                         </button>
                     @endpermission
                     @permission('maintenance_report.delete')
                         <button id="delete-maintenance-report-button" type="button" class="btn btn-sm btn-danger" data-id="${data.id}">
                             <i class="fas fa-trash-alt"></i>
-                            Hapus
+                            ${maintenanceText.delete}
                         </button>
                     @endpermission
                     @permission('maintenance_report.update')
                         <button id="send-maintenance-report-notification-button" type="button" class="btn btn-sm btn-warning" data-id="${data.id}">
                             <i class="fas fa-envelope"></i>
-                            Kirim Notifikasi
+                            ${maintenanceText.sendNotification}
                         </button>
                     @endpermission
                     @permission('maintenance_report.update')
                         <button id="update-maintenance-report-button" type="button" class="btn btn-sm btn-primary" data-id="${data.id}">
                             <i class="fas fa-save"></i>
-                            Simpan
+                            ${maintenanceText.save}
                         </button>
                     @endpermission
                 `;
 
-                modal.show('Form Detail Laporan Pemeliharaan', form, buttons);
+                modal.show(maintenanceText.maintenanceDetailFormTitle, form, buttons);
                 updateMaintenanceRecipientSelectionPreview(
                     document.getElementById('maintenance-report'),
                     maintenanceNotificationConfig
@@ -647,7 +619,9 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                 const id = $(this).data('id');
                 const status = $(this).data('status');
 
-                const confirmation = await Notification.confirmation('Anda yakin ingin mengubah status laporan menjadi ' + status + '?');
+                const confirmation = await Notification.confirmation(
+                    formatText(maintenanceText.updateStatusConfirm, { status: maintenanceText.statuses[status] ?? status })
+                );
                 if(!confirmation.isConfirmed)
                     return;
 
@@ -683,7 +657,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                     return;
                 }
 
-                const confirmation = await Notification.confirmation('Anda yakin ingin menyimpan perubahan?');
+                const confirmation = await Notification.confirmation(maintenanceText.saveChangesConfirm);
                 if(!confirmation.isConfirmed)
                     return;
 
@@ -761,14 +735,14 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
                     : '';
                 const manualRecipientList = parseMaintenanceManualRecipients(manualRecipients);
                 const selectedDashboardRecipientCount = selectedDashboardRecipientIds.length;
-                let confirmationMessage = 'Kirim ulang notifikasi maintenance ke email master saja?';
+                let confirmationMessage = maintenanceText.notifyMasterOnlyConfirm;
 
                 if (selectedDashboardRecipientCount > 0 && manualRecipientList.length > 0) {
-                    confirmationMessage = `Kirim ulang notifikasi maintenance ke email master, ${selectedDashboardRecipientCount} email dashboard terpilih, dan email manual tambahan?`;
+                    confirmationMessage = formatText(maintenanceText.notifyWithDashboardManualConfirm, { count: selectedDashboardRecipientCount });
                 } else if (selectedDashboardRecipientCount > 0) {
-                    confirmationMessage = `Kirim ulang notifikasi maintenance ke email master dan ${selectedDashboardRecipientCount} email dashboard terpilih?`;
+                    confirmationMessage = formatText(maintenanceText.notifyWithDashboardConfirm, { count: selectedDashboardRecipientCount });
                 } else if (manualRecipientList.length > 0) {
-                    confirmationMessage = 'Kirim ulang notifikasi maintenance ke email master dan email manual tambahan?';
+                    confirmationMessage = maintenanceText.notifyWithManualConfirm;
                 }
 
                 const confirmation = await Notification.confirmation(confirmationMessage);
@@ -808,7 +782,7 @@ $maintenanceNotificationAdditionalCount = (int) data_get($maintenanceNotificatio
             $(this).prop('disabled', true);
             try 
             {
-                const confirmation = await Notification.confirmation('Anda yakin ingin menghapus laporan ini?');
+                const confirmation = await Notification.confirmation(maintenanceText.deleteReportConfirm);
                 if(!confirmation.isConfirmed)
                     return;
 

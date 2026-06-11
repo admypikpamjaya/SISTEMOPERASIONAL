@@ -473,13 +473,13 @@
     <div class="inv-header-left">
         <div class="inv-header-icon"><i class="fas fa-file-invoice"></i></div>
         <div>
-            <h1 class="inv-header-title">Faktur / Entri Jurnal</h1>
-            <p class="inv-header-sub">Manajemen Invoice &amp; Jurnal Keuangan</p>
+            <h1 class="inv-header-title">{{ __('app.finance.invoice_journal_entries') }}</h1>
+            <p class="inv-header-sub">{{ __('app.finance.invoice_journal_management') }}</p>
         </div>
     </div>
     <div class="inv-header-actions">
         @permission('finance_invoice.update')
-            <form method="POST" action="{{ route('finance.invoice.publish-all-draft') }}" onsubmit="return confirm('Publish semua draft yang sesuai filter saat ini? Draft dengan item kosong atau debit/kredit belum seimbang akan dilewati.');">
+            <form method="POST" action="{{ route('finance.invoice.publish-all-draft') }}" onsubmit="return confirm(@json(__('app.finance.publish_all_drafts_confirm')));">
                 @csrf
                 <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
                 <input type="hidden" name="entry_type" value="{{ $filters['entry_type'] ?? 'ALL' }}">
@@ -488,13 +488,13 @@
                 <input type="hidden" name="year" value="{{ $filters['year'] ?? '' }}">
                 <input type="hidden" name="journal_name" value="{{ $filters['journal_name'] ?? '' }}">
                 <button type="submit" class="btn-inv-publish" {{ $draftPublishCount < 1 ? 'disabled' : '' }}>
-                    <i class="fas fa-upload"></i> Publish Semua Draft
+                    <i class="fas fa-upload"></i> {{ __('app.finance.publish_all_drafts') }}
                     <span>({{ number_format($draftPublishCount, 0, ',', '.') }})</span>
                 </button>
             </form>
         @endpermission
         <a href="{{ route('finance.invoice.create') }}" class="btn-inv-new">
-            <i class="fas fa-plus"></i> Buat Faktur Baru
+            <i class="fas fa-plus"></i> {{ __('app.finance.create_new_invoice') }}
         </a>
     </div>
 </div>
@@ -502,38 +502,38 @@
 <div class="inv-filter-card">
     <div class="inv-filter-header">
         <span class="fh-icon"><i class="fas fa-sliders-h"></i></span>
-        <h3>Filter Faktur &amp; Jurnal</h3>
+        <h3>{{ __('app.finance.invoice_filter_title') }}</h3>
     </div>
     <div class="inv-filter-body">
         <form method="GET" action="{{ route('finance.invoice.index') }}">
             <div class="inv-filter-form">
                 <div class="inv-form-group is-wide">
-                    <label class="inv-label"><i class="fas fa-search"></i> Cari</label>
+                    <label class="inv-label"><i class="fas fa-search"></i> {{ __('app.finance.search') }}</label>
                     <input type="text" name="q" id="q" class="inv-control"
-                        placeholder="No faktur / jurnal / referensi"
+                        placeholder="{{ __('app.finance.invoice_search_placeholder') }}"
                         value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="inv-form-group">
-                    <label class="inv-label"><i class="fas fa-toggle-on"></i> Status</label>
+                    <label class="inv-label"><i class="fas fa-toggle-on"></i> {{ __('app.finance.status') }}</label>
                     <select name="status" id="status" class="inv-control">
-                        <option value="ALL"       {{ ($filters['status'] ?? 'ALL') === 'ALL'       ? 'selected' : '' }}>Semua</option>
-                        <option value="DRAFT"     {{ ($filters['status'] ?? '') === 'DRAFT'         ? 'selected' : '' }}>Draft</option>
-                        <option value="POSTED"    {{ ($filters['status'] ?? '') === 'POSTED'        ? 'selected' : '' }}>Terekam</option>
-                        <option value="CANCELLED" {{ ($filters['status'] ?? '') === 'CANCELLED'     ? 'selected' : '' }}>Batal</option>
+                        <option value="ALL"       {{ ($filters['status'] ?? 'ALL') === 'ALL'       ? 'selected' : '' }}>{{ __('app.finance.all') }}</option>
+                        <option value="DRAFT"     {{ ($filters['status'] ?? '') === 'DRAFT'         ? 'selected' : '' }}>{{ __('app.finance.draft') }}</option>
+                        <option value="POSTED"    {{ ($filters['status'] ?? '') === 'POSTED'        ? 'selected' : '' }}>{{ __('app.finance.posted') }}</option>
+                        <option value="CANCELLED" {{ ($filters['status'] ?? '') === 'CANCELLED'     ? 'selected' : '' }}>{{ __('app.finance.cancelled') }}</option>
                     </select>
                 </div>
                 <div class="inv-form-group">
-                    <label class="inv-label"><i class="fas fa-tags"></i> Jenis</label>
+                    <label class="inv-label"><i class="fas fa-tags"></i> {{ __('app.finance.type') }}</label>
                     <select name="entry_type" id="entry_type" class="inv-control">
-                        <option value="ALL"     {{ ($filters['entry_type'] ?? 'ALL') === 'ALL'     ? 'selected' : '' }}>Semua</option>
-                        <option value="INCOME"  {{ ($filters['entry_type'] ?? '') === 'INCOME'     ? 'selected' : '' }}>Pemasukan</option>
-                        <option value="EXPENSE" {{ ($filters['entry_type'] ?? '') === 'EXPENSE'    ? 'selected' : '' }}>Pengeluaran</option>
+                        <option value="ALL"     {{ ($filters['entry_type'] ?? 'ALL') === 'ALL'     ? 'selected' : '' }}>{{ __('app.finance.all') }}</option>
+                        <option value="INCOME"  {{ ($filters['entry_type'] ?? '') === 'INCOME'     ? 'selected' : '' }}>{{ __('app.finance.income') }}</option>
+                        <option value="EXPENSE" {{ ($filters['entry_type'] ?? '') === 'EXPENSE'    ? 'selected' : '' }}>{{ __('app.finance.expense') }}</option>
                     </select>
                 </div>
                 <div class="inv-form-group is-mid">
-                    <label class="inv-label"><i class="fas fa-book"></i> Jurnal</label>
+                    <label class="inv-label"><i class="fas fa-book"></i> {{ __('app.finance.journal') }}</label>
                     <select name="journal_name" id="journal_name" class="inv-control">
-                        <option value="">Semua Jurnal</option>
+                        <option value="">{{ __('app.finance.all_journals') }}</option>
                         @foreach($journalOptions as $journalOption)
                             <option value="{{ $journalOption }}" {{ ($filters['journal_name'] ?? '') === $journalOption ? 'selected' : '' }}>
                                 {{ $journalOption }}
@@ -542,12 +542,12 @@
                     </select>
                 </div>
                 <div class="inv-form-group is-mid">
-                    <label class="inv-label"><i class="fas fa-calendar-day"></i> Harian</label>
+                    <label class="inv-label"><i class="fas fa-calendar-day"></i> {{ __('app.finance.daily') }}</label>
                     <input type="date" name="accounting_date" id="accounting_date" class="inv-control"
                         value="{{ $filters['accounting_date'] ?? '' }}">
                 </div>
                 <div class="inv-form-group is-narrow">
-                    <label class="inv-label"><i class="fas fa-calendar-week"></i> Bulan</label>
+                    <label class="inv-label"><i class="fas fa-calendar-week"></i> {{ __('app.finance.month') }}</label>
                     <select name="month" id="month" class="inv-control">
                         <option value="">-</option>
                         @for($m = 1; $m <= 12; $m++)
@@ -558,12 +558,12 @@
                     </select>
                 </div>
                 <div class="inv-form-group is-narrow">
-                    <label class="inv-label"><i class="fas fa-calendar"></i> Tahun</label>
+                    <label class="inv-label"><i class="fas fa-calendar"></i> {{ __('app.finance.year') }}</label>
                     <input type="number" name="year" id="year" class="inv-control"
                         min="1900" max="2100" value="{{ $filters['year'] ?? '' }}">
                 </div>
                 <div class="inv-form-group is-narrow">
-                    <label class="inv-label"><i class="fas fa-list-ol"></i> Per Halaman</label>
+                    <label class="inv-label"><i class="fas fa-list-ol"></i> {{ __('app.finance.per_page') }}</label>
                     <select name="per_page" id="per_page" class="inv-control">
                         @foreach([10, 15, 25, 50, 100] as $size)
                             <option value="{{ $size }}" {{ (int) ($filters['per_page'] ?? 15) === $size ? 'selected' : '' }}>
@@ -574,10 +574,10 @@
                 </div>
                 <div class="inv-filter-actions">
                     <button type="submit" class="btn-apply">
-                        <i class="fas fa-filter"></i> Terapkan Filter
+                        <i class="fas fa-filter"></i> {{ __('app.finance.apply_filter') }}
                     </button>
                     <a href="{{ route('finance.invoice.index') }}" class="btn-reset">
-                        <i class="fas fa-sync"></i> Reset
+                        <i class="fas fa-sync"></i> {{ __('app.finance.reset') }}
                     </a>
                 </div>
             </div>
@@ -589,10 +589,10 @@
     <div class="inv-table-header">
         <h3 class="inv-table-title">
             <span class="tt-icon"><i class="fas fa-receipt"></i></span>
-            Daftar Faktur / Entri Jurnal
+            {{ __('app.finance.invoice_list_title') }}
         </h3>
         <span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">
-            Total: <strong style="color:var(--text-primary);">{{ $invoices->total() }}</strong> entri
+            {{ __('app.finance.total') }}: <strong style="color:var(--text-primary);">{{ $invoices->total() }}</strong> {{ __('app.finance.entries') }}
         </span>
     </div>
 
@@ -611,6 +611,11 @@
                         'CANCELLED' => 'fa-times-circle',
                         default     => 'fa-clock',
                     };
+                    $statusLabel = match($status) {
+                        'POSTED' => __('app.finance.posted'),
+                        'CANCELLED' => __('app.finance.cancelled'),
+                        default => __('app.finance.draft'),
+                    };
                     $creatorName = $invoice->creator?->name ?? '-';
                     $creatorInitial = strtoupper(substr($creatorName, 0, 1));
                 @endphp
@@ -626,24 +631,24 @@
                             </button>
                             <div class="dropdown-menu dropdown-menu-right inv-item-menu">
                                 <a class="dropdown-item" href="{{ route('finance.invoice.show', $invoice->id) }}">
-                                    <i class="fas fa-eye mr-2"></i>Detail
+                                    <i class="fas fa-eye mr-2"></i>{{ __('app.finance.detail') }}
                                 </a>
                                 <a class="dropdown-item" href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'pdf']) }}">
-                                    <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                                    <i class="fas fa-file-pdf mr-2"></i>{{ __('app.finance.download_pdf') }}
                                 </a>
                                 <a class="dropdown-item" href="{{ route('finance.invoice.download', ['invoice' => $invoice->id, 'format' => 'excel']) }}">
-                                    <i class="fas fa-file-excel mr-2"></i>Download Excel
+                                    <i class="fas fa-file-excel mr-2"></i>{{ __('app.finance.download_excel') }}
                                 </a>
                                 <a class="dropdown-item" href="{{ route('finance.invoice.edit', $invoice->id) }}">
-                                    <i class="fas fa-pen mr-2"></i>Edit
+                                    <i class="fas fa-pen mr-2"></i>{{ __('app.finance.edit') }}
                                 </a>
                                 @if($invoice->status !== 'POSTED')
                                     <div class="dropdown-divider"></div>
-                                    <form action="{{ route('finance.invoice.destroy', $invoice->id) }}" method="POST" onsubmit="return confirm('Hapus faktur ini?');">
+                                    <form action="{{ route('finance.invoice.destroy', $invoice->id) }}" method="POST" onsubmit="return confirm(@json(__('app.finance.delete_invoice_confirm')));">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="dropdown-item text-danger">
-                                            <i class="fas fa-trash mr-2"></i>Hapus
+                                            <i class="fas fa-trash mr-2"></i>{{ __('app.finance.delete') }}
                                         </button>
                                     </form>
                                 @endif
@@ -659,33 +664,33 @@
                     <div class="inv-item-tags">
                         @if($invoice->entry_type === 'INCOME')
                             <span class="badge-type badge-income">
-                                <i class="fas fa-arrow-up" style="font-size:.55rem;"></i> Pemasukan
+                                <i class="fas fa-arrow-up" style="font-size:.55rem;"></i> {{ __('app.finance.income') }}
                             </span>
                         @else
                             <span class="badge-type badge-expense">
-                                <i class="fas fa-arrow-down" style="font-size:.55rem;"></i> Pengeluaran
+                                <i class="fas fa-arrow-down" style="font-size:.55rem;"></i> {{ __('app.finance.expense') }}
                             </span>
                         @endif
                         <span class="badge-status {{ $statusClass }}">
                             <i class="fas {{ $statusIcon }}" style="font-size:.55rem;"></i>
-                            {{ $status }}
+                            {{ $statusLabel }}
                         </span>
                     </div>
 
                     <div class="inv-item-amounts">
                         <div class="inv-item-amount debit">
-                            <span>Debit</span>
+                            <span>{{ __('app.finance.debit') }}</span>
                             <strong>Rp {{ number_format((float) $invoice->total_debit, 2, ',', '.') }}</strong>
                         </div>
                         <div class="inv-item-amount credit">
-                            <span>Kredit</span>
+                            <span>{{ __('app.finance.credit') }}</span>
                             <strong>Rp {{ number_format((float) $invoice->total_credit, 2, ',', '.') }}</strong>
                         </div>
                     </div>
 
                     <div class="inv-item-footer">
                         <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="inv-item-main-btn">
-                            <i class="fas fa-folder-open"></i> Lihat Entri
+                            <i class="fas fa-folder-open"></i> {{ __('app.finance.view_detail') }}
                         </a>
                         <div class="creator-cell">
                             <div class="creator-avatar">{{ $creatorInitial }}</div>
@@ -696,7 +701,7 @@
             @empty
                 <div class="inv-empty-state">
                     <div class="inv-empty-icon"><i class="fas fa-file-invoice"></i></div>
-                    <div class="inv-empty-text">Belum ada data faktur / jurnal.</div>
+                    <div class="inv-empty-text">{{ __('app.finance.no_invoices_journals') }}</div>
                 </div>
             @endforelse
         </div>

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Detail Log Penyusutan #{{ $log->id }}</title>
+    <title>{{ __('app.finance.asset_depreciation_log_detail') }} #{{ $log->id }}</title>
     <style>
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
@@ -55,51 +55,51 @@
         }
     @endphp
 
-    <h1>Detail Log Asset Depreciation</h1>
+    <h1>{{ __('app.finance.asset_depreciation_log_detail') }}</h1>
     <p class="sub">
-        ID Log: #{{ $log->id }} | Dicetak: {{ now($timezone ?? config('app.timezone'))->format('d/m/Y H:i:s') }}
+        {{ __('app.finance.log_id') }}: #{{ $log->id }} | {{ __('app.finance.printed_at') }}: {{ now($timezone ?? config('app.timezone'))->format('d/m/Y H:i:s') }}
     </p>
 
     <table>
         <tbody>
             <tr>
-                <th>Waktu Hitung (WIB)</th>
+                <th>{{ __('app.finance.calculated_at_wib') }}</th>
                 <td>{{ $log->calculated_at?->timezone($timezone ?? config('app.timezone'))->format('d/m/Y H:i:s') ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Kode Akun Asset</th>
+                <th>{{ __('app.finance.asset_account_code') }}</th>
                 <td>{{ $log->asset?->account_code ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Kategori Asset</th>
+                <th>{{ __('app.finance.asset_category_label') }}</th>
                 <td>{{ $assetCategoryLabel }}</td>
             </tr>
             <tr>
-                <th>Lokasi Asset</th>
+                <th>{{ __('app.finance.asset_location') }}</th>
                 <td>{{ $log->asset?->location ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Periode Manfaat</th>
+                <th>{{ __('app.finance.benefit_period') }}</th>
                 <td>{{ $periodLabel ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Nilai Perolehan</th>
+                <th>{{ __('app.finance.acquisition_cost') }}</th>
                 <td>Rp {{ number_format((float) $log->acquisition_cost, 2, ',', '.') }}</td>
             </tr>
             <tr>
-                <th>Umur Manfaat (bulan)</th>
+                <th>{{ __('app.finance.useful_life_months') }}</th>
                 <td>{{ (int) $log->useful_life_months }}</td>
             </tr>
             <tr>
-                <th>Penyusutan per Bulan</th>
+                <th>{{ __('app.finance.monthly_depreciation') }}</th>
                 <td>Rp {{ number_format((float) $log->depreciation_per_month, 2, ',', '.') }}</td>
             </tr>
             <tr>
-                <th>Dihitung Oleh</th>
+                <th>{{ __('app.finance.calculated_by') }}</th>
                 <td>{{ $log->calculator?->name ?? '-' }}</td>
             </tr>
             <tr>
-                <th>Email Penghitung</th>
+                <th>{{ __('app.finance.calculator_email') }}</th>
                 <td>{{ $log->calculator?->email ?? '-' }}</td>
             </tr>
         </tbody>

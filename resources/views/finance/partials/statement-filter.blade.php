@@ -31,20 +31,9 @@
         'ledger_batch_id' => $ledgerBatchId,
         'per_page' => $showPerPage ? $perPage : null,
     ], static fn ($value): bool => $value !== null && $value !== '');
-    $monthOptions = [
-        1 => 'Januari',
-        2 => 'Februari',
-        3 => 'Maret',
-        4 => 'April',
-        5 => 'Mei',
-        6 => 'Juni',
-        7 => 'Juli',
-        8 => 'Agustus',
-        9 => 'September',
-        10 => 'Oktober',
-        11 => 'November',
-        12 => 'Desember',
-    ];
+    $monthOptions = collect(range(1, 12))
+        ->mapWithKeys(fn (int $monthNumber): array => [$monthNumber => __('app.finance.months.' . $monthNumber)])
+        ->all();
 @endphp
 
 <style>
@@ -141,7 +130,7 @@
     <div class="fs-filter-head">
         <div class="fs-filter-title">
             <span class="fs-filter-icon"><i class="fas fa-filter"></i></span>
-            <span>Filter Periode Laporan</span>
+            <span>{{ __('app.finance.report_period_filter') }}</span>
         </div>
     </div>
     <div class="fs-filter-body">
@@ -170,23 +159,23 @@
             <div class="fs-filter-grid">
                 <div class="fs-field" id="statement_period_type_group" data-span="{{ $showPerPage ? '4' : '6' }}">
                     <label class="fs-label" for="statement_period_type">
-                        <i class="fas fa-layer-group"></i> Periode
+                        <i class="fas fa-layer-group"></i> {{ __('app.finance.period') }}
                     </label>
                     <select name="period_type" id="statement_period_type" class="fs-control">
-                        <option value="ALL" {{ $periodType === 'ALL' ? 'selected' : '' }}>Semua</option>
-                        <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>Harian / Tanggal</option>
-                        <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>Bulanan</option>
-                        <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>Tahunan</option>
+                        <option value="ALL" {{ $periodType === 'ALL' ? 'selected' : '' }}>{{ __('app.finance.all') }}</option>
+                        <option value="DAILY" {{ $periodType === 'DAILY' ? 'selected' : '' }}>{{ __('app.finance.daily_date') }}</option>
+                        <option value="MONTHLY" {{ $periodType === 'MONTHLY' ? 'selected' : '' }}>{{ __('app.finance.monthly') }}</option>
+                        <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>{{ __('app.finance.yearly') }}</option>
                     </select>
                     <div class="fs-helper-text">
-                        Pilih <strong>Harian / Tanggal</strong> untuk filter detail jurnal berdasarkan rentang tanggal yang lebih spesifik.
+                        {!! __('app.finance.daily_filter_help', ['period' => '<strong>' . e(__('app.finance.daily_date')) . '</strong>']) !!}
                     </div>
                 </div>
 
                 @if($showPerPage)
                     <div class="fs-field" data-span="2">
                         <label class="fs-label" for="statement_per_page">
-                            <i class="fas fa-list-ol"></i> Per Halaman
+                            <i class="fas fa-list-ol"></i> {{ __('app.finance.per_page') }}
                         </label>
                         <select name="per_page" id="statement_per_page" class="fs-control">
                             @foreach($perPageOptions as $size)
@@ -203,8 +192,7 @@
                         <div class="fs-mode-note">
                             <i class="fas fa-calendar-day"></i>
                             <div>
-                                Detail jurnal dari laba rugi dan lembar saldo sekarang bisa difilter sampai level tanggal.
-                                Jika ingin lebih presisi dari rentang bulan, ubah periode ke <strong>Harian / Tanggal</strong>.
+                                {!! __('app.finance.journal_detail_date_note', ['period' => '<strong>' . e(__('app.finance.daily_date')) . '</strong>']) !!}
                             </div>
                         </div>
                     </div>
@@ -212,7 +200,7 @@
 
                 <div class="fs-field" id="statement_start_date_group" data-span="3">
                     <label class="fs-label" for="statement_start_date">
-                        <i class="fas fa-calendar-day"></i> Dari Tanggal
+                        <i class="fas fa-calendar-day"></i> {{ __('app.finance.from_date') }}
                     </label>
                     <input
                         type="date"
@@ -225,7 +213,7 @@
 
                 <div class="fs-field" id="statement_end_date_group" data-span="3">
                     <label class="fs-label" for="statement_end_date">
-                        <i class="fas fa-calendar-check"></i> Sampai Tanggal
+                        <i class="fas fa-calendar-check"></i> {{ __('app.finance.until_date') }}
                     </label>
                     <input
                         type="date"
@@ -238,7 +226,7 @@
 
                 <div class="fs-field" id="statement_start_month_group" data-span="3">
                     <label class="fs-label" for="statement_start_month">
-                        <i class="fas fa-calendar-week"></i> Dari Bulan
+                        <i class="fas fa-calendar-week"></i> {{ __('app.finance.from_month') }}
                     </label>
                     <select name="start_month" id="statement_start_month" class="fs-control">
                         @foreach($monthOptions as $monthNumber => $monthLabel)
@@ -251,7 +239,7 @@
 
                 <div class="fs-field" id="statement_start_year_group" data-span="2">
                     <label class="fs-label" for="statement_start_year">
-                        <i class="fas fa-calendar-alt"></i> Dari Tahun
+                        <i class="fas fa-calendar-alt"></i> {{ __('app.finance.from_year') }}
                     </label>
                     <input
                         type="number"
@@ -266,7 +254,7 @@
 
                 <div class="fs-field" id="statement_end_month_group" data-span="3">
                     <label class="fs-label" for="statement_end_month">
-                        <i class="fas fa-calendar-week"></i> Sampai Bulan
+                        <i class="fas fa-calendar-week"></i> {{ __('app.finance.until_month') }}
                     </label>
                     <select name="end_month" id="statement_end_month" class="fs-control">
                         @foreach($monthOptions as $monthNumber => $monthLabel)
@@ -279,7 +267,7 @@
 
                 <div class="fs-field" id="statement_end_year_group" data-span="2">
                     <label class="fs-label" for="statement_end_year">
-                        <i class="fas fa-calendar-alt"></i> Sampai Tahun
+                        <i class="fas fa-calendar-alt"></i> {{ __('app.finance.until_year') }}
                     </label>
                     <input
                         type="number"
@@ -296,7 +284,7 @@
                     <div class="fs-mode-note">
                         <i class="fas fa-infinity"></i>
                         <div>
-                            Mode <strong>Semua</strong> akan menampilkan seluruh data tanpa batas tanggal, bulan, atau tahun.
+                            {!! __('app.finance.all_period_note', ['period' => '<strong>' . e(__('app.finance.all')) . '</strong>']) !!}
                         </div>
                     </div>
                 </div>
@@ -304,11 +292,11 @@
                 <div class="fs-field fs-actions" data-span="12">
                     <button type="submit" class="fs-btn fs-btn-primary">
                         <i class="fas fa-search"></i>
-                        <span>Filter</span>
+                        <span>{{ __('app.finance.filter') }}</span>
                     </button>
                     <a href="{{ $action }}{{ !empty($resetQuery) ? '?' . http_build_query($resetQuery) : '' }}" class="fs-btn fs-btn-muted is-link-reset">
                         <i class="fas fa-redo"></i>
-                        <span>Reset</span>
+                        <span>{{ __('app.finance.reset') }}</span>
                     </a>
                 </div>
             </div>
