@@ -4,6 +4,7 @@ namespace App\Http\Requests\Finance;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class GenerateProfitLossReportRequest extends FormRequest
@@ -25,6 +26,11 @@ class GenerateProfitLossReportRequest extends FormRequest
     {
         return [
             'report_type' => 'required|string|in:DAILY,MONTHLY,YEARLY',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'report_date' => 'nullable|date|required_if:report_type,DAILY',
             'year' => 'nullable|integer|digits:4|between:1900,2100|required_unless:report_type,DAILY',
             'month' => 'nullable|integer|between:1,12|required_if:report_type,MONTHLY',
@@ -65,6 +71,7 @@ class GenerateProfitLossReportRequest extends FormRequest
 
         $this->merge([
             'report_type' => $reportType,
+            'category_id' => trim((string) $this->input('category_id', '')),
             'opening_balance' => $this->input('opening_balance', 0),
             'entries' => $entries,
         ]);
@@ -116,6 +123,8 @@ class GenerateProfitLossReportRequest extends FormRequest
     {
         return [
             'report_type.required' => 'Tipe laporan wajib dipilih.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'report_type.in' => 'Tipe laporan harus DAILY, MONTHLY, atau YEARLY.',
             'report_date.required_if' => 'Tanggal wajib diisi untuk laporan harian.',
             'report_date.date' => 'Tanggal laporan tidak valid.',

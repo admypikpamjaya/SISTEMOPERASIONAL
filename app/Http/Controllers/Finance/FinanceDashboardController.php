@@ -28,6 +28,7 @@ class FinanceDashboardController extends Controller
                 month: $filter->month,
                 periodType: $filter->periodType,
                 reportDate: $filter->reportDate,
+                categoryId: $filter->categoryId,
                 page: $filter->page,
                 perPage: $filter->perPage
             );
@@ -59,6 +60,7 @@ class FinanceDashboardController extends Controller
                     'month' => $filter->month,
                     'year' => $filter->year,
                     'per_page' => $filter->perPage,
+                    'category_id' => $filter->categoryId,
                 ],
                 'filterQuery' => $filter->toQueryArray(),
                 'featureAccess' => $featureAccess,

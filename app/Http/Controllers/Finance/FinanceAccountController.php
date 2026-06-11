@@ -23,11 +23,13 @@ class FinanceAccountController extends Controller
     {
         $validated = $request->validate([
             'group' => 'nullable|integer|between:1,255',
+            'category_id' => 'nullable|uuid|exists:finance_categories,id',
             'edit' => 'nullable|uuid',
             'detail' => 'nullable|uuid',
         ]);
 
         $selectedGroup = isset($validated['group']) ? (int) $validated['group'] : null;
+        $selectedCategoryId = isset($validated['category_id']) ? (string) $validated['category_id'] : null;
 
         $editAccount = null;
         if (!empty($validated['edit'])) {
@@ -39,6 +41,7 @@ class FinanceAccountController extends Controller
             $detailRelations = [
                 'creator:id,name',
                 'updater:id,name',
+                'category:id,name,status',
             ];
 
             if (Schema::hasTable('finance_account_logs')) {
@@ -63,6 +66,7 @@ class FinanceAccountController extends Controller
         }
 
         $query = FinanceAccount::query()
+            ->with('category:id,name,status')
             ->orderBy('class_no')
             ->orderBy('code');
 
@@ -70,11 +74,16 @@ class FinanceAccountController extends Controller
             $query->where('class_no', $selectedGroup);
         }
 
+        if (!empty($selectedCategoryId)) {
+            $query->where('category_id', $selectedCategoryId);
+        }
+
         $accounts = $query
             ->paginate(15)
             ->withQueryString();
 
         $accountCounts = FinanceAccount::query()
+            ->when(!empty($selectedCategoryId), fn ($countQuery) => $countQuery->where('category_id', $selectedCategoryId))
             ->selectRaw('class_no, COUNT(*) as total')
             ->groupBy('class_no')
             ->pluck('total', 'class_no');
@@ -147,6 +156,7 @@ class FinanceAccountController extends Controller
             'editAccount' => $editAccount,
             'detailAccount' => $detailAccount,
             'accountLogs' => $accountLogs,
+            'selectedCategoryId' => $selectedCategoryId,
         ]);
     }
 
@@ -160,6 +170,7 @@ class FinanceAccountController extends Controller
 
             $account = FinanceAccount::query()->create([
                 'code' => (string) $validated['code'],
+                'category_id' => (string) $validated['category_id'],
                 'name' => (string) $validated['name'],
                 'type' => $type,
                 'class_no' => $classNo,
@@ -177,7 +188,7 @@ class FinanceAccountController extends Controller
             );
 
             return redirect()
-                ->route('finance.accounts.index', ['group' => $classNo])
+                ->route('finance.accounts.index', ['group' => $classNo, 'category_id' => $validated['category_id']])
                 ->with('success', 'Akun berhasil ditambahkan ke bagan akun.');
         } catch (Throwable $exception) {
             report($exception);
@@ -200,6 +211,7 @@ class FinanceAccountController extends Controller
 
             $account->update([
                 'code' => (string) $validated['code'],
+                'category_id' => (string) $validated['category_id'],
                 'name' => (string) $validated['name'],
                 'type' => $type,
                 'class_no' => $classNo,
@@ -218,7 +230,7 @@ class FinanceAccountController extends Controller
             );
 
             return redirect()
-                ->route('finance.accounts.index', ['group' => $classNo])
+                ->route('finance.accounts.index', ['group' => $classNo, 'category_id' => $validated['category_id']])
                 ->with('success', 'Akun berhasil diperbarui.');
         } catch (Throwable $exception) {
             report($exception);

@@ -55,6 +55,7 @@ class ReportService
 
         $report = $this->financeReportRepository->create([
             'period_id' => $dto->periodId,
+            'category_id' => $dto->categoryId,
             'report_type' => $reportType,
             'version_no' => $nextVersion,
             'reconciliation_snapshot_id' => $dto->reconciliationSnapshotId,
@@ -72,6 +73,7 @@ class ReportService
         ?int $month = null,
         ?string $periodType = null,
         ?string $reportDate = null,
+        ?string $categoryId = null,
         int $page = 1,
         int $perPage = 20
     ) {
@@ -80,6 +82,7 @@ class ReportService
             reportDate: $reportDate,
             year: $year,
             month: $month,
+            categoryId: $categoryId,
             readOnlyOnly: true,
             page: $page,
             perPage: $perPage
@@ -121,6 +124,7 @@ class ReportService
             reportDate: $filter->reportDate,
             year: $filter->year,
             month: $filter->month,
+            categoryId: $filter->categoryId,
             readOnlyOnly: true,
             page: $filter->page,
             perPage: $filter->perPage
@@ -141,6 +145,7 @@ class ReportService
             reportDate: $filter->reportDate,
             year: $filter->year,
             month: $filter->month,
+            categoryId: $filter->categoryId,
             readOnlyOnly: true
         );
 
@@ -218,6 +223,7 @@ class ReportService
             $runNo = $this->financeDepreciationRunRepository->getNextRunNumber($period->id);
             $depreciationRun = $this->financeDepreciationRunRepository->create([
                 'period_id' => $period->id,
+                'category_id' => $dto->categoryId,
                 'run_no' => $runNo,
                 'status' => 'POSTED',
                 'assets_count' => 0,
@@ -229,6 +235,7 @@ class ReportService
 
             $reconciliationSnapshot = $this->financeReconciliationSnapshotRepository->create([
                 'period_id' => $period->id,
+                'category_id' => $dto->categoryId,
                 'depreciation_run_id' => $depreciationRun->id,
                 'income_total' => $reconciliation->totalIncome,
                 'expense_total' => $reconciliation->totalExpense,
@@ -256,6 +263,7 @@ class ReportService
                 reportType: $dto->reportType,
                 reconciliationSnapshotId: $reconciliationSnapshot->id,
                 summary: $summary,
+                categoryId: $dto->categoryId,
                 generatedBy: $dto->generatedBy,
                 isReadOnly: true
             ));
@@ -347,6 +355,7 @@ class ReportService
 
         return [
             'report_id' => $report->id,
+            'category_id' => $report->category_id !== null ? (string) $report->category_id : null,
             'report_type' => $reportType,
             'report_date' => $reportDate,
             'year' => $year,
@@ -420,6 +429,7 @@ class ReportService
 
             if ($report->reconciliationSnapshot !== null) {
                 $report->reconciliationSnapshot->update([
+                    'category_id' => $dto->categoryId,
                     'income_total' => $reconciliation->totalIncome,
                     'expense_total' => $reconciliation->totalExpense,
                     'depreciation_total' => $reconciliation->totalDepreciation,
@@ -443,6 +453,7 @@ class ReportService
             );
 
             $report->update([
+                'category_id' => $dto->categoryId,
                 'summary' => $summary->toArray(),
                 'generated_by' => $dto->generatedBy,
                 'generated_at' => now(),

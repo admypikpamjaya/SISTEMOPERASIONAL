@@ -20,6 +20,7 @@ class FinanceReport extends Model
 
     protected $fillable = [
         'period_id',
+        'category_id',
         'report_type',
         'version_no',
         'reconciliation_snapshot_id',
@@ -43,6 +44,11 @@ class FinanceReport extends Model
     public function period(): BelongsTo
     {
         return $this->belongsTo(FinancePeriod::class, 'period_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function reconciliationSnapshot(): BelongsTo

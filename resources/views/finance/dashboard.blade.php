@@ -6,6 +6,8 @@
     $reportDate = $filters['report_date'] ?? null;
     $month = $filters['month'] ?? null;
     $year = $filters['year'] ?? null;
+    $selectedCategoryId = $filters['category_id'] ?? null;
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
     $perPage = (int) ($filters['per_page'] ?? 10);
     $featureAccess = $featureAccess ?? [];
     $dashboardSummary = $dashboardSummary ?? [];
@@ -217,6 +219,17 @@
                                     <option value="YEARLY" {{ $periodType === 'YEARLY' ? 'selected' : '' }}>{{ __('app.finance.yearly') }}</option>
                                 </select>
                             </div>
+                            <div class="col-md-3 fd-field">
+                                <label class="fd-label" for="dashboard_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                                <select name="category_id" id="dashboard_category_id" class="fd-control">
+                                    <option value="">Semua kategori</option>
+                                    @foreach($financeCategoryOptions as $category)
+                                        <option value="{{ $category->id }}" {{ (string) $selectedCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="col-md-3 fd-field" id="dashboard_report_date_group">
                                 <label class="fd-label" for="dashboard_report_date"><i class="fas fa-calendar-day"></i> {{ __('app.finance.date') }}</label>
                                 <input type="date" name="report_date" id="dashboard_report_date" class="fd-control" value="{{ $reportDate }}">
@@ -241,7 +254,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-1 fd-actions">
+                            <div class="col-md-3 fd-actions">
                                 <button type="submit" class="fd-btn fd-btn-primary"><i class="fas fa-search"></i> {{ __('app.finance.filter') }}</button>
                                 <a href="{{ route('finance.dashboard') }}" class="fd-btn fd-btn-muted"><i class="fas fa-redo"></i> {{ __('app.finance.reset') }}</a>
                             </div>

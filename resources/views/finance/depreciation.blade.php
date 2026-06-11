@@ -6,6 +6,8 @@
      The useful-life input is still derived from the selected period range. --}}
 @php
     $nowWib = now(config('app.timezone'));
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedFinanceCategoryId = old('category_id', $filters['category_id'] ?? request('category_id'));
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -425,6 +427,25 @@
                     @csrf
                     <div class="ad-card-body">
 
+                        {{-- Kategori Finance --}}
+                        <div class="ad-form-group">
+                            <label for="category_id">
+                                <i class="fas fa-tags"></i> Kategori Finance
+                            </label>
+                            <select id="category_id" name="category_id" class="ad-select" required>
+                                <option value="">Pilih kategori finance</option>
+                                @foreach($financeCategoryOptions as $category)
+                                    <option value="{{ $category->id }}" @selected($selectedFinanceCategoryId === $category->id)>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="ad-hint">
+                                <i class="fas fa-filter"></i>
+                                Hasil penyusutan dan jurnal otomatis akan masuk ke kategori ini.
+                            </div>
+                        </div>
+
                         {{-- Asset --}}
                         <div class="ad-form-group">
                             <label for="asset_id">
@@ -607,6 +628,36 @@
                     </div>
                 </div>
 
+                <div class="ad-card-body">
+                    <form method="GET" action="{{ route('finance.depreciation.index') }}">
+                        <div class="form-row" style="gap:0 12px; align-items:flex-end;">
+                            <div class="ad-form-group col-md-4" style="padding:0; margin-bottom:0;">
+                                <label for="filter_category_id">
+                                    <i class="fas fa-tags"></i> Filter Kategori Finance
+                                </label>
+                                <select id="filter_category_id" name="category_id" class="ad-select">
+                                    <option value="">Semua kategori</option>
+                                    @foreach($financeCategoryOptions as $category)
+                                        <option value="{{ $category->id }}" @selected($selectedFinanceCategoryId === $category->id)>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="ad-form-group" style="padding:0; margin-bottom:0;">
+                                <button type="submit" class="ad-action-link" style="height:42px; padding:0 14px;">
+                                    <i class="fas fa-search"></i> Terapkan
+                                </button>
+                            </div>
+                            <div class="ad-form-group" style="padding:0; margin-bottom:0;">
+                                <a href="{{ route('finance.depreciation.index') }}" class="ad-action-link" style="height:42px; padding:0 14px;">
+                                    <i class="fas fa-undo"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="ad-card-body-p0" style="overflow-x:auto;">
                     <table class="ad-table">
                         <thead>
@@ -614,6 +665,7 @@
                                 <th><i class="fas fa-hashtag"></i>#</th>
                                 <th><i class="far fa-clock"></i>{{ __('app.finance.calculated_at_wib') }}</th>
                                 <th><i class="fas fa-cube"></i>{{ __('app.finance.asset') }}</th>
+                                <th><i class="fas fa-tags"></i>Kategori Finance</th>
                                 <th><i class="fas fa-calendar-alt"></i>{{ __('app.finance.period') }}</th>
                                 <th><i class="fas fa-money-bill-wave"></i>{{ __('app.finance.acquisition_cost') }}</th>
                                 <th><i class="fas fa-hourglass-half"></i>{{ __('app.finance.useful_life_short') }}</th>
@@ -634,6 +686,9 @@
                                     <td>
                                         <div class="ad-asset-code">{{ $log->asset_display_code ?? '-' }}</div>
                                         <div class="ad-asset-sub">{{ $log->asset_display_meta ?? '-' }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="ad-badge">{{ $log->finance_category_name ?? '-' }}</span>
                                     </td>
                                     <td>
                                         <span class="ad-badge">{{ $log->period_display_label ?? '-' }}</span>
@@ -668,7 +723,7 @@
                                 </tr>
                             @empty
                                 <tr id="depreciation-log-empty-row">
-                                    <td colspan="9">
+                                    <td colspan="10">
                                         <div class="ad-empty">
                                             <span class="ei"><i class="fas fa-calculator"></i></span>
                                             <p>{{ __('app.finance.no_depreciation_logs') }}</p>
@@ -836,6 +891,7 @@
                     <div class="ad-asset-code">${escapeHtml(log.asset_account_code || '-')}</div>
                     <div class="ad-asset-sub">${escapeHtml(log.asset_display_meta || '-')}</div>
                 </td>
+                <td><span class="ad-badge">${escapeHtml(log.finance_category_name || '-')}</span></td>
                 <td><span class="ad-badge">${escapeHtml(log.period_label || '-')}</span></td>
                 <td style="font-weight:700;color:var(--p2);">Rp ${formatNumber(log.acquisition_cost)}</td>
                 <td style="font-weight:600;text-align:center;">${escapeHtml(log.useful_life_months != null ? log.useful_life_months : '-')}</td>

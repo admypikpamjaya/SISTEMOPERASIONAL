@@ -24,6 +24,11 @@ class FinanceAccountStoreRequest extends FormRequest
     {
         return [
             'code' => ['required', 'string', 'max:64', Rule::unique('finance_accounts', 'code')],
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'max:64'],
             'class_no' => ['required', 'integer', 'between:1,255'],
@@ -41,6 +46,7 @@ class FinanceAccountStoreRequest extends FormRequest
 
         $this->merge([
             'code' => strtoupper(trim((string) $this->input('code', ''))),
+            'category_id' => trim((string) $this->input('category_id', '')),
             'name' => trim((string) $this->input('name', '')),
             'type' => strtoupper(trim((string) $this->input('type', ''))),
             'class_no' => is_numeric($this->input('class_no'))
@@ -56,6 +62,8 @@ class FinanceAccountStoreRequest extends FormRequest
             'code.required' => 'Kode akun wajib diisi.',
             'code.max' => 'Kode akun maksimal 64 karakter.',
             'code.unique' => 'Kode akun sudah digunakan.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'name.required' => 'Nama akun wajib diisi.',
             'name.max' => 'Nama akun maksimal 255 karakter.',
             'type.required' => 'Jenis akun wajib dipilih.',

@@ -527,6 +527,9 @@
     $comparisonType = strtoupper((string) ($filters['comparison_type'] ?? 'NONE'));
     $comparisonOffset = (int) ($filters['comparison_offset'] ?? 1);
     $comparisonDate = (string) ($filters['comparison_date'] ?? now()->toDateString());
+    $selectedCategoryId = $filters['category_id'] ?? null;
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedCategoryName = optional($financeCategoryOptions->firstWhere('id', $selectedCategoryId))->name;
     $perPage = (int) request('per_page', 20);
     $totalEndingBalance = (float) data_get($totals ?? [], 'total_ending_balance', 0);
     $totalOpeningBalance = (float) data_get($totals ?? [], 'total_opening_balance', 0);
@@ -540,6 +543,7 @@
         'report_date' => $statementReportDate,
         'month' => $statementMonth,
         'year' => $statementYear,
+        'category_id' => $selectedCategoryId,
     ], static fn ($value) => $value !== null && $value !== '');
     $actualJournalOverview = data_get($actualSummary ?? [], 'journal_overview', []);
     $actualBalanceSummary = data_get($actualSummary ?? [], 'balance_sheet.summary', []);
@@ -628,6 +632,18 @@
                 </div>
 
                 <div class="col-md-3 sfr-form-group">
+                    <label class="sfr-label"><i class="fas fa-tags"></i> Kategori Finance</label>
+                    <select name="category_id" id="category_id" class="sfr-control">
+                        <option value="">Semua kategori</option>
+                        @foreach($financeCategoryOptions as $category)
+                            <option value="{{ $category->id }}" {{ (string) $selectedCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3 sfr-form-group">
                     <label class="sfr-label"><i class="fas fa-code-branch"></i> {{ __('app.finance.comparison') }}</label>
                     <select name="comparison_type" id="comparison_type" class="sfr-control">
                         <option value="NONE"                  {{ $comparisonType === 'NONE'                  ? 'selected' : '' }}>{{ __('app.finance.none') }}</option>
@@ -680,6 +696,7 @@
         </h3>
         <div class="sfr-live-meta">
             <span class="sfr-live-pill"><i class="fas fa-calendar-check"></i> Periode: {{ $actualPeriodLabel ?? '-' }}</span>
+            <span class="sfr-live-pill"><i class="fas fa-tags"></i> Kategori: {{ $selectedCategoryName ?: 'Semua' }}</span>
             <span class="sfr-live-pill"><i class="fas fa-clock"></i> Diperbarui WIB: {{ $actualLatestPostedAt }}</span>
         </div>
     </div>

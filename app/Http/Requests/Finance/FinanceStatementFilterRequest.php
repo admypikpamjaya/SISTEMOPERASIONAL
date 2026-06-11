@@ -33,8 +33,11 @@ class FinanceStatementFilterRequest extends FormRequest
             'statement_batch_id' => 'nullable|uuid',
             'ledger_source' => 'nullable|string|in:system,imported,combined',
             'ledger_batch_id' => 'nullable|uuid',
+            'category_id' => 'nullable|uuid|exists:finance_categories,id',
             'selected_ids' => 'nullable|array',
             'selected_ids.*' => 'integer|min:1',
+            'export_scope' => 'nullable|string|in:all,filter,to_date',
+            'to_date' => 'nullable|date',
             'page' => 'nullable|integer|min:1',
             'per_page' => 'nullable|integer|min:1|max:100',
         ];
@@ -89,6 +92,15 @@ class FinanceStatementFilterRequest extends FormRequest
             'ledger_source' => $ledgerSource,
             'ledger_batch_id' => $this->filled('ledger_batch_id')
                 ? trim((string) $this->input('ledger_batch_id'))
+                : null,
+            'category_id' => $this->filled('category_id')
+                ? trim((string) $this->input('category_id'))
+                : null,
+            'export_scope' => $this->filled('export_scope')
+                ? strtolower(trim((string) $this->input('export_scope')))
+                : null,
+            'to_date' => $this->filled('to_date')
+                ? trim((string) $this->input('to_date'))
                 : null,
         ];
 
@@ -219,8 +231,12 @@ class FinanceStatementFilterRequest extends FormRequest
             'statement_batch_id.uuid' => 'Batch laporan tidak valid.',
             'ledger_source.in' => 'Sumber buku besar harus system, imported, atau combined.',
             'ledger_batch_id.uuid' => 'Batch buku besar tidak valid.',
+            'category_id.uuid' => 'Kategori finance tidak valid.',
+            'category_id.exists' => 'Kategori finance tidak ditemukan.',
             'selected_ids.array' => 'Daftar item terpilih tidak valid.',
             'selected_ids.*.integer' => 'Item terpilih tidak valid.',
+            'export_scope.in' => 'Pilihan download jurnal tidak valid.',
+            'to_date.date' => 'Tanggal download jurnal tidak valid.',
         ];
     }
 }

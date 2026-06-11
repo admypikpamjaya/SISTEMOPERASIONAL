@@ -48,6 +48,7 @@ class FinanceReportRepository
 
     public function paginate(
         ?string $reportType = null,
+        ?string $categoryId = null,
         bool $readOnlyOnly = true,
         int $page = 1,
         int $perPage = 20
@@ -111,6 +112,7 @@ class FinanceReportRepository
             reportDate: $reportDate,
             year: $year,
             month: $month,
+            categoryId: $categoryId,
             readOnlyOnly: $readOnlyOnly
         );
 
@@ -123,6 +125,7 @@ class FinanceReportRepository
         ?string $reportDate = null,
         ?int $year = null,
         ?int $month = null,
+        ?string $categoryId = null,
         bool $readOnlyOnly = true
     ): Collection {
         return $this->buildFilteredQuery(
@@ -130,6 +133,7 @@ class FinanceReportRepository
             reportDate: $reportDate,
             year: $year,
             month: $month,
+            categoryId: $categoryId,
             readOnlyOnly: $readOnlyOnly
         )
             ->orderByDesc('generated_at')
@@ -170,6 +174,7 @@ class FinanceReportRepository
         ?string $reportDate = null,
         ?int $year = null,
         ?int $month = null,
+        ?string $categoryId = null,
         bool $readOnlyOnly = true
     ): Builder {
         $query = FinanceReport::query()
@@ -177,6 +182,10 @@ class FinanceReportRepository
 
         if ($readOnlyOnly) {
             $query->where('is_read_only', true);
+        }
+
+        if (!empty($categoryId)) {
+            $query->where('category_id', $categoryId);
         }
 
         $query->whereHas('period', function ($periodQuery) use ($periodType, $reportDate, $year, $month) {

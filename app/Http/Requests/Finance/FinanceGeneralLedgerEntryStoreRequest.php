@@ -4,6 +4,7 @@ namespace App\Http\Requests\Finance;
 
 use App\Models\FinanceGeneralLedgerEntry;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class FinanceGeneralLedgerEntryStoreRequest extends FormRequest
@@ -17,6 +18,11 @@ class FinanceGeneralLedgerEntryStoreRequest extends FormRequest
     {
         return [
             'batch_id' => 'nullable|uuid|exists:finance_general_ledger_batches,id',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'row_type' => 'required|string|in:' . FinanceGeneralLedgerEntry::ROW_TYPE_OPENING . ',' . FinanceGeneralLedgerEntry::ROW_TYPE_ENTRY,
             'entry_date' => 'required|date',
             'account_code' => 'required|string|max:64',
@@ -38,6 +44,7 @@ class FinanceGeneralLedgerEntryStoreRequest extends FormRequest
     {
         $this->merge([
             'row_type' => strtoupper(trim((string) $this->input('row_type', FinanceGeneralLedgerEntry::ROW_TYPE_ENTRY))),
+            'category_id' => trim((string) $this->input('category_id', '')),
             'account_code' => strtoupper(trim((string) $this->input('account_code', ''))),
             'account_name' => trim((string) $this->input('account_name', '')),
             'transaction_no' => trim((string) $this->input('transaction_no', '')) ?: null,
@@ -88,6 +95,8 @@ class FinanceGeneralLedgerEntryStoreRequest extends FormRequest
         return [
             'batch_id.uuid' => 'Batch buku besar tidak valid.',
             'batch_id.exists' => 'Batch buku besar tidak ditemukan.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'row_type.required' => 'Jenis baris wajib dipilih.',
             'row_type.in' => 'Jenis baris tidak valid.',
             'entry_date.required' => 'Tanggal buku besar wajib diisi.',

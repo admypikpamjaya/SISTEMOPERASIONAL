@@ -317,6 +317,7 @@ class FinanceStatementController extends Controller
             $summary = $this->financeGeneralLedgerService->importFromExcel(
                 $uploadedFile->getPathname(),
                 $uploadedFile->getClientOriginalName(),
+                $request->validated()['category_id'],
                 $request->validated()['batch_name'] ?? null,
                 $request->validated()['notes'] ?? null,
                 auth()->id() ? (string) auth()->id() : null
@@ -326,6 +327,7 @@ class FinanceStatementController extends Controller
                 ->route('finance.report.general-ledger.manage', [
                     'ledger_source' => 'imported',
                     'ledger_batch_id' => (string) $summary['batch']->id,
+                    'category_id' => $request->validated()['category_id'],
                     'period_type' => 'ALL',
                 ])
                 ->with(
@@ -535,6 +537,7 @@ class FinanceStatementController extends Controller
                 $statementType,
                 $uploadedFile->getPathname(),
                 $uploadedFile->getClientOriginalName(),
+                $request->validated()['category_id'],
                 $request->validated()['batch_name'] ?? null,
                 $request->validated()['notes'] ?? null,
                 auth()->id() ? (string) auth()->id() : null
@@ -544,6 +547,7 @@ class FinanceStatementController extends Controller
                 ->route($routeName, [
                     'statement_data_source' => 'imported',
                     'statement_batch_id' => (string) $summary['batch']->id,
+                    'category_id' => $request->validated()['category_id'],
                     'period_type' => 'ALL',
                 ])
                 ->with('success', 'Import laporan selesai. ' . $summary['row_count'] . ' baris berhasil dibaca.');
@@ -680,6 +684,7 @@ class FinanceStatementController extends Controller
             'statement_batch_id' => $filter->statementBatchId,
             'ledger_source' => $filter->ledgerSource,
             'ledger_batch_id' => $filter->ledgerBatchId,
+            'category_id' => $filter->categoryId,
             'per_page' => $filter->perPage,
         ];
     }
@@ -700,6 +705,7 @@ class FinanceStatementController extends Controller
             'report_date' => $filter->reportDate,
             'month' => $filter->month,
             'year' => $filter->year,
+            'category_id' => $filter->categoryId,
             'per_page' => $filter->perPage,
         ], static fn ($value): bool => $value !== null && $value !== '');
     }
@@ -754,7 +760,8 @@ class FinanceStatementController extends Controller
     private function downloadStatementDocument(FinanceStatementFilterRequest $request, string $statementType)
     {
         try {
-            $filter = StatementFilterDTO::fromArray($request->validated());
+            $validated = $request->validated();
+            $filter = StatementFilterDTO::fromArray($validated);
             $format = strtolower((string) $request->query('format', 'pdf'));
             if ($format === 'xlsx') {
                 $format = 'excel';
@@ -764,6 +771,33 @@ class FinanceStatementController extends Controller
                 return redirect()
                     ->back()
                     ->with('error', 'Format dokumen laporan tidak dikenali.');
+            }
+
+            if ($statementType === 'journal_items') {
+                $exportScope = strtolower((string) ($validated['export_scope'] ?? 'filter'));
+
+                if ($exportScope === 'all') {
+                    $filter = new StatementFilterDTO(
+                        periodType: null,
+                        statementSource: $filter->statementSource,
+                        statementDataSource: $filter->statementDataSource,
+                        ledgerSource: $filter->ledgerSource,
+                        page: 1,
+                        perPage: 5000
+                    );
+                } elseif ($exportScope === 'to_date') {
+                    $toDate = Carbon::parse((string) ($validated['to_date'] ?? now()->toDateString()))->toDateString();
+                    $filter = new StatementFilterDTO(
+                        periodType: null,
+                        endDate: $toDate,
+                        statementSource: $filter->statementSource,
+                        statementDataSource: $filter->statementDataSource,
+                        ledgerSource: $filter->ledgerSource,
+                        categoryId: $filter->categoryId,
+                        page: 1,
+                        perPage: 5000
+                    );
+                }
             }
 
             $exportFilter = new StatementFilterDTO(
@@ -784,6 +818,7 @@ class FinanceStatementController extends Controller
                 statementBatchId: $filter->statementBatchId,
                 ledgerSource: $filter->ledgerSource,
                 ledgerBatchId: $filter->ledgerBatchId,
+                categoryId: $filter->categoryId,
                 selectedIds: $filter->selectedIds,
                 page: 1,
                 perPage: 5000
@@ -1571,6 +1606,7 @@ class FinanceStatementController extends Controller
             'report_date' => $request->input('report_date'),
             'month' => $request->input('month'),
             'year' => $request->input('year'),
+            'category_id' => $request->input('category_id'),
             'account_code' => $request->input('account_code_filter'),
             'search' => $request->input('search_filter'),
             'per_page' => $request->input('per_page'),
@@ -1585,6 +1621,7 @@ class FinanceStatementController extends Controller
         return [
             'id' => (string) $entry->id,
             'batch_id' => (string) $entry->batch_id,
+            'category_id' => $entry->category_id !== null ? (string) $entry->category_id : null,
             'row_type' => (string) $entry->row_type,
             'entry_date' => $entry->entry_date?->toDateString(),
             'account_code' => (string) $entry->account_code,
@@ -1650,6 +1687,7 @@ class FinanceStatementController extends Controller
             'report_date' => $request->input('report_date'),
             'month' => $request->input('month'),
             'year' => $request->input('year'),
+            'category_id' => $request->input('category_id'),
             'account_code' => $request->input('account_code_filter'),
             'search' => $request->input('search_filter'),
         ], static fn ($value): bool => $value !== null && $value !== '');

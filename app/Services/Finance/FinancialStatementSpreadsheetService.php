@@ -330,11 +330,11 @@ class FinancialStatementSpreadsheetService
         ], ['Jumlah Baris']);
 
         $sheet->fromArray(
-            ['ID', 'Tanggal', 'Entri Jurnal', 'Akun', 'Rekanan', 'Label', 'Tipe', 'Jumlah', 'Debit', 'Kredit', 'Pajak', 'Tax Grids', 'Analisa Distribusi'],
+            ['ID', 'Tanggal', 'Kategori Finance', 'Entri Jurnal', 'Akun', 'Rekanan', 'Label', 'Tipe', 'Jumlah', 'Debit', 'Kredit', 'Pajak', 'Tax Grids', 'Analisa Distribusi'],
             null,
             'A' . $row
         );
-        $this->styleTableHeader($sheet, 'A' . $row . ':M' . $row);
+        $this->styleTableHeader($sheet, 'A' . $row . ':N' . $row);
         $headerRow = $row;
         $row++;
 
@@ -342,6 +342,7 @@ class FinancialStatementSpreadsheetService
             $sheet->fromArray([
                 (int) ($item['item_id'] ?? 0),
                 $this->formatDate((string) ($item['accounting_date'] ?? '')),
+                (string) ($item['category_name'] ?? '-'),
                 (string) ($item['invoice_no'] ?? '-'),
                 trim((string) ($item['account_code'] ?? '-') . ' ' . (string) ($item['account_name'] ?? '')),
                 (string) ($item['partner_name'] ?? '-'),
@@ -358,16 +359,16 @@ class FinancialStatementSpreadsheetService
         }
 
         if ($row === $headerRow + 1) {
-            $sheet->mergeCells('A' . $row . ':M' . $row);
+            $sheet->mergeCells('A' . $row . ':N' . $row);
             $sheet->setCellValue('A' . $row, 'Belum ada item jurnal untuk filter aktif.');
             $row++;
         }
 
         $lastRow = max($row - 1, $headerRow);
-        $this->applyGridStyle($sheet, 'A' . $headerRow . ':M' . $lastRow);
-        $this->applyCurrencyStyle($sheet, 'H' . ($headerRow + 1) . ':J' . $lastRow);
+        $this->applyGridStyle($sheet, 'A' . $headerRow . ':N' . $lastRow);
+        $this->applyCurrencyStyle($sheet, 'I' . ($headerRow + 1) . ':K' . $lastRow);
 
-        foreach (range('A', 'M') as $column) {
+        foreach (range('A', 'N') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
         $sheet->freezePane('A' . ($headerRow + 1));

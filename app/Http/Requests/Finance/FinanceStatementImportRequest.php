@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Finance;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FinanceStatementImportRequest extends FormRequest
 {
@@ -15,6 +16,11 @@ class FinanceStatementImportRequest extends FormRequest
     {
         return [
             'file' => 'required|file|mimes:xlsx,xls,csv',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'batch_name' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:5000',
         ];
@@ -24,6 +30,7 @@ class FinanceStatementImportRequest extends FormRequest
     {
         $this->merge([
             'batch_name' => trim((string) $this->input('batch_name', '')) ?: null,
+            'category_id' => trim((string) $this->input('category_id', '')),
             'notes' => trim((string) $this->input('notes', '')) ?: null,
         ]);
     }
@@ -34,6 +41,8 @@ class FinanceStatementImportRequest extends FormRequest
             'file.required' => 'File Excel laporan wajib dipilih.',
             'file.file' => 'File import tidak valid.',
             'file.mimes' => 'Format file harus xlsx, xls, atau csv.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'batch_name.max' => 'Nama batch maksimal 255 karakter.',
             'notes.max' => 'Catatan import maksimal 5000 karakter.',
         ];

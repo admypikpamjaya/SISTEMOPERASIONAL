@@ -9,6 +9,7 @@ class FinanceSnapshotFilterDTO
         public ?string $reportDate = null,
         public ?int $year = null,
         public ?int $month = null,
+        public ?string $categoryId = null,
         public int $page = 1,
         public int $perPage = 20,
         public string $comparisonType = 'NONE',
@@ -28,6 +29,9 @@ class FinanceSnapshotFilterDTO
             reportDate: isset($data['report_date']) ? (string) $data['report_date'] : null,
             year: isset($data['year']) ? (int) $data['year'] : null,
             month: isset($data['month']) ? (int) $data['month'] : null,
+            categoryId: isset($data['category_id']) && trim((string) $data['category_id']) !== ''
+                ? trim((string) $data['category_id'])
+                : null,
             page: (int) ($data['page'] ?? 1),
             perPage: (int) ($data['per_page'] ?? 20),
             comparisonType: strtoupper((string) ($data['comparison_type'] ?? 'NONE')),

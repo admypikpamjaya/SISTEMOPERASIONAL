@@ -334,6 +334,7 @@
     $isReadOnly = (bool) ($isReadOnly ?? false);
     $formAction = $isEdit ? route('finance.invoice.update', $invoice->id) : route('finance.invoice.store');
     $defaultDate = old('accounting_date', $isEdit ? optional($invoice->accounting_date)->toDateString() : now()->toDateString());
+    $defaultCategoryId = old('category_id', $isEdit ? $invoice->category_id : request('category_id'));
     $defaultEntryType = old('entry_type', $isEdit ? $invoice->entry_type : 'EXPENSE');
     $defaultJournalName = old('journal_name', $isEdit ? $invoice->journal_name : '');
     $defaultReference = old('reference', $isEdit ? $invoice->reference : '');
@@ -346,6 +347,7 @@
     if ($defaultJournalName !== '' && !$journalOptions->contains($defaultJournalName)) {
         $journalOptions->prepend($defaultJournalName);
     }
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
 
     $accountOptions = collect($accountOptions ?? [])
         ->map(function ($item) {
@@ -494,6 +496,9 @@
         @csrf
         @if($isEdit) @method('PUT') @endif
         <input type="hidden" name="action" id="form-action" value="{{ $defaultAction }}">
+        @if($isReadOnly && $defaultCategoryId)
+            <input type="hidden" name="category_id" value="{{ $defaultCategoryId }}">
+        @endif
 
         <div class="ivf-form-body">
 
@@ -508,6 +513,18 @@
                         {{ $isReadOnly ? 'disabled' : '' }} required>
                 </div>
                 <div class="col-md-3 ivf-form-group">
+                    <label class="ivf-label"><i class="fas fa-tags"></i> Kategori Finance</label>
+                    <select name="category_id" id="category_id" class="ivf-control"
+                        {{ $isReadOnly ? 'disabled' : '' }} required>
+                        <option value="">Pilih kategori</option>
+                        @foreach($financeCategoryOptions as $category)
+                            <option value="{{ $category->id }}" {{ (string) $defaultCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 ivf-form-group">
                     <label class="ivf-label"><i class="fas fa-tags"></i> {{ __('app.finance.type') }}</label>
                     <select name="entry_type" id="entry_type" class="ivf-control"
                         {{ $isReadOnly ? 'disabled' : '' }} required>
@@ -515,7 +532,7 @@
                         <option value="EXPENSE" {{ $defaultEntryType === 'EXPENSE' ? 'selected' : '' }}>{{ __('app.finance.expense') }}</option>
                     </select>
                 </div>
-                <div class="col-md-6 ivf-form-group">
+                <div class="col-md-3 ivf-form-group">
                     <label class="ivf-label"><i class="fas fa-book"></i> {{ __('app.finance.journal') }}</label>
                     <input type="text"
                         name="journal_name"

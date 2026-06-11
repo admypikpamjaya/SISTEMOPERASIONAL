@@ -208,6 +208,12 @@ return array_map($withFallbackLabel, [
                 'route' => 'finance.dashboard',
             ],
             [
+                'label_key' => 'app.menu.finance_categories',
+                'icon'  => 'fas fa-tags',
+                'route' => 'finance.categories.index',
+                'roles' => [UserRole::IT_SUPPORT->value],
+            ],
+            [
                 'label_key' => 'app.menu.asset_depreciation',
                 'icon'  => 'fas fa-calculator',
                 'route' => 'finance.depreciation.index',

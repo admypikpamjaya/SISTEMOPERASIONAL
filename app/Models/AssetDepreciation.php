@@ -23,6 +23,7 @@ class AssetDepreciation extends Model
     protected $fillable = [
         'depreciation_run_id',
         'period_id',
+        'category_id',
         'asset_id',
         'policy_id',
         'method',
@@ -51,5 +52,10 @@ class AssetDepreciation extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 }

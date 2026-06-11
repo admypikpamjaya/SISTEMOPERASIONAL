@@ -360,6 +360,7 @@ class FinancialStatementDocumentService
             );
 
             $detailSegments = array_filter([
+                !empty($item['category_name']) ? 'Kategori: ' . (string) $item['category_name'] : null,
                 'Akun: ' . trim((string) ($item['account_code'] ?? '-') . ' ' . (string) ($item['account_name'] ?? '')),
                 'Label: ' . (string) ($item['label'] ?? '-'),
                 !empty($item['partner_name']) ? 'Rekanan: ' . (string) $item['partner_name'] : null,

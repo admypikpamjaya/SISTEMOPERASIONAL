@@ -27,6 +27,7 @@ class FinanceInvoiceController extends Controller
             'q' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:ALL,DRAFT,POSTED,CANCELLED',
             'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
+            'category_id' => 'nullable|uuid|exists:finance_categories,id',
             'accounting_date' => 'nullable|date_format:Y-m-d',
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
@@ -35,7 +36,7 @@ class FinanceInvoiceController extends Controller
         ]);
 
         $query = FinanceInvoice::query()
-            ->with(['creator:id,name'])
+            ->with(['creator:id,name', 'category:id,name,status'])
             ->orderByDesc('accounting_date')
             ->orderByDesc('created_at');
 
@@ -44,6 +45,7 @@ class FinanceInvoiceController extends Controller
         $search = trim((string) ($filters['q'] ?? ''));
         $status = strtoupper((string) ($filters['status'] ?? 'ALL'));
         $entryType = strtoupper((string) ($filters['entry_type'] ?? 'ALL'));
+        $categoryId = trim((string) ($filters['category_id'] ?? ''));
         $accountingDate = $filters['accounting_date'] ?? null;
         $year = isset($filters['year']) ? (int) $filters['year'] : null;
         $month = isset($filters['month']) ? (int) $filters['month'] : null;
@@ -65,6 +67,7 @@ class FinanceInvoiceController extends Controller
                 'q' => $search,
                 'status' => $status,
                 'entry_type' => $entryType,
+                'category_id' => $categoryId !== '' ? $categoryId : null,
                 'accounting_date' => $accountingDate,
                 'month' => $month,
                 'year' => $year,
@@ -101,6 +104,7 @@ class FinanceInvoiceController extends Controller
                         (string) $validated['accounting_date'],
                         (string) $validated['entry_type']
                     ),
+                    'category_id' => $validated['category_id'],
                     'accounting_date' => $validated['accounting_date'],
                     'entry_type' => $validated['entry_type'],
                     'journal_name' => $validated['journal_name'],
@@ -152,6 +156,7 @@ class FinanceInvoiceController extends Controller
     {
         $invoice->load([
             'items',
+            'category:id,name,status',
             'notes.user:id,name,role',
             'creator:id,name',
             'poster:id,name',
@@ -180,6 +185,7 @@ class FinanceInvoiceController extends Controller
             $invoice->loadMissing([
                 'items',
                 'notes.user:id,name,role',
+                'category:id,name,status',
                 'creator:id,name',
                 'poster:id,name',
                 'updater:id,name',
@@ -234,6 +240,7 @@ class FinanceInvoiceController extends Controller
 
                 $invoice->update([
                     'accounting_date' => $validated['accounting_date'],
+                    'category_id' => $validated['category_id'],
                     'entry_type' => $validated['entry_type'],
                     'journal_name' => $validated['journal_name'],
                     'reference' => $validated['reference'] ?? null,
@@ -325,6 +332,7 @@ class FinanceInvoiceController extends Controller
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
             'journal_name' => 'nullable|string|max:255',
+            'category_id' => 'nullable|uuid|exists:finance_categories,id',
         ]);
 
         $draftInvoices = FinanceInvoice::query()
@@ -434,6 +442,11 @@ class FinanceInvoiceController extends Controller
         $entryType = strtoupper((string) ($filters['entry_type'] ?? 'ALL'));
         if ($entryType !== 'ALL') {
             $query->where('entry_type', $entryType);
+        }
+
+        $categoryId = trim((string) ($filters['category_id'] ?? ''));
+        if ($categoryId !== '') {
+            $query->where('category_id', $categoryId);
         }
 
         $accountingDate = $filters['accounting_date'] ?? null;

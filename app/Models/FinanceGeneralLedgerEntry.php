@@ -22,6 +22,7 @@ class FinanceGeneralLedgerEntry extends Model
 
     protected $fillable = [
         'batch_id',
+        'category_id',
         'row_type',
         'entry_date',
         'account_code',
@@ -60,6 +61,11 @@ class FinanceGeneralLedgerEntry extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(FinanceGeneralLedgerBatch::class, 'batch_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function creator(): BelongsTo

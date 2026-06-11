@@ -492,6 +492,10 @@
                 </div>
             </div>
             <div class="ivd-meta-row">
+                <div class="ivd-meta-key"><i class="fas fa-layer-group"></i> Kategori Finance</div>
+                <div class="ivd-meta-val">{{ $invoice->category?->name ?? '-' }}</div>
+            </div>
+            <div class="ivd-meta-row">
                 <div class="ivd-meta-key"><i class="fas fa-book"></i> {{ __('app.finance.journal') }}</div>
                 <div class="ivd-meta-val">{{ $invoice->journal_name }}</div>
             </div>

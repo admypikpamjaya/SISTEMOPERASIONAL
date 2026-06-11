@@ -12,9 +12,11 @@ use App\Services\Finance\DepreciationService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 /**
@@ -61,7 +63,8 @@ class AssetDepreciationController extends Controller
                 $asset,
                 $result,
                 $periodStart,
-                $periodEnd
+                $periodEnd,
+                $validated['category_id']
             );
 
             // The log records what the user typed into the calculator at that
@@ -71,6 +74,7 @@ class AssetDepreciationController extends Controller
                 try {
                     $log = FinanceDepreciationCalculationLog::query()->create([
                         'asset_id' => $validated['asset_id'],
+                        'category_id' => $validated['category_id'],
                         'period_start_date' => $periodStart->toDateString(),
                         'period_end_date' => $periodEnd->toDateString(),
                         'period_month' => $periodEnd->month,
@@ -84,6 +88,7 @@ class AssetDepreciationController extends Controller
                     $logId = $log->id;
                     $log->loadMissing([
                         'asset:id,account_code,category,location',
+                        'category:id,name,status',
                         'calculator:id,name',
                     ]);
 
@@ -102,6 +107,7 @@ class AssetDepreciationController extends Controller
                             $log->asset?->category,
                             $log->asset?->location
                         ),
+                        'finance_category_name' => $log->category?->name ?? '-',
                         'period_label' => $this->formatPeriodLabel(
                             $log->period_start_date,
                             $log->period_end_date,
@@ -167,9 +173,18 @@ class AssetDepreciationController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         try {
+            $filters = $request->validate([
+                'category_id' => [
+                    'nullable',
+                    'uuid',
+                    Rule::exists('finance_categories', 'id'),
+                ],
+            ]);
+            $selectedCategoryId = $filters['category_id'] ?? null;
+
             // The page still needs the asset list because users pick an asset
             // first, then enter finance values manually for the calculation.
             $assets = Asset::query()
@@ -191,8 +206,12 @@ class AssetDepreciationController extends Controller
                 $logs = FinanceDepreciationCalculationLog::query()
                     ->with([
                         'asset:id,account_code,category,location',
+                        'category:id,name,status',
                         'calculator:id,name',
                     ])
+                    ->when($selectedCategoryId, function ($query) use ($selectedCategoryId): void {
+                        $query->where('category_id', $selectedCategoryId);
+                    })
                     ->orderByDesc('calculated_at')
                     ->limit(50)
                     ->get()
@@ -214,6 +233,7 @@ class AssetDepreciationController extends Controller
                             $log->period_month,
                             $log->period_year
                         );
+                        $log->finance_category_name = $log->category?->name ?? '-';
 
                         return $log;
                     });
@@ -222,6 +242,9 @@ class AssetDepreciationController extends Controller
             return view('finance.depreciation', [
                 'assets' => $assets,
                 'logs' => $logs,
+                'filters' => [
+                    'category_id' => $selectedCategoryId,
+                ],
             ]);
         } catch (Throwable $exception) {
             report($exception);
@@ -236,6 +259,7 @@ class AssetDepreciationController extends Controller
     {
         $log->loadMissing([
             'asset:id,account_code,category,location',
+            'category:id,name,status',
             'calculator:id,name,email',
         ]);
 
@@ -254,6 +278,7 @@ class AssetDepreciationController extends Controller
     {
         $log->loadMissing([
             'asset:id,account_code,category,location',
+            'category:id,name,status',
             'calculator:id,name,email',
         ]);
 
@@ -301,6 +326,7 @@ class AssetDepreciationController extends Controller
             'Kode Akun Asset: ' . (string) ($log->asset?->account_code ?? '-'),
             'Kategori Asset: ' . $this->formatAssetCategory($log->asset?->category),
             'Lokasi Asset: ' . (string) ($log->asset?->location ?? '-'),
+            'Kategori Finance: ' . (string) ($log->category?->name ?? '-'),
             'Periode: ' . $this->formatPeriodLabel(
                 $log->period_start_date,
                 $log->period_end_date,

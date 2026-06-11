@@ -19,6 +19,7 @@ use App\Http\Controllers\User\UserManagementController;
 use App\Http\Controllers\Finance\AssetDepreciationController;
 use App\Http\Controllers\Finance\FinanceAccountController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Finance\FinanceCategoryController;
 use App\Http\Controllers\Finance\FinanceInvoiceController;
 use App\Http\Controllers\Finance\FinanceReportController;
 use App\Http\Controllers\Finance\FinanceStatementController;
@@ -236,6 +237,10 @@ Route::prefix('finance')
         Route::get('/dashboard', [FinanceDashboardController::class, 'index'])
             ->middleware('check_access:finance_report.read')
             ->name('dashboard');
+
+        Route::resource('categories', FinanceCategoryController::class)
+            ->only(['index', 'store', 'update', 'destroy'])
+            ->middleware('role:' . UserRole::IT_SUPPORT->value);
 
         Route::get('/depreciation', [AssetDepreciationController::class, 'index'])
             ->middleware('check_access:finance_depreciation.read')

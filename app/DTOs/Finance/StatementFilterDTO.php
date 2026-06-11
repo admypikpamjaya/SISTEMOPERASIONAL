@@ -22,6 +22,7 @@ class StatementFilterDTO
         public ?string $statementBatchId = null,
         public ?string $ledgerSource = null,
         public ?string $ledgerBatchId = null,
+        public ?string $categoryId = null,
         /** @var array<int, int> */
         public array $selectedIds = [],
         public int $page = 1,
@@ -67,6 +68,9 @@ class StatementFilterDTO
             ledgerBatchId: isset($data['ledger_batch_id']) && trim((string) $data['ledger_batch_id']) !== ''
                 ? trim((string) $data['ledger_batch_id'])
                 : null,
+            categoryId: isset($data['category_id']) && trim((string) $data['category_id']) !== ''
+                ? trim((string) $data['category_id'])
+                : null,
             selectedIds: collect($data['selected_ids'] ?? [])
                 ->map(static fn ($id): int => (int) $id)
                 ->filter(static fn (int $id): bool => $id > 0)
@@ -100,6 +104,7 @@ class StatementFilterDTO
             'statement_batch_id' => $this->statementBatchId,
             'ledger_source' => $this->ledgerSource,
             'ledger_batch_id' => $this->ledgerBatchId,
+            'category_id' => $this->categoryId,
             'per_page' => $this->perPage,
         ];
 

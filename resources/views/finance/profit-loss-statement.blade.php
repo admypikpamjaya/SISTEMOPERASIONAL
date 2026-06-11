@@ -21,6 +21,13 @@
     $selectedBatchMeta = collect($batchOptions)->firstWhere('id', $selectedBatchId) ?? $selectedBatch;
     $importedRows = $importedRows ?? [];
     $editImportedRow = $editImportedRow ?? null;
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedFinanceCategoryId = old(
+        'category_id',
+        data_get($editImportedRow, 'category_id')
+            ?? data_get($filters, 'category_id')
+            ?? data_get($selectedBatchMeta, 'category_id')
+    );
     $sourceQueryBase = collect($filterQuery ?? [])
         ->except(['statement_data_source', 'statement_batch_id', 'page'])
         ->filter(static fn ($value): bool => $value !== null && $value !== '')
@@ -841,6 +848,17 @@
                         </div>
                     </div>
                     <div class="fs-field">
+                        <label class="fs-label" for="profit_import_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <select name="category_id" id="profit_import_category_id" class="fs-control" required>
+                            <option value="">Pilih kategori</option>
+                            @foreach($financeCategoryOptions as $category)
+                                <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="fs-field">
                         <label class="fs-label" for="profit_import_batch_name"><i class="fas fa-tag"></i> {{ __('app.finance.batch_name') }}</label>
                         <input type="text" name="batch_name" id="profit_import_batch_name" class="fs-control" value="{{ old('batch_name') }}">
                         <div class="fs-helper-text">
@@ -878,6 +896,17 @@
                     <input type="hidden" name="statement_type" value="PROFIT_LOSS">
                     <input type="hidden" name="batch_id" value="{{ old('batch_id', $profitRowForm['batch_id'] ?? $selectedBatchId) }}">
                     <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
+                    <div class="fs-field">
+                        <label class="fs-label" for="profit_row_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <select name="category_id" id="profit_row_category_id" class="fs-control" required>
+                            <option value="">Pilih kategori</option>
+                            @foreach($financeCategoryOptions as $category)
+                                <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="fs-field">
                         <label class="fs-label" for="profit_section_key"><i class="fas fa-folder-tree"></i> {{ __('app.finance.category') }}</label>
                         <select name="section_key" id="profit_section_key" class="fs-control" required>

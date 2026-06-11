@@ -27,6 +27,7 @@ class FinanceImportedStatementService
             ->selectRaw('SUM(CASE WHEN r.is_manual = 1 THEN 1 ELSE 0 END) as manual_count')
             ->groupBy([
                 'finance_statement_batches.id',
+                'finance_statement_batches.category_id',
                 'finance_statement_batches.statement_type',
                 'finance_statement_batches.source_type',
                 'finance_statement_batches.batch_name',
@@ -237,6 +238,7 @@ class FinanceImportedStatementService
         string $statementType,
         string $path,
         string $originalName,
+        string $categoryId,
         ?string $batchName,
         ?string $notes,
         ?string $actorId
@@ -262,6 +264,7 @@ class FinanceImportedStatementService
             $statementType,
             $resolvedBatchName,
             $originalName,
+            $categoryId,
             $notes,
             $actorId,
             $parsed,
@@ -270,6 +273,7 @@ class FinanceImportedStatementService
         ) {
             $batch = FinanceStatementBatch::query()->create([
                 'statement_type' => $statementType,
+                'category_id' => $categoryId,
                 'source_type' => FinanceStatementBatch::SOURCE_IMPORT,
                 'batch_name' => $resolvedBatchName,
                 'source_filename' => $originalName,
@@ -288,10 +292,11 @@ class FinanceImportedStatementService
             $chunks = array_chunk($parsed['rows'], 300);
             foreach ($chunks as $chunk) {
                 DB::table('finance_statement_rows')->insert(
-                    array_map(function (array $row) use ($batch, $actorId, $now): array {
+                    array_map(function (array $row) use ($batch, $categoryId, $actorId, $now): array {
                         return [
                             'id' => (string) Str::uuid(),
                             'batch_id' => (string) $batch->id,
+                            'category_id' => $categoryId,
                             'section_key' => $row['section_key'],
                             'section_label' => $row['section_label'],
                             'group_label' => $row['group_label'],
@@ -325,10 +330,12 @@ class FinanceImportedStatementService
     public function createRow(string $statementType, array $payload, ?string $actorId): FinanceStatementRow
     {
         $statementType = strtoupper($statementType);
-        $batch = $this->resolveTargetBatch($statementType, $payload['batch_id'] ?? null, $actorId);
+        $categoryId = (string) $payload['category_id'];
+        $batch = $this->resolveTargetBatch($statementType, $payload['batch_id'] ?? null, $actorId, $categoryId);
 
         $row = FinanceStatementRow::query()->create([
             'batch_id' => (string) $batch->id,
+            'category_id' => $categoryId,
             'section_key' => strtolower((string) $payload['section_key']),
             'section_label' => $payload['section_label'] ?: $this->resolveSectionLabel($statementType, (string) $payload['section_key']),
             'group_label' => $payload['group_label'] ?? null,
@@ -357,6 +364,7 @@ class FinanceImportedStatementService
 
         $row->update([
             'section_key' => strtolower((string) $payload['section_key']),
+            'category_id' => (string) $payload['category_id'],
             'section_label' => $payload['section_label'] ?: $this->resolveSectionLabel($statementType, (string) $payload['section_key']),
             'group_label' => $payload['group_label'] ?? null,
             'account_code' => $payload['account_code'] ?? null,
@@ -394,7 +402,12 @@ class FinanceImportedStatementService
         return FinanceStatementBatch::query()->find($batchId);
     }
 
-    private function resolveTargetBatch(string $statementType, ?string $batchId, ?string $actorId): FinanceStatementBatch
+    private function resolveTargetBatch(
+        string $statementType,
+        ?string $batchId,
+        ?string $actorId,
+        string $categoryId
+    ): FinanceStatementBatch
     {
         if (!empty($batchId)) {
             $batch = FinanceStatementBatch::query()
@@ -402,12 +415,19 @@ class FinanceImportedStatementService
                 ->find($batchId);
 
             if ($batch !== null) {
+                if ($batch->category_id === null) {
+                    $batch->update(['category_id' => $categoryId]);
+                } elseif ((string) $batch->category_id !== $categoryId) {
+                    throw new RuntimeException('Kategori baris tidak sama dengan kategori batch laporan.');
+                }
+
                 return $batch;
             }
         }
 
         return FinanceStatementBatch::query()->create([
             'statement_type' => $statementType,
+            'category_id' => $categoryId,
             'source_type' => FinanceStatementBatch::SOURCE_MANUAL,
             'batch_name' => $this->defaultManualBatchName($statementType),
             'notes' => 'Dibuat otomatis dari input manual.',
@@ -445,11 +465,16 @@ class FinanceImportedStatementService
         if (!empty($batchId)) {
             return FinanceStatementBatch::query()
                 ->where('statement_type', $statementType)
+                ->when(!empty($filter->categoryId), fn ($query) => $query->where('category_id', $filter->categoryId))
                 ->find($batchId);
         }
 
         $preferredQuery = FinanceStatementBatch::query()
             ->where('statement_type', $statementType);
+
+        if (!empty($filter->categoryId)) {
+            $preferredQuery->where('category_id', $filter->categoryId);
+        }
 
         if ($filter->startYear !== null && $filter->endYear !== null) {
             $preferredQuery->whereBetween('imported_year', [$filter->startYear, $filter->endYear]);
@@ -469,6 +494,7 @@ class FinanceImportedStatementService
 
         return FinanceStatementBatch::query()
             ->where('statement_type', $statementType)
+            ->when(!empty($filter->categoryId), fn ($query) => $query->where('category_id', $filter->categoryId))
             ->orderByDesc('imported_year')
             ->orderByDesc('imported_at')
             ->orderByDesc('created_at')
@@ -479,6 +505,10 @@ class FinanceImportedStatementService
     {
         $query = FinanceStatementRow::query()
             ->where('batch_id', $batchId);
+
+        if (!empty($filter->categoryId)) {
+            $query->where('category_id', $filter->categoryId);
+        }
 
         if (!empty($filter->accountCode)) {
             $query->where(function ($builder) use ($filter): void {
@@ -893,6 +923,7 @@ class FinanceImportedStatementService
     {
         return array_merge([
             'id' => (string) $batch->id,
+            'category_id' => $batch->category_id !== null ? (string) $batch->category_id : null,
             'statement_type' => (string) $batch->statement_type,
             'source_type' => (string) $batch->source_type,
             'batch_name' => (string) $batch->batch_name,
@@ -912,6 +943,7 @@ class FinanceImportedStatementService
         return [
             'id' => (string) $row->id,
             'batch_id' => (string) $row->batch_id,
+            'category_id' => $row->category_id !== null ? (string) $row->category_id : null,
             'section_key' => $row->section_key !== null ? (string) $row->section_key : null,
             'section_label' => $row->section_label !== null ? (string) $row->section_label : null,
             'group_label' => $row->group_label !== null ? (string) $row->group_label : null,

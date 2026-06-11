@@ -22,6 +22,7 @@ class FinanceAssetPolicy extends Model
 
     protected $fillable = [
         'asset_id',
+        'category_id',
         'revision_no',
         'method',
         'acquisition_cost',
@@ -46,6 +47,11 @@ class FinanceAssetPolicy extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function effectivePeriod(): BelongsTo

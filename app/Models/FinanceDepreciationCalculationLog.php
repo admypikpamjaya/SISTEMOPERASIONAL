@@ -15,6 +15,7 @@ class FinanceDepreciationCalculationLog extends Model
 
     protected $fillable = [
         'asset_id',
+        'category_id',
         'period_start_date',
         'period_end_date',
         'period_month',
@@ -40,6 +41,11 @@ class FinanceDepreciationCalculationLog extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function calculator(): BelongsTo

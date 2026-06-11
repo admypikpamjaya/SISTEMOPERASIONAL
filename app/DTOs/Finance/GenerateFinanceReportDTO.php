@@ -9,6 +9,7 @@ class GenerateFinanceReportDTO
         public string $reportType,
         public string $reconciliationSnapshotId,
         public ReportSummaryDTO $summary,
+        public ?string $categoryId = null,
         public ?string $generatedBy = null,
         public bool $isReadOnly = true
     ) {}

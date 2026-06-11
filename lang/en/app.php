@@ -60,6 +60,7 @@ return [
         'reminders' => 'Reminders',
         'finance' => 'Finance',
         'finance_dashboard' => 'Finance Dashboard',
+        'finance_categories' => 'Finance Categories',
         'asset_depreciation' => 'Asset Depreciation',
         'input_finance_report' => 'Finance Report Input',
         'balance_sheet' => 'Balance Sheet',

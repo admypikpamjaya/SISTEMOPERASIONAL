@@ -35,7 +35,7 @@ class FinanceGeneralLedgerService
         bool $paginate = true
     ): array {
         $batches = $this->getBatchOptions();
-        $selectedBatch = $this->resolveSelectedBatch($batchId);
+        $selectedBatch = $this->resolveSelectedBatch($batchId, $filter->categoryId);
 
         if ($selectedBatch === null) {
             return [
@@ -49,6 +49,10 @@ class FinanceGeneralLedgerService
 
         $baseQuery = FinanceGeneralLedgerEntry::query()
             ->where('batch_id', $selectedBatch->id);
+
+        if (!empty($filter->categoryId)) {
+            $baseQuery->where('category_id', $filter->categoryId);
+        }
 
         if (!empty($filter->accountCode)) {
             $baseQuery->where('account_code', $filter->accountCode);
@@ -93,6 +97,7 @@ class FinanceGeneralLedgerService
         if (!empty($filter->startDate)) {
             $openingRows = FinanceGeneralLedgerEntry::query()
                 ->where('batch_id', $selectedBatch->id)
+                ->when(!empty($filter->categoryId), fn (Builder $query) => $query->where('category_id', $filter->categoryId))
                 ->whereIn('account_code', $accountCodes)
                 ->whereDate('entry_date', '<', $filter->startDate)
                 ->orderBy('account_code')
@@ -206,6 +211,7 @@ class FinanceGeneralLedgerService
             ->selectRaw('SUM(CASE WHEN e.is_manual = 1 THEN 1 ELSE 0 END) as manual_count')
             ->groupBy([
                 'finance_general_ledger_batches.id',
+                'finance_general_ledger_batches.category_id',
                 'finance_general_ledger_batches.source_type',
                 'finance_general_ledger_batches.batch_name',
                 'finance_general_ledger_batches.source_filename',
@@ -235,6 +241,7 @@ class FinanceGeneralLedgerService
     public function importFromExcel(
         string $path,
         string $originalName,
+        string $categoryId,
         ?string $batchName,
         ?string $notes,
         ?string $actorId
@@ -253,6 +260,7 @@ class FinanceGeneralLedgerService
         $batch = DB::transaction(function () use (
             $resolvedBatchName,
             $originalName,
+            $categoryId,
             $notes,
             $actorId,
             $parsed,
@@ -261,6 +269,7 @@ class FinanceGeneralLedgerService
         ) {
             $batch = FinanceGeneralLedgerBatch::query()->create([
                 'source_type' => FinanceGeneralLedgerBatch::SOURCE_IMPORT,
+                'category_id' => $categoryId,
                 'batch_name' => $resolvedBatchName,
                 'source_filename' => $originalName,
                 'sheet_name' => $sheet->getTitle(),
@@ -278,10 +287,11 @@ class FinanceGeneralLedgerService
             $chunks = array_chunk($parsed['rows'], 300);
             foreach ($chunks as $chunk) {
                 DB::table('finance_general_ledger_entries')->insert(
-                    array_map(function (array $row) use ($batch, $actorId, $now): array {
+                    array_map(function (array $row) use ($batch, $categoryId, $actorId, $now): array {
                         return [
                             'id' => (string) Str::uuid(),
                             'batch_id' => (string) $batch->id,
+                            'category_id' => $categoryId,
                             'row_type' => $row['row_type'],
                             'entry_date' => $row['entry_date'],
                             'account_code' => $row['account_code'],
@@ -324,11 +334,13 @@ class FinanceGeneralLedgerService
 
     public function createEntry(array $payload, ?string $actorId): FinanceGeneralLedgerEntry
     {
-        $batch = $this->resolveTargetBatch($payload['batch_id'] ?? null, $actorId);
+        $categoryId = (string) $payload['category_id'];
+        $batch = $this->resolveTargetBatch($payload['batch_id'] ?? null, $actorId, $categoryId);
         $sortOrder = $this->nextSortOrder((string) $batch->id, (string) $payload['account_code']);
 
         $entry = FinanceGeneralLedgerEntry::query()->create([
             'batch_id' => (string) $batch->id,
+            'category_id' => $categoryId,
             'row_type' => (string) $payload['row_type'],
             'entry_date' => (string) $payload['entry_date'],
             'account_code' => (string) $payload['account_code'],
@@ -374,6 +386,7 @@ class FinanceGeneralLedgerService
 
         $entry->update([
             'row_type' => (string) $payload['row_type'],
+            'category_id' => (string) $payload['category_id'],
             'entry_date' => (string) $payload['entry_date'],
             'account_code' => (string) $payload['account_code'],
             'account_name' => (string) $payload['account_name'],
@@ -726,30 +739,40 @@ class FinanceGeneralLedgerService
         return round($isNegative ? $amount * -1 : $amount, 2);
     }
 
-    private function resolveSelectedBatch(?string $batchId): ?FinanceGeneralLedgerBatch
+    private function resolveSelectedBatch(?string $batchId, ?string $categoryId = null): ?FinanceGeneralLedgerBatch
     {
         if (!empty($batchId)) {
-            $selectedBatch = FinanceGeneralLedgerBatch::query()->find($batchId);
+            $selectedBatch = FinanceGeneralLedgerBatch::query()
+                ->when(!empty($categoryId), fn (Builder $query) => $query->where('category_id', $categoryId))
+                ->find($batchId);
             if ($selectedBatch !== null) {
                 return $selectedBatch;
             }
         }
 
         return FinanceGeneralLedgerBatch::query()
+            ->when(!empty($categoryId), fn (Builder $query) => $query->where('category_id', $categoryId))
             ->orderByDesc('imported_at')
             ->orderByDesc('created_at')
             ->first();
     }
 
-    private function resolveTargetBatch(?string $batchId, ?string $actorId): FinanceGeneralLedgerBatch
+    private function resolveTargetBatch(?string $batchId, ?string $actorId, string $categoryId): FinanceGeneralLedgerBatch
     {
         $batch = $this->findBatch($batchId);
         if ($batch !== null) {
+            if ($batch->category_id === null) {
+                $batch->update(['category_id' => $categoryId]);
+            } elseif ((string) $batch->category_id !== $categoryId) {
+                throw new RuntimeException('Kategori baris tidak sama dengan kategori batch buku besar.');
+            }
+
             return $batch;
         }
 
         return FinanceGeneralLedgerBatch::query()->create([
             'source_type' => FinanceGeneralLedgerBatch::SOURCE_MANUAL,
+            'category_id' => $categoryId,
             'batch_name' => 'Manual Buku Besar',
             'notes' => 'Batch otomatis untuk entry buku besar manual.',
             'imported_at' => now(),
@@ -776,6 +799,10 @@ class FinanceGeneralLedgerService
         $baseQuery = FinanceGeneralLedgerEntry::query()
             ->where('batch_id', $batchId);
 
+        if (!empty($filter->categoryId)) {
+            $baseQuery->where('category_id', $filter->categoryId);
+        }
+
         if (!empty($filter->accountCode)) {
             $baseQuery->where('account_code', $filter->accountCode);
         }
@@ -790,6 +817,7 @@ class FinanceGeneralLedgerService
         if ($hasDateFilter) {
             $accountCount = (int) FinanceGeneralLedgerEntry::query()
                 ->where('batch_id', $batchId)
+                ->when(!empty($filter->categoryId), fn (Builder $query) => $query->where('category_id', $filter->categoryId))
                 ->when(!empty($filter->accountCode), fn (Builder $query) => $query->where('account_code', $filter->accountCode))
                 ->tap(fn (Builder $query) => $this->applyImportedLedgerSearch($query, $filter->search))
                 ->tap(fn (Builder $query) => $this->applyImportedLedgerPeriodFilter($query, $filter))
@@ -843,6 +871,7 @@ class FinanceGeneralLedgerService
     {
         $query = FinanceGeneralLedgerEntry::query()
             ->where('batch_id', $batchId)
+            ->when(!empty($filter->categoryId), fn (Builder $query) => $query->where('category_id', $filter->categoryId))
             ->whereIn('account_code', $accountCodes);
 
         $this->applyImportedLedgerSearch($query, $filter->search);
@@ -967,6 +996,7 @@ class FinanceGeneralLedgerService
     {
         return array_merge([
             'id' => (string) $batch->id,
+            'category_id' => $batch->category_id !== null ? (string) $batch->category_id : null,
             'source_type' => (string) $batch->source_type,
             'batch_name' => (string) $batch->batch_name,
             'source_filename' => $batch->source_filename !== null ? (string) $batch->source_filename : null,

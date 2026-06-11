@@ -17,6 +17,8 @@
     $statementBatchId = $statementFilters['statement_batch_id'] ?? null;
     $ledgerSource = $statementFilters['ledger_source'] ?? null;
     $ledgerBatchId = $statementFilters['ledger_batch_id'] ?? null;
+    $categoryId = $statementFilters['category_id'] ?? null;
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
     $perPage = (int) ($statementFilters['per_page'] ?? 10);
     $action = $action ?? url()->current();
     $perPageOptions = $perPageOptions ?? [10, 20, 50, 100];
@@ -186,6 +188,20 @@
                         </select>
                     </div>
                 @endif
+
+                <div class="fs-field" data-span="3">
+                    <label class="fs-label" for="statement_category_id">
+                        <i class="fas fa-tags"></i> Kategori Finance
+                    </label>
+                    <select name="category_id" id="statement_category_id" class="fs-control">
+                        <option value="">Semua kategori</option>
+                        @foreach($financeCategoryOptions as $category)
+                            <option value="{{ $category->id }}" {{ (string) $categoryId === (string) $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
                 @if($isJournalDetail)
                     <div class="fs-field" data-span="{{ $showPerPage ? '6' : '6' }}">

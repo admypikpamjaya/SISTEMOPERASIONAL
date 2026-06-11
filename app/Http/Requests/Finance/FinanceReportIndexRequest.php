@@ -28,6 +28,7 @@ class FinanceReportIndexRequest extends FormRequest
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
             'report_type' => 'nullable|string|in:DAILY,MONTHLY,YEARLY',
+            'category_id' => 'nullable|uuid|exists:finance_categories,id',
             'comparison_type' => 'nullable|string|in:NONE,PREVIOUS_PERIOD,SAME_PERIOD_LAST_YEAR,SPECIFIC_DATE',
             'comparison_offset' => 'nullable|integer|min:1|max:36',
             'comparison_date' => 'nullable|date|required_if:comparison_type,SPECIFIC_DATE',
@@ -52,6 +53,7 @@ class FinanceReportIndexRequest extends FormRequest
             'period_type' => $periodType,
             'comparison_type' => $comparisonType,
             'report_date' => $reportDate,
+            'category_id' => $this->filled('category_id') ? trim((string) $this->input('category_id')) : null,
         ];
 
         if ($periodType === 'DAILY' && !empty($reportDate)) {
@@ -90,6 +92,7 @@ class FinanceReportIndexRequest extends FormRequest
             'period_type.in' => 'Tipe periode harus ALL, DAILY, MONTHLY, atau YEARLY.',
             'report_date.date' => 'Format tanggal laporan tidak valid.',
             'comparison_type.in' => 'Tipe perbandingan tidak valid.',
+            'category_id.exists' => 'Kategori finance tidak ditemukan.',
             'comparison_offset.min' => 'Offset perbandingan minimal 1 periode.',
             'comparison_offset.max' => 'Offset perbandingan maksimal 36 periode.',
             'comparison_date.required_if' => 'Tanggal perbandingan wajib diisi untuk mode tanggal.',

@@ -20,6 +20,7 @@ class FinanceInvoice extends Model
 
     protected $fillable = [
         'invoice_no',
+        'category_id',
         'accounting_date',
         'entry_type',
         'journal_name',
@@ -46,6 +47,11 @@ class FinanceInvoice extends Model
     {
         return $this->hasMany(FinanceInvoiceItem::class, 'invoice_id')
             ->orderBy('sort_order');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function notes(): HasMany

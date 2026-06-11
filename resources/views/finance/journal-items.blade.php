@@ -10,6 +10,8 @@
     $statementSourceLabel = $statementSourceLabel ?? __('app.finance.finance_report');
     $statementBackUrl = $statementBackUrl ?? route('finance.dashboard');
     $selectedItemCount = count(request()->query('selected_ids', []));
+    $exportScope = request('export_scope', 'filter');
+    $exportToDate = request('to_date', now(config('app.timezone'))->toDateString());
 @endphp
 
 <style>
@@ -234,6 +236,20 @@
         background: #fff;
     }
     .ji-search-input:focus {
+        outline: none;
+        border-color: rgba(37, 99, 235, 0.4);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .ji-export-control {
+        border: 1.5px solid rgba(148, 163, 184, 0.18);
+        border-radius: var(--ji-radius-sm);
+        padding: 0.58rem 0.75rem;
+        font-size: 0.82rem;
+        color: var(--ji-text);
+        background: #fff;
+        min-height: 40px;
+    }
+    .ji-export-control:focus {
         outline: none;
         border-color: rgba(37, 99, 235, 0.4);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
@@ -515,6 +531,12 @@
                 </button>
             </form>
 
+            <select id="ji-export-scope" class="ji-export-control" title="Mode download jurnal">
+                <option value="filter" {{ $exportScope === 'filter' ? 'selected' : '' }}>Sesuai filter</option>
+                <option value="all" {{ $exportScope === 'all' ? 'selected' : '' }}>Semua jurnal</option>
+                <option value="to_date" {{ $exportScope === 'to_date' ? 'selected' : '' }}>Sampai tanggal</option>
+            </select>
+            <input type="date" id="ji-export-to-date" class="ji-export-control" value="{{ $exportToDate }}" title="Tanggal batas download jurnal">
             <button type="button" class="ji-btn ji-btn-muted ji-export-btn" data-format="excel">
                 <i class="fas fa-file-excel"></i> Excel
             </button>
@@ -530,6 +552,7 @@
                 <tr>
                     <th class="ji-checkbox-col"></th>
                     <th>{{ __('app.finance.date') }}</th>
+                    <th>Kategori Finance</th>
                     <th>{{ __('app.finance.journal_entry') }}</th>
                     <th>{{ __('app.finance.accounts') }}</th>
                     <th>{{ __('app.finance.partner_name') }}</th>
@@ -550,6 +573,7 @@
                             <input type="checkbox" class="ji-checkbox ji-item-checkbox" value="{{ $item['item_id'] }}">
                         </td>
                         <td>{{ \Carbon\Carbon::parse($item['accounting_date'])->format('d/m/Y') }}</td>
+                        <td><span class="ji-pill">{{ $item['category_name'] ?? '-' }}</span></td>
                         <td>
                             <a href="{{ route('finance.invoice.show', $item['invoice_id']) }}" class="ji-entry-link">
                                 {{ $item['invoice_no'] }}
@@ -576,7 +600,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="13">
+                        <td colspan="14">
                             <div class="ji-empty">
                                 <i class="fas fa-inbox"></i>
                                 <div>{{ __('app.finance.no_journal_items_filter') }}</div>
@@ -600,6 +624,8 @@
         <input type="hidden" name="{{ $key }}" value="{{ $value }}">
     @endforeach
     <input type="hidden" name="format" id="ji-export-format" value="pdf">
+    <input type="hidden" name="export_scope" id="ji-export-scope-field" value="filter">
+    <input type="hidden" name="to_date" id="ji-export-to-date-field" value="{{ $exportToDate }}">
     <div id="ji-selected-fields"></div>
 </form>
 
@@ -611,6 +637,10 @@
             const selectedCount = document.getElementById('ji-selected-count');
             const exportForm = document.getElementById('ji-export-form');
             const exportFormat = document.getElementById('ji-export-format');
+            const exportScope = document.getElementById('ji-export-scope');
+            const exportScopeField = document.getElementById('ji-export-scope-field');
+            const exportToDate = document.getElementById('ji-export-to-date');
+            const exportToDateField = document.getElementById('ji-export-to-date-field');
             const selectedFields = document.getElementById('ji-selected-fields');
             const exportButtons = Array.from(document.querySelectorAll('.ji-export-btn'));
 
@@ -642,6 +672,19 @@
                 checkbox.addEventListener('change', updateSelectedCount);
             });
 
+            function syncExportScopeControls() {
+                if (!exportScope || !exportToDate) {
+                    return;
+                }
+
+                exportToDate.disabled = exportScope.value !== 'to_date';
+            }
+
+            if (exportScope) {
+                exportScope.addEventListener('change', syncExportScopeControls);
+                syncExportScopeControls();
+            }
+
             exportButtons.forEach(function (button) {
                 button.addEventListener('click', function () {
                     if (!exportForm || !exportFormat || !selectedFields) {
@@ -649,19 +692,27 @@
                     }
 
                     exportFormat.value = button.dataset.format || 'pdf';
+                    if (exportScopeField && exportScope) {
+                        exportScopeField.value = exportScope.value || 'filter';
+                    }
+                    if (exportToDateField && exportToDate) {
+                        exportToDateField.value = exportToDate.value || '';
+                    }
                     selectedFields.innerHTML = '';
 
-                    checkboxes
-                        .filter(function (checkbox) {
-                            return checkbox.checked;
-                        })
-                        .forEach(function (checkbox) {
-                            const hiddenInput = document.createElement('input');
-                            hiddenInput.type = 'hidden';
-                            hiddenInput.name = 'selected_ids[]';
-                            hiddenInput.value = checkbox.value;
-                            selectedFields.appendChild(hiddenInput);
-                        });
+                    if (!exportScope || exportScope.value === 'filter') {
+                        checkboxes
+                            .filter(function (checkbox) {
+                                return checkbox.checked;
+                            })
+                            .forEach(function (checkbox) {
+                                const hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = 'selected_ids[]';
+                                hiddenInput.value = checkbox.value;
+                                selectedFields.appendChild(hiddenInput);
+                            });
+                    }
 
                     exportForm.submit();
                 });

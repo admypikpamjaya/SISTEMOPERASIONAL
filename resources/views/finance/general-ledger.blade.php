@@ -21,6 +21,13 @@
     $selectedBatchMeta = collect($batchOptions)->firstWhere('id', $selectedBatchId)
         ?? $selectedBatch;
     $editEntry = $editEntry ?? null;
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedFinanceCategoryId = old(
+        'category_id',
+        data_get($editEntry, 'category_id')
+            ?? data_get($filters, 'category_id')
+            ?? data_get($selectedBatchMeta, 'category_id')
+    );
     $selectedAccountName = $selectedAccountCode !== null && !empty($groups)
         ? ($groups[0]['account_name'] ?? null)
         : null;
@@ -1078,6 +1085,19 @@
                     </div>
                     <div class="gl-form-grid">
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_import_category_id">
+                                <i class="fas fa-tags"></i> Kategori Finance
+                            </label>
+                            <select name="category_id" id="gl_import_category_id" class="fs-control" required>
+                                <option value="">Pilih kategori</option>
+                                @foreach($financeCategoryOptions as $category)
+                                    <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="fs-field gl-col-6" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_import_batch_name">
                                 <i class="fas fa-signature"></i> {{ __('app.finance.batch_name') }}
                             </label>
@@ -1125,6 +1145,19 @@
                         <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
                     @endforeach
                     <div class="gl-form-grid">
+                        <div class="fs-field gl-col-3" style="margin-bottom:0;">
+                            <label class="fs-label" for="gl_entry_category_id">
+                                <i class="fas fa-tags"></i> Kategori Finance
+                            </label>
+                            <select name="category_id" id="gl_entry_category_id" class="fs-control" required>
+                                <option value="">Pilih kategori</option>
+                                @foreach($financeCategoryOptions as $category)
+                                    <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_row_type">
                                 <i class="fas fa-stream"></i> {{ __('app.finance.row_type') }}

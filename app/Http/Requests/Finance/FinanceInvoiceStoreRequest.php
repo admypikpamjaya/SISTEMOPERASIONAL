@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Finance;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class FinanceInvoiceStoreRequest extends FormRequest
@@ -24,6 +25,11 @@ class FinanceInvoiceStoreRequest extends FormRequest
     {
         return [
             'action' => 'nullable|string|in:save_draft,post',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'accounting_date' => 'required|date',
             'entry_type' => 'required|string|in:INCOME,EXPENSE',
             'journal_name' => 'required|string|max:255',
@@ -71,6 +77,7 @@ class FinanceInvoiceStoreRequest extends FormRequest
 
         $this->merge([
             'action' => strtolower((string) $this->input('action', 'save_draft')),
+            'category_id' => trim((string) $this->input('category_id', '')),
             'entry_type' => strtoupper((string) $this->input('entry_type')),
             'journal_name' => trim((string) $this->input('journal_name', '')),
             'reference' => trim((string) $this->input('reference', '')) ?: null,
@@ -132,6 +139,8 @@ class FinanceInvoiceStoreRequest extends FormRequest
     {
         return [
             'accounting_date.required' => 'Tanggal akuntansi wajib diisi.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'accounting_date.date' => 'Tanggal akuntansi tidak valid.',
             'entry_type.required' => 'Jenis transaksi wajib dipilih.',
             'entry_type.in' => 'Jenis transaksi harus INCOME atau EXPENSE.',

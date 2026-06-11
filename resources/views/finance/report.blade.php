@@ -17,6 +17,8 @@
     $defaultReportDate = old('report_date', $defaults['report_date'] ?? now()->toDateString());
     $defaultMonth = (int) old('month', $defaults['month'] ?? now()->month);
     $defaultYear = (int) old('year', $defaults['year'] ?? now()->year);
+    $defaultCategoryId = old('category_id', $defaults['category_id'] ?? ($isEditMode ? data_get($editingReport, 'category_id') : null));
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
     $defaultOpeningBalance = old(
         'opening_balance',
         $isEditMode
@@ -125,6 +127,7 @@
         'report_date' => $defaultReportDate,
         'month' => $defaultMonth,
         'year' => $defaultYear,
+        'category_id' => $defaultCategoryId,
     ], static fn ($value) => $value !== null && $value !== '');
 @endphp
 
@@ -557,6 +560,20 @@
                                 </select>
                             </div>
 
+                            <div class="fr-form-group col-md-3" style="padding:0;">
+                                <label for="category_id_create">
+                                    <i class="fas fa-tags"></i> Kategori Finance
+                                </label>
+                                <select name="category_id" id="category_id_create" class="fr-select" required>
+                                    <option value="">Pilih kategori</option>
+                                    @foreach($financeCategoryOptions as $category)
+                                        <option value="{{ $category->id }}" {{ (string) $defaultCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             <div class="fr-form-group col-md-2" id="report_date_group" style="padding:0;">
                                 <label for="report_date_create">
                                     <i class="fas fa-calendar-day"></i> {{ __('app.finance.date') }}
@@ -589,7 +606,7 @@
                                 >
                             </div>
 
-                            <div class="fr-form-group col-md-4" style="padding:0;">
+                            <div class="fr-form-group col-md-3" style="padding:0;">
                                 <label for="opening_balance_create">
                                     <i class="fas fa-wallet"></i> {{ __('app.finance.opening_balance') }}
                                 </label>

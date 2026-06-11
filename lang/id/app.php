@@ -60,6 +60,7 @@ return [
         'reminders' => 'Pengingat',
         'finance' => 'Keuangan',
         'finance_dashboard' => 'Dasbor Keuangan',
+        'finance_categories' => 'Kategori Finance',
         'asset_depreciation' => 'Penyusutan Aset',
         'input_finance_report' => 'Entri Laporan Keuangan',
         'balance_sheet' => 'Lembar Saldo',

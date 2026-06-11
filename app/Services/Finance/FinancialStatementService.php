@@ -447,6 +447,8 @@ class FinancialStatementService
                     'invoice_no' => (string) $item->invoice_no,
                     'journal_name' => (string) $item->journal_name,
                     'reference' => $item->reference !== null ? (string) $item->reference : null,
+                    'category_id' => $item->category_id !== null ? (string) $item->category_id : null,
+                    'category_name' => $item->category_name !== null ? (string) $item->category_name : null,
                     'entry_type' => (string) $item->entry_type,
                     'account_code' => (string) $item->account_code,
                     'account_name' => (string) $item->account_name,
@@ -513,6 +515,7 @@ class FinancialStatementService
     {
         $query = DB::table('finance_invoice_items as fii')
             ->join('finance_invoices as fi', 'fi.id', '=', 'fii.invoice_id')
+            ->leftJoin('finance_categories as fc', 'fc.id', '=', 'fi.category_id')
             ->leftJoin('finance_accounts as fa', 'fa.code', '=', 'fii.account_code')
             ->leftJoin('assets as a', 'a.account_code', '=', 'fii.account_code')
             ->where('fi.status', 'POSTED');
@@ -531,6 +534,8 @@ class FinancialStatementService
                 'fi.journal_name',
                 'fi.reference',
                 'fi.entry_type',
+                'fi.category_id',
+                'fc.name as category_name',
                 'fii.account_code',
                 'fii.partner_name',
                 'fii.label',
@@ -597,6 +602,10 @@ class FinancialStatementService
             $query->where('fii.account_code', $filter->accountCode);
         }
 
+        if (!empty($filter->categoryId)) {
+            $query->where('fi.category_id', $filter->categoryId);
+        }
+
         return $query;
     }
 
@@ -610,20 +619,22 @@ class FinancialStatementService
             if (!empty($filter->endDate)) {
                 $query->whereDate('fi.accounting_date', '<=', $filter->endDate);
             }
+        } else {
+            if (!empty($filter->reportDate)) {
+                $query->whereDate('fi.accounting_date', $filter->reportDate);
+            }
 
-            return $query;
+            if ($filter->year !== null) {
+                $query->whereYear('fi.accounting_date', $filter->year);
+            }
+
+            if ($filter->month !== null) {
+                $query->whereMonth('fi.accounting_date', $filter->month);
+            }
         }
 
-        if (!empty($filter->reportDate)) {
-            $query->whereDate('fi.accounting_date', $filter->reportDate);
-        }
-
-        if ($filter->year !== null) {
-            $query->whereYear('fi.accounting_date', $filter->year);
-        }
-
-        if ($filter->month !== null) {
-            $query->whereMonth('fi.accounting_date', $filter->month);
+        if (!empty($filter->categoryId)) {
+            $query->where('fi.category_id', $filter->categoryId);
         }
 
         return $query;

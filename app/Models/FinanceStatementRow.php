@@ -19,6 +19,7 @@ class FinanceStatementRow extends Model
 
     protected $fillable = [
         'batch_id',
+        'category_id',
         'section_key',
         'section_label',
         'group_label',
@@ -45,6 +46,11 @@ class FinanceStatementRow extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(FinanceStatementBatch::class, 'batch_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function creator(): BelongsTo

@@ -58,6 +58,7 @@ class FinanceReportController extends Controller
                 'suggestedOpeningBalance' => $suggestedOpeningBalance,
                 'defaults' => [
                     'period_type' => $periodType,
+                    'category_id' => $validated['category_id'] ?? null,
                     'report_date' => $reportDate->toDateString(),
                     'year' => $year,
                     'month' => $month,
@@ -101,6 +102,7 @@ class FinanceReportController extends Controller
                     'comparison_type' => $filter->comparisonType,
                     'comparison_offset' => $filter->comparisonOffset,
                     'comparison_date' => $filter->comparisonDate,
+                    'category_id' => $filter->categoryId,
                 ],
             ]);
         } catch (Throwable $exception) {
@@ -160,6 +162,7 @@ class FinanceReportController extends Controller
             'year' => $filter->year,
             'month' => $filter->month,
             'per_page' => $filter->perPage,
+            'category_id' => $filter->categoryId,
         ]);
     }
 
@@ -169,6 +172,10 @@ class FinanceReportController extends Controller
             ->where('status', 'POSTED');
 
         $this->applySnapshotPeriodToInvoiceQuery($query, $filter);
+
+        if (!empty($filter->categoryId)) {
+            $query->where('category_id', $filter->categoryId);
+        }
 
         return $query
             ->orderByDesc('accounting_date')
@@ -249,6 +256,7 @@ class FinanceReportController extends Controller
                 'suggestedOpeningBalance' => (float) data_get($payload, 'opening_balance', 0),
                 'defaults' => [
                     'period_type' => (string) data_get($payload, 'report_type', 'MONTHLY'),
+                    'category_id' => data_get($payload, 'category_id'),
                     'report_date' => (string) data_get($payload, 'report_date', now()->toDateString()),
                     'year' => (int) data_get($payload, 'year', now()->year),
                     'month' => data_get($payload, 'month'),

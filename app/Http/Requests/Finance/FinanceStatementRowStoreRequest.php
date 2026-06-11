@@ -26,6 +26,11 @@ class FinanceStatementRowStoreRequest extends FormRequest
                 ]),
             ],
             'batch_id' => 'nullable|uuid|exists:finance_statement_batches,id',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'section_key' => 'required|string|max:60',
             'section_label' => 'nullable|string|max:120',
             'group_label' => 'nullable|string|max:255',
@@ -40,6 +45,7 @@ class FinanceStatementRowStoreRequest extends FormRequest
     {
         $this->merge([
             'statement_type' => strtoupper(trim((string) $this->input('statement_type', ''))),
+            'category_id' => trim((string) $this->input('category_id', '')),
             'section_key' => strtolower(trim((string) $this->input('section_key', ''))),
             'section_label' => trim((string) $this->input('section_label', '')) ?: null,
             'group_label' => trim((string) $this->input('group_label', '')) ?: null,
@@ -75,6 +81,8 @@ class FinanceStatementRowStoreRequest extends FormRequest
             'statement_type.in' => 'Jenis laporan tidak valid.',
             'batch_id.uuid' => 'Batch laporan tidak valid.',
             'batch_id.exists' => 'Batch laporan tidak ditemukan.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'section_key.required' => 'Kategori laporan wajib dipilih.',
             'section_key.max' => 'Kategori laporan terlalu panjang.',
             'section_label.max' => 'Label kategori maksimal 120 karakter.',

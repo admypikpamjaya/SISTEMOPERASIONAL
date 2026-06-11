@@ -9,6 +9,7 @@ use App\Models\Asset\Asset;
 use App\Models\AssetDepreciation;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAssetPolicy;
+use App\Models\FinanceCategory;
 use App\Models\FinanceDepreciationRun;
 use App\Models\FinanceInvoice;
 use App\Models\FinancePeriod;
@@ -62,15 +63,16 @@ class DepreciationService
         Asset $asset,
         DepreciationResultDTO $result,
         CarbonImmutable $periodStart,
-        CarbonImmutable $periodEnd
+        CarbonImmutable $periodEnd,
+        string $categoryId
     ): array {
-        return DB::transaction(function () use ($asset, $result, $periodStart, $periodEnd): array {
+        return DB::transaction(function () use ($asset, $result, $periodStart, $periodEnd, $categoryId): array {
             $period = $this->resolveMonthlyPeriod($periodEnd);
-            $policy = $this->resolvePolicy($asset, $result, $periodStart, $period);
-            $run = $this->resolveRun($period);
-            $history = $this->upsertHistory($run, $period, $policy, $asset, $result);
-            $expenseAccount = $this->resolveExpenseAccount($asset);
-            $invoice = $this->upsertInvoice($asset, $result, $history, $expenseAccount, $periodStart, $periodEnd);
+            $policy = $this->resolvePolicy($asset, $result, $periodStart, $period, $categoryId);
+            $run = $this->resolveRun($period, $categoryId);
+            $history = $this->upsertHistory($run, $period, $policy, $asset, $result, $categoryId);
+            $expenseAccount = $this->resolveExpenseAccount($asset, $categoryId);
+            $invoice = $this->upsertInvoice($asset, $result, $history, $expenseAccount, $periodStart, $periodEnd, $categoryId);
 
             $run->update([
                 'status' => 'POSTED',
@@ -114,7 +116,8 @@ class DepreciationService
         Asset $asset,
         DepreciationResultDTO $result,
         CarbonImmutable $periodStart,
-        FinancePeriod $period
+        FinancePeriod $period,
+        string $categoryId
     ): FinanceAssetPolicy {
         $latestPolicy = FinanceAssetPolicy::query()
             ->where('asset_id', $asset->id)
@@ -127,13 +130,18 @@ class DepreciationService
                 && (int) $latestPolicy->useful_life_months === (int) $result->usefulLifeMonths
                 && optional($latestPolicy->depreciation_start_date)->toDateString() === $periodStart->toDateString();
 
-            if ($samePolicy) {
+            if ($samePolicy && ($latestPolicy->category_id === null || (string) $latestPolicy->category_id === $categoryId)) {
+                if ($latestPolicy->category_id === null) {
+                    $latestPolicy->update(['category_id' => $categoryId]);
+                }
+
                 return $latestPolicy;
             }
         }
 
         return FinanceAssetPolicy::query()->create([
             'asset_id' => $asset->id,
+            'category_id' => $categoryId,
             'revision_no' => (int) ($latestPolicy?->revision_no ?? 0) + 1,
             'method' => 'STRAIGHT_LINE',
             'acquisition_cost' => round($result->acquisitionCost, 2),
@@ -147,10 +155,11 @@ class DepreciationService
         ]);
     }
 
-    private function resolveRun(FinancePeriod $period): FinanceDepreciationRun
+    private function resolveRun(FinancePeriod $period, string $categoryId): FinanceDepreciationRun
     {
         $run = FinanceDepreciationRun::query()
             ->where('period_id', $period->id)
+            ->where('category_id', $categoryId)
             ->where('notes', self::AUTO_RUN_NOTE)
             ->orderBy('run_no')
             ->first();
@@ -165,6 +174,7 @@ class DepreciationService
 
         return FinanceDepreciationRun::query()->create([
             'period_id' => $period->id,
+            'category_id' => $categoryId,
             'run_no' => $nextRunNo,
             'status' => 'POSTED',
             'assets_count' => 0,
@@ -180,7 +190,8 @@ class DepreciationService
         FinancePeriod $period,
         FinanceAssetPolicy $policy,
         Asset $asset,
-        DepreciationResultDTO $result
+        DepreciationResultDTO $result,
+        string $categoryId
     ): AssetDepreciation {
         $sequenceMonth = max(1, $result->usefulLifeMonths);
         $depreciationAmount = round($result->depreciationPerMonth, 2);
@@ -197,6 +208,7 @@ class DepreciationService
             ],
             [
                 'period_id' => $period->id,
+                'category_id' => $categoryId,
                 'policy_id' => $policy->id,
                 'method' => 'STRAIGHT_LINE',
                 'acquisition_cost_snapshot' => round($result->acquisitionCost, 2),
@@ -211,21 +223,22 @@ class DepreciationService
         );
     }
 
-    private function resolveExpenseAccount(Asset $asset): FinanceAccount
+    private function resolveExpenseAccount(Asset $asset, string $categoryId): FinanceAccount
     {
         $actorId = auth()->id() ? (string) auth()->id() : null;
+        $categorySuffix = $this->buildCategoryCodeSuffix($categoryId);
 
         $config = match ($asset->category) {
             AssetCategory::AC => [
-                'code' => 'DEP-EXP-AC',
+                'code' => 'DEP-EXP-AC-' . $categorySuffix,
                 'name' => 'Beban Penyusutan AC',
             ],
             AssetCategory::COMPUTER => [
-                'code' => 'DEP-EXP-COMPUTER',
+                'code' => 'DEP-EXP-COMPUTER-' . $categorySuffix,
                 'name' => 'Beban Penyusutan Komputer',
             ],
             default => [
-                'code' => 'DEP-EXP-ASSET',
+                'code' => 'DEP-EXP-ASSET-' . $categorySuffix,
                 'name' => 'Beban Penyusutan Aset',
             ],
         };
@@ -233,6 +246,7 @@ class DepreciationService
         $account = FinanceAccount::query()->firstOrCreate(
             ['code' => $config['code']],
             [
+                'category_id' => $categoryId,
                 'name' => $config['name'],
                 'type' => FinanceAccount::TYPE_PENGELUARAN,
                 'class_no' => FinanceAccount::classForType(FinanceAccount::TYPE_PENGELUARAN),
@@ -241,12 +255,14 @@ class DepreciationService
                 'updated_by' => $actorId,
                 'meta' => [
                     'source' => self::AUTO_SOURCE,
+                    'category_id' => $categoryId,
                     'asset_category' => $asset->category->value,
                 ],
             ]
         );
 
         $account->update([
+            'category_id' => $account->category_id ?: $categoryId,
             'name' => $config['name'],
             'type' => FinanceAccount::TYPE_PENGELUARAN,
             'class_no' => FinanceAccount::classForType(FinanceAccount::TYPE_PENGELUARAN),
@@ -254,6 +270,7 @@ class DepreciationService
             'updated_by' => $actorId,
             'meta' => array_merge((array) $account->meta, [
                 'source' => self::AUTO_SOURCE,
+                'category_id' => $categoryId,
                 'asset_category' => $asset->category->value,
             ]),
         ]);
@@ -267,17 +284,19 @@ class DepreciationService
         AssetDepreciation $history,
         FinanceAccount $expenseAccount,
         CarbonInterface $periodStart,
-        CarbonInterface $periodEnd
+        CarbonInterface $periodEnd,
+        string $categoryId
     ): FinanceInvoice {
         $actorId = auth()->id() ? (string) auth()->id() : null;
         $accountingDate = CarbonImmutable::instance($periodEnd)->endOfMonth()->toDateString();
         $amount = round((float) $history->depreciation_amount, 2);
-        $reference = $this->buildInvoiceReference($asset->account_code, $periodEnd);
+        $reference = $this->buildInvoiceReference($asset->account_code, $periodEnd, $categoryId);
         $invoice = FinanceInvoice::query()
             ->where('reference', $reference)
             ->first();
 
         $payload = [
+            'category_id' => $categoryId,
             'accounting_date' => $accountingDate,
             'entry_type' => 'EXPENSE',
             'journal_name' => self::AUTO_JOURNAL_NAME,
@@ -290,6 +309,7 @@ class DepreciationService
             'posted_at' => now(),
             'meta' => [
                 'source' => self::AUTO_SOURCE,
+                'category_id' => $categoryId,
                 'asset_id' => $asset->id,
                 'asset_account_code' => $asset->account_code,
                 'policy_id' => $history->policy_id,
@@ -350,12 +370,20 @@ class DepreciationService
         return $invoice;
     }
 
-    private function buildInvoiceReference(string $accountCode, CarbonInterface $periodEnd): string
+    private function buildInvoiceReference(string $accountCode, CarbonInterface $periodEnd, string $categoryId): string
     {
         $normalizedCode = preg_replace('/[^A-Z0-9]+/', '-', strtoupper($accountCode)) ?? strtoupper($accountCode);
         $normalizedCode = trim($normalizedCode, '-');
 
-        return 'DEP/' . $periodEnd->format('Ym') . '/' . $normalizedCode;
+        return 'DEP/' . $periodEnd->format('Ym') . '/' . $this->buildCategoryCodeSuffix($categoryId) . '/' . $normalizedCode;
+    }
+
+    private function buildCategoryCodeSuffix(string $categoryId): string
+    {
+        $category = FinanceCategory::query()->find($categoryId);
+        $source = $category?->id ?? $categoryId;
+
+        return strtoupper(substr(str_replace('-', '', (string) $source), 0, 10));
     }
 
     private function generateInvoiceNo(string $accountingDate, string $entryType): string

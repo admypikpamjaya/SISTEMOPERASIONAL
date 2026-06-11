@@ -13,6 +13,7 @@ class GenerateProfitLossReportDTO
         public ?int $day,
         public ?string $reportDate,
         public string $reportType,
+        public string $categoryId,
         public float $openingBalance,
         public array $entries,
         public ?string $generatedBy = null
@@ -31,6 +32,7 @@ class GenerateProfitLossReportDTO
             isset($data['day']) ? (int) $data['day'] : null,
             isset($data['report_date']) ? (string) $data['report_date'] : null,
             strtoupper((string) $data['report_type']),
+            (string) $data['category_id'],
             (float) ($data['opening_balance'] ?? 0),
             $entries,
             $generatedBy

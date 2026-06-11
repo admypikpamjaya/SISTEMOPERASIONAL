@@ -467,6 +467,8 @@
     $filters = $filters ?? [];
     $journalOptions = $journalOptions ?? [];
     $draftPublishCount = (int) ($draftPublishCount ?? 0);
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedCategoryId = $filters['category_id'] ?? null;
 @endphp
 
 <div class="inv-page-header">
@@ -487,6 +489,7 @@
                 <input type="hidden" name="month" value="{{ $filters['month'] ?? '' }}">
                 <input type="hidden" name="year" value="{{ $filters['year'] ?? '' }}">
                 <input type="hidden" name="journal_name" value="{{ $filters['journal_name'] ?? '' }}">
+                <input type="hidden" name="category_id" value="{{ $selectedCategoryId ?? '' }}">
                 <button type="submit" class="btn-inv-publish" {{ $draftPublishCount < 1 ? 'disabled' : '' }}>
                     <i class="fas fa-upload"></i> {{ __('app.finance.publish_all_drafts') }}
                     <span>({{ number_format($draftPublishCount, 0, ',', '.') }})</span>
@@ -520,6 +523,17 @@
                         <option value="DRAFT"     {{ ($filters['status'] ?? '') === 'DRAFT'         ? 'selected' : '' }}>{{ __('app.finance.draft') }}</option>
                         <option value="POSTED"    {{ ($filters['status'] ?? '') === 'POSTED'        ? 'selected' : '' }}>{{ __('app.finance.posted') }}</option>
                         <option value="CANCELLED" {{ ($filters['status'] ?? '') === 'CANCELLED'     ? 'selected' : '' }}>{{ __('app.finance.cancelled') }}</option>
+                    </select>
+                </div>
+                <div class="inv-form-group is-mid">
+                    <label class="inv-label"><i class="fas fa-tags"></i> Kategori Finance</label>
+                    <select name="category_id" id="category_id" class="inv-control">
+                        <option value="">Semua kategori</option>
+                        @foreach($financeCategoryOptions as $category)
+                            <option value="{{ $category->id }}" {{ (string) $selectedCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="inv-form-group">
@@ -674,6 +688,10 @@
                         <span class="badge-status {{ $statusClass }}">
                             <i class="fas {{ $statusIcon }}" style="font-size:.55rem;"></i>
                             {{ $statusLabel }}
+                        </span>
+                        <span class="badge-type" style="background:rgba(37,99,235,.10);color:var(--blue-primary);">
+                            <i class="fas fa-tags" style="font-size:.55rem;"></i>
+                            {{ $invoice->category?->name ?? 'Tanpa kategori' }}
                         </span>
                     </div>
 

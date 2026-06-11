@@ -70,6 +70,7 @@ class FinanceAccount extends Model
 
     protected $fillable = [
         'code',
+        'category_id',
         'name',
         'type',
         'class_no',
@@ -176,6 +177,11 @@ class FinanceAccount extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function updater(): BelongsTo

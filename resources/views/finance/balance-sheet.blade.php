@@ -27,6 +27,13 @@
     $selectedBatchMeta = collect($batchOptions)->firstWhere('id', $selectedBatchId) ?? $selectedBatch;
     $importedRows = $importedRows ?? [];
     $editImportedRow = $editImportedRow ?? null;
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedFinanceCategoryId = old(
+        'category_id',
+        data_get($editImportedRow, 'category_id')
+            ?? data_get($filters, 'category_id')
+            ?? data_get($selectedBatchMeta, 'category_id')
+    );
     $statementTypeOptions = \App\Models\FinanceAccount::manualStatementTypeOptions();
     $permissionService = app(\App\Services\AccessControl\PermissionService::class);
     $canManageStatementMapping = auth()->check()
@@ -879,6 +886,17 @@
                         <input type="file" name="file" id="balance_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
                     </div>
                     <div class="fs-field">
+                        <label class="fs-label" for="balance_import_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <select name="category_id" id="balance_import_category_id" class="fs-control" required>
+                            <option value="">Pilih kategori</option>
+                            @foreach($financeCategoryOptions as $category)
+                                <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="fs-field">
                         <label class="fs-label" for="balance_import_batch_name"><i class="fas fa-tag"></i> {{ __('app.finance.batch_name') }}</label>
                         <input type="text" name="batch_name" id="balance_import_batch_name" class="fs-control" value="{{ old('batch_name') }}">
                     </div>
@@ -917,6 +935,17 @@
                     <input type="hidden" name="end_month" value="{{ data_get($filters, 'end_month') }}">
                     <input type="hidden" name="start_year" value="{{ data_get($filters, 'start_year') }}">
                     <input type="hidden" name="end_year" value="{{ data_get($filters, 'end_year') }}">
+                    <div class="fs-field">
+                        <label class="fs-label" for="balance_row_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <select name="category_id" id="balance_row_category_id" class="fs-control" required>
+                            <option value="">Pilih kategori</option>
+                            @foreach($financeCategoryOptions as $category)
+                                <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="fs-field">
                         <label class="fs-label" for="balance_section_key"><i class="fas fa-folder-tree"></i> {{ __('app.finance.category') }}</label>
                         <select name="section_key" id="balance_section_key" class="fs-control" required>

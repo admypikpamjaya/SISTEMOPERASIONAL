@@ -457,6 +457,8 @@
     $typeClassMap = $typeClassMap ?? [];
     $accountCounts = $accountCounts ?? collect();
     $accountLogs = $accountLogs ?? collect();
+    $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedCategoryId = $selectedCategoryId ?? request('category_id');
     $detailAccount = $detailAccount ?? null;
     $isDetailActive = $detailAccount !== null;
     $detailAccountLogs = ($isDetailActive && $detailAccount->relationLoaded('logs'))
@@ -465,6 +467,7 @@
     $isEditing = isset($editAccount) && $editAccount;
 
     $currentType = old('type', $isEditing ? $editAccount->type : '');
+    $currentCategoryId = old('category_id', $isEditing ? $editAccount->category_id : $selectedCategoryId);
     $currentClassNo = old(
         'class_no',
         $isEditing
@@ -476,6 +479,7 @@
         : route('finance.accounts.store');
     $cancelEditParams = array_filter([
         'group' => $selectedGroup ?: ($isEditing ? $editAccount->class_no : null),
+        'category_id' => $selectedCategoryId,
         'detail' => $isDetailActive ? $detailAccount->id : null,
     ]);
 @endphp
@@ -488,6 +492,28 @@
             <p class="coa-subtitle">{{ __('app.finance.chart_of_accounts_subtitle') }}</p>
         </div>
     </div>
+    <form method="GET" action="{{ route('finance.accounts.index') }}" class="coa-inline" style="margin-top:0;">
+        @if($selectedGroup)
+            <input type="hidden" name="group" value="{{ $selectedGroup }}">
+        @endif
+        <label for="coa_filter_category_id" class="mb-0" style="font-size:.72rem;color:var(--fa-muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em;">
+            Kategori Finance
+        </label>
+        <select id="coa_filter_category_id" name="category_id" class="coa-select" style="min-width:220px;">
+            <option value="">Semua kategori</option>
+            @foreach($financeCategoryOptions as $category)
+                <option value="{{ $category->id }}" {{ (string) $selectedCategoryId === (string) $category->id ? 'selected' : '' }}>
+                    {{ $category->name }}
+                </option>
+            @endforeach
+        </select>
+        <button type="submit" class="coa-btn coa-btn-primary">
+            <i class="fas fa-filter"></i> Filter
+        </button>
+        <a href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup])) }}" class="coa-btn coa-btn-muted">
+            Reset
+        </a>
+    </form>
 </div>
 
 @if($errors->any())
@@ -516,7 +542,7 @@
                 <li>
                     <div class="coa-side-row">
                         <a
-                            href="{{ route('finance.accounts.index', ['group' => $groupNo]) }}"
+                            href="{{ route('finance.accounts.index', array_filter(['group' => $groupNo, 'category_id' => $selectedCategoryId])) }}"
                             class="coa-side-item {{ $isActiveGroup ? 'active' : '' }}">
                             <span class="coa-side-num">{{ $groupNo }}</span>
                             <span class="coa-side-label">{{ $groupLabel }}</span>
@@ -552,6 +578,21 @@
                     @endif
 
                     <div class="coa-form-grid">
+                        <div class="coa-field">
+                            <label for="category_id">Kategori Finance</label>
+                            <select
+                                id="category_id"
+                                name="category_id"
+                                class="coa-select"
+                                required>
+                                <option value="">Pilih kategori</option>
+                                @foreach($financeCategoryOptions as $category)
+                                    <option value="{{ $category->id }}" {{ (string) $currentCategoryId === (string) $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="coa-field">
                             <label for="code">{{ __('app.finance.account_code') }}</label>
                             <input
@@ -668,6 +709,10 @@
                             </div>
                         </div>
                         <div class="coa-detail-item">
+                            <label>Kategori Finance</label>
+                            <div class="coa-detail-value">{{ $detailAccount->category?->name ?? '-' }}</div>
+                        </div>
+                        <div class="coa-detail-item">
                             <label>{{ __('app.finance.status') }}</label>
                             <div class="coa-detail-value">
                                 <span class="coa-status {{ $detailAccount->is_active ? 'active' : 'inactive' }}">
@@ -700,12 +745,12 @@
 
                     <div class="coa-detail-actions">
                         <a
-                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no, 'edit' => $detailAccount->id, 'detail' => $detailAccount->id])) }}"
+                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no, 'category_id' => $selectedCategoryId, 'edit' => $detailAccount->id, 'detail' => $detailAccount->id])) }}"
                             class="coa-btn coa-btn-primary">
                             {{ __('app.finance.edit_this_account') }}
                         </a>
                         <a
-                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no])) }}"
+                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $detailAccount->class_no, 'category_id' => $selectedCategoryId])) }}"
                             class="coa-btn coa-btn-muted">
                             {{ __('app.finance.close_detail') }}
                         </a>
@@ -748,6 +793,7 @@
                         <tr>
                             <th style="width:52px;">#</th>
                             <th style="width:140px;">{{ __('app.finance.code') }}</th>
+                            <th style="width:150px;">Kategori Finance</th>
                             <th>{{ __('app.finance.account_name') }}</th>
                             <th style="width:200px;">{{ __('app.finance.account_type') }}</th>
                             <th style="width:92px;">{{ __('app.finance.sequence') }}</th>
@@ -763,6 +809,7 @@
                             <tr class="{{ $isDetailRow ? 'coa-row-selected' : '' }}">
                                 <td>{{ $accounts->firstItem() + $loop->index }}</td>
                                 <td style="font-weight:700;color:#1e3a8a;">{{ $account->code }}</td>
+                                <td>{{ $account->category?->name ?? '-' }}</td>
                                 <td>{{ $account->name }}</td>
                                 <td>
                                     <span class="coa-type-badge">{{ $account->type_label }}</span>
@@ -777,12 +824,12 @@
                                 <td>
                                     <div class="coa-actions">
                                         <a
-                                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'detail' => $account->id])) }}"
+                                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'category_id' => $selectedCategoryId, 'detail' => $account->id])) }}"
                                             class="coa-link">
                                             {{ __('app.finance.detail') }}
                                         </a>
                                         <a
-                                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'edit' => $account->id, 'detail' => $account->id])) }}"
+                                            href="{{ route('finance.accounts.index', array_filter(['group' => $selectedGroup ?: $account->class_no, 'category_id' => $selectedCategoryId, 'edit' => $account->id, 'detail' => $account->id])) }}"
                                             class="coa-link">
                                             {{ __('app.finance.change') }}
                                         </a>
@@ -791,7 +838,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="coa-empty">{{ __('app.finance.no_accounts_in_classification') }}</td>
+                                <td colspan="8" class="coa-empty">{{ __('app.finance.no_accounts_in_classification') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

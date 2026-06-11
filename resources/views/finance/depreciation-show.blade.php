@@ -234,6 +234,10 @@
                         <td>{{ $log->asset?->location ?? '-' }}</td>
                     </tr>
                     <tr>
+                        <th>Kategori Finance</th>
+                        <td>{{ $log->category?->name ?? '-' }}</td>
+                    </tr>
+                    <tr>
                         <th>{{ __('app.finance.benefit_period') }}</th>
                         <td>{{ $periodLabel ?? '-' }}</td>
                     </tr>

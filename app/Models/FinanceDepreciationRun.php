@@ -20,6 +20,7 @@ class FinanceDepreciationRun extends Model
 
     protected $fillable = [
         'period_id',
+        'category_id',
         'run_no',
         'status',
         'assets_count',
@@ -39,6 +40,11 @@ class FinanceDepreciationRun extends Model
     public function period(): BelongsTo
     {
         return $this->belongsTo(FinancePeriod::class, 'period_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function reconciliationSnapshots(): HasMany

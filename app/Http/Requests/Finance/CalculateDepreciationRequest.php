@@ -4,6 +4,7 @@ namespace App\Http\Requests\Finance;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 class CalculateDepreciationRequest extends FormRequest
@@ -25,6 +26,11 @@ class CalculateDepreciationRequest extends FormRequest
     {
         return [
             'asset_id' => 'required|string|exists:assets,id',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
             'acquisition_cost' => 'nullable|numeric|min:0',
             'period_start' => 'required|date_format:Y-m',
             'period_end' => 'required|date_format:Y-m',
@@ -35,6 +41,8 @@ class CalculateDepreciationRequest extends FormRequest
     {
         return [
             'asset_id.required' => 'Asset wajib disertakan.',
+            'category_id.required' => 'Kategori finance wajib dipilih.',
+            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
             'asset_id.exists' => 'Asset tidak ditemukan.',
             'acquisition_cost.numeric' => 'Nilai perolehan harus berupa angka.',
             'acquisition_cost.min' => 'Nilai perolehan minimal 0.',

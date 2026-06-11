@@ -23,6 +23,7 @@ class FinanceGeneralLedgerBatch extends Model
 
     protected $fillable = [
         'source_type',
+        'category_id',
         'batch_name',
         'source_filename',
         'sheet_name',
@@ -43,6 +44,11 @@ class FinanceGeneralLedgerBatch extends Model
     public function entries(): HasMany
     {
         return $this->hasMany(FinanceGeneralLedgerEntry::class, 'batch_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 
     public function creator(): BelongsTo
