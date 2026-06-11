@@ -222,7 +222,7 @@
                             $isAllowedForBlasting = true;
 
                             if ($hasChildren) {
-                                $isActiveParent = $menuChildren
+                                $isActiveParent = $matchesMenuRoute($menu) || $menuChildren
                                     ->contains(fn($child) => $matchesMenuRoute($child));
                             }
 

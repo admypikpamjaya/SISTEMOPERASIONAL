@@ -29,9 +29,10 @@ return array_map($withFallbackLabel, [
 
     [
         'module_name' => 'asset_management',
-        'label_key'   => 'app.menu.asset_management',
-        'icon'        => 'fas fa-boxes',
+        'label_key'   => 'app.menu.asset_master_data',
+        'icon'        => 'fas fa-list',
         'route'       => 'asset-management.index',
+        'active_routes' => ['asset-management.index', 'asset-management.ac.*', 'asset-management.building-infrastructure.*', 'asset-management.electronic.*', 'asset-management.room-inventory.*', 'asset-management.vehicle.*', 'asset-management.computer.*'],
         'roles'       => [
             UserRole::IT_SUPPORT->value,
             UserRole::ASSET_MANAGER->value,
@@ -39,13 +40,6 @@ return array_map($withFallbackLabel, [
             UserRole::QC->value,
         ],
         'children'    => [
-            [
-                'module_name' => 'asset_management',
-                'label_key'   => 'app.menu.asset_master_data',
-                'icon'        => 'fas fa-list',
-                'route'       => 'asset-management.index',
-                'active_routes' => ['asset-management.index'],
-            ],
             [
                 'module_name' => 'asset_management',
                 'label_key'   => 'app.menu.asset_category_ac',
@@ -63,7 +57,7 @@ return array_map($withFallbackLabel, [
             [
                 'module_name' => 'asset_management',
                 'label_key'   => 'app.menu.asset_category_electronic',
-                'icon'        => 'fas fa-tv',
+                'icon'        => 'fas fa-desktop',
                 'route'       => 'asset-management.electronic.index',
                 'active_routes' => ['asset-management.electronic.*'],
             ],
@@ -88,6 +82,21 @@ return array_map($withFallbackLabel, [
                 'route'       => 'asset-management.computer.index',
                 'active_routes' => ['asset-management.computer.*'],
             ],
+        ],
+    ],
+
+    [
+        'module_name' => 'asset_management',
+        'label_key'   => 'app.menu.asset_management',
+        'icon'        => 'fas fa-boxes',
+        'route'       => 'maintenance-report.index',
+        'roles'       => [
+            UserRole::IT_SUPPORT->value,
+            UserRole::ASSET_MANAGER->value,
+            UserRole::PEMBINA->value,
+            UserRole::QC->value,
+        ],
+        'children'    => [
             [
                 'module_name' => 'maintenance_report',
                 'label_key'   => 'app.menu.maintenance_report',
