@@ -26,6 +26,9 @@ class FinanceInvoiceController extends Controller
     public function index(Request $request)
     {
         $filters = $this->validateInvoiceFilters($request);
+        if (!$request->filled('status')) {
+            $filters['status'] = 'POSTED';
+        }
 
         $query = FinanceInvoice::query()
             ->with($this->invoiceRelations())
@@ -43,7 +46,7 @@ class FinanceInvoiceController extends Controller
         $month = isset($filters['month']) ? (int) $filters['month'] : null;
         $journalName = trim((string) ($filters['journal_name'] ?? ''));
 
-        $journalOptions = $this->getJournalOptions();
+        $journalOptions = $this->getJournalOptions($filters, onlyPosted: true, includePresets: false);
 
         $perPage = (int) ($filters['per_page'] ?? 15);
         $invoices = $query->paginate($perPage)->withQueryString();
@@ -730,7 +733,11 @@ class FinanceInvoiceController extends Controller
         return $base . str_pad((string) ($lastSequence + 1), 4, '0', STR_PAD_LEFT);
     }
 
-    private function getJournalOptions()
+    private function getJournalOptions(
+        array $filters = [],
+        bool $onlyPosted = false,
+        bool $includePresets = true
+    )
     {
         $presetOptions = collect([
             'J.BSM.PMB-Keluar',
@@ -743,15 +750,23 @@ class FinanceInvoiceController extends Controller
             'J.BCA-Masuk',
         ]);
 
-        $storedOptions = FinanceInvoice::query()
-            ->whereNotNull('journal_name')
+        $storedQuery = FinanceInvoice::query()
             ->where('journal_name', '!=', '')
+            ->whereNotNull('journal_name');
+
+        if ($onlyPosted) {
+            $optionFilters = $filters;
+            unset($optionFilters['journal_name'], $optionFilters['status'], $optionFilters['per_page']);
+            $this->applyInvoiceFilters($storedQuery, $optionFilters, 'POSTED');
+        }
+
+        $storedOptions = $storedQuery
             ->select('journal_name')
             ->distinct()
             ->orderBy('journal_name')
             ->pluck('journal_name');
 
-        return $presetOptions
+        return ($includePresets ? $presetOptions : collect())
             ->merge($storedOptions)
             ->map(fn ($item) => trim((string) $item))
             ->filter()

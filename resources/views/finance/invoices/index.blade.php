@@ -596,7 +596,7 @@
                         value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="inv-form-group">
-                    <label class="inv-label"><i class="fas fa-toggle-on"></i> {{ __('app.finance.status') }}</label>
+                    <label class="inv-label"><i class="fas fa-toggle-on"></i> Status Data</label>
                     <select name="status" id="status" class="inv-control">
                         <option value="ALL"       {{ ($filters['status'] ?? 'ALL') === 'ALL'       ? 'selected' : '' }}>{{ __('app.finance.all') }}</option>
                         <option value="DRAFT"     {{ ($filters['status'] ?? '') === 'DRAFT'         ? 'selected' : '' }}>{{ __('app.finance.draft') }}</option>
@@ -610,13 +610,13 @@
                         <option value="">Semua kategori</option>
                         @foreach($financeCategoryOptions as $category)
                             <option value="{{ $category->id }}" {{ (string) $selectedCategoryId === (string) $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
+                                {{ $category->name }}{{ ($category->category_type ?? 'single') === 'group' ? ' (Gabungan)' : '' }}
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div class="inv-form-group">
-                    <label class="inv-label"><i class="fas fa-tags"></i> {{ __('app.finance.type') }}</label>
+                    <label class="inv-label"><i class="fas fa-exchange-alt"></i> Pemasukan/Pengeluaran</label>
                     <select name="entry_type" id="entry_type" class="inv-control">
                         <option value="ALL"     {{ ($filters['entry_type'] ?? 'ALL') === 'ALL'     ? 'selected' : '' }}>{{ __('app.finance.all') }}</option>
                         <option value="INCOME"  {{ ($filters['entry_type'] ?? '') === 'INCOME'     ? 'selected' : '' }}>{{ __('app.finance.income') }}</option>
@@ -624,7 +624,7 @@
                     </select>
                 </div>
                 <div class="inv-form-group is-mid">
-                    <label class="inv-label"><i class="fas fa-book"></i> {{ __('app.finance.journal') }}</label>
+                    <label class="inv-label"><i class="fas fa-book"></i> Jenis Jurnal Posted</label>
                     <select name="journal_name" id="journal_name" class="inv-control">
                         <option value="">{{ __('app.finance.all_journals') }}</option>
                         @foreach($journalOptions as $journalOption)
