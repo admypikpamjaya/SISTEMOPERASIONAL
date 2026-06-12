@@ -116,28 +116,21 @@ class FinanceCategoryController extends Controller
 
         try {
             DB::transaction(function () use ($validated): void {
-                $category = FinanceCategory::query()->create([
-                    'name' => $validated['name'],
-                    'description' => $validated['description'] ?? null,
-                    'status' => $validated['status'],
-                    'category_type' => $validated['category_type'],
-                    'source_type' => $validated['source_type'],
-                    'created_by' => auth()->id() ? (string) auth()->id() : null,
-                ]);
+                $category = FinanceCategory::query()->create($this->categorySavePayload($validated, true));
 
                 $this->syncMembers($category, $validated['category_type'], $validated['member_ids'] ?? []);
             });
 
             return redirect()
                 ->route('finance.categories.index')
-                ->with('success', 'Kategori finance berhasil ditambahkan.');
+                ->with('success', __('app.finance_categories.created_success'));
         } catch (Throwable $exception) {
             report($exception);
 
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Gagal menambahkan kategori finance.');
+                ->with('error', __('app.finance_categories.created_failed'));
         }
     }
 
@@ -147,27 +140,21 @@ class FinanceCategoryController extends Controller
 
         try {
             DB::transaction(function () use ($category, $validated): void {
-                $category->update([
-                    'name' => $validated['name'],
-                    'description' => $validated['description'] ?? null,
-                    'status' => $validated['status'],
-                    'category_type' => $validated['category_type'],
-                    'source_type' => $validated['source_type'],
-                ]);
+                $category->update($this->categorySavePayload($validated));
 
                 $this->syncMembers($category, $validated['category_type'], $validated['member_ids'] ?? []);
             });
 
             return redirect()
                 ->route('finance.categories.index')
-                ->with('success', 'Kategori finance berhasil diperbarui.');
+                ->with('success', __('app.finance_categories.updated_success'));
         } catch (Throwable $exception) {
             report($exception);
 
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Gagal memperbarui kategori finance.');
+                ->with('error', __('app.finance_categories.updated_failed'));
         }
     }
 
@@ -191,15 +178,15 @@ class FinanceCategoryController extends Controller
                 ->with(
                     'success',
                     $visible
-                        ? 'Kategori finance berhasil ditampilkan kembali.'
-                        : 'Kategori finance berhasil disembunyikan dari pilihan input dan import baru.'
+                        ? __('app.finance_categories.visible_success')
+                        : __('app.finance_categories.hidden_success')
                 );
         } catch (Throwable $exception) {
             report($exception);
 
             return redirect()
                 ->back()
-                ->with('error', 'Gagal mengubah visibilitas kategori finance.');
+                ->with('error', __('app.finance_categories.visibility_failed'));
         }
     }
 
@@ -210,7 +197,7 @@ class FinanceCategoryController extends Controller
             if ($usageCount > 0) {
                 return redirect()
                     ->back()
-                    ->with('error', 'Kategori masih dipakai oleh data finance, jadi tidak bisa dihapus. Gunakan Sembunyikan agar tidak muncul di input baru.');
+                    ->with('error', __('app.finance_categories.delete_used_error'));
             }
 
             DB::transaction(function () use ($category): void {
@@ -226,13 +213,13 @@ class FinanceCategoryController extends Controller
 
             return redirect()
                 ->route('finance.categories.index')
-                ->with('success', 'Kategori finance berhasil dihapus.');
+                ->with('success', __('app.finance_categories.deleted_success'));
         } catch (Throwable $exception) {
             report($exception);
 
             return redirect()
                 ->back()
-                ->with('error', 'Gagal menghapus kategori finance.');
+                ->with('error', __('app.finance_categories.deleted_failed'));
         }
     }
 
@@ -259,16 +246,16 @@ class FinanceCategoryController extends Controller
             ],
             'member_ids.*' => ['uuid', 'distinct', Rule::exists('finance_categories', 'id')],
         ], [
-            'name.required' => 'Nama kategori wajib diisi.',
-            'name.unique' => 'Nama kategori sudah digunakan.',
-            'status.required' => 'Visibilitas kategori wajib dipilih.',
-            'status.in' => 'Visibilitas kategori tidak valid.',
-            'category_type.required' => 'Tipe kategori wajib dipilih.',
-            'category_type.in' => 'Tipe kategori tidak valid.',
-            'source_type.required' => 'Sumber kategori wajib dipilih.',
-            'source_type.in' => 'Sumber kategori tidak valid.',
-            'member_ids.required' => 'Kategori gabungan wajib memiliki minimal satu anggota.',
-            'member_ids.min' => 'Kategori gabungan wajib memiliki minimal satu anggota.',
+            'name.required' => __('app.finance_categories.validation.name_required'),
+            'name.unique' => __('app.finance_categories.validation.name_unique'),
+            'status.required' => __('app.finance_categories.validation.visibility_required'),
+            'status.in' => __('app.finance_categories.validation.visibility_invalid'),
+            'category_type.required' => __('app.finance_categories.validation.type_required'),
+            'category_type.in' => __('app.finance_categories.validation.type_invalid'),
+            'source_type.required' => __('app.finance_categories.validation.source_required'),
+            'source_type.in' => __('app.finance_categories.validation.source_invalid'),
+            'member_ids.required' => __('app.finance_categories.validation.members_required'),
+            'member_ids.min' => __('app.finance_categories.validation.members_required'),
         ]);
 
         $validated['category_type'] = $validated['category_type'] ?? FinanceCategory::TYPE_SINGLE;
@@ -280,7 +267,7 @@ class FinanceCategoryController extends Controller
 
         if ($category !== null && in_array((string) $category->id, $validated['member_ids'], true)) {
             throw ValidationException::withMessages([
-                'member_ids' => 'Kategori tidak boleh menjadi anggota dari dirinya sendiri.',
+                'member_ids' => __('app.finance_categories.validation.self_member'),
             ]);
         }
 
@@ -288,13 +275,40 @@ class FinanceCategoryController extends Controller
             foreach ($validated['member_ids'] as $memberId) {
                 if ($this->wouldCreateCycle((string) $category->id, (string) $memberId)) {
                     throw ValidationException::withMessages([
-                        'member_ids' => 'Relasi gabungan kategori tidak boleh membentuk putaran.',
+                        'member_ids' => __('app.finance_categories.validation.member_cycle'),
                     ]);
                 }
             }
         }
 
         return $validated;
+    }
+
+    /**
+     * @param array{name:string,description:?string,status:string,category_type:string,source_type:string} $validated
+     * @return array<string, mixed>
+     */
+    private function categorySavePayload(array $validated, bool $includeCreator = false): array
+    {
+        $payload = [
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'status' => $validated['status'],
+        ];
+
+        if (Schema::hasColumn('finance_categories', 'category_type')) {
+            $payload['category_type'] = $validated['category_type'];
+        }
+
+        if (Schema::hasColumn('finance_categories', 'source_type')) {
+            $payload['source_type'] = $validated['source_type'];
+        }
+
+        if ($includeCreator && Schema::hasColumn('finance_categories', 'created_by')) {
+            $payload['created_by'] = auth()->id() ? (string) auth()->id() : null;
+        }
+
+        return $payload;
     }
 
     private function countUsage(string $categoryId): int

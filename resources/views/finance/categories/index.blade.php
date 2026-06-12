@@ -75,31 +75,31 @@
         <div class="fc-title">
             <div class="fc-title-icon"><i class="fas fa-tags"></i></div>
             <div>
-                <h1>Kategori Finance</h1>
-                <p>Kelola kategori dinamis untuk pemisahan data finance per unit atau kebutuhan client.</p>
+                <h1>{{ __('app.finance_categories.title') }}</h1>
+                <p>{{ __('app.finance_categories.subtitle') }}</p>
             </div>
         </div>
         <a href="{{ route('finance.dashboard') }}" class="fc-btn fc-btn-muted">
-            <i class="fas fa-arrow-left"></i> Dasbor Keuangan
+            <i class="fas fa-arrow-left"></i> {{ __('app.finance_categories.back_to_dashboard') }}
         </a>
     </div>
 
     @if($errors->any())
         <div class="alert alert-danger">
-            <strong>Validasi gagal:</strong> {{ $errors->first() }}
+            <strong>{{ __('app.finance_categories.validation_failed') }}</strong> {{ $errors->first() }}
         </div>
     @endif
 
     <div class="fc-help">
-        <div><strong>Edit</strong> untuk mengubah nama, tipe, anggota gabungan, sumber, dan deskripsi kategori.</div>
-        <div><strong>Sembunyikan</strong> untuk menjaga riwayat tetap aman, tetapi kategori tidak muncul di pilihan input/import baru.</div>
-        <div><strong>Hapus</strong> untuk menghapus permanen, hanya tersedia kalau kategori belum dipakai data finance.</div>
+        <div><strong>{{ __('app.finance_categories.edit') }}</strong> {{ __('app.finance_categories.help_edit') }}</div>
+        <div><strong>{{ __('app.finance_categories.hide') }}</strong> {{ __('app.finance_categories.help_hide') }}</div>
+        <div><strong>{{ __('app.finance_categories.delete') }}</strong> {{ __('app.finance_categories.help_delete') }}</div>
     </div>
 
     <div class="fc-grid">
         <div class="fc-card">
             <div class="fc-card-head">
-                <h2><i class="fas fa-{{ $editCategory ? 'pen' : 'plus' }}"></i> {{ $editCategory ? 'Edit Kategori' : 'Tambah Kategori' }}</h2>
+                <h2><i class="fas fa-{{ $editCategory ? 'pen' : 'plus' }}"></i> {{ $editCategory ? __('app.finance_categories.edit_category') : __('app.finance_categories.add_category') }}</h2>
             </div>
             <div class="fc-body">
                 <form method="POST" action="{{ $editCategory ? route('finance.categories.update', $editCategory->id) : route('finance.categories.store') }}">
@@ -109,13 +109,13 @@
                     @endif
 
                     <div class="fc-field">
-                        <label class="fc-label" for="name"><i class="fas fa-tag"></i> Nama</label>
-                        <input id="name" name="name" class="fc-control" value="{{ old('name', $editCategory->name ?? '') }}" placeholder="TK, SD, SMP, Yayasan">
+                        <label class="fc-label" for="name"><i class="fas fa-tag"></i> {{ __('app.finance_categories.name') }}</label>
+                        <input id="name" name="name" class="fc-control" value="{{ old('name', $editCategory->name ?? '') }}" placeholder="{{ __('app.finance_categories.name_placeholder') }}">
                     </div>
 
                     <div class="fc-two-grid">
                         <div class="fc-field">
-                            <label class="fc-label" for="category_type"><i class="fas fa-sitemap"></i> Tipe</label>
+                            <label class="fc-label" for="category_type"><i class="fas fa-sitemap"></i> {{ __('app.finance_categories.type_label') }}</label>
                             <select id="category_type" name="category_type" class="fc-control">
                                 @foreach($typeOptions as $value => $label)
                                     <option value="{{ $value }}" {{ $selectedType === $value ? 'selected' : '' }}>{{ $label }}</option>
@@ -124,7 +124,7 @@
                         </div>
 
                         <div class="fc-field">
-                            <label class="fc-label" for="source_type"><i class="fas fa-shield-alt"></i> Sumber</label>
+                            <label class="fc-label" for="source_type"><i class="fas fa-shield-alt"></i> {{ __('app.finance_categories.source_label') }}</label>
                             <select id="source_type" name="source_type" class="fc-control">
                                 @foreach($sourceOptions as $value => $label)
                                     <option value="{{ $value }}" {{ $selectedSource === $value ? 'selected' : '' }}>{{ $label }}</option>
@@ -134,7 +134,7 @@
                     </div>
 
                     <div class="fc-field" id="member_ids_group">
-                        <label class="fc-label"><i class="fas fa-link"></i> Anggota Gabungan</label>
+                        <label class="fc-label"><i class="fas fa-link"></i> {{ __('app.finance_categories.members_label') }}</label>
                         <div class="fc-member-box">
                             @foreach($memberOptions as $option)
                                 @continue($editCategory && (string) $editCategory->id === (string) $option->id)
@@ -142,10 +142,10 @@
                                     <input type="checkbox" name="member_ids[]" value="{{ $option->id }}" {{ in_array((string) $option->id, $selectedMemberIds, true) ? 'checked' : '' }}>
                                     <span>{{ $option->name }}</span>
                                     @if(($option->category_type ?? 'single') === 'group')
-                                        <small class="fc-badge group" style="padding:.08rem .35rem;">Gabungan</small>
+                                        <small class="fc-badge group" style="padding:.08rem .35rem;">{{ __('app.finance_categories.group_badge') }}</small>
                                     @endif
                                     @if(($option->status ?? \App\Models\FinanceCategory::STATUS_ACTIVE) !== \App\Models\FinanceCategory::STATUS_ACTIVE)
-                                        <small class="fc-badge inactive" style="padding:.08rem .35rem;">Disembunyikan</small>
+                                        <small class="fc-badge inactive" style="padding:.08rem .35rem;">{{ __('app.finance_categories.hidden_badge') }}</small>
                                     @endif
                                 </label>
                             @endforeach
@@ -153,12 +153,12 @@
                     </div>
 
                     <div class="fc-field">
-                        <label class="fc-label" for="description"><i class="fas fa-align-left"></i> Deskripsi</label>
-                        <textarea id="description" name="description" class="fc-control" placeholder="Catatan opsional kategori">{{ old('description', $editCategory->description ?? '') }}</textarea>
+                        <label class="fc-label" for="description"><i class="fas fa-align-left"></i> {{ __('app.finance_categories.description') }}</label>
+                        <textarea id="description" name="description" class="fc-control" placeholder="{{ __('app.finance_categories.description_placeholder') }}">{{ old('description', $editCategory->description ?? '') }}</textarea>
                     </div>
 
                     <div class="fc-field">
-                        <label class="fc-label" for="status"><i class="fas fa-eye"></i> Visibilitas</label>
+                        <label class="fc-label" for="status"><i class="fas fa-eye"></i> {{ __('app.finance_categories.visibility') }}</label>
                         <select id="status" name="status" class="fc-control">
                             @foreach($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ old('status', $editCategory->status ?? 'active') === $value ? 'selected' : '' }}>{{ $label }}</option>
@@ -168,10 +168,10 @@
 
                     <div class="fc-actions">
                         <button type="submit" class="fc-btn fc-btn-primary">
-                            <i class="fas fa-save"></i> {{ $editCategory ? 'Simpan Perubahan' : 'Tambah Kategori' }}
+                            <i class="fas fa-save"></i> {{ $editCategory ? __('app.finance_categories.save_changes') : __('app.finance_categories.add_submit') }}
                         </button>
                         @if($editCategory)
-                            <a href="{{ route('finance.categories.index') }}" class="fc-btn fc-btn-muted">Batal</a>
+                            <a href="{{ route('finance.categories.index') }}" class="fc-btn fc-btn-muted">{{ __('app.finance_categories.cancel') }}</a>
                         @endif
                     </div>
                 </form>
@@ -180,25 +180,25 @@
 
         <div class="fc-card">
             <div class="fc-card-head">
-                <h2><i class="fas fa-list"></i> Daftar Kategori</h2>
+                <h2><i class="fas fa-list"></i> {{ __('app.finance_categories.list_title') }}</h2>
             </div>
             <div class="fc-body">
                 <form method="GET" action="{{ route('finance.categories.index') }}" class="fc-filter">
                     <div>
-                        <label class="fc-label" for="q"><i class="fas fa-search"></i> Cari</label>
-                        <input id="q" name="q" class="fc-control" value="{{ $filters['q'] ?? '' }}" placeholder="Cari kategori">
+                        <label class="fc-label" for="q"><i class="fas fa-search"></i> {{ __('app.finance_categories.search') }}</label>
+                        <input id="q" name="q" class="fc-control" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('app.finance_categories.search_placeholder') }}">
                     </div>
                     <div>
-                        <label class="fc-label" for="status-filter"><i class="fas fa-filter"></i> Visibilitas</label>
+                        <label class="fc-label" for="status-filter"><i class="fas fa-filter"></i> {{ __('app.finance_categories.visibility') }}</label>
                         <select id="status-filter" name="status" class="fc-control">
-                            <option value="all" {{ ($filters['status'] ?? 'all') === 'all' ? 'selected' : '' }}>Semua</option>
+                            <option value="all" {{ ($filters['status'] ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('app.finance_categories.all') }}</option>
                             @foreach($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ ($filters['status'] ?? 'all') === $value ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="fc-actions">
-                        <button type="submit" class="fc-btn fc-btn-primary"><i class="fas fa-search"></i> Filter</button>
+                        <button type="submit" class="fc-btn fc-btn-primary"><i class="fas fa-search"></i> {{ __('app.finance_categories.filter') }}</button>
                     </div>
                 </form>
             </div>
@@ -207,13 +207,13 @@
                 <table class="fc-table">
                     <thead>
                         <tr>
-                            <th>Kategori</th>
-                            <th>Tipe</th>
-                            <th>Visibilitas</th>
-                            <th>Anggota</th>
-                            <th>Dipakai</th>
-                            <th>Dibuat Oleh</th>
-                            <th>Aksi</th>
+                            <th>{{ __('app.finance_categories.category') }}</th>
+                            <th>{{ __('app.finance_categories.type_label') }}</th>
+                            <th>{{ __('app.finance_categories.visibility') }}</th>
+                            <th>{{ __('app.finance_categories.members') }}</th>
+                            <th>{{ __('app.finance_categories.used_by') }}</th>
+                            <th>{{ __('app.finance_categories.created_by') }}</th>
+                            <th>{{ __('app.finance_categories.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -254,40 +254,40 @@
                                         <span class="fc-desc">-</span>
                                     @endif
                                 </td>
-                                <td>{{ number_format($usage, 0, ',', '.') }} data</td>
+                                <td>{{ __('app.finance_categories.usage_count', ['count' => number_format($usage, 0, ',', '.')]) }}</td>
                                 <td>{{ $category->creator?->name ?? '-' }}</td>
                                 <td>
                                     <div class="fc-row-actions">
                                         <a href="{{ route('finance.categories.index', array_merge(request()->query(), ['edit' => $category->id])) }}" class="fc-btn fc-btn-muted">
-                                            <i class="fas fa-pen"></i> Edit
+                                            <i class="fas fa-pen"></i> {{ __('app.finance_categories.edit') }}
                                         </a>
                                         <form
                                             method="POST"
                                             action="{{ route('finance.categories.visibility', $category->id) }}"
-                                            onsubmit="return confirm('{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'Sembunyikan kategori ini dari pilihan input/import baru? Data lama tetap tersimpan.' : 'Tampilkan kembali kategori ini di pilihan input/import baru?' }}')"
+                                            onsubmit='return confirm(@json($category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? __('app.finance_categories.hide_confirm') : __('app.finance_categories.show_confirm')))'
                                         >
                                             @csrf
                                             @method('PATCH')
                                             <input type="hidden" name="visible" value="{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? '0' : '1' }}">
                                             <button type="submit" class="fc-btn {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'fc-btn-warning' : 'fc-btn-success' }}">
                                                 <i class="fas fa-{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'eye-slash' : 'eye' }}"></i>
-                                                {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'Sembunyikan' : 'Tampilkan' }}
+                                                {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? __('app.finance_categories.hide') : __('app.finance_categories.show') }}
                                             </button>
                                         </form>
-                                        <form method="POST" action="{{ route('finance.categories.destroy', $category->id) }}" onsubmit="return confirm('Hapus kategori ini permanen? Relasi gabungan ikut dilepas.')">
+                                        <form method="POST" action="{{ route('finance.categories.destroy', $category->id) }}" onsubmit='return confirm(@json(__('app.finance_categories.delete_confirm')))'>
                                             @csrf
                                             @method('DELETE')
                                             <button
                                                 type="submit"
                                                 class="fc-btn fc-btn-danger"
                                                 {{ $usage > 0 ? 'disabled' : '' }}
-                                                title="{{ $usage > 0 ? 'Kategori sedang dipakai data finance. Gunakan Sembunyikan.' : 'Hapus permanen kategori ini.' }}"
+                                                title="{{ $usage > 0 ? __('app.finance_categories.delete_locked_title') : __('app.finance_categories.delete_title') }}"
                                             >
-                                                <i class="fas fa-trash"></i> Hapus
+                                                <i class="fas fa-trash"></i> {{ __('app.finance_categories.delete') }}
                                             </button>
                                         </form>
                                         @if($usage > 0)
-                                            <div class="fc-action-note">Sudah dipakai data finance, hapus dikunci. Pakai Sembunyikan.</div>
+                                            <div class="fc-action-note">{{ __('app.finance_categories.delete_locked_note') }}</div>
                                         @endif
                                     </div>
                                 </td>
@@ -295,7 +295,7 @@
                         @empty
                             <tr>
                                 <td colspan="7">
-                                    <div class="fc-empty">Belum ada kategori finance.</div>
+                                    <div class="fc-empty">{{ __('app.finance_categories.empty') }}</div>
                                 </td>
                             </tr>
                         @endforelse

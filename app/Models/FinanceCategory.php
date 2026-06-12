@@ -40,24 +40,24 @@ class FinanceCategory extends Model
     public static function statusOptions(): array
     {
         return [
-            self::STATUS_ACTIVE => 'Aktif',
-            self::STATUS_INACTIVE => 'Disembunyikan',
+            self::STATUS_ACTIVE => __('app.finance_categories.status.active'),
+            self::STATUS_INACTIVE => __('app.finance_categories.status.hidden'),
         ];
     }
 
     public static function typeOptions(): array
     {
         return [
-            self::TYPE_SINGLE => 'Berdiri Sendiri',
-            self::TYPE_GROUP => 'Gabungan',
+            self::TYPE_SINGLE => __('app.finance_categories.type.single'),
+            self::TYPE_GROUP => __('app.finance_categories.type.group'),
         ];
     }
 
     public static function sourceOptions(): array
     {
         return [
-            self::SOURCE_STATIC => 'Statik',
-            self::SOURCE_CUSTOM => 'Custom',
+            self::SOURCE_STATIC => __('app.finance_categories.source.static'),
+            self::SOURCE_CUSTOM => __('app.finance_categories.source.custom'),
         ];
     }
 
@@ -78,7 +78,10 @@ class FinanceCategory extends Model
             'finance_category_members',
             'parent_category_id',
             'member_category_id'
-        )->withTimestamps();
+        )
+            ->using(FinanceCategoryMember::class)
+            ->withPivot('id')
+            ->withTimestamps();
     }
 
     public function memberOf(): BelongsToMany
@@ -88,7 +91,10 @@ class FinanceCategory extends Model
             'finance_category_members',
             'member_category_id',
             'parent_category_id'
-        )->withTimestamps();
+        )
+            ->using(FinanceCategoryMember::class)
+            ->withPivot('id')
+            ->withTimestamps();
     }
 
     public function isGroup(): bool
