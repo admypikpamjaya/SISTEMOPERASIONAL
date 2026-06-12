@@ -42,7 +42,7 @@ class FinanceStatementImportRequest extends FormRequest
             'file.file' => 'File import tidak valid.',
             'file.mimes' => 'Format file harus xlsx, xls, atau csv.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'batch_name.max' => 'Nama batch maksimal 255 karakter.',
             'notes.max' => 'Catatan import maksimal 5000 karakter.',
         ];

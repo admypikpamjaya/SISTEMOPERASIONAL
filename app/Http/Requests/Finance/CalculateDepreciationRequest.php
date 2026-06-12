@@ -42,7 +42,7 @@ class CalculateDepreciationRequest extends FormRequest
         return [
             'asset_id.required' => 'Asset wajib disertakan.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'asset_id.exists' => 'Asset tidak ditemukan.',
             'acquisition_cost.numeric' => 'Nilai perolehan harus berupa angka.',
             'acquisition_cost.min' => 'Nilai perolehan minimal 0.',

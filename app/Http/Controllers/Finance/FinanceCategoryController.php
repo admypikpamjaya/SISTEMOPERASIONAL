@@ -84,8 +84,14 @@ class FinanceCategoryController extends Controller
                 $category->id => $this->countUsage((string) $category->id),
             ]);
 
-        $memberOptions = FinanceCategory::query()
-            ->active()
+        $memberOptionsQuery = FinanceCategory::query()
+            ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END");
+
+        if (Schema::hasColumn('finance_categories', 'sort_order')) {
+            $memberOptionsQuery->orderBy('sort_order');
+        }
+
+        $memberOptions = $memberOptionsQuery
             ->orderBy('name')
             ->get($categoryColumns);
 
@@ -165,19 +171,58 @@ class FinanceCategoryController extends Controller
         }
     }
 
+    public function visibility(Request $request, FinanceCategory $category)
+    {
+        $validated = $request->validate([
+            'visible' => ['required', 'boolean'],
+        ]);
+
+        $visible = (bool) $validated['visible'];
+
+        try {
+            $category->update([
+                'status' => $visible
+                    ? FinanceCategory::STATUS_ACTIVE
+                    : FinanceCategory::STATUS_INACTIVE,
+            ]);
+
+            return redirect()
+                ->back()
+                ->with(
+                    'success',
+                    $visible
+                        ? 'Kategori finance berhasil ditampilkan kembali.'
+                        : 'Kategori finance berhasil disembunyikan dari pilihan input dan import baru.'
+                );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengubah visibilitas kategori finance.');
+        }
+    }
+
     public function destroy(FinanceCategory $category)
     {
         try {
             $usageCount = $this->countUsage((string) $category->id);
             if ($usageCount > 0) {
-                $category->update(['status' => FinanceCategory::STATUS_INACTIVE]);
-
                 return redirect()
-                    ->route('finance.categories.index')
-                    ->with('success', 'Kategori masih dipakai oleh data finance, jadi dinonaktifkan agar data lama tetap aman.');
+                    ->back()
+                    ->with('error', 'Kategori masih dipakai oleh data finance, jadi tidak bisa dihapus. Gunakan Sembunyikan agar tidak muncul di input baru.');
             }
 
-            $category->delete();
+            DB::transaction(function () use ($category): void {
+                if (Schema::hasTable('finance_category_members')) {
+                    DB::table('finance_category_members')
+                        ->where('parent_category_id', $category->id)
+                        ->orWhere('member_category_id', $category->id)
+                        ->delete();
+                }
+
+                $category->delete();
+            });
 
             return redirect()
                 ->route('finance.categories.index')
@@ -216,8 +261,8 @@ class FinanceCategoryController extends Controller
         ], [
             'name.required' => 'Nama kategori wajib diisi.',
             'name.unique' => 'Nama kategori sudah digunakan.',
-            'status.required' => 'Status kategori wajib dipilih.',
-            'status.in' => 'Status kategori tidak valid.',
+            'status.required' => 'Visibilitas kategori wajib dipilih.',
+            'status.in' => 'Visibilitas kategori tidak valid.',
             'category_type.required' => 'Tipe kategori wajib dipilih.',
             'category_type.in' => 'Tipe kategori tidak valid.',
             'source_type.required' => 'Sumber kategori wajib dipilih.',
@@ -254,20 +299,10 @@ class FinanceCategoryController extends Controller
 
     private function countUsage(string $categoryId): int
     {
-        $dataUsage = collect(self::USAGE_TABLES)
+        return collect(self::USAGE_TABLES)
             ->filter(fn (string $table): bool => DB::getSchemaBuilder()->hasTable($table)
                 && DB::getSchemaBuilder()->hasColumn($table, 'category_id'))
             ->sum(fn (string $table): int => (int) DB::table($table)->where('category_id', $categoryId)->count());
-
-        $memberUsage = 0;
-        if (DB::getSchemaBuilder()->hasTable('finance_category_members')) {
-            $memberUsage = (int) DB::table('finance_category_members')
-                ->where('parent_category_id', $categoryId)
-                ->orWhere('member_category_id', $categoryId)
-                ->count();
-        }
-
-        return $dataUsage + $memberUsage;
     }
 
     /**

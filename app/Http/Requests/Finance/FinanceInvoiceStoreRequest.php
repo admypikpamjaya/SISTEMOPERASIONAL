@@ -140,7 +140,7 @@ class FinanceInvoiceStoreRequest extends FormRequest
         return [
             'accounting_date.required' => 'Tanggal akuntansi wajib diisi.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'accounting_date.date' => 'Tanggal akuntansi tidak valid.',
             'entry_type.required' => 'Jenis transaksi wajib dipilih.',
             'entry_type.in' => 'Jenis transaksi harus INCOME atau EXPENSE.',

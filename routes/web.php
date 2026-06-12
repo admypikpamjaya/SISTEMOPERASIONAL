@@ -238,6 +238,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.read')
             ->name('dashboard');
 
+        Route::patch('/categories/{category}/visibility', [FinanceCategoryController::class, 'visibility'])
+            ->middleware('role:' . UserRole::IT_SUPPORT->value)
+            ->name('categories.visibility');
+
         Route::resource('categories', FinanceCategoryController::class)
             ->only(['index', 'store', 'update', 'destroy'])
             ->middleware('role:' . UserRole::IT_SUPPORT->value);

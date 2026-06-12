@@ -82,7 +82,7 @@ class FinanceStatementRowStoreRequest extends FormRequest
             'batch_id.uuid' => 'Batch laporan tidak valid.',
             'batch_id.exists' => 'Batch laporan tidak ditemukan.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'section_key.required' => 'Kategori laporan wajib dipilih.',
             'section_key.max' => 'Kategori laporan terlalu panjang.',
             'section_label.max' => 'Label kategori maksimal 120 karakter.',

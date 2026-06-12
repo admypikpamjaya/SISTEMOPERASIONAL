@@ -41,7 +41,7 @@ class FinanceCategory extends Model
     {
         return [
             self::STATUS_ACTIVE => 'Aktif',
-            self::STATUS_INACTIVE => 'Nonaktif',
+            self::STATUS_INACTIVE => 'Disembunyikan',
         ];
     }
 

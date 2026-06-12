@@ -63,7 +63,7 @@ class FinanceAccountStoreRequest extends FormRequest
             'code.max' => 'Kode akun maksimal 64 karakter.',
             'code.unique' => 'Kode akun sudah digunakan.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'name.required' => 'Nama akun wajib diisi.',
             'name.max' => 'Nama akun maksimal 255 karakter.',
             'type.required' => 'Jenis akun wajib dipilih.',

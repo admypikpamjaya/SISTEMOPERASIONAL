@@ -124,7 +124,7 @@ class GenerateProfitLossReportRequest extends FormRequest
         return [
             'report_type.required' => 'Tipe laporan wajib dipilih.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'report_type.in' => 'Tipe laporan harus DAILY, MONTHLY, atau YEARLY.',
             'report_date.required_if' => 'Tanggal wajib diisi untuk laporan harian.',
             'report_date.date' => 'Tanggal laporan tidak valid.',

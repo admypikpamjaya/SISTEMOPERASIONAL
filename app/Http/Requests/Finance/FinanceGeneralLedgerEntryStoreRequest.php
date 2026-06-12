@@ -96,7 +96,7 @@ class FinanceGeneralLedgerEntryStoreRequest extends FormRequest
             'batch_id.uuid' => 'Batch buku besar tidak valid.',
             'batch_id.exists' => 'Batch buku besar tidak ditemukan.',
             'category_id.required' => 'Kategori finance wajib dipilih.',
-            'category_id.exists' => 'Kategori finance tidak aktif atau tidak ditemukan.',
+            'category_id.exists' => 'Kategori finance disembunyikan atau tidak ditemukan.',
             'row_type.required' => 'Jenis baris wajib dipilih.',
             'row_type.in' => 'Jenis baris tidak valid.',
             'entry_date.required' => 'Tanggal buku besar wajib diisi.',

@@ -23,6 +23,9 @@
     .fc-btn-primary { color:#fff; background:linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow:0 8px 20px rgba(37,99,235,.25); }
     .fc-btn-muted { color:var(--app-text,#0f172a); background:var(--app-surface-soft,#f8fafc); border-color:var(--app-border,#dbe4f0); }
     .fc-btn-danger { color:#dc2626; background:rgba(220,38,38,.08); border-color:rgba(220,38,38,.2); }
+    .fc-btn-warning { color:#b45309; background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.28); }
+    .fc-btn-success { color:#047857; background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.24); }
+    .fc-btn:disabled { opacity:.48; cursor:not-allowed; box-shadow:none; }
     .fc-filter { display:grid; grid-template-columns:minmax(180px,1fr) 150px auto; gap:.6rem; align-items:end; }
     @media(max-width: 768px) { .fc-filter { grid-template-columns:1fr; } }
     .fc-two-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
@@ -46,7 +49,10 @@
     .fc-member-chips { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.45rem; }
     .fc-member-chip { display:inline-flex; align-items:center; border-radius:999px; padding:.2rem .5rem; background:rgba(37,99,235,.09); color:#1d4ed8; font-size:.72rem; font-weight:800; }
     .fc-row-actions { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+    .fc-action-note { flex-basis:100%; font-size:.7rem; color:var(--app-text-muted,#64748b); font-weight:700; }
     .fc-empty { padding:2.4rem 1rem; text-align:center; color:var(--app-text-muted,#64748b); font-weight:700; }
+    .fc-help { display:grid; gap:.35rem; margin-bottom:1rem; padding:.8rem .9rem; border-radius:12px; background:rgba(37,99,235,.07); border:1px solid rgba(37,99,235,.14); color:var(--app-text-soft,#334155); font-size:.78rem; font-weight:600; line-height:1.45; }
+    .fc-help strong { color:var(--app-text,#0f172a); }
 </style>
 
 @php
@@ -83,6 +89,12 @@
             <strong>Validasi gagal:</strong> {{ $errors->first() }}
         </div>
     @endif
+
+    <div class="fc-help">
+        <div><strong>Edit</strong> untuk mengubah nama, tipe, anggota gabungan, sumber, dan deskripsi kategori.</div>
+        <div><strong>Sembunyikan</strong> untuk menjaga riwayat tetap aman, tetapi kategori tidak muncul di pilihan input/import baru.</div>
+        <div><strong>Hapus</strong> untuk menghapus permanen, hanya tersedia kalau kategori belum dipakai data finance.</div>
+    </div>
 
     <div class="fc-grid">
         <div class="fc-card">
@@ -132,6 +144,9 @@
                                     @if(($option->category_type ?? 'single') === 'group')
                                         <small class="fc-badge group" style="padding:.08rem .35rem;">Gabungan</small>
                                     @endif
+                                    @if(($option->status ?? \App\Models\FinanceCategory::STATUS_ACTIVE) !== \App\Models\FinanceCategory::STATUS_ACTIVE)
+                                        <small class="fc-badge inactive" style="padding:.08rem .35rem;">Disembunyikan</small>
+                                    @endif
                                 </label>
                             @endforeach
                         </div>
@@ -143,7 +158,7 @@
                     </div>
 
                     <div class="fc-field">
-                        <label class="fc-label" for="status"><i class="fas fa-toggle-on"></i> Status</label>
+                        <label class="fc-label" for="status"><i class="fas fa-eye"></i> Visibilitas</label>
                         <select id="status" name="status" class="fc-control">
                             @foreach($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ old('status', $editCategory->status ?? 'active') === $value ? 'selected' : '' }}>{{ $label }}</option>
@@ -174,7 +189,7 @@
                         <input id="q" name="q" class="fc-control" value="{{ $filters['q'] ?? '' }}" placeholder="Cari kategori">
                     </div>
                     <div>
-                        <label class="fc-label" for="status-filter"><i class="fas fa-filter"></i> Status</label>
+                        <label class="fc-label" for="status-filter"><i class="fas fa-filter"></i> Visibilitas</label>
                         <select id="status-filter" name="status" class="fc-control">
                             <option value="all" {{ ($filters['status'] ?? 'all') === 'all' ? 'selected' : '' }}>Semua</option>
                             @foreach($statusOptions as $value => $label)
@@ -194,7 +209,7 @@
                         <tr>
                             <th>Kategori</th>
                             <th>Tipe</th>
-                            <th>Status</th>
+                            <th>Visibilitas</th>
                             <th>Anggota</th>
                             <th>Dipakai</th>
                             <th>Dibuat Oleh</th>
@@ -223,7 +238,8 @@
                                 </td>
                                 <td>
                                     <span class="fc-badge {{ $category->status }}">
-                                        <i class="fas fa-circle"></i> {{ $statusOptions[$category->status] ?? $category->status }}
+                                        <i class="fas fa-{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'eye' : 'eye-slash' }}"></i>
+                                        {{ $statusOptions[$category->status] ?? $category->status }}
                                     </span>
                                 </td>
                                 <td>
@@ -245,13 +261,34 @@
                                         <a href="{{ route('finance.categories.index', array_merge(request()->query(), ['edit' => $category->id])) }}" class="fc-btn fc-btn-muted">
                                             <i class="fas fa-pen"></i> Edit
                                         </a>
-                                        <form method="POST" action="{{ route('finance.categories.destroy', $category->id) }}" onsubmit="return confirm('Hapus atau nonaktifkan kategori ini?')">
+                                        <form
+                                            method="POST"
+                                            action="{{ route('finance.categories.visibility', $category->id) }}"
+                                            onsubmit="return confirm('{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'Sembunyikan kategori ini dari pilihan input/import baru? Data lama tetap tersimpan.' : 'Tampilkan kembali kategori ini di pilihan input/import baru?' }}')"
+                                        >
                                             @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="fc-btn fc-btn-danger">
-                                                <i class="fas fa-trash"></i> {{ $usage > 0 ? 'Nonaktifkan' : 'Hapus' }}
+                                            @method('PATCH')
+                                            <input type="hidden" name="visible" value="{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? '0' : '1' }}">
+                                            <button type="submit" class="fc-btn {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'fc-btn-warning' : 'fc-btn-success' }}">
+                                                <i class="fas fa-{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'eye-slash' : 'eye' }}"></i>
+                                                {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'Sembunyikan' : 'Tampilkan' }}
                                             </button>
                                         </form>
+                                        <form method="POST" action="{{ route('finance.categories.destroy', $category->id) }}" onsubmit="return confirm('Hapus kategori ini permanen? Relasi gabungan ikut dilepas.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button
+                                                type="submit"
+                                                class="fc-btn fc-btn-danger"
+                                                {{ $usage > 0 ? 'disabled' : '' }}
+                                                title="{{ $usage > 0 ? 'Kategori sedang dipakai data finance. Gunakan Sembunyikan.' : 'Hapus permanen kategori ini.' }}"
+                                            >
+                                                <i class="fas fa-trash"></i> Hapus
+                                            </button>
+                                        </form>
+                                        @if($usage > 0)
+                                            <div class="fc-action-note">Sudah dipakai data finance, hapus dikunci. Pakai Sembunyikan.</div>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
