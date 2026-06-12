@@ -3,6 +3,7 @@
 namespace App\Repositories\Finance;
 
 use App\Models\FinanceReport;
+use App\Services\Finance\FinanceCategoryScopeService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,10 @@ use Illuminate\Support\Facades\Schema;
 
 class FinanceReportRepository
 {
+    public function __construct(
+        private FinanceCategoryScopeService $categoryScopeService
+    ) {}
+
     public function create(array $data): FinanceReport
     {
         return FinanceReport::query()->create($data);
@@ -103,6 +108,8 @@ class FinanceReportRepository
     public function paginateByFilters(
         ?string $periodType = null,
         ?string $reportDate = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
         ?int $year = null,
         ?int $month = null,
         ?string $categoryId = null,
@@ -113,6 +120,8 @@ class FinanceReportRepository
         $query = $this->buildFilteredQuery(
             periodType: $periodType,
             reportDate: $reportDate,
+            startDate: $startDate,
+            endDate: $endDate,
             year: $year,
             month: $month,
             categoryId: $categoryId,
@@ -126,6 +135,8 @@ class FinanceReportRepository
     public function getByFilters(
         ?string $periodType = null,
         ?string $reportDate = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
         ?int $year = null,
         ?int $month = null,
         ?string $categoryId = null,
@@ -134,6 +145,8 @@ class FinanceReportRepository
         return $this->buildFilteredQuery(
             periodType: $periodType,
             reportDate: $reportDate,
+            startDate: $startDate,
+            endDate: $endDate,
             year: $year,
             month: $month,
             categoryId: $categoryId,
@@ -147,9 +160,10 @@ class FinanceReportRepository
         string $periodType,
         int $year,
         int $month = 0,
-        int $day = 0
+        int $day = 0,
+        ?string $categoryId = null
     ): ?FinanceReport {
-        return FinanceReport::query()
+        $query = FinanceReport::query()
             ->with(['user', 'period'])
             ->where('is_read_only', true)
             ->whereHas('period', function ($periodQuery) use ($periodType, $year, $month, $day) {
@@ -161,7 +175,11 @@ class FinanceReportRepository
                 if ($this->hasDayColumn()) {
                     $periodQuery->where('day', $day);
                 }
-            })
+            });
+
+        $this->applyCategoryFilter($query, $categoryId);
+
+        return $query
             ->orderByDesc('version_no')
             ->orderByDesc('generated_at')
             ->first();
@@ -175,6 +193,8 @@ class FinanceReportRepository
     private function buildFilteredQuery(
         ?string $periodType = null,
         ?string $reportDate = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
         ?int $year = null,
         ?int $month = null,
         ?string $categoryId = null,
@@ -189,13 +209,21 @@ class FinanceReportRepository
 
         $this->applyCategoryFilter($query, $categoryId);
 
-        $query->whereHas('period', function ($periodQuery) use ($periodType, $reportDate, $year, $month) {
+        $query->whereHas('period', function ($periodQuery) use ($periodType, $reportDate, $startDate, $endDate, $year, $month) {
             if (!empty($periodType) && strtoupper((string) $periodType) !== 'ALL') {
                 $periodQuery->where('period_type', strtoupper($periodType));
             }
 
             if (!empty($reportDate)) {
                 $periodQuery->whereDate('start_date', $reportDate);
+            }
+
+            if (!empty($startDate)) {
+                $periodQuery->whereDate('end_date', '>=', $startDate);
+            }
+
+            if (!empty($endDate)) {
+                $periodQuery->whereDate('start_date', '<=', $endDate);
             }
 
             if ($year !== null) {
@@ -220,7 +248,7 @@ class FinanceReportRepository
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where('category_id', $categoryId);
+        return $query->whereIn('category_id', $this->categoryScopeService->idsFor($categoryId));
     }
 
     private function hasFinanceReportCategoryColumn(): bool

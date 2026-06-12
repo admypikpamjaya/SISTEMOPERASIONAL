@@ -25,6 +25,8 @@
     .fc-btn-danger { color:#dc2626; background:rgba(220,38,38,.08); border-color:rgba(220,38,38,.2); }
     .fc-filter { display:grid; grid-template-columns:minmax(180px,1fr) 150px auto; gap:.6rem; align-items:end; }
     @media(max-width: 768px) { .fc-filter { grid-template-columns:1fr; } }
+    .fc-two-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
+    @media(max-width: 575px) { .fc-two-grid { grid-template-columns:1fr; } }
     .fc-table { width:100%; border-collapse:collapse; }
     .fc-table th { text-align:left; padding:.8rem .95rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--app-text-muted,#64748b); background:var(--app-surface-soft,#f8fafc); border-bottom:1px solid var(--app-border,#e2e8f0); white-space:nowrap; }
     .fc-table td { padding:.85rem .95rem; border-bottom:1px solid var(--app-border,#e2e8f0); color:var(--app-text-soft,#334155); vertical-align:top; }
@@ -34,9 +36,33 @@
     .fc-badge { display:inline-flex; align-items:center; gap:.3rem; border-radius:999px; padding:.24rem .58rem; font-size:.72rem; font-weight:800; }
     .fc-badge.active { background:rgba(16,185,129,.12); color:#047857; }
     .fc-badge.inactive { background:rgba(148,163,184,.16); color:#475569; }
+    .fc-badge.group { background:rgba(37,99,235,.12); color:#1d4ed8; }
+    .fc-badge.single { background:rgba(14,165,233,.12); color:#0369a1; }
+    .fc-badge.static { background:rgba(245,158,11,.14); color:#b45309; }
+    .fc-badge.custom { background:rgba(139,92,246,.13); color:#6d28d9; }
+    .fc-member-box { display:grid; gap:.45rem; max-height:170px; overflow:auto; padding:.6rem; border:1px solid var(--app-border,#dbe4f0); border-radius:10px; background:var(--app-surface-soft,#f8fafc); }
+    .fc-member-option { display:flex; align-items:center; gap:.45rem; font-size:.82rem; font-weight:700; color:var(--app-text-soft,#334155); }
+    .fc-member-option input { width:16px; height:16px; }
+    .fc-member-chips { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.45rem; }
+    .fc-member-chip { display:inline-flex; align-items:center; border-radius:999px; padding:.2rem .5rem; background:rgba(37,99,235,.09); color:#1d4ed8; font-size:.72rem; font-weight:800; }
     .fc-row-actions { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
     .fc-empty { padding:2.4rem 1rem; text-align:center; color:var(--app-text-muted,#64748b); font-weight:700; }
 </style>
+
+@php
+    $typeOptions = $typeOptions ?? \App\Models\FinanceCategory::typeOptions();
+    $sourceOptions = $sourceOptions ?? \App\Models\FinanceCategory::sourceOptions();
+    $memberOptions = $memberOptions ?? collect();
+    $editCategoryMembers = $editCategory && $editCategory->relationLoaded('members')
+        ? $editCategory->members
+        : collect();
+    $selectedMemberIds = collect(old(
+        'member_ids',
+        $editCategoryMembers->pluck('id')->all()
+    ))->map(static fn ($id): string => (string) $id)->all();
+    $selectedType = old('category_type', $editCategory->category_type ?? \App\Models\FinanceCategory::TYPE_SINGLE);
+    $selectedSource = old('source_type', $editCategory->source_type ?? \App\Models\FinanceCategory::SOURCE_CUSTOM);
+@endphp
 
 <div class="fc-shell">
     <div class="fc-header">
@@ -73,6 +99,42 @@
                     <div class="fc-field">
                         <label class="fc-label" for="name"><i class="fas fa-tag"></i> Nama</label>
                         <input id="name" name="name" class="fc-control" value="{{ old('name', $editCategory->name ?? '') }}" placeholder="TK, SD, SMP, Yayasan">
+                    </div>
+
+                    <div class="fc-two-grid">
+                        <div class="fc-field">
+                            <label class="fc-label" for="category_type"><i class="fas fa-sitemap"></i> Tipe</label>
+                            <select id="category_type" name="category_type" class="fc-control">
+                                @foreach($typeOptions as $value => $label)
+                                    <option value="{{ $value }}" {{ $selectedType === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="fc-field">
+                            <label class="fc-label" for="source_type"><i class="fas fa-shield-alt"></i> Sumber</label>
+                            <select id="source_type" name="source_type" class="fc-control">
+                                @foreach($sourceOptions as $value => $label)
+                                    <option value="{{ $value }}" {{ $selectedSource === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="fc-field" id="member_ids_group">
+                        <label class="fc-label"><i class="fas fa-link"></i> Anggota Gabungan</label>
+                        <div class="fc-member-box">
+                            @foreach($memberOptions as $option)
+                                @continue($editCategory && (string) $editCategory->id === (string) $option->id)
+                                <label class="fc-member-option">
+                                    <input type="checkbox" name="member_ids[]" value="{{ $option->id }}" {{ in_array((string) $option->id, $selectedMemberIds, true) ? 'checked' : '' }}>
+                                    <span>{{ $option->name }}</span>
+                                    @if(($option->category_type ?? 'single') === 'group')
+                                        <small class="fc-badge group" style="padding:.08rem .35rem;">Gabungan</small>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="fc-field">
@@ -131,7 +193,9 @@
                     <thead>
                         <tr>
                             <th>Kategori</th>
+                            <th>Tipe</th>
                             <th>Status</th>
+                            <th>Anggota</th>
                             <th>Dipakai</th>
                             <th>Dibuat Oleh</th>
                             <th>Aksi</th>
@@ -146,11 +210,33 @@
                                     @if(!empty($category->description))
                                         <div class="fc-desc">{{ $category->description }}</div>
                                     @endif
+                                    <div class="fc-member-chips">
+                                        <span class="fc-badge {{ $category->source_type ?? 'custom' }}">
+                                            {{ $sourceOptions[$category->source_type ?? 'custom'] ?? ($category->source_type ?? 'Custom') }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fc-badge {{ $category->category_type ?? 'single' }}">
+                                        {{ $typeOptions[$category->category_type ?? 'single'] ?? ($category->category_type ?? 'Berdiri Sendiri') }}
+                                    </span>
                                 </td>
                                 <td>
                                     <span class="fc-badge {{ $category->status }}">
                                         <i class="fas fa-circle"></i> {{ $statusOptions[$category->status] ?? $category->status }}
                                     </span>
+                                </td>
+                                <td>
+                                    @php($rowMembers = $category->relationLoaded('members') ? $category->members : collect())
+                                    @if($rowMembers->isNotEmpty())
+                                        <div class="fc-member-chips">
+                                            @foreach($rowMembers as $member)
+                                                <span class="fc-member-chip">{{ $member->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="fc-desc">-</span>
+                                    @endif
                                 </td>
                                 <td>{{ number_format($usage, 0, ',', '.') }} data</td>
                                 <td>{{ $category->creator?->name ?? '-' }}</td>
@@ -171,7 +257,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5">
+                                <td colspan="7">
                                     <div class="fc-empty">Belum ada kategori finance.</div>
                                 </td>
                             </tr>
@@ -186,4 +272,24 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        const typeSelect = document.getElementById('category_type');
+        const membersGroup = document.getElementById('member_ids_group');
+        if (!typeSelect || !membersGroup) {
+            return;
+        }
+
+        function syncMembersVisibility() {
+            const isGroup = typeSelect.value === 'group';
+            membersGroup.style.display = isGroup ? '' : 'none';
+            membersGroup.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+                input.disabled = !isGroup;
+            });
+        }
+
+        typeSelect.addEventListener('change', syncMembersVisibility);
+        syncMembersVisibility();
+    })();
+</script>
 @endsection

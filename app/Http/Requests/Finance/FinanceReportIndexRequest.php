@@ -31,6 +31,8 @@ class FinanceReportIndexRequest extends FormRequest
         return [
             'period_type' => 'nullable|string|in:ALL,DAILY,MONTHLY,YEARLY',
             'report_date' => 'nullable|date',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|digits:4|between:1900,2100',
             'report_type' => 'nullable|string|in:DAILY,MONTHLY,YEARLY',
@@ -38,6 +40,7 @@ class FinanceReportIndexRequest extends FormRequest
             'comparison_type' => 'nullable|string|in:NONE,PREVIOUS_PERIOD,SAME_PERIOD_LAST_YEAR,SPECIFIC_DATE',
             'comparison_offset' => 'nullable|integer|min:1|max:36',
             'comparison_date' => 'nullable|date|required_if:comparison_type,SPECIFIC_DATE',
+            'format' => 'nullable|string|in:pdf,excel,xlsx',
             'page' => 'nullable|integer|min:1',
             'per_page' => 'nullable|integer|min:1|max:100',
         ];
@@ -51,6 +54,13 @@ class FinanceReportIndexRequest extends FormRequest
         }
         $comparisonType = strtoupper((string) $this->input('comparison_type', 'NONE'));
         $reportDate = $this->input('report_date');
+        $startDate = $this->filled('start_date')
+            ? Carbon::parse((string) $this->input('start_date'))->toDateString()
+            : null;
+        $endDate = $this->filled('end_date')
+            ? Carbon::parse((string) $this->input('end_date'))->toDateString()
+            : null;
+
         if ($periodType === 'DAILY' && empty($reportDate)) {
             $reportDate = now()->toDateString();
         }
@@ -59,6 +69,8 @@ class FinanceReportIndexRequest extends FormRequest
             'period_type' => $periodType,
             'comparison_type' => $comparisonType,
             'report_date' => $reportDate,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'category_id' => $this->filled('category_id') ? trim((string) $this->input('category_id')) : null,
         ];
 
@@ -76,9 +88,6 @@ class FinanceReportIndexRequest extends FormRequest
             $payload['report_date'] = null;
             $payload['year'] = null;
             $payload['month'] = null;
-            $payload['comparison_type'] = 'NONE';
-            $payload['comparison_offset'] = null;
-            $payload['comparison_date'] = null;
         }
 
         if ($comparisonType !== 'PREVIOUS_PERIOD') {
@@ -97,12 +106,16 @@ class FinanceReportIndexRequest extends FormRequest
         return [
             'period_type.in' => 'Tipe periode harus ALL, DAILY, MONTHLY, atau YEARLY.',
             'report_date.date' => 'Format tanggal laporan tidak valid.',
+            'start_date.date' => 'Tanggal awal tidak valid.',
+            'end_date.date' => 'Tanggal akhir tidak valid.',
+            'end_date.after_or_equal' => 'Tanggal akhir harus sama atau setelah tanggal awal.',
             'comparison_type.in' => 'Tipe perbandingan tidak valid.',
             'category_id.exists' => 'Kategori finance tidak ditemukan.',
             'comparison_offset.min' => 'Offset perbandingan minimal 1 periode.',
             'comparison_offset.max' => 'Offset perbandingan maksimal 36 periode.',
             'comparison_date.required_if' => 'Tanggal perbandingan wajib diisi untuk mode tanggal.',
             'comparison_date.date' => 'Tanggal perbandingan tidak valid.',
+            'format.in' => 'Format download harus PDF atau Excel.',
         ];
     }
 }

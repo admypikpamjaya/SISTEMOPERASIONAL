@@ -206,6 +206,7 @@ class FinanceStatementController extends Controller
             $report = $this->resolveGeneralLedgerReportData($filter, $filter->ledgerBatchId);
             $resolvedBatchId = $filter->ledgerBatchId ?? data_get($report, 'batch.id');
             $filter->ledgerBatchId = $resolvedBatchId;
+            $accountOptions = $this->resolveGeneralLedgerAccountOptions($filter, $resolvedBatchId);
             $editEntry = $ledgerSource === 'imported'
                 ? $this->financeGeneralLedgerService->findEntry((string) $request->query('edit_entry', ''))
                 : null;
@@ -225,6 +226,7 @@ class FinanceStatementController extends Controller
                 'filterQuery' => $filterQuery,
                 'baseFilterQuery' => $this->buildBaseFilterQuery($filter),
                 'selectedAccountCode' => $filter->accountCode,
+                'accountOptions' => $accountOptions,
                 'ledgerSource' => $ledgerSource,
                 'selectedBatchId' => $resolvedBatchId,
                 'batchOptions' => $report['batches'] ?? $batchOptions->all(),
@@ -994,6 +996,51 @@ class FinanceStatementController extends Controller
         }
 
         return $systemReport;
+    }
+
+    /**
+     * @return array<int, array{account_code:string,account_name:string,finance_type:string}>
+     */
+    private function resolveGeneralLedgerAccountOptions(StatementFilterDTO $filter, ?string $batchId): array
+    {
+        $ledgerSource = $filter->ledgerSource ?? 'system';
+
+        if ($ledgerSource === 'imported') {
+            return $this->financeGeneralLedgerService->getImportedAccountOptions($filter, $batchId);
+        }
+
+        $systemOptions = $this->financialStatementService->getGeneralLedgerAccountOptions($filter);
+        if ($ledgerSource !== 'combined') {
+            return $systemOptions;
+        }
+
+        $importedOptions = $this->financeGeneralLedgerService->getImportedAccountOptions($filter, $batchId);
+        $merged = [];
+
+        foreach (array_merge($systemOptions, $importedOptions) as $option) {
+            $accountCode = strtoupper(trim((string) ($option['account_code'] ?? '')));
+            if ($accountCode === '') {
+                continue;
+            }
+
+            if (!isset($merged[$accountCode])) {
+                $merged[$accountCode] = [
+                    'account_code' => $accountCode,
+                    'account_name' => (string) ($option['account_name'] ?? '-'),
+                    'finance_type' => (string) ($option['finance_type'] ?? ''),
+                ];
+
+                continue;
+            }
+
+            if (($merged[$accountCode]['account_name'] ?? '-') === '-' && !empty($option['account_name'])) {
+                $merged[$accountCode]['account_name'] = (string) $option['account_name'];
+            }
+        }
+
+        ksort($merged, SORT_NATURAL);
+
+        return array_values($merged);
     }
 
     /**

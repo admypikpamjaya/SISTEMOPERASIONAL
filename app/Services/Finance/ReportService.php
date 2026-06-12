@@ -122,6 +122,8 @@ class ReportService
         $reports = $this->financeReportRepository->paginateByFilters(
             periodType: $filter->periodType,
             reportDate: $filter->reportDate,
+            startDate: $filter->startDate,
+            endDate: $filter->endDate,
             year: $filter->year,
             month: $filter->month,
             categoryId: $filter->categoryId,
@@ -131,8 +133,7 @@ class ReportService
         );
 
         $comparisons = [];
-        $allowComparison = $filter->comparisonType !== 'NONE'
-            && !empty($filter->periodType);
+        $allowComparison = $filter->comparisonType !== 'NONE';
 
         foreach ($reports->items() as $report) {
             $comparisons[$report->id] = $allowComparison
@@ -143,6 +144,8 @@ class ReportService
         $allReports = $this->financeReportRepository->getByFilters(
             periodType: $filter->periodType,
             reportDate: $filter->reportDate,
+            startDate: $filter->startDate,
+            endDate: $filter->endDate,
             year: $filter->year,
             month: $filter->month,
             categoryId: $filter->categoryId,
@@ -166,6 +169,62 @@ class ReportService
             'reports' => $reports,
             'comparisons' => $comparisons,
             'totals' => $totals,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   reports: \Illuminate\Database\Eloquent\Collection<int, FinanceReport>,
+     *   comparisons: array<string, array<string, mixed>|null>,
+     *   totals: array{count:int,total_opening_balance:float,total_ending_balance:float,total_net_result:float}
+     * }
+     */
+    public function getSnapshotExport(FinanceSnapshotFilterDTO $filter): array
+    {
+        $reports = $this->financeReportRepository->getByFilters(
+            periodType: $filter->periodType,
+            reportDate: $filter->reportDate,
+            startDate: $filter->startDate,
+            endDate: $filter->endDate,
+            year: $filter->year,
+            month: $filter->month,
+            categoryId: $filter->categoryId,
+            readOnlyOnly: true
+        );
+
+        $comparisons = [];
+        foreach ($reports as $report) {
+            $comparisons[$report->id] = $filter->comparisonType !== 'NONE'
+                ? $this->buildComparisonData($report, $filter)
+                : null;
+        }
+
+        return [
+            'reports' => $reports,
+            'comparisons' => $comparisons,
+            'totals' => $this->buildSnapshotTotals($reports),
+        ];
+    }
+
+    /**
+     * @param iterable<int, FinanceReport> $reports
+     * @return array{count:int,total_opening_balance:float,total_ending_balance:float,total_net_result:float}
+     */
+    private function buildSnapshotTotals(iterable $reports): array
+    {
+        $collection = collect($reports);
+
+        return [
+            'count' => $collection->count(),
+            'total_opening_balance' => round($collection->sum(
+                static fn (FinanceReport $report): float => (float) data_get($report->summary, 'opening_balance', 0)
+            ), 2),
+            'total_ending_balance' => round($collection->sum(
+                static fn (FinanceReport $report): float => (float) data_get($report->summary, 'ending_balance', 0)
+            ), 2),
+            'total_net_result' => round($collection->sum(
+                static fn (FinanceReport $report): float => (float) data_get($report->summary, 'net_result', 0)
+            ), 2),
         ];
     }
 
@@ -636,7 +695,8 @@ class ReportService
             $target['period_type'],
             $target['year'],
             $target['month'],
-            $target['day']
+            $target['day'],
+            $filter->categoryId
         );
 
         $baseNet = (float) data_get($baseReport->summary, 'net_result', 0);

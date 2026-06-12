@@ -465,7 +465,7 @@ class FinanceImportedStatementService
         if (!empty($batchId)) {
             return FinanceStatementBatch::query()
                 ->where('statement_type', $statementType)
-                ->when(!empty($filter->categoryId), fn ($query) => $query->where('category_id', $filter->categoryId))
+                ->when(!empty($filter->categoryId), fn ($query) => $query->whereIn('category_id', $this->categoryIds($filter->categoryId)))
                 ->find($batchId);
         }
 
@@ -473,7 +473,7 @@ class FinanceImportedStatementService
             ->where('statement_type', $statementType);
 
         if (!empty($filter->categoryId)) {
-            $preferredQuery->where('category_id', $filter->categoryId);
+            $preferredQuery->whereIn('category_id', $this->categoryIds($filter->categoryId));
         }
 
         if ($filter->startYear !== null && $filter->endYear !== null) {
@@ -494,7 +494,7 @@ class FinanceImportedStatementService
 
         return FinanceStatementBatch::query()
             ->where('statement_type', $statementType)
-            ->when(!empty($filter->categoryId), fn ($query) => $query->where('category_id', $filter->categoryId))
+            ->when(!empty($filter->categoryId), fn ($query) => $query->whereIn('category_id', $this->categoryIds($filter->categoryId)))
             ->orderByDesc('imported_year')
             ->orderByDesc('imported_at')
             ->orderByDesc('created_at')
@@ -507,7 +507,7 @@ class FinanceImportedStatementService
             ->where('batch_id', $batchId);
 
         if (!empty($filter->categoryId)) {
-            $query->where('category_id', $filter->categoryId);
+            $query->whereIn('category_id', $this->categoryIds($filter->categoryId));
         }
 
         if (!empty($filter->accountCode)) {
@@ -533,6 +533,14 @@ class FinanceImportedStatementService
             ->orderBy('sort_order')
             ->orderBy('sheet_row_number')
             ->orderBy('id');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function categoryIds(?string $categoryId): array
+    {
+        return app(FinanceCategoryScopeService::class)->idsFor($categoryId);
     }
 
     /**

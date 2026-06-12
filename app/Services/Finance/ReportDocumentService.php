@@ -4,6 +4,7 @@ namespace App\Services\Finance;
 
 use App\DTOs\Finance\ProfitLossLineDTO;
 use App\DTOs\Finance\ProfitLossReportDetailDTO;
+use App\Models\FinanceReport;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -44,9 +45,256 @@ class ReportDocumentService
         };
     }
 
+    /**
+     * @param iterable<int, FinanceReport> $reports
+     * @param array<string, mixed> $totals
+     * @param array<string, mixed> $actualSummary
+     * @param array<string, array<string, mixed>|null> $comparisons
+     * @param array<string, mixed> $meta
+     * @return array{content:string,filename:string,mime:string}
+     */
+    public function exportSnapshotCollection(
+        iterable $reports,
+        array $totals,
+        array $actualSummary,
+        array $comparisons,
+        array $meta,
+        string $format
+    ): array {
+        $reportCollection = collect($reports)->values();
+        $normalizedFormat = strtolower($format);
+
+        if (in_array($normalizedFormat, ['excel', 'xlsx'], true)) {
+            return [
+                'content' => $this->renderSnapshotCollectionExcel($reportCollection, $totals, $actualSummary, $comparisons, $meta),
+                'filename' => $this->buildSnapshotCollectionFilename($meta, 'xlsx'),
+                'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ];
+        }
+
+        return [
+            'content' => $this->renderSnapshotCollectionPdf($reportCollection, $totals, $actualSummary, $comparisons, $meta),
+            'filename' => $this->buildSnapshotCollectionFilename($meta, 'pdf'),
+            'mime' => 'application/pdf',
+        ];
+    }
+
     public function renderProfitLossDocument(ProfitLossReportDetailDTO $report): string
     {
         return $this->renderWordDocument($report);
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<int, FinanceReport> $reports
+     * @param array<string, mixed> $totals
+     * @param array<string, mixed> $actualSummary
+     * @param array<string, array<string, mixed>|null> $comparisons
+     * @param array<string, mixed> $meta
+     */
+    private function renderSnapshotCollectionExcel(
+        $reports,
+        array $totals,
+        array $actualSummary,
+        array $comparisons,
+        array $meta
+    ): string {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Cuplikan Keuangan');
+
+        foreach ([
+            'A' => 7,
+            'B' => 18,
+            'C' => 14,
+            'D' => 13,
+            'E' => 20,
+            'F' => 20,
+            'G' => 22,
+            'H' => 26,
+            'I' => 22,
+            'J' => 20,
+        ] as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
+        }
+
+        $sheet->mergeCells('A1:J1');
+        $sheet->setCellValue('A1', 'CUPLIKAN LAPORAN KEUANGAN');
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(24);
+
+        $sheet->setCellValue('A3', 'Periode');
+        $sheet->setCellValue('B3', (string) ($meta['period_label'] ?? 'Semua periode'));
+        $sheet->setCellValue('D3', 'Kategori');
+        $sheet->setCellValue('E3', (string) ($meta['category_name'] ?? 'Semua'));
+        $sheet->setCellValue('G3', 'Dibuat');
+        $sheet->setCellValue('H3', now()->format('d/m/Y H:i:s'));
+        $sheet->getStyle('A3:H3')->getFont()->setBold(true);
+
+        $actualOverview = data_get($actualSummary, 'journal_overview', []);
+        $actualProfitLoss = data_get($actualSummary, 'profit_loss.totals', []);
+        $actualLedger = data_get($actualSummary, 'general_ledger', []);
+
+        $summaryRows = [
+            ['Total Nominal Terposting', (float) data_get($actualOverview, 'total_posted_nominal', 0), 'Faktur/Jurnal Terposting', (int) data_get($actualOverview, 'posted_invoice_count', 0)],
+            ['Surplus (Defisit) Aktual', (float) data_get($actualProfitLoss, 'net_result', 0), 'Total Buku Besar', (float) data_get($actualLedger, 'total_debit', 0)],
+            ['Snapshot Manual Tersimpan', (int) data_get($totals, 'count', 0), 'Surplus Snapshot', (float) data_get($totals, 'total_net_result', 0)],
+        ];
+
+        $row = 5;
+        foreach ($summaryRows as $summaryRow) {
+            $sheet->setCellValue('A' . $row, $summaryRow[0]);
+            $sheet->setCellValue('B' . $row, $summaryRow[1]);
+            $sheet->setCellValue('D' . $row, $summaryRow[2]);
+            $sheet->setCellValue('E' . $row, $summaryRow[3]);
+            $row++;
+        }
+        $sheet->getStyle('A5:A7')->getFont()->setBold(true);
+        $sheet->getStyle('D5:D7')->getFont()->setBold(true);
+        $sheet->getStyle('B5:B6')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
+        $sheet->getStyle('E6:E7')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
+
+        $headerRow = 10;
+        $sheet->fromArray([
+            'No',
+            'Periode',
+            'Tipe',
+            'Versi',
+            'Saldo Awal',
+            'Saldo Akhir',
+            'Surplus (Defisit)',
+            'Perbandingan',
+            'Dibuat Pada',
+            'Dibuat Oleh',
+        ], null, 'A' . $headerRow);
+        $sheet->getStyle('A' . $headerRow . ':J' . $headerRow)->applyFromArray($this->snapshotTableHeaderStyle());
+
+        $row = $headerRow + 1;
+        foreach ($reports as $index => $report) {
+            $comparison = $comparisons[$report->id] ?? null;
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $this->resolveSnapshotPeriodLabel($report));
+            $sheet->setCellValue('C' . $row, (string) ($report->report_type ?? '-'));
+            $sheet->setCellValue('D' . $row, (int) ($report->version_no ?? 0));
+            $sheet->setCellValue('E' . $row, (float) data_get($report->summary, 'opening_balance', 0));
+            $sheet->setCellValue('F' . $row, (float) data_get($report->summary, 'ending_balance', 0));
+            $sheet->setCellValue('G' . $row, (float) data_get($report->summary, 'net_result', 0));
+            $sheet->setCellValue('H' . $row, $this->resolveSnapshotComparisonLabel($comparison));
+            $sheet->setCellValue('I' . $row, optional($report->generated_at)->format('d/m/Y H:i:s') ?? '-');
+            $sheet->setCellValue('J' . $row, (string) ($report->user?->name ?? '-'));
+            $row++;
+        }
+
+        if ($reports->isEmpty()) {
+            $sheet->mergeCells('A' . $row . ':J' . $row);
+            $sheet->setCellValue('A' . $row, 'Tidak ada snapshot manual tersimpan untuk filter ini.');
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
+        }
+
+        $totalRow = $row;
+        $sheet->mergeCells('A' . $totalRow . ':D' . $totalRow);
+        $sheet->setCellValue('A' . $totalRow, 'TOTAL');
+        $sheet->setCellValue('E' . $totalRow, (float) data_get($totals, 'total_opening_balance', 0));
+        $sheet->setCellValue('F' . $totalRow, (float) data_get($totals, 'total_ending_balance', 0));
+        $sheet->setCellValue('G' . $totalRow, (float) data_get($totals, 'total_net_result', 0));
+        $sheet->getStyle('A' . $totalRow . ':J' . $totalRow)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'EAF2FF'],
+            ],
+        ]);
+        $sheet->getStyle('A' . $totalRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        $sheet->getStyle('E' . ($headerRow + 1) . ':G' . $totalRow)
+            ->getNumberFormat()
+            ->setFormatCode('[$Rp-421] #,##0.00');
+        $sheet->getStyle('E' . ($headerRow + 1) . ':G' . $totalRow)
+            ->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('A' . $headerRow . ':J' . $totalRow)->applyFromArray($this->snapshotThinBorderStyle());
+        $sheet->freezePane('A11');
+        $sheet->setAutoFilter('A' . $headerRow . ':J' . max($headerRow, $totalRow - 1));
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<int, FinanceReport> $reports
+     * @param array<string, mixed> $totals
+     * @param array<string, mixed> $actualSummary
+     * @param array<string, array<string, mixed>|null> $comparisons
+     * @param array<string, mixed> $meta
+     */
+    private function renderSnapshotCollectionPdf(
+        $reports,
+        array $totals,
+        array $actualSummary,
+        array $comparisons,
+        array $meta
+    ): string {
+        $pages = [];
+        $chunks = $reports->chunk(15);
+        if ($chunks->isEmpty()) {
+            $chunks = collect([collect()]);
+        }
+
+        $pageNumber = 1;
+        foreach ($chunks as $chunk) {
+            $top = 0.0;
+            $content = $this->buildSnapshotPdfHeader($top, $meta, $pageNumber);
+
+            if ($pageNumber === 1) {
+                $actualOverview = data_get($actualSummary, 'journal_overview', []);
+                $actualProfitLoss = data_get($actualSummary, 'profit_loss.totals', []);
+                $actualLedger = data_get($actualSummary, 'general_ledger', []);
+
+                $content .= $this->pdfDrawText('Total Nominal Terposting', 50, $top, 10, true, [225, 232, 240]);
+                $content .= $this->pdfDrawText('Rp ' . $this->formatNominal((float) data_get($actualOverview, 'total_posted_nominal', 0)), 210, $top, 10, false, [225, 232, 240]);
+                $content .= $this->pdfDrawText('Faktur/Jurnal', 360, $top, 10, true, [225, 232, 240]);
+                $content .= $this->pdfDrawText(number_format((int) data_get($actualOverview, 'posted_invoice_count', 0), 0, ',', '.'), 470, $top, 10, false, [225, 232, 240]);
+                $top += 18;
+
+                $content .= $this->pdfDrawText('Surplus Aktual', 50, $top, 10, true, [225, 232, 240]);
+                $content .= $this->pdfDrawText('Rp ' . $this->formatNominal((float) data_get($actualProfitLoss, 'net_result', 0)), 210, $top, 10, false, [225, 232, 240]);
+                $content .= $this->pdfDrawText('Total Buku Besar', 360, $top, 10, true, [225, 232, 240]);
+                $content .= $this->pdfDrawText('Rp ' . $this->formatNominal((float) data_get($actualLedger, 'total_debit', 0)), 470, $top, 10, false, [225, 232, 240]);
+                $top += 26;
+            }
+
+            $content .= $this->drawSnapshotPdfTableHeader($top);
+
+            if ($chunk->isEmpty()) {
+                $content .= $this->pdfDrawText('Tidak ada snapshot manual tersimpan untuk filter ini.', 50, $top, 9, false, [225, 232, 240]);
+                $top += 18;
+            } else {
+                foreach ($chunk as $index => $report) {
+                    $number = (($pageNumber - 1) * 15) + $index + 1;
+                    $content .= $this->drawSnapshotPdfRow($number, $report, $comparisons[$report->id] ?? null, $top);
+                }
+            }
+
+            if ($pageNumber === $chunks->count()) {
+                $top += 10;
+                $content .= $this->pdfDrawText('Total snapshot: ' . number_format((int) data_get($totals, 'count', 0), 0, ',', '.'), 50, $top, 10, true, [225, 232, 240]);
+                $content .= $this->pdfDrawText('Surplus snapshot: Rp ' . $this->formatNominal((float) data_get($totals, 'total_net_result', 0)), 280, $top, 10, true, [225, 232, 240]);
+            }
+
+            $content .= $this->pdfDrawText('Halaman ' . $pageNumber, 500, 810, 8, false, [160, 174, 192]);
+            $pages[] = $content;
+            $pageNumber++;
+        }
+
+        return $this->buildGenericPdfDocument($pages);
     }
 
     public function buildProfitLossFilename(ProfitLossReportDetailDTO $report, string $extension = 'docx'): string
@@ -58,6 +306,233 @@ class ReportDocumentService
         };
 
         return sprintf('laporan-laba-rugi-%s.%s', $period, $extension);
+    }
+
+    private function resolveSnapshotPeriodLabel(FinanceReport $report): string
+    {
+        $period = $report->period;
+        $periodType = strtoupper((string) ($period->period_type ?? $report->report_type ?? ''));
+
+        if ($period === null) {
+            return '-';
+        }
+
+        if ($periodType === 'DAILY') {
+            return optional($period->start_date)->format('d/m/Y') ?? '-';
+        }
+
+        if ($periodType === 'MONTHLY') {
+            return sprintf('%02d/%04d', (int) $period->month, (int) $period->year);
+        }
+
+        return (string) $period->year;
+    }
+
+    /**
+     * @param array<string, mixed>|null $comparison
+     */
+    private function resolveSnapshotComparisonLabel(?array $comparison): string
+    {
+        if ($comparison === null) {
+            return '-';
+        }
+
+        $label = (string) data_get($comparison, 'label', 'Pembanding');
+        if (!data_get($comparison, 'available', false)) {
+            return $label . ': data tidak ditemukan';
+        }
+
+        $diffNet = (float) data_get($comparison, 'difference_net_result', 0);
+        $diffBalance = (float) data_get($comparison, 'difference_ending_balance', 0);
+
+        return $label
+            . ' | Surplus ' . ($diffNet >= 0 ? '+' : '-')
+            . 'Rp ' . $this->formatNominal(abs($diffNet))
+            . ' | Saldo ' . ($diffBalance >= 0 ? '+' : '-')
+            . 'Rp ' . $this->formatNominal(abs($diffBalance));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function snapshotTableHeaderStyle(): array
+    {
+        return [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1F4E78'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function snapshotThinBorderStyle(): array
+    {
+        return [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D1D5DB'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function buildSnapshotCollectionFilename(array $meta, string $extension): string
+    {
+        $label = (string) ($meta['period_label'] ?? 'semua-periode');
+        $slug = strtolower((string) preg_replace('/[^a-zA-Z0-9]+/', '-', $label));
+        $slug = trim($slug, '-');
+
+        if ($slug === '') {
+            $slug = now()->format('Ymd-His');
+        }
+
+        return 'cuplikan-laporan-keuangan-' . $slug . '.' . $extension;
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function buildSnapshotPdfHeader(float &$top, array $meta, int $pageNumber): string
+    {
+        $content = '';
+        $content .= $this->pdfDrawRect(0, 0, 595, 842, [30, 31, 35], null);
+        $content .= $this->pdfDrawRect(16, 14, 563, 814, [39, 41, 47], null);
+        $content .= $this->pdfDrawText('CUPLIKAN LAPORAN KEUANGAN', 50, 54, 20, true, [230, 236, 244]);
+        $content .= $this->pdfDrawText('YPIK PAM JAYA', 50, 78, 11, false, [206, 215, 228]);
+
+        $periodLabel = (string) ($meta['period_label'] ?? 'Semua periode');
+        $categoryName = (string) ($meta['category_name'] ?? 'Semua');
+        $comparisonType = (string) ($meta['comparison_type'] ?? 'NONE');
+
+        $content .= $this->pdfDrawText('Periode: ' . $periodLabel, 50, 112, 10, false, [225, 232, 240]);
+        $content .= $this->pdfDrawText('Kategori: ' . $categoryName, 50, 130, 10, false, [225, 232, 240]);
+        $content .= $this->pdfDrawText('Perbandingan: ' . $comparisonType, 340, 112, 10, false, [225, 232, 240]);
+        $content .= $this->pdfDrawText('Generated: ' . now()->format('d/m/Y H:i:s'), 340, 130, 10, false, [225, 232, 240]);
+
+        $top = $pageNumber === 1 ? 166.0 : 154.0;
+
+        return $content;
+    }
+
+    private function drawSnapshotPdfTableHeader(float &$top): string
+    {
+        $content = '';
+        $x = 50.0;
+        $height = 26.0;
+        $border = [78, 92, 111];
+        $widths = [28.0, 76.0, 64.0, 95.0, 95.0, 170.0];
+        $labels = ['No', 'Periode', 'Tipe', 'Saldo Akhir', 'Surplus', 'Perbandingan'];
+
+        foreach ($labels as $index => $label) {
+            $content .= $this->pdfDrawRect($x, $top, $widths[$index], $height, [47, 56, 68], $border);
+            $content .= $this->pdfDrawText($label, $x + 6, $top + 8, 8, true, [232, 238, 245]);
+            $x += $widths[$index];
+        }
+
+        $top += $height;
+
+        return $content;
+    }
+
+    /**
+     * @param array<string, mixed>|null $comparison
+     */
+    private function drawSnapshotPdfRow(int $number, FinanceReport $report, ?array $comparison, float &$top): string
+    {
+        $content = '';
+        $x = 50.0;
+        $height = 34.0;
+        $border = [78, 92, 111];
+        $widths = [28.0, 76.0, 64.0, 95.0, 95.0, 170.0];
+        $values = [
+            (string) $number,
+            $this->resolveSnapshotPeriodLabel($report),
+            (string) ($report->report_type ?? '-'),
+            'Rp ' . $this->formatNominal((float) data_get($report->summary, 'ending_balance', 0)),
+            'Rp ' . $this->formatNominal((float) data_get($report->summary, 'net_result', 0)),
+            $this->resolveSnapshotComparisonLabel($comparison),
+        ];
+
+        foreach ($values as $index => $value) {
+            $content .= $this->pdfDrawRect($x, $top, $widths[$index], $height, [38, 43, 52], $border);
+            $content .= $this->pdfDrawText(
+                $this->truncatePdfText($value, $widths[$index] - 10, 7),
+                $x + 5,
+                $top + 11,
+                7,
+                false,
+                [222, 229, 237]
+            );
+            $x += $widths[$index];
+        }
+
+        $top += $height;
+
+        return $content;
+    }
+
+    /**
+     * @param array<int, string> $pageStreams
+     */
+    private function buildGenericPdfDocument(array $pageStreams): string
+    {
+        $objects = [];
+        $objectIndex = 2;
+
+        $fontRegularId = ++$objectIndex;
+        $objects[$fontRegularId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+
+        $fontBoldId = ++$objectIndex;
+        $objects[$fontBoldId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+
+        $pageObjectIds = [];
+        foreach ($pageStreams as $stream) {
+            $contentObjectId = ++$objectIndex;
+            $objects[$contentObjectId] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
+
+            $pageObjectId = ++$objectIndex;
+            $pageObjectIds[] = $pageObjectId;
+            $objects[$pageObjectId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontRegularId} 0 R /F2 {$fontBoldId} 0 R >> >> /Contents {$contentObjectId} 0 R >>";
+        }
+
+        $kids = implode(' ', array_map(static fn (int $id) => $id . ' 0 R', $pageObjectIds));
+        $objects[2] = "<< /Type /Pages /Kids [ {$kids} ] /Count " . count($pageObjectIds) . " >>";
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+
+        ksort($objects);
+
+        $pdf = "%PDF-1.4\n";
+        $offsets = [0];
+        foreach ($objects as $id => $body) {
+            $offsets[$id] = strlen($pdf);
+            $pdf .= $id . " 0 obj\n" . $body . "\nendobj\n";
+        }
+
+        $xrefOffset = strlen($pdf);
+        $maxObjectId = max(array_keys($objects));
+        $pdf .= "xref\n0 " . ($maxObjectId + 1) . "\n";
+        $pdf .= "0000000000 65535 f \n";
+        for ($i = 1; $i <= $maxObjectId; $i++) {
+            $offset = $offsets[$i] ?? 0;
+            $pdf .= sprintf('%010d 00000 n ', $offset) . "\n";
+        }
+
+        $pdf .= "trailer\n<< /Size " . ($maxObjectId + 1) . " /Root 1 0 R >>\n";
+        $pdf .= "startxref\n{$xrefOffset}\n%%EOF";
+
+        return $pdf;
     }
 
     private function renderWordDocument(ProfitLossReportDetailDTO $report): string

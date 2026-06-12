@@ -348,6 +348,30 @@ class FinancialStatementService
     }
 
     /**
+     * @return array<int, array{account_code:string,account_name:string,finance_type:string}>
+     */
+    public function getGeneralLedgerAccountOptions(StatementFilterDTO $filter): array
+    {
+        $optionFilter = clone $filter;
+        $optionFilter->accountCode = null;
+
+        return $this->makeFilteredItemQuery($optionFilter)
+            ->selectRaw('fii.account_code as account_code')
+            ->selectRaw("COALESCE(MAX(fa.name), MAX(fii.label), fii.account_code) as account_name")
+            ->selectRaw("UPPER(COALESCE(MAX(fa.type), '')) as finance_type")
+            ->groupBy('fii.account_code')
+            ->orderBy('fii.account_code')
+            ->get()
+            ->map(static fn ($row): array => [
+                'account_code' => (string) $row->account_code,
+                'account_name' => (string) $row->account_name,
+                'finance_type' => (string) $row->finance_type,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * @return array{
      *   balance_sheet: array<string, mixed>,
      *   profit_loss: array<string, mixed>,
@@ -665,7 +689,9 @@ class FinancialStatementService
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where('fi.category_id', $filter->categoryId);
+        $categoryIds = app(FinanceCategoryScopeService::class)->idsFor($filter->categoryId);
+
+        return $query->whereIn('fi.category_id', $categoryIds);
     }
 
     private function canJoinFinanceCategories(): bool

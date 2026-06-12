@@ -378,6 +378,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.generate')
             ->name('report.account-mapping');
 
+        Route::get('/report/snapshots/download', [FinanceReportController::class, 'downloadSnapshots'])
+            ->middleware('check_access:finance_report.read')
+            ->name('report.snapshots.download');
+
         Route::get('/report/{id}/download', [FinanceReportController::class, 'download'])
             ->middleware('check_access:finance_report.read')
             ->name('report.download');

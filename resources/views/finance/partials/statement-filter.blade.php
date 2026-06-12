@@ -19,13 +19,15 @@
     $ledgerBatchId = $statementFilters['ledger_batch_id'] ?? null;
     $categoryId = $statementFilters['category_id'] ?? null;
     $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $accountOptions = collect($accountOptions ?? []);
+    $showAccountFilter = (bool) ($showAccountFilter ?? false);
     $perPage = (int) ($statementFilters['per_page'] ?? 10);
     $action = $action ?? url()->current();
     $perPageOptions = $perPageOptions ?? [10, 20, 50, 100];
     $showPerPage = $showPerPage ?? false;
     $isJournalDetail = request()->routeIs('finance.report.journal-items');
     $resetQuery = array_filter([
-        'account_code' => $accountCode,
+        'account_code' => $showAccountFilter ? null : $accountCode,
         'statement_source' => $statementSource,
         'statement_data_source' => $statementDataSource,
         'statement_batch_id' => $statementBatchId,
@@ -137,7 +139,7 @@
     </div>
     <div class="fs-filter-body">
         <form method="GET" action="{{ $action }}" class="fs-filter-form">
-            @if(!empty($accountCode))
+            @if(!empty($accountCode) && !$showAccountFilter)
                 <input type="hidden" name="account_code" value="{{ $accountCode }}">
             @endif
             @if(!empty($search))
@@ -197,11 +199,31 @@
                         <option value="">Semua kategori</option>
                         @foreach($financeCategoryOptions as $category)
                             <option value="{{ $category->id }}" {{ (string) $categoryId === (string) $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
+                                {{ $category->name }}{{ ($category->category_type ?? 'single') === 'group' ? ' (Gabungan)' : '' }}
                             </option>
                         @endforeach
                     </select>
                 </div>
+
+                @if($showAccountFilter)
+                    <div class="fs-field" data-span="3">
+                        <label class="fs-label" for="statement_account_code">
+                            <i class="fas fa-book"></i> Akun Buku Besar
+                        </label>
+                        <select name="account_code" id="statement_account_code" class="fs-control">
+                            <option value="">Semua akun</option>
+                            @foreach($accountOptions as $accountOption)
+                                @php
+                                    $optionCode = (string) data_get($accountOption, 'account_code');
+                                    $optionName = (string) data_get($accountOption, 'account_name', '-');
+                                @endphp
+                                <option value="{{ $optionCode }}" {{ (string) $accountCode === $optionCode ? 'selected' : '' }}>
+                                    {{ $optionCode }} - {{ $optionName }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
 
                 @if($isJournalDetail)
                     <div class="fs-field" data-span="{{ $showPerPage ? '6' : '6' }}">

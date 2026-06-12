@@ -8,6 +8,7 @@ use App\Http\Requests\Finance\FinanceInvoiceStoreRequest;
 use App\Http\Requests\Finance\FinanceInvoiceUpdateRequest;
 use App\Models\FinanceAccount;
 use App\Models\FinanceInvoice;
+use App\Services\Finance\FinanceCategoryScopeService;
 use App\Services\Finance\FinanceInvoiceDocumentService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -486,7 +487,7 @@ class FinanceInvoiceController extends Controller
         $categoryId = trim((string) ($filters['category_id'] ?? ''));
         if ($categoryId !== '') {
             if ($this->hasInvoiceCategoryColumn()) {
-                $query->where('category_id', $categoryId);
+                $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($categoryId));
             } else {
                 $query->whereRaw('1 = 0');
             }

@@ -108,12 +108,26 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('finance.*', function ($view): void {
-            $categories = Schema::hasTable('finance_categories')
-                ? FinanceCategory::query()
-                    ->active()
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'status'])
-                : collect();
+            $categories = collect();
+            if (Schema::hasTable('finance_categories')) {
+                $columns = ['id', 'name', 'status'];
+                foreach (['category_type', 'source_type', 'sort_order'] as $column) {
+                    if (Schema::hasColumn('finance_categories', $column)) {
+                        $columns[] = $column;
+                    }
+                }
+
+                $query = FinanceCategory::query()
+                    ->active();
+
+                if (Schema::hasColumn('finance_categories', 'sort_order')) {
+                    $query->orderBy('sort_order');
+                }
+
+                $query->orderBy('name');
+
+                $categories = $query->get($columns);
+            }
 
             $view->with('financeCategoryOptions', $categories);
         });

@@ -7,6 +7,7 @@ use App\Http\Requests\Finance\FinanceAccountStoreRequest;
 use App\Http\Requests\Finance\FinanceAccountUpdateRequest;
 use App\Models\FinanceAccount;
 use App\Models\FinanceAccountLog;
+use App\Services\Finance\FinanceCategoryScopeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -75,7 +76,7 @@ class FinanceAccountController extends Controller
         }
 
         if (!empty($selectedCategoryId)) {
-            $query->where('category_id', $selectedCategoryId);
+            $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId));
         }
 
         $accounts = $query
@@ -83,7 +84,7 @@ class FinanceAccountController extends Controller
             ->withQueryString();
 
         $accountCounts = FinanceAccount::query()
-            ->when(!empty($selectedCategoryId), fn ($countQuery) => $countQuery->where('category_id', $selectedCategoryId))
+            ->when(!empty($selectedCategoryId), fn ($countQuery) => $countQuery->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId)))
             ->selectRaw('class_no, COUNT(*) as total')
             ->groupBy('class_no')
             ->pluck('total', 'class_no');

@@ -9,6 +9,7 @@ use App\Http\Requests\Finance\CalculateDepreciationRequest;
 use App\Models\Asset\Asset;
 use App\Models\FinanceDepreciationCalculationLog;
 use App\Services\Finance\DepreciationService;
+use App\Services\Finance\FinanceCategoryScopeService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
@@ -210,7 +211,7 @@ class AssetDepreciationController extends Controller
                         'calculator:id,name',
                     ])
                     ->when($selectedCategoryId, function ($query) use ($selectedCategoryId): void {
-                        $query->where('category_id', $selectedCategoryId);
+                        $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId));
                     })
                     ->orderByDesc('calculated_at')
                     ->limit(50)

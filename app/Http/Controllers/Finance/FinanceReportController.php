@@ -12,11 +12,13 @@ use App\Http\Requests\Finance\GenerateProfitLossReportRequest;
 use App\Models\FinanceAccount;
 use App\Models\FinanceInvoice;
 use App\Services\Finance\FinancialStatementService;
+use App\Services\Finance\FinanceCategoryScopeService;
 use App\Services\Finance\ReportDocumentService;
 use App\Services\Finance\ReportService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
@@ -98,6 +100,8 @@ class FinanceReportController extends Controller
                 'filters' => [
                     'period_type' => $selectedPeriodType,
                     'report_date' => $filter->reportDate,
+                    'start_date' => $filter->startDate,
+                    'end_date' => $filter->endDate,
                     'month' => $filter->month,
                     'year' => $filter->year,
                     'comparison_type' => $filter->comparisonType,
@@ -160,6 +164,8 @@ class FinanceReportController extends Controller
         return StatementFilterDTO::fromArray([
             'period_type' => $filter->periodType ?? 'ALL',
             'report_date' => $filter->reportDate,
+            'start_date' => $filter->startDate,
+            'end_date' => $filter->endDate,
             'year' => $filter->year,
             'month' => $filter->month,
             'per_page' => $filter->perPage,
@@ -175,7 +181,7 @@ class FinanceReportController extends Controller
         $this->applySnapshotPeriodToInvoiceQuery($query, $filter);
 
         if (!empty($filter->categoryId) && Schema::hasColumn('finance_invoices', 'category_id')) {
-            $query->where('category_id', $filter->categoryId);
+            $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($filter->categoryId));
         } elseif (!empty($filter->categoryId)) {
             $query->whereRaw('1 = 0');
         }
@@ -200,6 +206,18 @@ class FinanceReportController extends Controller
 
     private function applySnapshotPeriodToInvoiceQuery(Builder $query, FinanceSnapshotFilterDTO $filter): Builder
     {
+        if (!empty($filter->startDate) || !empty($filter->endDate)) {
+            if (!empty($filter->startDate)) {
+                $query->whereDate('accounting_date', '>=', $filter->startDate);
+            }
+
+            if (!empty($filter->endDate)) {
+                $query->whereDate('accounting_date', '<=', $filter->endDate);
+            }
+
+            return $query;
+        }
+
         if (!empty($filter->reportDate)) {
             $query->whereDate('accounting_date', $filter->reportDate);
         }
@@ -217,6 +235,17 @@ class FinanceReportController extends Controller
 
     private function buildActualPeriodLabel(string $periodType, FinanceSnapshotFilterDTO $filter): string
     {
+        if (!empty($filter->startDate) || !empty($filter->endDate)) {
+            $startLabel = !empty($filter->startDate)
+                ? Carbon::parse((string) $filter->startDate)->format('d/m/Y')
+                : 'Awal';
+            $endLabel = !empty($filter->endDate)
+                ? Carbon::parse((string) $filter->endDate)->format('d/m/Y')
+                : 'Akhir';
+
+            return $startLabel . ' s.d. ' . $endLabel;
+        }
+
         return match ($periodType) {
             'ALL' => 'Semua periode',
             'DAILY' => !empty($filter->reportDate)
@@ -225,6 +254,57 @@ class FinanceReportController extends Controller
             'YEARLY' => (string) ($filter->year ?? now()->year),
             default => sprintf('%02d/%04d', (int) ($filter->month ?? now()->month), (int) ($filter->year ?? now()->year)),
         };
+    }
+
+    public function downloadSnapshots(FinanceReportIndexRequest $request)
+    {
+        try {
+            $validated = $this->normalizeSnapshotFilters($request->validated());
+            $format = strtolower((string) ($validated['format'] ?? 'pdf'));
+            if ($format === 'xlsx') {
+                $format = 'excel';
+            }
+
+            if (!in_array($format, ['pdf', 'excel'], true)) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Format download cuplikan tidak valid.');
+            }
+
+            $selectedPeriodType = strtoupper((string) ($validated['period_type'] ?? 'MONTHLY'));
+            $filter = FinanceSnapshotFilterDTO::fromArray($validated);
+            $statementFilter = $this->buildStatementFilter($filter);
+            $exportPayload = $this->reportService->getSnapshotExport($filter);
+            $actualSummary = $this->financialStatementService->getDashboardSummary($statementFilter);
+
+            $exported = $this->reportDocumentService->exportSnapshotCollection(
+                $exportPayload['reports'],
+                $exportPayload['totals'],
+                $actualSummary,
+                $exportPayload['comparisons'],
+                [
+                    'period_label' => $this->buildActualPeriodLabel($selectedPeriodType, $filter),
+                    'period_type' => $selectedPeriodType,
+                    'category_name' => $this->resolveFinanceCategoryName($filter->categoryId),
+                    'start_date' => $filter->startDate,
+                    'end_date' => $filter->endDate,
+                    'comparison_type' => $filter->comparisonType,
+                ],
+                $format
+            );
+
+            return response($exported['content'], 200, [
+                'Content-Type' => $exported['mime'],
+                'Content-Disposition' => 'attachment; filename="' . $exported['filename'] . '"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengunduh cuplikan laporan finance.');
+        }
     }
 
     public function store(GenerateProfitLossReportRequest $request)
@@ -423,5 +503,18 @@ class FinanceReportController extends Controller
             ->filter()
             ->unique()
             ->values();
+    }
+
+    private function resolveFinanceCategoryName(?string $categoryId): ?string
+    {
+        if (empty($categoryId) || !Schema::hasTable('finance_categories')) {
+            return null;
+        }
+
+        $name = DB::table('finance_categories')
+            ->where('id', $categoryId)
+            ->value('name');
+
+        return $name !== null ? (string) $name : null;
     }
 }

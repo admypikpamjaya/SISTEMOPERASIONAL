@@ -8,6 +8,10 @@
     $year = $filters['year'] ?? null;
     $selectedCategoryId = $filters['category_id'] ?? null;
     $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $selectedCategory = $selectedCategoryId ? $financeCategoryOptions->firstWhere('id', $selectedCategoryId) : null;
+    $selectedCategoryLabel = $selectedCategory
+        ? ($selectedCategory->name . (($selectedCategory->category_type ?? 'single') === 'group' ? ' (Gabungan)' : ''))
+        : 'Semua kategori';
     $perPage = (int) ($filters['per_page'] ?? 10);
     $featureAccess = $featureAccess ?? [];
     $dashboardSummary = $dashboardSummary ?? [];
@@ -225,7 +229,7 @@
                                     <option value="">Semua kategori</option>
                                     @foreach($financeCategoryOptions as $category)
                                         <option value="{{ $category->id }}" {{ (string) $selectedCategoryId === (string) $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }}
+                                            {{ $category->name }}{{ ($category->category_type ?? 'single') === 'group' ? ' (Gabungan)' : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -265,7 +269,7 @@
         </div>
         <div class="col-lg-4">
             <div class="fd-hero">
-                <small><i class="fas fa-file-invoice-dollar"></i> {{ __('app.finance.total_posted_invoice_amount') }}</small>
+                <small><i class="fas fa-file-invoice-dollar"></i> {{ __('app.finance.total_posted_invoice_amount') }} | {{ $selectedCategoryLabel }}</small>
                 <strong>Rp {{ number_format((float) data_get($journalOverview, 'total_posted_nominal', 0), 2, ',', '.') }}</strong>
                 <p>
                     {{ __('app.finance.posted_invoice_summary', [

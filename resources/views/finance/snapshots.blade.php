@@ -125,6 +125,24 @@
         text-decoration: none; transition: all 0.2s;
     }
     .btn-reset:hover { border-color: var(--blue-light); color: var(--text-primary); text-decoration: none; }
+    .btn-sfr-download {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        color: white; font-size: 0.82rem; font-weight: 800;
+        padding: 0.52rem 0.95rem; border-radius: var(--radius-sm);
+        text-decoration: none; transition: all 0.2s;
+        border: none; white-space: nowrap;
+    }
+    .btn-sfr-download.excel {
+        background: linear-gradient(135deg, var(--accent-green), #059669);
+        box-shadow: 0 3px 10px rgba(16,185,129,0.26);
+    }
+    .btn-sfr-download.pdf {
+        background: linear-gradient(135deg, var(--accent-red), #dc2626);
+        box-shadow: 0 3px 10px rgba(239,68,68,0.22);
+    }
+    .btn-sfr-download:hover {
+        color: white; text-decoration: none; transform: translateY(-1px);
+    }
 
     /* ── Summary Cards ────────────────────────── */
     .sfr-summary-grid {
@@ -522,6 +540,8 @@
 @php
     $periodType = strtoupper((string) ($filters['period_type'] ?? 'MONTHLY'));
     $reportDate = (string) ($filters['report_date'] ?? now()->toDateString());
+    $startDate = (string) ($filters['start_date'] ?? '');
+    $endDate = (string) ($filters['end_date'] ?? '');
     $month = (int) ($filters['month'] ?? now()->month);
     $year = (int) ($filters['year'] ?? now()->year);
     $comparisonType = strtoupper((string) ($filters['comparison_type'] ?? 'NONE'));
@@ -541,9 +561,23 @@
     $statementRouteParams = array_filter([
         'period_type' => $periodType,
         'report_date' => $statementReportDate,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
         'month' => $statementMonth,
         'year' => $statementYear,
         'category_id' => $selectedCategoryId,
+    ], static fn ($value) => $value !== null && $value !== '');
+    $snapshotDownloadQuery = array_filter([
+        'period_type' => $periodType,
+        'report_date' => $periodType === 'DAILY' ? $reportDate : null,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'month' => $periodType === 'MONTHLY' ? $month : null,
+        'year' => in_array($periodType, ['MONTHLY', 'YEARLY'], true) ? $year : null,
+        'category_id' => $selectedCategoryId,
+        'comparison_type' => $comparisonType,
+        'comparison_offset' => $comparisonType === 'PREVIOUS_PERIOD' ? $comparisonOffset : null,
+        'comparison_date' => $comparisonType === 'SPECIFIC_DATE' ? $comparisonDate : null,
     ], static fn ($value) => $value !== null && $value !== '');
     $actualJournalOverview = data_get($actualSummary ?? [], 'journal_overview', []);
     $actualBalanceSummary = data_get($actualSummary ?? [], 'balance_sheet.summary', []);
@@ -588,6 +622,12 @@
                 <i class="fas fa-book-open"></i> {{ __('app.finance.general_ledger') }}
             </a>
         @endpermission
+        <a href="{{ route('finance.report.snapshots.download', array_merge($snapshotDownloadQuery, ['format' => 'excel'])) }}" class="btn-sfr-download excel">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{{ route('finance.report.snapshots.download', array_merge($snapshotDownloadQuery, ['format' => 'pdf'])) }}" class="btn-sfr-download pdf">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
     </div>
 </div>
 
@@ -615,6 +655,16 @@
                 <div class="col-md-3 sfr-form-group" id="report_date_group">
                     <label class="sfr-label"><i class="fas fa-calendar-day"></i> {{ __('app.finance.as_of_date') }}</label>
                     <input type="date" name="report_date" id="report_date" class="sfr-control" value="{{ $reportDate }}">
+                </div>
+
+                <div class="col-md-3 sfr-form-group" id="start_date_group">
+                    <label class="sfr-label"><i class="fas fa-calendar-minus"></i> Dari Tanggal</label>
+                    <input type="date" name="start_date" id="start_date" class="sfr-control" value="{{ $startDate }}">
+                </div>
+
+                <div class="col-md-3 sfr-form-group" id="end_date_group">
+                    <label class="sfr-label"><i class="fas fa-calendar-plus"></i> Sampai Tanggal</label>
+                    <input type="date" name="end_date" id="end_date" class="sfr-control" value="{{ $endDate }}">
                 </div>
 
                 <div class="col-md-2 sfr-form-group" id="month_group">
@@ -993,6 +1043,8 @@
         const periodTypeSelect      = document.getElementById('period_type');
         const reportDateGroup       = document.getElementById('report_date_group');
         const reportDateInput       = document.getElementById('report_date');
+        const startDateInput        = document.getElementById('start_date');
+        const endDateInput          = document.getElementById('end_date');
         const monthGroup            = document.getElementById('month_group');
         const monthInput            = document.getElementById('month');
         const yearGroup             = document.getElementById('year_group');
@@ -1005,7 +1057,6 @@
 
         function syncPeriodFilter() {
             const periodType = periodTypeSelect.value;
-            const isAll     = periodType === 'ALL';
             const isDaily   = periodType === 'DAILY';
             const isMonthly = periodType === 'MONTHLY';
             const isYearly  = periodType === 'YEARLY';
@@ -1020,9 +1071,6 @@
             monthInput.required      = isMonthly;
             yearInput.disabled       = !(isMonthly || isYearly);
             yearInput.required       = (isMonthly || isYearly);
-
-            if (isAll) { comparisonTypeSelect.value = 'NONE'; }
-            comparisonTypeSelect.disabled = isAll;
         }
 
         function syncComparisonFilter() {
@@ -1041,9 +1089,16 @@
 
         periodTypeSelect.addEventListener('change', syncPeriodFilter);
         comparisonTypeSelect.addEventListener('change', syncComparisonFilter);
+        startDateInput.addEventListener('change', function () {
+            endDateInput.min = startDateInput.value || '';
+            if (startDateInput.value && endDateInput.value && endDateInput.value < startDateInput.value) {
+                endDateInput.value = startDateInput.value;
+            }
+        });
 
         syncPeriodFilter();
         syncComparisonFilter();
+        endDateInput.min = startDateInput.value || '';
     })();
 </script>
 @endsection

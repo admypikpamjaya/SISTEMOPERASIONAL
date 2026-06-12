@@ -7,6 +7,8 @@ class FinanceSnapshotFilterDTO
     public function __construct(
         public ?string $periodType = null,
         public ?string $reportDate = null,
+        public ?string $startDate = null,
+        public ?string $endDate = null,
         public ?int $year = null,
         public ?int $month = null,
         public ?string $categoryId = null,
@@ -27,6 +29,8 @@ class FinanceSnapshotFilterDTO
         return new self(
             periodType: $periodType,
             reportDate: isset($data['report_date']) ? (string) $data['report_date'] : null,
+            startDate: isset($data['start_date']) ? (string) $data['start_date'] : null,
+            endDate: isset($data['end_date']) ? (string) $data['end_date'] : null,
             year: isset($data['year']) ? (int) $data['year'] : null,
             month: isset($data['month']) ? (int) $data['month'] : null,
             categoryId: isset($data['category_id']) && trim((string) $data['category_id']) !== ''

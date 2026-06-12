@@ -5,6 +5,7 @@
     $summary = $report['summary'] ?? ['account_count' => 0, 'entry_count' => 0, 'total_debit' => 0, 'total_credit' => 0, 'balance_gap' => 0];
     $groups = $report['groups'] ?? [];
     $accounts = $report['accounts'] ?? null;
+    $accountOptions = collect($accountOptions ?? []);
     $baseFilterQuery = $baseFilterQuery ?? ($filterQuery ?? []);
     $selectedAccountCode = $selectedAccountCode ?? null;
     $isManageMode = $isManageMode ?? false;
@@ -28,8 +29,9 @@
             ?? data_get($filters, 'category_id')
             ?? data_get($selectedBatchMeta, 'category_id')
     );
-    $selectedAccountName = $selectedAccountCode !== null && !empty($groups)
-        ? ($groups[0]['account_name'] ?? null)
+    $selectedAccountName = $selectedAccountCode !== null
+        ? (data_get(collect($groups)->firstWhere('account_code', $selectedAccountCode), 'account_name')
+            ?? data_get($accountOptions->firstWhere('account_code', $selectedAccountCode), 'account_name'))
         : null;
     $sourceQueryBase = collect($filterQuery ?? [])
         ->except(['ledger_source', 'ledger_batch_id', 'page'])
@@ -1029,6 +1031,8 @@
     'action' => route($pageRouteName),
     'filters' => $filters,
     'showPerPage' => true,
+    'showAccountFilter' => true,
+    'accountOptions' => $accountOptions,
 ])
 
 @if($isManageMode && $isImportedSource)
