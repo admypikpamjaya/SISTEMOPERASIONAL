@@ -164,6 +164,74 @@
         justify-content: center; font-size: 0.7rem; color: var(--blue-primary);
     }
 
+    .inv-export-bar {
+        display: flex; align-items: center; justify-content: space-between; gap: 0.85rem;
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1px solid var(--border-light);
+        background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06));
+        flex-wrap: wrap;
+    }
+    .inv-export-left,
+    .inv-export-right {
+        display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+    }
+    .inv-export-check {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        color: var(--text-secondary); font-size: 0.78rem; font-weight: 700;
+        margin: 0; user-select: none;
+    }
+    .inv-export-check input,
+    .inv-select-card input {
+        width: 16px; height: 16px; margin: 0; accent-color: var(--blue-primary);
+    }
+    .inv-selected-chip {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        min-height: 34px; padding: 0.42rem 0.7rem; border-radius: 999px;
+        background: rgba(37,99,235,0.10); color: var(--blue-primary);
+        font-size: 0.75rem; font-weight: 800;
+    }
+    .inv-export-control {
+        min-height: 36px; border: 1.5px solid var(--border-table); border-radius: 9px;
+        background: white; color: var(--text-primary);
+        font-size: 0.78rem; font-weight: 700; padding: 0.4rem 0.65rem;
+    }
+    .inv-export-control.is-small { width: 74px; }
+    .btn-inv-random,
+    .btn-inv-export {
+        min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 0.38rem;
+        border-radius: 9px; font-size: 0.78rem; font-weight: 800;
+        padding: 0.42rem 0.8rem; border: 1px solid transparent;
+        font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .btn-inv-random {
+        color: var(--text-secondary); background: white; border-color: var(--border-table);
+    }
+    .btn-inv-random:hover { color: var(--blue-primary); border-color: rgba(37,99,235,0.28); }
+    .btn-inv-export.excel {
+        color: white; background: linear-gradient(135deg, #10b981, #059669);
+        box-shadow: 0 3px 10px rgba(16,185,129,0.28);
+    }
+    .btn-inv-export.pdf {
+        color: white; background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 3px 10px rgba(239,68,68,0.25);
+    }
+    .btn-inv-export:hover,
+    .btn-inv-random:hover { transform: translateY(-1px); }
+
+    .inv-item-title-wrap {
+        display: flex; align-items: flex-start; gap: 0.55rem; min-width: 0; flex: 1;
+    }
+    .inv-select-card {
+        width: 24px; height: 24px; flex: 0 0 24px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 8px; background: white; border: 1px solid var(--border-table);
+        margin-top: 0.05rem; cursor: pointer;
+    }
+    .inv-select-card.is-disabled {
+        opacity: 0.45; cursor: not-allowed; background: #eef2f7;
+    }
+
     .inv-grid-wrap { padding: 1rem 1.25rem 1.25rem; }
     .inv-grid {
         display: grid; gap: 1rem;
@@ -378,6 +446,7 @@
 
     body.dark-mode .inv-filter-header,
     body.dark-mode .inv-table-header,
+    body.dark-mode .inv-export-bar,
     body.dark-mode .inv-table-footer {
         background: var(--app-surface-soft) !important;
         border-color: var(--app-border) !important;
@@ -390,6 +459,7 @@
 
     body.dark-mode .inv-item-card,
     body.dark-mode .inv-item-amount,
+    body.dark-mode .inv-select-card,
     body.dark-mode .inv-empty-state,
     body.dark-mode .inv-item-menu {
         background: var(--app-surface-soft) !important;
@@ -402,6 +472,8 @@
     body.dark-mode .inv-table-title,
     body.dark-mode .inv-item-title,
     body.dark-mode .cell-journal,
+    body.dark-mode .inv-export-check,
+    body.dark-mode .inv-export-control,
     body.dark-mode .creator-name {
         color: var(--app-text) !important;
     }
@@ -419,6 +491,13 @@
 
     body.dark-mode .inv-control {
         background: var(--app-surface-soft) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode .inv-export-control,
+    body.dark-mode .btn-inv-random {
+        background: var(--app-surface) !important;
         border-color: var(--app-border) !important;
         color: var(--app-text) !important;
     }
@@ -610,6 +689,36 @@
         </span>
     </div>
 
+    <div class="inv-export-bar">
+        <div class="inv-export-left">
+            <label class="inv-export-check">
+                <input type="checkbox" id="inv-select-all">
+                <span>Pilih posted tampil</span>
+            </label>
+            <span class="inv-selected-chip">
+                <i class="fas fa-check-double"></i>
+                <span id="inv-selected-count">0 dipilih</span>
+            </span>
+            <input type="number" id="inv-random-count" class="inv-export-control is-small" min="1" max="100" value="5" aria-label="Jumlah pilihan acak">
+            <button type="button" class="btn-inv-random" id="inv-random-select">
+                <i class="fas fa-random"></i> Pilih Acak
+            </button>
+        </div>
+        <div class="inv-export-right">
+            <select class="inv-export-control" id="inv-export-scope" aria-label="Mode download faktur posted">
+                <option value="filter">Sesuai Filter</option>
+                <option value="all">Semua Posted</option>
+                <option value="selected">Pilihan Dicentang</option>
+            </select>
+            <button type="button" class="btn-inv-export excel" data-format="excel">
+                <i class="fas fa-file-excel"></i> Excel
+            </button>
+            <button type="button" class="btn-inv-export pdf" data-format="pdf">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+        </div>
+    </div>
+
     <div class="inv-grid-wrap">
         <div class="inv-grid">
             @forelse($invoices as $invoice)
@@ -632,13 +741,27 @@
                     };
                     $creatorName = $invoice->creator?->name ?? '-';
                     $creatorInitial = strtoupper(substr($creatorName, 0, 1));
+                    $invoiceCategoryName = $invoice->relationLoaded('category')
+                        ? ($invoice->category?->name ?? 'Tanpa kategori')
+                        : 'Tanpa kategori';
                 @endphp
 
                 <div class="inv-item-card">
                     <div class="inv-item-top">
-                        <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="inv-item-title">
-                            {{ $invoice->journal_name ?: $invoice->invoice_no }}
-                        </a>
+                        <div class="inv-item-title-wrap">
+                            @if($status === 'POSTED')
+                                <label class="inv-select-card" title="Pilih faktur posted">
+                                    <input type="checkbox" class="inv-posted-checkbox" value="{{ $invoice->id }}">
+                                </label>
+                            @else
+                                <span class="inv-select-card is-disabled" title="Hanya faktur posted yang bisa didownload">
+                                    <input type="checkbox" disabled>
+                                </span>
+                            @endif
+                            <a href="{{ route('finance.invoice.show', $invoice->id) }}" class="inv-item-title">
+                                {{ $invoice->journal_name ?: $invoice->invoice_no }}
+                            </a>
+                        </div>
                         <div class="dropdown">
                             <button type="button" class="inv-item-menu-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-ellipsis-v"></i>
@@ -691,7 +814,7 @@
                         </span>
                         <span class="badge-type" style="background:rgba(37,99,235,.10);color:var(--blue-primary);">
                             <i class="fas fa-tags" style="font-size:.55rem;"></i>
-                            {{ $invoice->category?->name ?? 'Tanpa kategori' }}
+                            {{ $invoiceCategoryName }}
                         </span>
                     </div>
 
@@ -730,4 +853,126 @@
         </div>
     @endif
 </div>
+
+<form method="GET" action="{{ route('finance.invoice.download-posted') }}" id="inv-export-form" style="display:none;">
+    <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
+    <input type="hidden" name="status" value="{{ $filters['status'] ?? 'ALL' }}">
+    <input type="hidden" name="entry_type" value="{{ $filters['entry_type'] ?? 'ALL' }}">
+    <input type="hidden" name="category_id" value="{{ $selectedCategoryId ?? '' }}">
+    <input type="hidden" name="accounting_date" value="{{ $filters['accounting_date'] ?? '' }}">
+    <input type="hidden" name="month" value="{{ $filters['month'] ?? '' }}">
+    <input type="hidden" name="year" value="{{ $filters['year'] ?? '' }}">
+    <input type="hidden" name="journal_name" value="{{ $filters['journal_name'] ?? '' }}">
+    <input type="hidden" name="format" id="inv-export-format" value="pdf">
+    <input type="hidden" name="export_scope" id="inv-export-scope-field" value="filter">
+    <div id="inv-selected-fields"></div>
+</form>
+@endsection
+
+@section('js')
+<script>
+    (function () {
+        const checkboxes = Array.from(document.querySelectorAll('.inv-posted-checkbox'));
+        const selectAll = document.getElementById('inv-select-all');
+        const selectedCount = document.getElementById('inv-selected-count');
+        const randomCount = document.getElementById('inv-random-count');
+        const randomButton = document.getElementById('inv-random-select');
+        const exportScope = document.getElementById('inv-export-scope');
+        const exportForm = document.getElementById('inv-export-form');
+        const exportFormat = document.getElementById('inv-export-format');
+        const exportScopeField = document.getElementById('inv-export-scope-field');
+        const selectedFields = document.getElementById('inv-selected-fields');
+
+        function selectedIds() {
+            return checkboxes
+                .filter((checkbox) => checkbox.checked)
+                .map((checkbox) => checkbox.value);
+        }
+
+        function syncSelectionState() {
+            const ids = selectedIds();
+            selectedCount.textContent = ids.length + ' dipilih';
+
+            if (!selectAll) {
+                return;
+            }
+
+            selectAll.checked = checkboxes.length > 0 && ids.length === checkboxes.length;
+            selectAll.indeterminate = ids.length > 0 && ids.length < checkboxes.length;
+            selectAll.disabled = checkboxes.length === 0;
+        }
+
+        function rebuildSelectedFields(ids) {
+            selectedFields.innerHTML = '';
+            ids.forEach((id) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_ids[]';
+                input.value = id;
+                selectedFields.appendChild(input);
+            });
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = selectAll.checked;
+                });
+                syncSelectionState();
+            });
+        }
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', syncSelectionState);
+        });
+
+        if (randomButton) {
+            randomButton.addEventListener('click', function () {
+                if (checkboxes.length === 0) {
+                    alert('Tidak ada faktur posted yang tampil untuk dipilih.');
+                    return;
+                }
+
+                const limit = Math.max(1, Math.min(
+                    Number.parseInt(randomCount.value || '1', 10),
+                    checkboxes.length
+                ));
+
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = false;
+                });
+
+                checkboxes
+                    .map((checkbox) => ({ checkbox, sort: Math.random() }))
+                    .sort((left, right) => left.sort - right.sort)
+                    .slice(0, limit)
+                    .forEach((item) => {
+                        item.checkbox.checked = true;
+                    });
+
+                exportScope.value = 'selected';
+                syncSelectionState();
+            });
+        }
+
+        document.querySelectorAll('.btn-inv-export').forEach((button) => {
+            button.addEventListener('click', function () {
+                const scope = exportScope.value || 'filter';
+                const ids = selectedIds();
+
+                if (scope === 'selected' && ids.length === 0) {
+                    alert('Pilih minimal satu faktur posted terlebih dahulu.');
+                    return;
+                }
+
+                exportFormat.value = button.dataset.format || 'pdf';
+                exportScopeField.value = scope;
+                rebuildSelectedFields(scope === 'selected' ? ids : []);
+                exportForm.submit();
+            });
+        });
+
+        syncSelectionState();
+    })();
+</script>
 @endsection

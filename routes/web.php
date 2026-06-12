@@ -425,6 +425,10 @@ Route::prefix('finance')
                     ->middleware('check_access:finance_invoice.update')
                     ->name('publish-all-draft');
 
+                Route::get('/download-posted', [FinanceInvoiceController::class, 'downloadPosted'])
+                    ->middleware('check_access:finance_invoice.read')
+                    ->name('download-posted');
+
                 Route::get('/{invoice}/download', [FinanceInvoiceController::class, 'download'])
                     ->middleware('check_access:finance_invoice.read')
                     ->name('download');

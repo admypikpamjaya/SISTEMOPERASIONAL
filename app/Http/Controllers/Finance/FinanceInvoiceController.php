@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class FinanceInvoiceController extends Controller
@@ -23,20 +24,10 @@ class FinanceInvoiceController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->validate([
-            'q' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:ALL,DRAFT,POSTED,CANCELLED',
-            'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
-            'category_id' => 'nullable|uuid|exists:finance_categories,id',
-            'accounting_date' => 'nullable|date_format:Y-m-d',
-            'month' => 'nullable|integer|between:1,12',
-            'year' => 'nullable|integer|digits:4|between:1900,2100',
-            'journal_name' => 'nullable|string|max:255',
-            'per_page' => 'nullable|integer|min:5|max:100',
-        ]);
+        $filters = $this->validateInvoiceFilters($request);
 
         $query = FinanceInvoice::query()
-            ->with(['creator:id,name', 'category:id,name,status'])
+            ->with($this->invoiceRelations())
             ->orderByDesc('accounting_date')
             ->orderByDesc('created_at');
 
@@ -182,14 +173,7 @@ class FinanceInvoiceController extends Controller
                 $format = 'excel';
             }
 
-            $invoice->loadMissing([
-                'items',
-                'notes.user:id,name,role',
-                'category:id,name,status',
-                'creator:id,name',
-                'poster:id,name',
-                'updater:id,name',
-            ]);
+            $invoice->loadMissing($this->invoiceRelations(withItems: true, withNotes: true, withUpdater: true));
 
             $exported = $this->invoiceDocumentService->exportInvoice($invoice, $format);
 
@@ -204,6 +188,69 @@ class FinanceInvoiceController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'Gagal mengunduh dokumen faktur.');
+        }
+    }
+
+    public function downloadPosted(Request $request)
+    {
+        try {
+            $validated = $this->validateInvoiceExport($request);
+            $format = strtolower((string) ($validated['format'] ?? 'pdf'));
+            if ($format === 'xlsx') {
+                $format = 'excel';
+            }
+
+            $scope = strtolower((string) ($validated['export_scope'] ?? 'filter'));
+            $query = FinanceInvoice::query()
+                ->with($this->invoiceRelations(withItems: true))
+                ->where('status', 'POSTED');
+
+            if ($scope === 'selected') {
+                $selectedIds = collect($validated['selected_ids'] ?? [])
+                    ->map(static fn ($id): string => trim((string) $id))
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                if ($selectedIds->isEmpty()) {
+                    return redirect()
+                        ->back()
+                        ->with('error', 'Pilih minimal satu faktur posted untuk download custom.');
+                }
+
+                $query->whereIn('id', $selectedIds->all());
+            } elseif ($scope === 'filter') {
+                $this->applyInvoiceFilters($query, $validated, 'POSTED');
+            }
+
+            $invoices = $query
+                ->orderByDesc('accounting_date')
+                ->orderByDesc('posted_at')
+                ->orderByDesc('created_at')
+                ->get();
+
+            if ($invoices->isEmpty()) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Tidak ada faktur posted yang sesuai untuk didownload.');
+            }
+
+            $exported = $this->invoiceDocumentService->exportInvoiceCollection($invoices, $format, [
+                'scope' => $scope,
+                'filters' => $validated,
+            ]);
+
+            return response($exported['content'], 200, [
+                'Content-Type' => $exported['mime'],
+                'Content-Disposition' => 'attachment; filename="' . $exported['filename'] . '"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal mengunduh daftar faktur posted.');
         }
     }
 
@@ -325,15 +372,7 @@ class FinanceInvoiceController extends Controller
 
     public function publishAllDraft(Request $request)
     {
-        $filters = $request->validate([
-            'q' => 'nullable|string|max:255',
-            'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
-            'accounting_date' => 'nullable|date_format:Y-m-d',
-            'month' => 'nullable|integer|between:1,12',
-            'year' => 'nullable|integer|digits:4|between:1900,2100',
-            'journal_name' => 'nullable|string|max:255',
-            'category_id' => 'nullable|uuid|exists:finance_categories,id',
-        ]);
+        $filters = $this->validateInvoiceFilters($request, includeStatus: false, includePagination: false);
 
         $draftInvoices = FinanceInvoice::query()
             ->with(['items:id,invoice_id,debit,credit'])
@@ -446,7 +485,11 @@ class FinanceInvoiceController extends Controller
 
         $categoryId = trim((string) ($filters['category_id'] ?? ''));
         if ($categoryId !== '') {
-            $query->where('category_id', $categoryId);
+            if ($this->hasInvoiceCategoryColumn()) {
+                $query->where('category_id', $categoryId);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         $accountingDate = $filters['accounting_date'] ?? null;
@@ -470,6 +513,113 @@ class FinanceInvoiceController extends Controller
         }
 
         return $query;
+    }
+
+    private function validateInvoiceFilters(
+        Request $request,
+        bool $includeStatus = true,
+        bool $includePagination = true
+    ): array {
+        $rules = [
+            'q' => 'nullable|string|max:255',
+            'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
+            'category_id' => $this->categoryFilterRules(),
+            'accounting_date' => 'nullable|date_format:Y-m-d',
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|digits:4|between:1900,2100',
+            'journal_name' => 'nullable|string|max:255',
+        ];
+
+        if ($includeStatus) {
+            $rules['status'] = 'nullable|string|in:ALL,DRAFT,POSTED,CANCELLED';
+        }
+
+        if ($includePagination) {
+            $rules['per_page'] = 'nullable|integer|min:5|max:100';
+        }
+
+        return $request->validate($rules);
+    }
+
+    private function validateInvoiceExport(Request $request): array
+    {
+        return $request->validate(array_merge($this->baseInvoiceFilterRules(), [
+            'format' => 'nullable|string|in:pdf,excel,xlsx',
+            'export_scope' => 'nullable|string|in:all,filter,selected',
+            'selected_ids' => 'nullable|array',
+            'selected_ids.*' => 'uuid',
+        ]));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function baseInvoiceFilterRules(): array
+    {
+        return [
+            'q' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:ALL,DRAFT,POSTED,CANCELLED',
+            'entry_type' => 'nullable|string|in:ALL,INCOME,EXPENSE',
+            'category_id' => $this->categoryFilterRules(),
+            'accounting_date' => 'nullable|date_format:Y-m-d',
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|digits:4|between:1900,2100',
+            'journal_name' => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function categoryFilterRules(): array
+    {
+        $rules = ['nullable', 'uuid'];
+
+        if ($this->hasFinanceCategoryTable()) {
+            $rules[] = 'exists:finance_categories,id';
+        }
+
+        return $rules;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function invoiceRelations(
+        bool $withItems = false,
+        bool $withNotes = false,
+        bool $withUpdater = false
+    ): array {
+        $relations = ['creator:id,name', 'poster:id,name'];
+
+        if ($withUpdater) {
+            $relations[] = 'updater:id,name';
+        }
+
+        if ($withItems) {
+            $relations[] = 'items';
+        }
+
+        if ($withNotes) {
+            $relations[] = 'notes.user:id,name,role';
+        }
+
+        if ($this->hasInvoiceCategoryColumn() && $this->hasFinanceCategoryTable()) {
+            $relations[] = 'category:id,name,status';
+        }
+
+        return $relations;
+    }
+
+    private function hasInvoiceCategoryColumn(): bool
+    {
+        return Schema::hasTable('finance_invoices')
+            && Schema::hasColumn('finance_invoices', 'category_id');
+    }
+
+    private function hasFinanceCategoryTable(): bool
+    {
+        return Schema::hasTable('finance_categories');
     }
 
     /**

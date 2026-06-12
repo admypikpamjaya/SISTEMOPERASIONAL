@@ -40,6 +40,315 @@ class FinanceInvoiceDocumentService
         throw new InvalidArgumentException('Format dokumen faktur tidak didukung.');
     }
 
+    /**
+     * @param iterable<int, FinanceInvoice> $invoices
+     * @param array<string, mixed> $meta
+     * @return array{content:string, filename:string, mime:string}
+     */
+    public function exportInvoiceCollection(iterable $invoices, string $format, array $meta = []): array
+    {
+        $invoiceCollection = collect($invoices)->values();
+        $normalizedFormat = strtolower($format);
+
+        if (in_array($normalizedFormat, ['excel', 'xlsx'], true)) {
+            return [
+                'content' => $this->renderInvoiceCollectionExcel($invoiceCollection, $meta),
+                'filename' => $this->buildCollectionFilename($meta, 'xlsx'),
+                'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ];
+        }
+
+        if ($normalizedFormat === 'pdf') {
+            return [
+                'content' => $this->renderInvoiceCollectionPdf($invoiceCollection, $meta),
+                'filename' => $this->buildCollectionFilename($meta, 'pdf'),
+                'mime' => 'application/pdf',
+            ];
+        }
+
+        throw new InvalidArgumentException('Format dokumen faktur tidak didukung.');
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<int, FinanceInvoice> $invoices
+     * @param array<string, mixed> $meta
+     */
+    private function renderInvoiceCollectionExcel($invoices, array $meta): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Daftar Faktur Posted');
+
+        foreach ([
+            'A' => 7,
+            'B' => 22,
+            'C' => 15,
+            'D' => 18,
+            'E' => 18,
+            'F' => 30,
+            'G' => 24,
+            'H' => 18,
+            'I' => 18,
+            'J' => 14,
+            'K' => 22,
+            'L' => 22,
+            'M' => 22,
+        ] as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
+        }
+
+        $this->applySpreadsheetBrandHeader(
+            $sheet,
+            'M',
+            'DAFTAR FAKTUR POSTED',
+            $this->buildCollectionSubtitle($invoices->count(), $meta)
+        );
+
+        $sheet->setCellValue('A6', 'Mode Download');
+        $sheet->setCellValue('B6', $this->resolveCollectionScopeLabel($meta));
+        $sheet->setCellValue('D6', 'Jumlah Faktur');
+        $sheet->setCellValue('E6', $invoices->count());
+        $sheet->setCellValue('G6', 'Total Debit');
+        $sheet->setCellValue('H6', (float) $invoices->sum(fn (FinanceInvoice $invoice): float => (float) $invoice->total_debit));
+        $sheet->setCellValue('J6', 'Total Kredit');
+        $sheet->setCellValue('K6', (float) $invoices->sum(fn (FinanceInvoice $invoice): float => (float) $invoice->total_credit));
+        $sheet->getStyle('A6:K6')->getFont()->setBold(true);
+        $sheet->getStyle('H6:K6')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
+
+        $headerRow = 8;
+        $sheet->fromArray([
+            'No',
+            'No. Faktur',
+            'Tanggal',
+            'Kategori',
+            'Jenis',
+            'Jurnal',
+            'Referensi',
+            'Total Debit',
+            'Total Kredit',
+            'Status',
+            'Dibuat Oleh',
+            'Direkam Oleh',
+            'Direkam Pada',
+        ], null, 'A' . $headerRow);
+
+        $sheet->getStyle('A' . $headerRow . ':M' . $headerRow)->applyFromArray($this->tableHeaderStyle());
+
+        $row = $headerRow + 1;
+        foreach ($invoices as $index => $invoice) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, (string) $invoice->invoice_no);
+            $sheet->setCellValue('C' . $row, optional($invoice->accounting_date)->format('d/m/Y') ?? '-');
+            $sheet->setCellValue('D' . $row, $this->resolveInvoiceCategoryName($invoice));
+            $sheet->setCellValue('E' . $row, $this->resolveEntryTypeLabel((string) $invoice->entry_type));
+            $sheet->setCellValue('F' . $row, (string) $invoice->journal_name);
+            $sheet->setCellValue('G' . $row, (string) ($invoice->reference ?? '-'));
+            $sheet->setCellValue('H' . $row, (float) $invoice->total_debit);
+            $sheet->setCellValue('I' . $row, (float) $invoice->total_credit);
+            $sheet->setCellValue('J' . $row, (string) $invoice->status);
+            $sheet->setCellValue('K' . $row, (string) ($invoice->creator?->name ?? '-'));
+            $sheet->setCellValue('L' . $row, (string) ($invoice->poster?->name ?? '-'));
+            $sheet->setCellValue('M' . $row, $invoice->posted_at?->format('d/m/Y H:i:s') ?? '-');
+            $row++;
+        }
+
+        if ($invoices->isEmpty()) {
+            $sheet->mergeCells('A' . $row . ':M' . $row);
+            $sheet->setCellValue('A' . $row, 'Tidak ada faktur posted untuk mode download ini.');
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $row++;
+        }
+
+        $totalRow = $row;
+        $sheet->mergeCells('A' . $totalRow . ':G' . $totalRow);
+        $sheet->setCellValue('A' . $totalRow, 'TOTAL');
+        $sheet->setCellValue('H' . $totalRow, (float) $invoices->sum(fn (FinanceInvoice $invoice): float => (float) $invoice->total_debit));
+        $sheet->setCellValue('I' . $totalRow, (float) $invoices->sum(fn (FinanceInvoice $invoice): float => (float) $invoice->total_credit));
+        $sheet->getStyle('A' . $totalRow . ':M' . $totalRow)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'EAF2FF'],
+            ],
+        ]);
+        $sheet->getStyle('A' . $totalRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('H' . ($headerRow + 1) . ':I' . $totalRow)
+            ->getNumberFormat()
+            ->setFormatCode('[$Rp-421] #,##0.00');
+        $sheet->getStyle('H' . ($headerRow + 1) . ':I' . $totalRow)
+            ->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getStyle('A' . $headerRow . ':M' . $totalRow)->applyFromArray($this->thinBorderStyle());
+        $sheet->freezePane('A9');
+        $sheet->setAutoFilter('A' . $headerRow . ':M' . max($headerRow, $totalRow - 1));
+
+        $detailSheet = $spreadsheet->createSheet();
+        $detailSheet->setTitle('Detail Item Jurnal');
+        foreach ([
+            'A' => 7,
+            'B' => 22,
+            'C' => 7,
+            'D' => 18,
+            'E' => 15,
+            'F' => 18,
+            'G' => 34,
+            'H' => 26,
+            'I' => 18,
+            'J' => 18,
+        ] as $column => $width) {
+            $detailSheet->getColumnDimension($column)->setWidth($width);
+        }
+
+        $this->applySpreadsheetBrandHeader(
+            $detailSheet,
+            'J',
+            'DETAIL ITEM JURNAL FAKTUR POSTED',
+            $this->buildCollectionSubtitle($invoices->count(), $meta),
+            false
+        );
+
+        $detailHeaderRow = 6;
+        $detailSheet->fromArray([
+            'No',
+            'No. Faktur',
+            'Item',
+            'Asset Category',
+            'Akun',
+            'Rekanan',
+            'Label',
+            'Analisa Distribusi',
+            'Debit',
+            'Kredit',
+        ], null, 'A' . $detailHeaderRow);
+        $detailSheet->getStyle('A' . $detailHeaderRow . ':J' . $detailHeaderRow)->applyFromArray($this->tableHeaderStyle());
+
+        $detailRow = $detailHeaderRow + 1;
+        $detailNo = 1;
+        foreach ($invoices as $invoice) {
+            if ($invoice->items->isEmpty()) {
+                $detailSheet->setCellValue('A' . $detailRow, $detailNo++);
+                $detailSheet->setCellValue('B' . $detailRow, (string) $invoice->invoice_no);
+                $detailSheet->setCellValue('C' . $detailRow, '-');
+                $detailSheet->setCellValue('G' . $detailRow, 'Belum ada item jurnal.');
+                $detailRow++;
+                continue;
+            }
+
+            foreach ($invoice->items as $itemIndex => $item) {
+                $detailSheet->setCellValue('A' . $detailRow, $detailNo++);
+                $detailSheet->setCellValue('B' . $detailRow, (string) $invoice->invoice_no);
+                $detailSheet->setCellValue('C' . $detailRow, $itemIndex + 1);
+                $detailSheet->setCellValue('D' . $detailRow, (string) ($item->asset_category ?? '-'));
+                $detailSheet->setCellValue('E' . $detailRow, (string) $item->account_code);
+                $detailSheet->setCellValue('F' . $detailRow, (string) ($item->partner_name ?? '-'));
+                $detailSheet->setCellValue('G' . $detailRow, (string) $item->label);
+                $detailSheet->setCellValue('H' . $detailRow, (string) ($item->analytic_distribution ?? '-'));
+                $detailSheet->setCellValue('I' . $detailRow, (float) $item->debit);
+                $detailSheet->setCellValue('J' . $detailRow, (float) $item->credit);
+                $detailRow++;
+            }
+        }
+
+        if ($detailRow === $detailHeaderRow + 1) {
+            $detailSheet->mergeCells('A' . $detailRow . ':J' . $detailRow);
+            $detailSheet->setCellValue('A' . $detailRow, 'Tidak ada item jurnal.');
+            $detailSheet->getStyle('A' . $detailRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $detailRow++;
+        }
+
+        $detailLastRow = max($detailHeaderRow + 1, $detailRow - 1);
+        $detailSheet->getStyle('A' . $detailHeaderRow . ':J' . $detailLastRow)->applyFromArray($this->thinBorderStyle());
+        $detailSheet->getStyle('I' . ($detailHeaderRow + 1) . ':J' . $detailLastRow)
+            ->getNumberFormat()
+            ->setFormatCode('[$Rp-421] #,##0.00');
+        $detailSheet->getStyle('I' . ($detailHeaderRow + 1) . ':J' . $detailLastRow)
+            ->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $detailSheet->freezePane('A7');
+        $detailSheet->setAutoFilter('A' . $detailHeaderRow . ':J' . $detailLastRow);
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        $writer = new Xlsx($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<int, FinanceInvoice> $invoices
+     * @param array<string, mixed> $meta
+     */
+    private function renderInvoiceCollectionPdf($invoices, array $meta): string
+    {
+        $pages = [];
+        $logoImage = $this->loadPdfFoundationLogo();
+        $chunks = $invoices->chunk(16);
+        $pageNumber = 1;
+
+        if ($chunks->isEmpty()) {
+            $chunks = collect([collect()]);
+        }
+
+        foreach ($chunks as $chunk) {
+            $content = '';
+            $top = $this->appendCollectionPdfHeader(
+                $content,
+                $pageNumber,
+                $this->buildCollectionSubtitle($invoices->count(), $meta),
+                $logoImage !== null
+            );
+
+            if ($pageNumber === 1) {
+                $this->appendPdfLine(
+                    $content,
+                    'Mode Download : ' . $this->resolveCollectionScopeLabel($meta),
+                    $top,
+                    false,
+                    10
+                );
+                $this->appendPdfLine(
+                    $content,
+                    'Jumlah Faktur : ' . number_format($invoices->count(), 0, ',', '.')
+                    . ' | Total Debit: Rp ' . $this->formatNominal((float) $invoices->sum(fn (FinanceInvoice $invoice): float => (float) $invoice->total_debit))
+                    . ' | Total Kredit: Rp ' . $this->formatNominal((float) $invoices->sum(fn (FinanceInvoice $invoice): float => (float) $invoice->total_credit)),
+                    $top,
+                    true,
+                    9,
+                    15.0
+                );
+            }
+
+            $this->appendPdfLine($content, str_repeat('=', 94), $top, false);
+            $this->appendPdfLine($content, $this->buildCollectionPdfHeaderLine(), $top, true);
+            $this->appendPdfLine($content, str_repeat('-', 94), $top, false);
+
+            if ($chunk->isEmpty()) {
+                $this->appendPdfLine($content, 'Tidak ada faktur posted untuk mode download ini.', $top, false);
+            } else {
+                foreach ($chunk as $invoice) {
+                    $rowNumber = $invoices->search(fn (FinanceInvoice $candidate): bool => $candidate->id === $invoice->id) + 1;
+                    $this->appendPdfLine($content, $this->buildCollectionPdfInvoiceLine((int) $rowNumber, $invoice), $top, false, 8, 11.0);
+                    $this->appendPdfLine($content, $this->buildCollectionPdfInvoiceSubLine($invoice), $top, false, 8, 11.0);
+                }
+            }
+
+            $content .= $this->pdfDrawText(
+                'Halaman ' . $pageNumber,
+                505.0,
+                815.0,
+                8,
+                false,
+                [120, 130, 145]
+            );
+
+            $pages[] = $content;
+            $pageNumber++;
+        }
+
+        return $this->buildPdfDocument($pages, $logoImage);
+    }
+
     private function renderExcelDocument(FinanceInvoice $invoice): string
     {
         $spreadsheet = new Spreadsheet();
@@ -754,6 +1063,132 @@ class FinanceInvoiceDocumentService
             . "Q\n";
     }
 
+    private function appendCollectionPdfHeader(
+        string &$content,
+        int $pageNumber,
+        string $subtitle,
+        bool $withLogo
+    ): float {
+        if ($withLogo) {
+            $content .= $this->pdfDrawImage('Im1', 28.0, 24.0, 38.0, 38.0);
+        }
+
+        $content .= $this->pdfDrawText('YAYASAN YPIK PAM JAYA', $withLogo ? 78.0 : 28.0, 27.0, 15, true, [30, 64, 175]);
+        $content .= $this->pdfDrawText('Sistem Operasional Yayasan', $withLogo ? 78.0 : 28.0, 44.0, 10, false, [100, 116, 139]);
+        $content .= $this->pdfDrawText('DAFTAR FAKTUR POSTED', 28.0, 72.0, 16, true, [22, 30, 45]);
+        $content .= $this->pdfDrawText($subtitle, 28.0, 91.0, 9, false, [71, 85, 105]);
+
+        if ($pageNumber > 1) {
+            $content .= $this->pdfDrawText('Lanjutan', 505.0, 72.0, 9, true, [71, 85, 105]);
+        }
+
+        return 116.0;
+    }
+
+    private function buildCollectionPdfHeaderLine(): string
+    {
+        return implode(' ', [
+            $this->padPdfText('No', 3),
+            $this->padPdfText('Tanggal', 10),
+            $this->padPdfText('No Faktur', 20),
+            $this->padPdfText('Jenis', 10),
+            $this->padPdfText('Kategori', 14),
+            str_pad('Debit', 16, ' ', STR_PAD_LEFT),
+        ]);
+    }
+
+    private function buildCollectionPdfInvoiceLine(int $number, FinanceInvoice $invoice): string
+    {
+        return implode(' ', [
+            str_pad((string) $number, 3, ' ', STR_PAD_LEFT),
+            $this->padPdfText(optional($invoice->accounting_date)->format('d/m/Y') ?? '-', 10),
+            $this->padPdfText((string) $invoice->invoice_no, 20),
+            $this->padPdfText($this->resolveEntryTypeLabel((string) $invoice->entry_type), 10),
+            $this->padPdfText($this->resolveInvoiceCategoryName($invoice), 14),
+            str_pad($this->formatNominal((float) $invoice->total_debit), 16, ' ', STR_PAD_LEFT),
+        ]);
+    }
+
+    private function buildCollectionPdfInvoiceSubLine(FinanceInvoice $invoice): string
+    {
+        $journal = 'Jurnal: ' . (string) $invoice->journal_name;
+        $reference = trim((string) ($invoice->reference ?? ''));
+        if ($reference !== '') {
+            $journal .= ' | Ref: ' . $reference;
+        }
+
+        return '    '
+            . $this->padPdfText($journal, 57)
+            . ' '
+            . $this->padPdfText('Status: ' . (string) $invoice->status, 16)
+            . ' '
+            . str_pad('Kredit ' . $this->formatNominal((float) $invoice->total_credit), 20, ' ', STR_PAD_LEFT);
+    }
+
+    private function resolveInvoiceCategoryName(FinanceInvoice $invoice): string
+    {
+        if ($invoice->relationLoaded('category') && $invoice->category !== null) {
+            return (string) $invoice->category->name;
+        }
+
+        return 'Tanpa kategori';
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function resolveCollectionScopeLabel(array $meta): string
+    {
+        return match ((string) ($meta['scope'] ?? 'filter')) {
+            'all' => 'Semua faktur posted',
+            'selected' => 'Faktur posted terpilih',
+            default => 'Faktur posted sesuai filter',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function buildCollectionSubtitle(int $invoiceCount, array $meta): string
+    {
+        return $this->resolveCollectionScopeLabel($meta)
+            . ' | Jumlah: ' . number_format($invoiceCount, 0, ',', '.')
+            . ' | Dicetak: ' . now(config('app.timezone'))->format('d/m/Y H:i');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function tableHeaderStyle(): array
+    {
+        return [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1F4E78'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function thinBorderStyle(): array
+    {
+        return [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D1D5DB'],
+                ],
+            ],
+        ];
+    }
+
     private function resolveEntryTypeLabel(string $entryType): string
     {
         return strtoupper($entryType) === 'INCOME' ? 'Pemasukan' : 'Pengeluaran';
@@ -775,5 +1210,17 @@ class FinanceInvoiceDocumentService
         }
 
         return 'faktur-' . strtolower($sanitized) . '.' . strtolower($extension);
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function buildCollectionFilename(array $meta, string $extension): string
+    {
+        $scope = (string) ($meta['scope'] ?? 'filter');
+        $scope = (string) preg_replace('/[^A-Za-z0-9._-]/', '-', $scope);
+        $scope = trim($scope, '-_.') ?: 'filter';
+
+        return 'faktur-posted-' . strtolower($scope) . '-' . now()->format('Ymd-His') . '.' . strtolower($extension);
     }
 }
