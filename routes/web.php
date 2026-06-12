@@ -213,6 +213,9 @@ Route::prefix('user-database')
         Route::post('/reset-password/{id}', 'sendResetPasswordLink')
             ->middleware('check_access:user_management.update')
             ->name('send-reset-password-link');
+        Route::post('/{id}/password', 'updatePassword')
+            ->middleware(['role:' . UserRole::IT_SUPPORT->value, 'check_access:user_management.update'])
+            ->name('password.update');
         Route::put('/', 'update')
             ->middleware('check_access:user_management.update')
             ->name('update');

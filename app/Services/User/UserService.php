@@ -14,11 +14,20 @@ class UserService
 {
     public function getUsers(?string $keyword = null, ?int $page = 1)
     {
-        $users = User::where('name', 'like', '%'.$keyword.'%')
-            ->orWhere('email', 'like', '%'.$keyword.'%')
-            ->paginate(5, ['*'], 'page', $page);
-        
-        return $users;
+        $keyword = trim((string) $keyword);
+        $query = User::query()->orderBy('name');
+
+        if($keyword !== '') {
+            $query->where(function ($userQuery) use ($keyword) {
+                $userQuery->where('name', 'like', '%' . $keyword . '%')
+                    ->orWhere('email', 'like', '%' . $keyword . '%')
+                    ->orWhere('role', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        return $query
+            ->paginate(10, ['*'], 'page', $page)
+            ->withQueryString();
     }
 
     public function getUser(string $id): UserDataDTO
@@ -97,6 +106,21 @@ class UserService
             'role' => $dto->role->value
         ]);
         
+        return UserDataDTO::fromModel($user);
+    }
+
+    public function updatePassword(string $id, string $password): UserDataDTO
+    {
+        $user = User::find($id);
+        if(empty($user))
+            throw new \Exception('User tidak ditemukan', 404);
+
+        $user->forceFill([
+            'password' => Hash::make($password),
+        ])->save();
+
+        $user->tokens()?->delete();
+
         return UserDataDTO::fromModel($user);
     }
 

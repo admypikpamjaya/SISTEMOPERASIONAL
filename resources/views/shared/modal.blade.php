@@ -13,7 +13,7 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">{{ __('app.common.close') }}</button>
                 <div id="modal-footer-buttons-container">
 
                 </div>

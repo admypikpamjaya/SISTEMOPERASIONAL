@@ -2,56 +2,65 @@
 
 @section('content')
 <style>
-    .fc-shell { display: grid; gap: 1rem; }
+    .fc-shell { display: grid; gap: 1rem; color:var(--app-text,#0f172a); }
     .fc-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
-    .fc-title { display:flex; align-items:center; gap:.75rem; }
-    .fc-title-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#2563eb,#06b6d4); box-shadow:0 10px 24px rgba(37,99,235,.24); }
-    .fc-title h1 { margin:0; font-size:1.35rem; font-weight:800; color:var(--app-text,#0f172a); }
-    .fc-title p { margin:.12rem 0 0; color:var(--app-text-muted,#64748b); font-size:.86rem; }
+    .fc-title { display:flex; align-items:center; gap:.75rem; min-width:0; }
+    .fc-title-icon { width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#2563eb,#0f766e); box-shadow:0 10px 24px rgba(37,99,235,.22); flex:0 0 auto; }
+    .fc-title h1 { margin:0; font-size:1.28rem; line-height:1.2; font-weight:800; color:var(--app-text,#0f172a); letter-spacing:0; }
+    .fc-title p { margin:.16rem 0 0; color:var(--app-text-muted,#64748b); font-size:.92rem; line-height:1.35; }
     .fc-grid { display:grid; grid-template-columns: minmax(280px, 380px) minmax(0,1fr); gap:1rem; align-items:start; }
     @media(max-width: 991px) { .fc-grid { grid-template-columns:1fr; } }
-    .fc-card { background:var(--app-surface,#fff); border:1px solid var(--app-border,rgba(148,163,184,.22)); border-radius:14px; box-shadow:var(--app-shadow,0 10px 30px rgba(15,23,42,.08)); overflow:hidden; }
+    .fc-card { background:var(--app-surface,#fff); border:1px solid var(--app-border,rgba(148,163,184,.22)); border-radius:8px; box-shadow:var(--app-shadow,0 10px 30px rgba(15,23,42,.08)); overflow:hidden; }
     .fc-card-head { padding:1rem 1.15rem; border-bottom:1px solid var(--app-border,rgba(148,163,184,.18)); display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
-    .fc-card-head h2 { margin:0; font-size:.95rem; font-weight:800; color:var(--app-text,#0f172a); display:flex; align-items:center; gap:.5rem; }
+    .fc-card-head h2 { margin:0; font-size:1rem; line-height:1.25; font-weight:800; color:var(--app-text,#0f172a); display:flex; align-items:center; gap:.5rem; letter-spacing:0; }
     .fc-body { padding:1.15rem; }
     .fc-field { margin-bottom:.9rem; }
-    .fc-label { display:flex; align-items:center; gap:.35rem; margin-bottom:.38rem; font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; font-weight:800; color:var(--app-text-muted,#64748b); }
-    .fc-control { width:100%; min-height:40px; border:1px solid var(--app-border,#dbe4f0); border-radius:10px; padding:.55rem .7rem; background:var(--app-surface,#fff); color:var(--app-text,#0f172a); font-weight:600; }
+    .fc-label { display:flex; align-items:center; gap:.35rem; margin-bottom:.4rem; font-size:.86rem; line-height:1.25; text-transform:none; letter-spacing:0; font-weight:700; color:var(--app-text-soft,#334155); }
+    .fc-label i { width:15px; text-align:center; color:var(--app-accent,#2563eb); }
+    .fc-control { width:100%; min-height:40px; border:1px solid var(--app-border,#dbe4f0); border-radius:8px; padding:.55rem .7rem; background:var(--app-surface,#fff); color:var(--app-text,#0f172a); font-weight:600; font-size:.92rem; line-height:1.35; }
     textarea.fc-control { min-height:110px; resize:vertical; }
     .fc-actions { display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; }
-    .fc-btn { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:40px; padding:.55rem .9rem; border-radius:10px; border:1px solid transparent; font-weight:800; font-size:.82rem; text-decoration:none; cursor:pointer; }
-    .fc-btn-primary { color:#fff; background:linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow:0 8px 20px rgba(37,99,235,.25); }
+    .fc-btn { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; min-height:40px; padding:.55rem .85rem; border-radius:8px; border:1px solid transparent; font-weight:800; font-size:.88rem; line-height:1.2; text-decoration:none; cursor:pointer; white-space:nowrap; }
+    .fc-btn i { width:16px; text-align:center; }
+    .fc-btn-primary { color:#fff; background:linear-gradient(135deg,#2563eb,#1d4ed8); box-shadow:0 8px 20px rgba(37,99,235,.24); }
     .fc-btn-muted { color:var(--app-text,#0f172a); background:var(--app-surface-soft,#f8fafc); border-color:var(--app-border,#dbe4f0); }
     .fc-btn-danger { color:#dc2626; background:rgba(220,38,38,.08); border-color:rgba(220,38,38,.2); }
-    .fc-btn-warning { color:#b45309; background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.28); }
-    .fc-btn-success { color:#047857; background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.24); }
+    .fc-btn-hide { color:#9a3412; background:#fff7ed; border-color:#fdba74; }
+    .fc-btn-hide i { color:#ea580c; }
+    .fc-btn-publish { color:#047857; background:#ecfdf5; border-color:#6ee7b7; }
+    .fc-btn-publish i { color:#059669; }
+    body.dark-mode .fc-btn-hide { color:#fed7aa; background:rgba(234,88,12,.14); border-color:rgba(251,146,60,.34); }
+    body.dark-mode .fc-btn-publish { color:#a7f3d0; background:rgba(16,185,129,.14); border-color:rgba(110,231,183,.3); }
     .fc-btn:disabled { opacity:.48; cursor:not-allowed; box-shadow:none; }
     .fc-filter { display:grid; grid-template-columns:minmax(180px,1fr) 150px auto; gap:.6rem; align-items:end; }
     @media(max-width: 768px) { .fc-filter { grid-template-columns:1fr; } }
     .fc-two-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
     @media(max-width: 575px) { .fc-two-grid { grid-template-columns:1fr; } }
     .fc-table { width:100%; border-collapse:collapse; }
-    .fc-table th { text-align:left; padding:.8rem .95rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--app-text-muted,#64748b); background:var(--app-surface-soft,#f8fafc); border-bottom:1px solid var(--app-border,#e2e8f0); white-space:nowrap; }
-    .fc-table td { padding:.85rem .95rem; border-bottom:1px solid var(--app-border,#e2e8f0); color:var(--app-text-soft,#334155); vertical-align:top; }
+    .fc-table th { text-align:left; padding:.85rem .95rem; font-size:.86rem; line-height:1.25; text-transform:none; letter-spacing:0; color:var(--app-text-soft,#334155); background:var(--app-surface-soft,#f8fafc); border-bottom:1px solid var(--app-border,#e2e8f0); white-space:nowrap; font-weight:800; }
+    .fc-table td { padding:.9rem .95rem; border-bottom:1px solid var(--app-border,#e2e8f0); color:var(--app-text-soft,#334155); vertical-align:top; font-size:.9rem; line-height:1.35; }
     .fc-table tr:last-child td { border-bottom:0; }
-    .fc-name { font-weight:800; color:var(--app-text,#0f172a); }
-    .fc-desc { font-size:.78rem; color:var(--app-text-muted,#64748b); margin-top:.18rem; }
-    .fc-badge { display:inline-flex; align-items:center; gap:.3rem; border-radius:999px; padding:.24rem .58rem; font-size:.72rem; font-weight:800; }
-    .fc-badge.active { background:rgba(16,185,129,.12); color:#047857; }
-    .fc-badge.inactive { background:rgba(148,163,184,.16); color:#475569; }
+    .fc-name { font-weight:800; color:var(--app-text,#0f172a); font-size:.96rem; line-height:1.25; }
+    .fc-desc { font-size:.84rem; line-height:1.35; color:var(--app-text-muted,#64748b); margin-top:.2rem; }
+    .fc-badge { display:inline-flex; align-items:center; gap:.32rem; border-radius:999px; padding:.28rem .6rem; font-size:.78rem; line-height:1.1; font-weight:800; white-space:nowrap; }
+    .fc-badge.is-compact { padding:.16rem .42rem; font-size:.74rem; }
+    .fc-badge.active { background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+    .fc-badge.inactive { background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; }
     .fc-badge.group { background:rgba(37,99,235,.12); color:#1d4ed8; }
     .fc-badge.single { background:rgba(14,165,233,.12); color:#0369a1; }
     .fc-badge.static { background:rgba(245,158,11,.14); color:#b45309; }
     .fc-badge.custom { background:rgba(139,92,246,.13); color:#6d28d9; }
-    .fc-member-box { display:grid; gap:.45rem; max-height:170px; overflow:auto; padding:.6rem; border:1px solid var(--app-border,#dbe4f0); border-radius:10px; background:var(--app-surface-soft,#f8fafc); }
-    .fc-member-option { display:flex; align-items:center; gap:.45rem; font-size:.82rem; font-weight:700; color:var(--app-text-soft,#334155); }
+    body.dark-mode .fc-badge.active { background:rgba(16,185,129,.14); color:#a7f3d0; border-color:rgba(110,231,183,.28); }
+    body.dark-mode .fc-badge.inactive { background:rgba(234,88,12,.14); color:#fed7aa; border-color:rgba(251,146,60,.28); }
+    .fc-member-box { display:grid; gap:.45rem; max-height:170px; overflow:auto; padding:.6rem; border:1px solid var(--app-border,#dbe4f0); border-radius:8px; background:var(--app-surface-soft,#f8fafc); }
+    .fc-member-option { display:flex; align-items:center; gap:.45rem; font-size:.88rem; line-height:1.25; font-weight:700; color:var(--app-text-soft,#334155); }
     .fc-member-option input { width:16px; height:16px; }
     .fc-member-chips { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.45rem; }
-    .fc-member-chip { display:inline-flex; align-items:center; border-radius:999px; padding:.2rem .5rem; background:rgba(37,99,235,.09); color:#1d4ed8; font-size:.72rem; font-weight:800; }
+    .fc-member-chip { display:inline-flex; align-items:center; border-radius:999px; padding:.22rem .5rem; background:rgba(37,99,235,.09); color:#1d4ed8; font-size:.78rem; line-height:1.1; font-weight:800; }
     .fc-row-actions { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
-    .fc-action-note { flex-basis:100%; font-size:.7rem; color:var(--app-text-muted,#64748b); font-weight:700; }
-    .fc-empty { padding:2.4rem 1rem; text-align:center; color:var(--app-text-muted,#64748b); font-weight:700; }
-    .fc-help { display:grid; gap:.35rem; margin-bottom:1rem; padding:.8rem .9rem; border-radius:12px; background:rgba(37,99,235,.07); border:1px solid rgba(37,99,235,.14); color:var(--app-text-soft,#334155); font-size:.78rem; font-weight:600; line-height:1.45; }
+    .fc-action-note { flex-basis:100%; font-size:.8rem; line-height:1.35; color:var(--app-text-muted,#64748b); font-weight:700; }
+    .fc-empty { padding:2.4rem 1rem; text-align:center; color:var(--app-text-muted,#64748b); font-weight:700; font-size:.92rem; }
+    .fc-help { display:grid; gap:.35rem; margin-bottom:1rem; padding:.85rem .95rem; border-radius:8px; background:rgba(37,99,235,.07); border:1px solid rgba(37,99,235,.14); color:var(--app-text-soft,#334155); font-size:.88rem; font-weight:600; line-height:1.45; }
     .fc-help strong { color:var(--app-text,#0f172a); }
 </style>
 
@@ -142,10 +151,10 @@
                                     <input type="checkbox" name="member_ids[]" value="{{ $option->id }}" {{ in_array((string) $option->id, $selectedMemberIds, true) ? 'checked' : '' }}>
                                     <span>{{ $option->name }}</span>
                                     @if(($option->category_type ?? 'single') === 'group')
-                                        <small class="fc-badge group" style="padding:.08rem .35rem;">{{ __('app.finance_categories.group_badge') }}</small>
+                                        <small class="fc-badge group is-compact">{{ __('app.finance_categories.group_badge') }}</small>
                                     @endif
                                     @if(($option->status ?? \App\Models\FinanceCategory::STATUS_ACTIVE) !== \App\Models\FinanceCategory::STATUS_ACTIVE)
-                                        <small class="fc-badge inactive" style="padding:.08rem .35rem;">{{ __('app.finance_categories.hidden_badge') }}</small>
+                                        <small class="fc-badge inactive is-compact">{{ __('app.finance_categories.hidden_badge') }}</small>
                                     @endif
                                 </label>
                             @endforeach
@@ -269,8 +278,8 @@
                                             @csrf
                                             @method('PATCH')
                                             <input type="hidden" name="visible" value="{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? '0' : '1' }}">
-                                            <button type="submit" class="fc-btn {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'fc-btn-warning' : 'fc-btn-success' }}">
-                                                <i class="fas fa-{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'eye-slash' : 'eye' }}"></i>
+                                            <button type="submit" class="fc-btn {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'fc-btn-hide' : 'fc-btn-publish' }}">
+                                                <i class="fas fa-{{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? 'eye-slash' : 'upload' }}"></i>
                                                 {{ $category->status === \App\Models\FinanceCategory::STATUS_ACTIVE ? __('app.finance_categories.hide') : __('app.finance_categories.show') }}
                                             </button>
                                         </form>
