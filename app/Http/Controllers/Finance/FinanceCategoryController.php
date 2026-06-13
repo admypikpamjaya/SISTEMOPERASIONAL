@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Models\FinanceCategory;
+use App\Services\Finance\FinanceCategoryScopeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -27,6 +28,10 @@ class FinanceCategoryController extends Controller
         'finance_reconciliation_snapshots',
         'finance_report_snapshots',
     ];
+
+    public function __construct(private FinanceCategoryScopeService $categoryScopeService)
+    {
+    }
 
     public function index(Request $request)
     {
@@ -313,10 +318,15 @@ class FinanceCategoryController extends Controller
 
     private function countUsage(string $categoryId): int
     {
+        $categoryIds = $this->categoryScopeService->idsFor($categoryId);
+        if (empty($categoryIds)) {
+            $categoryIds = [$categoryId];
+        }
+
         return collect(self::USAGE_TABLES)
             ->filter(fn (string $table): bool => DB::getSchemaBuilder()->hasTable($table)
                 && DB::getSchemaBuilder()->hasColumn($table, 'category_id'))
-            ->sum(fn (string $table): int => (int) DB::table($table)->where('category_id', $categoryId)->count());
+            ->sum(fn (string $table): int => (int) DB::table($table)->whereIn('category_id', $categoryIds)->count());
     }
 
     /**

@@ -62,6 +62,22 @@
     .fc-empty { padding:2.4rem 1rem; text-align:center; color:var(--app-text-muted,#64748b); font-weight:700; font-size:.92rem; }
     .fc-help { display:grid; gap:.35rem; margin-bottom:1rem; padding:.85rem .95rem; border-radius:8px; background:rgba(37,99,235,.07); border:1px solid rgba(37,99,235,.14); color:var(--app-text-soft,#334155); font-size:.88rem; font-weight:600; line-height:1.45; }
     .fc-help strong { color:var(--app-text,#0f172a); }
+    .fc-mapping-card { background:var(--app-surface,#fff); border:1px solid var(--app-border,rgba(148,163,184,.22)); border-radius:8px; box-shadow:var(--app-shadow,0 10px 30px rgba(15,23,42,.08)); overflow:hidden; }
+    .fc-mapping-head { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1rem 1.15rem; border-bottom:1px solid var(--app-border,rgba(148,163,184,.18)); }
+    .fc-mapping-head h2 { margin:0; display:flex; align-items:center; gap:.5rem; font-size:1rem; line-height:1.25; font-weight:800; color:var(--app-text,#0f172a); letter-spacing:0; }
+    .fc-mapping-head p { margin:.25rem 0 0; color:var(--app-text-muted,#64748b); font-size:.9rem; line-height:1.45; font-weight:600; }
+    .fc-mapping-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem; padding:1rem 1.15rem 1.15rem; }
+    @media(max-width: 1100px) { .fc-mapping-grid { grid-template-columns:1fr; } }
+    .fc-info-box { min-width:0; padding:.9rem; border:1px solid var(--app-border,rgba(148,163,184,.22)); border-radius:8px; background:var(--app-surface-soft,#f8fafc); }
+    .fc-info-box h3 { margin:0 0 .65rem; display:flex; align-items:center; gap:.45rem; font-size:.92rem; line-height:1.25; font-weight:800; color:var(--app-text,#0f172a); letter-spacing:0; }
+    .fc-info-box h3 i { color:var(--app-accent,#2563eb); width:16px; text-align:center; }
+    .fc-info-list,
+    .fc-test-list { margin:0; padding-left:1.1rem; color:var(--app-text-soft,#334155); font-size:.88rem; line-height:1.5; font-weight:600; }
+    .fc-info-list li,
+    .fc-test-list li { margin:.22rem 0; }
+    .fc-sample-flow { display:grid; gap:.45rem; color:var(--app-text-soft,#334155); font-size:.88rem; line-height:1.45; font-weight:700; }
+    .fc-sample-flow span { display:block; padding:.48rem .55rem; border-radius:8px; background:var(--app-surface,#fff); border:1px solid var(--app-border,rgba(148,163,184,.2)); }
+    .fc-sample-flow strong { color:var(--app-text,#0f172a); }
 </style>
 
 @php
@@ -103,6 +119,45 @@
         <div><strong>{{ __('app.finance_categories.edit') }}</strong> {{ __('app.finance_categories.help_edit') }}</div>
         <div><strong>{{ __('app.finance_categories.hide') }}</strong> {{ __('app.finance_categories.help_hide') }}</div>
         <div><strong>{{ __('app.finance_categories.delete') }}</strong> {{ __('app.finance_categories.help_delete') }}</div>
+    </div>
+
+    <div class="fc-mapping-card">
+        <div class="fc-mapping-head">
+            <div>
+                <h2><i class="fas fa-project-diagram"></i> {{ __('app.finance_categories.mapping_title') }}</h2>
+                <p>{{ __('app.finance_categories.mapping_intro') }}</p>
+            </div>
+            <span class="fc-badge group"><i class="fas fa-sync-alt"></i> {{ __('app.finance_categories.mapping_badge') }}</span>
+        </div>
+        <div class="fc-mapping-grid">
+            <div class="fc-info-box">
+                <h3><i class="fas fa-sitemap"></i> {{ __('app.finance_categories.mapping_rule_title') }}</h3>
+                <ul class="fc-info-list">
+                    <li>{{ __('app.finance_categories.mapping_single') }}</li>
+                    <li>{{ __('app.finance_categories.mapping_group') }}</li>
+                    <li>{{ __('app.finance_categories.mapping_dynamic') }}</li>
+                </ul>
+            </div>
+            <div class="fc-info-box">
+                <h3><i class="fas fa-lightbulb"></i> {{ __('app.finance_categories.mapping_example_title') }}</h3>
+                <div class="fc-sample-flow">
+                    <span>{!! __('app.finance_categories.mapping_example_sd') !!}</span>
+                    <span>{!! __('app.finance_categories.mapping_example_group_a') !!}</span>
+                    <span>{!! __('app.finance_categories.mapping_example_group_b') !!}</span>
+                </div>
+            </div>
+            <div class="fc-info-box">
+                <h3><i class="fas fa-clipboard-check"></i> {{ __('app.finance_categories.testing_title') }}</h3>
+                <ol class="fc-test-list">
+                    <li>{{ __('app.finance_categories.testing_step_1') }}</li>
+                    <li>{{ __('app.finance_categories.testing_step_2') }}</li>
+                    <li>{{ __('app.finance_categories.testing_step_3') }}</li>
+                    <li>{{ __('app.finance_categories.testing_step_4') }}</li>
+                    <li>{{ __('app.finance_categories.testing_step_5') }}</li>
+                    <li>{{ __('app.finance_categories.testing_step_6') }}</li>
+                </ol>
+            </div>
+        </div>
     </div>
 
     <div class="fc-grid">
@@ -263,7 +318,12 @@
                                         <span class="fc-desc">-</span>
                                     @endif
                                 </td>
-                                <td>{{ __('app.finance_categories.usage_count', ['count' => number_format($usage, 0, ',', '.')]) }}</td>
+                                <td>
+                                    {{ __('app.finance_categories.usage_count', ['count' => number_format($usage, 0, ',', '.')]) }}
+                                    @if(($category->category_type ?? 'single') === \App\Models\FinanceCategory::TYPE_GROUP)
+                                        <div class="fc-desc">{{ __('app.finance_categories.usage_scope_note') }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ $category->creator?->name ?? '-' }}</td>
                                 <td>
                                     <div class="fc-row-actions">

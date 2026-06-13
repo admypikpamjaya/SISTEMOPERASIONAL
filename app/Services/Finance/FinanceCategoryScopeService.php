@@ -21,15 +21,35 @@ class FinanceCategoryScopeService
             return [$categoryId];
         }
 
-        $ids = [$categoryId];
-
         if (!Schema::hasTable('finance_category_members')) {
-            return $ids;
+            return [$categoryId];
         }
 
-        $this->collectMemberIds($categoryId, $ids, []);
+        $ids = [];
+        $queue = [$categoryId];
 
-        return array_values(array_unique(array_filter($ids)));
+        while (!empty($queue)) {
+            $currentId = (string) array_shift($queue);
+            if ($currentId === '' || isset($ids[$currentId])) {
+                continue;
+            }
+
+            $ids[$currentId] = $currentId;
+
+            $memberIds = DB::table('finance_category_members')
+                ->where('parent_category_id', $currentId)
+                ->pluck('member_category_id')
+                ->map(static fn ($id): string => (string) $id)
+                ->all();
+
+            foreach ($memberIds as $memberId) {
+                if (!isset($ids[$memberId])) {
+                    $queue[] = $memberId;
+                }
+            }
+        }
+
+        return array_values($ids);
     }
 
     public function apply($query, string $column, ?string $categoryId)
@@ -42,27 +62,4 @@ class FinanceCategoryScopeService
         return $query->whereIn($column, $categoryIds);
     }
 
-    /**
-     * @param array<int, string> $ids
-     * @param array<string, bool> $visited
-     */
-    private function collectMemberIds(string $parentId, array &$ids, array $visited): void
-    {
-        if (($visited[$parentId] ?? false) === true) {
-            return;
-        }
-
-        $visited[$parentId] = true;
-
-        $memberIds = DB::table('finance_category_members')
-            ->where('parent_category_id', $parentId)
-            ->pluck('member_category_id')
-            ->map(static fn ($id): string => (string) $id)
-            ->all();
-
-        foreach ($memberIds as $memberId) {
-            $ids[] = $memberId;
-            $this->collectMemberIds($memberId, $ids, $visited);
-        }
-    }
 }
