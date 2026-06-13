@@ -78,7 +78,8 @@ class FinancialStatementSpreadsheetService
 
         $summary = $report['summary'] ?? [];
         $sections = $report['sections'] ?? [];
-        $row = 5;
+        $row = $this->appendCategoryFilterRows($sheet, 5, $filter);
+        $summaryStartRow = $row;
 
         $row = $this->appendSummaryRows($sheet, $row, [
             ['Liabilitas', (float) ($summary['liabilitas_total'] ?? 0)],
@@ -125,7 +126,7 @@ class FinancialStatementSpreadsheetService
 
         $lastRow = max($row - 1, $headerRow);
         $this->applyGridStyle($sheet, 'A' . $headerRow . ':E' . $lastRow);
-        $this->applyCurrencyStyle($sheet, 'B5:B9');
+        $this->applyCurrencyStyle($sheet, 'B' . $summaryStartRow . ':B' . ($summaryStartRow + 4));
         $this->applyCurrencyStyle($sheet, 'E' . ($headerRow + 1) . ':E' . $lastRow);
 
         $sheet->getColumnDimension('A')->setWidth(20);
@@ -154,7 +155,8 @@ class FinancialStatementSpreadsheetService
         );
 
         $totals = $report['totals'] ?? [];
-        $row = 5;
+        $row = $this->appendCategoryFilterRows($sheet, 5, $filter);
+        $summaryStartRow = $row;
         $row = $this->appendSummaryRows($sheet, $row, [
             ['Total Pemasukan', (float) ($totals['income'] ?? 0)],
             ['Total Pengeluaran', (float) ($totals['expense'] ?? 0)],
@@ -203,7 +205,7 @@ class FinancialStatementSpreadsheetService
 
         $lastRow = $totalRow;
         $this->applyGridStyle($sheet, 'A' . $headerRow . ':D' . $lastRow);
-        $this->applyCurrencyStyle($sheet, 'B5:B7');
+        $this->applyCurrencyStyle($sheet, 'B' . $summaryStartRow . ':B' . ($summaryStartRow + 2));
         $this->applyCurrencyStyle($sheet, 'D' . ($headerRow + 1) . ':D' . $lastRow);
 
         $sheet->getColumnDimension('A')->setWidth(18);
@@ -231,7 +233,7 @@ class FinancialStatementSpreadsheetService
         );
 
         $summary = $report['summary'] ?? [];
-        $row = 5;
+        $row = $this->appendCategoryFilterRows($sheet, 5, $filter);
         $row = $this->appendSummaryRows($sheet, $row, [
             ['Jumlah Akun', (float) ($summary['account_count'] ?? 0)],
             ['Baris Jurnal', (float) ($summary['entry_count'] ?? 0)],
@@ -321,7 +323,7 @@ class FinancialStatementSpreadsheetService
         );
 
         $summary = $report['summary'] ?? [];
-        $row = 5;
+        $row = $this->appendCategoryFilterRows($sheet, 5, $filter);
         $row = $this->appendSummaryRows($sheet, $row, [
             ['Jumlah Baris', (float) ($summary['entry_count'] ?? 0)],
             ['Nilai Jurnal', (float) ($summary['total_amount'] ?? 0)],
@@ -406,6 +408,26 @@ class FinancialStatementSpreadsheetService
         }
 
         return $row + 1;
+    }
+
+    private function appendCategoryFilterRows(Worksheet $sheet, int $startRow, StatementFilterDTO $filter): int
+    {
+        $categoryMeta = app(FinanceCategoryScopeService::class)->describe($filter->categoryId);
+        $row = $startRow;
+
+        $sheet->setCellValue('A' . $row, __('app.finance.category_filter_label'));
+        $sheet->setCellValue('B' . $row, (string) $categoryMeta['selected_name']);
+        $sheet->mergeCells('B' . $row . ':M' . $row);
+        $row++;
+
+        $sheet->setCellValue('A' . $row, __('app.finance.category_scope_label'));
+        $sheet->setCellValue('B' . $row, (string) $categoryMeta['scope_label']);
+        $sheet->mergeCells('B' . $row . ':M' . $row);
+
+        $sheet->getStyle('A' . $startRow . ':A' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('A' . $startRow . ':M' . $row)->getAlignment()->setWrapText(true);
+
+        return $row + 2;
     }
 
     private function prepareSheetHeader(Worksheet $sheet, string $title, string $subtitle): void

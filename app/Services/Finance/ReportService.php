@@ -668,7 +668,8 @@ class ReportService
             totalIncome: (float) data_get($report->summary, 'total_income', 0),
             totalExpense: (float) data_get($report->summary, 'total_expense', 0),
             totalDepreciation: (float) data_get($report->summary, 'total_depreciation', 0),
-            surplusDeficit: $surplusDeficit
+            surplusDeficit: $surplusDeficit,
+            categoryId: $report->category_id !== null ? (string) $report->category_id : null
         );
     }
 

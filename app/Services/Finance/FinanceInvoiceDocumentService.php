@@ -104,6 +104,7 @@ class FinanceInvoiceDocumentService
             $this->buildCollectionSubtitle($invoices->count(), $meta)
         );
 
+        $categoryMeta = $this->resolveCollectionCategoryMeta($meta);
         $sheet->setCellValue('A6', 'Mode Download');
         $sheet->setCellValue('B6', $this->resolveCollectionScopeLabel($meta));
         $sheet->setCellValue('D6', 'Jumlah Faktur');
@@ -115,7 +116,15 @@ class FinanceInvoiceDocumentService
         $sheet->getStyle('A6:K6')->getFont()->setBold(true);
         $sheet->getStyle('H6:K6')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
 
-        $headerRow = 8;
+        $sheet->setCellValue('A7', __('app.finance.category_filter_label'));
+        $sheet->setCellValue('B7', (string) $categoryMeta['selected_name']);
+        $sheet->setCellValue('A8', __('app.finance.category_scope_label'));
+        $sheet->setCellValue('B8', (string) $categoryMeta['scope_label']);
+        $sheet->mergeCells('B8:M8');
+        $sheet->getStyle('A7:A8')->getFont()->setBold(true);
+        $sheet->getStyle('B8:M8')->getAlignment()->setWrapText(true);
+
+        $headerRow = 10;
         $sheet->fromArray([
             'No',
             'No. Faktur',
@@ -179,7 +188,7 @@ class FinanceInvoiceDocumentService
             ->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         $sheet->getStyle('A' . $headerRow . ':M' . $totalRow)->applyFromArray($this->thinBorderStyle());
-        $sheet->freezePane('A9');
+        $sheet->freezePane('A11');
         $sheet->setAutoFilter('A' . $headerRow . ':M' . max($headerRow, $totalRow - 1));
 
         $detailSheet = $spreadsheet->createSheet();
@@ -300,9 +309,24 @@ class FinanceInvoiceDocumentService
             );
 
             if ($pageNumber === 1) {
+                $categoryMeta = $this->resolveCollectionCategoryMeta($meta);
                 $this->appendPdfLine(
                     $content,
                     'Mode Download : ' . $this->resolveCollectionScopeLabel($meta),
+                    $top,
+                    false,
+                    10
+                );
+                $this->appendPdfLine(
+                    $content,
+                    __('app.finance.category_filter_label') . ' : ' . (string) $categoryMeta['selected_name'],
+                    $top,
+                    false,
+                    10
+                );
+                $this->appendPdfLine(
+                    $content,
+                    __('app.finance.category_scope_label') . ' : ' . $this->padPdfText((string) $categoryMeta['scope_label'], 70),
                     $top,
                     false,
                     10
@@ -383,6 +407,8 @@ class FinanceInvoiceDocumentService
         $sheet->setCellValue('B10', (string) ($invoice->reference ?? '-'));
         $sheet->setCellValue('A11', 'Status');
         $sheet->setCellValue('B11', (string) $invoice->status);
+        $sheet->setCellValue('A12', 'Kategori Finance');
+        $sheet->setCellValue('B12', $this->resolveInvoiceCategoryName($invoice));
 
         $sheet->setCellValue('E6', 'Total Debit');
         $sheet->setCellValue('F6', (float) $invoice->total_debit);
@@ -397,12 +423,12 @@ class FinanceInvoiceDocumentService
         $sheet->setCellValue('E11', 'Diperbarui Pada');
         $sheet->setCellValue('F11', $invoice->updated_at?->format('d/m/Y H:i:s') ?? '-');
 
-        $sheet->getStyle('A6:A11')->getFont()->setBold(true);
+        $sheet->getStyle('A6:A12')->getFont()->setBold(true);
         $sheet->getStyle('E6:E11')->getFont()->setBold(true);
         $sheet->getStyle('F6:F7')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
         $sheet->getStyle('F6:F7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-        $headerRow = 14;
+        $headerRow = 15;
         $sheet->fromArray(
             ['No', 'Asset Category', 'Akun', 'Rekanan', 'Label', 'Analisa Distribusi', 'Debit', 'Kredit'],
             null,
@@ -474,7 +500,7 @@ class FinanceInvoiceDocumentService
             ->getAlignment()
             ->setVertical(Alignment::VERTICAL_TOP);
 
-        $sheet->freezePane('A15');
+        $sheet->freezePane('A16');
 
         $notesSheet = $spreadsheet->createSheet();
         $notesSheet->setTitle('Log Catatan');
@@ -558,7 +584,7 @@ class FinanceInvoiceDocumentService
             $content = '';
             $top = $this->appendPdfHeader($content, $invoice, $isFirstPage, $pageNumber, $logoImage !== null);
 
-            $maxRows = $isFirstPage ? 25 : 38;
+            $maxRows = $isFirstPage ? 24 : 38;
             $rowsWritten = 0;
 
             if ($totalItems === 0) {
@@ -680,6 +706,12 @@ class FinanceInvoiceDocumentService
             $this->appendPdfLine(
                 $content,
                 'Referensi    : ' . (string) ($invoice->reference ?? '-'),
+                $top,
+                false
+            );
+            $this->appendPdfLine(
+                $content,
+                'Kategori     : ' . $this->resolveInvoiceCategoryName($invoice),
                 $top,
                 false
             );
@@ -1136,6 +1168,26 @@ class FinanceInvoiceDocumentService
 
     /**
      * @param array<string, mixed> $meta
+     * @return array{
+     *     selected_id:?string,
+     *     selected_name:string,
+     *     scope_ids:array<int, string>,
+     *     scope_names:array<int, string>,
+     *     scope_label:string,
+     *     is_group:bool
+     * }
+     */
+    private function resolveCollectionCategoryMeta(array $meta): array
+    {
+        $categoryId = data_get($meta, 'filters.category_id');
+
+        return app(FinanceCategoryScopeService::class)->describe(
+            is_string($categoryId) && trim($categoryId) !== '' ? $categoryId : null
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $meta
      */
     private function resolveCollectionScopeLabel(array $meta): string
     {
@@ -1151,8 +1203,11 @@ class FinanceInvoiceDocumentService
      */
     private function buildCollectionSubtitle(int $invoiceCount, array $meta): string
     {
+        $categoryMeta = $this->resolveCollectionCategoryMeta($meta);
+
         return $this->resolveCollectionScopeLabel($meta)
             . ' | Jumlah: ' . number_format($invoiceCount, 0, ',', '.')
+            . ' | Kategori: ' . (string) $categoryMeta['selected_name']
             . ' | Dicetak: ' . now(config('app.timezone'))->format('d/m/Y H:i');
     }
 

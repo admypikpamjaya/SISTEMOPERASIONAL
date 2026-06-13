@@ -248,7 +248,7 @@ class FinanceReportRepository
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->whereIn('category_id', $this->categoryScopeService->idsFor($categoryId));
+        return $query->whereIn('finance_report_snapshots.category_id', $this->categoryScopeService->idsFor($categoryId));
     }
 
     private function hasFinanceReportCategoryColumn(): bool

@@ -59,9 +59,12 @@ class FinanceImportedStatementService
         ?string $batchId = null
     ): array {
         $batches = $this->getBatchOptions(FinanceStatementBatch::TYPE_BALANCE_SHEET);
-        $selectedBatch = $this->resolveSelectedBatch(FinanceStatementBatch::TYPE_BALANCE_SHEET, $batchId, $filter);
+        $aggregateByCategory = !empty($filter->categoryId);
+        $selectedBatch = $aggregateByCategory
+            ? null
+            : $this->resolveSelectedBatch(FinanceStatementBatch::TYPE_BALANCE_SHEET, $batchId, $filter);
 
-        if ($selectedBatch === null) {
+        if ($selectedBatch === null && !$aggregateByCategory) {
             return [
                 'sections' => $this->emptyBalanceSections(),
                 'summary' => [
@@ -85,7 +88,11 @@ class FinanceImportedStatementService
             ];
         }
 
-        $rows = $this->buildRowQuery($selectedBatch->id, $filter)->get();
+        $rows = $this->buildRowQuery(
+            FinanceStatementBatch::TYPE_BALANCE_SHEET,
+            $selectedBatch?->id,
+            $filter
+        )->get();
         $sections = collect($this->emptyBalanceSections())->keyBy('key')->all();
         $uncategorizedRows = [];
         $uncategorizedSummary = [
@@ -157,7 +164,7 @@ class FinanceImportedStatementService
             'uncategorized_count' => count($uncategorizedRows),
             'uncategorized_rows' => $uncategorizedRows,
             'uncategorized_summary' => $uncategorizedSummary,
-            'batch' => $this->serializeBatch($selectedBatch),
+            'batch' => $selectedBatch !== null ? $this->serializeBatch($selectedBatch) : null,
             'batches' => $batches->all(),
             'imported_rows' => $rows->map(fn (FinanceStatementRow $row): array => $this->serializeRow($row))->all(),
         ];
@@ -171,9 +178,12 @@ class FinanceImportedStatementService
         ?string $batchId = null
     ): array {
         $batches = $this->getBatchOptions(FinanceStatementBatch::TYPE_PROFIT_LOSS);
-        $selectedBatch = $this->resolveSelectedBatch(FinanceStatementBatch::TYPE_PROFIT_LOSS, $batchId, $filter);
+        $aggregateByCategory = !empty($filter->categoryId);
+        $selectedBatch = $aggregateByCategory
+            ? null
+            : $this->resolveSelectedBatch(FinanceStatementBatch::TYPE_PROFIT_LOSS, $batchId, $filter);
 
-        if ($selectedBatch === null) {
+        if ($selectedBatch === null && !$aggregateByCategory) {
             return [
                 'income_rows' => [],
                 'expense_rows' => [],
@@ -188,7 +198,11 @@ class FinanceImportedStatementService
             ];
         }
 
-        $rows = $this->buildRowQuery($selectedBatch->id, $filter)->get();
+        $rows = $this->buildRowQuery(
+            FinanceStatementBatch::TYPE_PROFIT_LOSS,
+            $selectedBatch?->id,
+            $filter
+        )->get();
         $incomeRows = [];
         $expenseRows = [];
         $totalIncome = 0.0;
@@ -225,7 +239,7 @@ class FinanceImportedStatementService
                 'expense' => $totalExpense,
                 'net_result' => round($totalIncome - $totalExpense, 2),
             ],
-            'batch' => $this->serializeBatch($selectedBatch),
+            'batch' => $selectedBatch !== null ? $this->serializeBatch($selectedBatch) : null,
             'batches' => $batches->all(),
             'imported_rows' => $rows->map(fn (FinanceStatementRow $row): array => $this->serializeRow($row))->all(),
         ];
@@ -358,13 +372,17 @@ class FinanceImportedStatementService
     public function updateRow(FinanceStatementRow $row, string $statementType, array $payload, ?string $actorId): FinanceStatementRow
     {
         $statementType = strtoupper($statementType);
+        $categoryId = (string) $payload['category_id'];
+        $originalBatchId = (string) $row->batch_id;
+        $batch = $this->resolveTargetBatch($statementType, $originalBatchId, $actorId, $categoryId);
         $meta = is_array($row->meta) ? $row->meta : [];
         $meta['edited_manually'] = true;
         $meta['edited_at'] = now()->toDateTimeString();
 
-        $row->update([
+        $attributes = [
+            'batch_id' => (string) $batch->id,
             'section_key' => strtolower((string) $payload['section_key']),
-            'category_id' => (string) $payload['category_id'],
+            'category_id' => $categoryId,
             'section_label' => $payload['section_label'] ?: $this->resolveSectionLabel($statementType, (string) $payload['section_key']),
             'group_label' => $payload['group_label'] ?? null,
             'account_code' => $payload['account_code'] ?? null,
@@ -374,7 +392,13 @@ class FinanceImportedStatementService
             'is_manual' => true,
             'meta' => $meta,
             'updated_by' => $actorId,
-        ]);
+        ];
+
+        if ((string) $batch->id !== $originalBatchId) {
+            $attributes['sort_order'] = $this->nextSortOrder((string) $batch->id);
+        }
+
+        $row->update($attributes);
 
         return $row->fresh() ?? $row;
     }
@@ -415,14 +439,37 @@ class FinanceImportedStatementService
                 ->find($batchId);
 
             if ($batch !== null) {
-                if ($batch->category_id === null) {
+                if ($batch->category_id === null && $batch->source_type === FinanceStatementBatch::SOURCE_MANUAL) {
                     $batch->update(['category_id' => $categoryId]);
-                } elseif ((string) $batch->category_id !== $categoryId) {
-                    throw new RuntimeException('Kategori baris tidak sama dengan kategori batch laporan.');
+                    return $batch->fresh() ?? $batch;
                 }
 
-                return $batch;
+                if ((string) $batch->category_id === $categoryId) {
+                    return $batch;
+                }
+
+                return $this->resolveManualBatchForCategory($statementType, $actorId, $categoryId);
             }
+        }
+
+        return $this->resolveManualBatchForCategory($statementType, $actorId, $categoryId);
+    }
+
+    private function resolveManualBatchForCategory(
+        string $statementType,
+        ?string $actorId,
+        string $categoryId
+    ): FinanceStatementBatch {
+        $batch = FinanceStatementBatch::query()
+            ->where('statement_type', $statementType)
+            ->where('source_type', FinanceStatementBatch::SOURCE_MANUAL)
+            ->where('category_id', $categoryId)
+            ->orderByDesc('imported_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($batch !== null) {
+            return $batch;
         }
 
         return FinanceStatementBatch::query()->create([
@@ -501,10 +548,16 @@ class FinanceImportedStatementService
             ->first();
     }
 
-    private function buildRowQuery(string $batchId, StatementFilterDTO $filter)
+    private function buildRowQuery(string $statementType, ?string $batchId, StatementFilterDTO $filter)
     {
         $query = FinanceStatementRow::query()
-            ->where('batch_id', $batchId);
+            ->whereIn('batch_id', FinanceStatementBatch::query()
+                ->select('id')
+                ->where('statement_type', $statementType));
+
+        if (!empty($batchId)) {
+            $query->where('batch_id', $batchId);
+        }
 
         if (!empty($filter->categoryId)) {
             $query->whereIn('category_id', $this->categoryIds($filter->categoryId));
@@ -530,6 +583,7 @@ class FinanceImportedStatementService
         }
 
         return $query
+            ->orderBy('batch_id')
             ->orderBy('sort_order')
             ->orderBy('sheet_row_number')
             ->orderBy('id');

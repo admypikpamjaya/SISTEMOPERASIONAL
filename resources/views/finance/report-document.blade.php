@@ -130,6 +130,9 @@
         } elseif ($report->reportType === 'MONTHLY') {
             $periodLabel = sprintf('%02d/%04d', (int) ($report->month ?? 1), $report->year);
         }
+
+        $categoryMeta = app(\App\Services\Finance\FinanceCategoryScopeService::class)
+            ->describe($report->categoryId ?? null);
     @endphp
 
     <div class="document-shell">
@@ -144,6 +147,12 @@
                 <td>: {{ $periodLabel }}</td>
                 <td class="label">{{ __('app.finance.type') }}</td>
                 <td>: {{ $report->reportType }}</td>
+            </tr>
+            <tr>
+                <td class="label">{{ __('app.finance.category_filter_label') }}</td>
+                <td>: {{ $categoryMeta['selected_name'] }}</td>
+                <td class="label">{{ __('app.finance.category_scope_label') }}</td>
+                <td>: {{ $categoryMeta['scope_label'] }}</td>
             </tr>
             <tr>
                 <td class="label">{{ __('app.finance.prepared_by') }}</td>

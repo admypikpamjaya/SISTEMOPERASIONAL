@@ -134,7 +134,11 @@ class ReportDocumentService
         $sheet->setCellValue('E3', (string) ($meta['category_name'] ?? 'Semua'));
         $sheet->setCellValue('G3', 'Dibuat');
         $sheet->setCellValue('H3', now()->format('d/m/Y H:i:s'));
-        $sheet->getStyle('A3:H3')->getFont()->setBold(true);
+        $sheet->setCellValue('A4', __('app.finance.category_scope_label'));
+        $sheet->setCellValue('B4', (string) ($meta['category_scope'] ?? $meta['category_name'] ?? 'Semua'));
+        $sheet->mergeCells('B4:J4');
+        $sheet->getStyle('A3:J4')->getFont()->setBold(true);
+        $sheet->getStyle('B4:J4')->getAlignment()->setWrapText(true);
 
         $actualOverview = data_get($actualSummary, 'journal_overview', []);
         $actualProfitLoss = data_get($actualSummary, 'profit_loss.totals', []);
@@ -146,7 +150,7 @@ class ReportDocumentService
             ['Snapshot Manual Tersimpan', (int) data_get($totals, 'count', 0), 'Surplus Snapshot', (float) data_get($totals, 'total_net_result', 0)],
         ];
 
-        $row = 5;
+        $row = 6;
         foreach ($summaryRows as $summaryRow) {
             $sheet->setCellValue('A' . $row, $summaryRow[0]);
             $sheet->setCellValue('B' . $row, $summaryRow[1]);
@@ -154,12 +158,12 @@ class ReportDocumentService
             $sheet->setCellValue('E' . $row, $summaryRow[3]);
             $row++;
         }
-        $sheet->getStyle('A5:A7')->getFont()->setBold(true);
-        $sheet->getStyle('D5:D7')->getFont()->setBold(true);
-        $sheet->getStyle('B5:B6')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
-        $sheet->getStyle('E6:E7')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
+        $sheet->getStyle('A6:A8')->getFont()->setBold(true);
+        $sheet->getStyle('D6:D8')->getFont()->setBold(true);
+        $sheet->getStyle('B6:B7')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
+        $sheet->getStyle('E7:E8')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
 
-        $headerRow = 10;
+        $headerRow = 11;
         $sheet->fromArray([
             'No',
             'Periode',
@@ -219,7 +223,7 @@ class ReportDocumentService
             ->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         $sheet->getStyle('A' . $headerRow . ':J' . $totalRow)->applyFromArray($this->snapshotThinBorderStyle());
-        $sheet->freezePane('A11');
+        $sheet->freezePane('A12');
         $sheet->setAutoFilter('A' . $headerRow . ':J' . max($headerRow, $totalRow - 1));
 
         $writer = new Xlsx($spreadsheet);
@@ -414,14 +418,23 @@ class ReportDocumentService
 
         $periodLabel = (string) ($meta['period_label'] ?? 'Semua periode');
         $categoryName = (string) ($meta['category_name'] ?? 'Semua');
+        $categoryScope = (string) ($meta['category_scope'] ?? $categoryName);
         $comparisonType = (string) ($meta['comparison_type'] ?? 'NONE');
 
         $content .= $this->pdfDrawText('Periode: ' . $periodLabel, 50, 112, 10, false, [225, 232, 240]);
         $content .= $this->pdfDrawText('Kategori: ' . $categoryName, 50, 130, 10, false, [225, 232, 240]);
+        $content .= $this->pdfDrawText(
+            __('app.finance.category_scope_label') . ': ' . $this->truncatePdfText($categoryScope, 470, 10),
+            50,
+            148,
+            10,
+            false,
+            [225, 232, 240]
+        );
         $content .= $this->pdfDrawText('Perbandingan: ' . $comparisonType, 340, 112, 10, false, [225, 232, 240]);
         $content .= $this->pdfDrawText('Generated: ' . now()->format('d/m/Y H:i:s'), 340, 130, 10, false, [225, 232, 240]);
 
-        $top = $pageNumber === 1 ? 166.0 : 154.0;
+        $top = $pageNumber === 1 ? 184.0 : 172.0;
 
         return $content;
     }
@@ -545,8 +558,15 @@ class ReportDocumentService
     private function renderDocxDocument(ProfitLossReportDetailDTO $report): string
     {
         $rows = $this->buildReportRows($report);
+        $categoryMeta = $this->resolveReportCategoryMeta($report);
         $metaRows = [
             ['Periode', ': ' . $this->resolvePeriodLabel($report), 'Jenis', ': ' . $report->reportType],
+            [
+                __('app.finance.category_filter_label'),
+                ': ' . (string) $categoryMeta['selected_name'],
+                __('app.finance.category_scope_label'),
+                ': ' . (string) $categoryMeta['scope_label'],
+            ],
             ['Disusun Oleh', ': ' . ($report->generatedByName ?? '-'), 'Generated At', ': ' . $report->generatedAt->format('Y-m-d H:i:s')],
         ];
 
@@ -1060,6 +1080,7 @@ class ReportDocumentService
         $sheet->getColumnDimension('B')->setWidth(40);
         $sheet->getColumnDimension('C')->setWidth(36);
         $sheet->getColumnDimension('D')->setWidth(22);
+        $categoryMeta = $this->resolveReportCategoryMeta($report);
 
         $row = 1;
         $sheet->mergeCells('A1:D1');
@@ -1080,12 +1101,19 @@ class ReportDocumentService
         $sheet->setCellValue('D4', $report->openingBalance);
         $sheet->setCellValue('A5', 'Saldo Akhir');
         $sheet->setCellValue('D5', $report->endingBalance);
+        $sheet->setCellValue('A6', __('app.finance.category_filter_label'));
+        $sheet->mergeCells('B6:D6');
+        $sheet->setCellValue('B6', (string) $categoryMeta['selected_name']);
+        $sheet->setCellValue('A7', __('app.finance.category_scope_label'));
+        $sheet->mergeCells('B7:D7');
+        $sheet->setCellValue('B7', (string) $categoryMeta['scope_label']);
 
-        $sheet->getStyle('A3:A5')->getFont()->setBold(true);
+        $sheet->getStyle('A3:A7')->getFont()->setBold(true);
+        $sheet->getStyle('B6:D7')->getAlignment()->setWrapText(true);
         $sheet->getStyle('D4:D5')->getNumberFormat()->setFormatCode('[$Rp-421] #,##0.00');
         $sheet->getStyle('D4:D5')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-        $row = 7;
+        $row = 9;
         $headerRow = $row;
         $sheet->fromArray(['Kode', 'Uraian', 'Keterangan', 'Nominal'], null, 'A' . $row);
         $sheet->getStyle('A' . $row . ':D' . $row)->applyFromArray([
@@ -1134,7 +1162,7 @@ class ReportDocumentService
             ->getAlignment()
             ->setVertical(Alignment::VERTICAL_TOP);
 
-        $sheet->freezePane('A8');
+        $sheet->freezePane('A10');
 
         $writer = new Xlsx($spreadsheet);
         ob_start();
@@ -1360,6 +1388,7 @@ class ReportDocumentService
         $content .= $this->pdfDrawRect(16, 14, 563, 814, [39, 41, 47], null);
 
         if ($isFirstPage) {
+            $categoryMeta = $this->resolveReportCategoryMeta($report);
             $content .= $this->pdfDrawText('LABA DAN RUGI', $tableX, 76, 32, true, [230, 236, 244], 'center', $tableWidth);
             $content .= $this->pdfDrawText('YPIK PAM JAYA', $tableX, 109, 16, false, [206, 215, 228], 'center', $tableWidth);
 
@@ -1372,11 +1401,30 @@ class ReportDocumentService
             $content .= $this->pdfDrawText('Jenis', $metaRightX, 150, 12, true, [225, 232, 240]);
             $content .= $this->pdfDrawText(': ' . $report->reportType, $metaRightX + $valueOffset, 150, 12, false, [211, 220, 230]);
 
-            $content .= $this->pdfDrawText('Disusun Oleh', $metaLeftX, 188, 12, true, [225, 232, 240]);
-            $content .= $this->pdfDrawText(': ' . ($report->generatedByName ?? '-'), $metaLeftX + $valueOffset, 188, 12, false, [211, 220, 230]);
-            $content .= $this->pdfDrawText('Generated At', $metaRightX, 188, 12, true, [225, 232, 240]);
-            $content .= $this->pdfDrawText(': ' . $report->generatedAt->format('Y-m-d H:i:s'), $metaRightX + $valueOffset, 188, 12, false, [211, 220, 230]);
-            $tableTop = 248.0;
+            $content .= $this->pdfDrawText(__('app.finance.category_filter_label'), $metaLeftX, 176, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(
+                ': ' . $this->truncatePdfText((string) $categoryMeta['selected_name'], 130, 12),
+                $metaLeftX + $valueOffset,
+                176,
+                12,
+                false,
+                [211, 220, 230]
+            );
+            $content .= $this->pdfDrawText(__('app.finance.category_scope_label'), $metaRightX, 176, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(
+                ': ' . $this->truncatePdfText((string) $categoryMeta['scope_label'], 138, 12),
+                $metaRightX + $valueOffset,
+                176,
+                12,
+                false,
+                [211, 220, 230]
+            );
+
+            $content .= $this->pdfDrawText('Disusun Oleh', $metaLeftX, 214, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(': ' . ($report->generatedByName ?? '-'), $metaLeftX + $valueOffset, 214, 12, false, [211, 220, 230]);
+            $content .= $this->pdfDrawText('Generated At', $metaRightX, 214, 12, true, [225, 232, 240]);
+            $content .= $this->pdfDrawText(': ' . $report->generatedAt->format('Y-m-d H:i:s'), $metaRightX + $valueOffset, 214, 12, false, [211, 220, 230]);
+            $tableTop = 274.0;
         } else {
             $content .= $this->pdfDrawText('LABA DAN RUGI (lanjutan)', $tableX, 72, 18, true, [230, 236, 244], 'center', $tableWidth);
             $tableTop = 108.0;
@@ -1612,6 +1660,21 @@ class ReportDocumentService
     private function escapeXmlText(string $value): string
     {
         return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * @return array{
+     *     selected_id:?string,
+     *     selected_name:string,
+     *     scope_ids:array<int, string>,
+     *     scope_names:array<int, string>,
+     *     scope_label:string,
+     *     is_group:bool
+     * }
+     */
+    private function resolveReportCategoryMeta(ProfitLossReportDetailDTO $report): array
+    {
+        return app(FinanceCategoryScopeService::class)->describe($report->categoryId);
     }
 
     private function resolvePeriodLabel(ProfitLossReportDetailDTO $report): string

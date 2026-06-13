@@ -76,7 +76,7 @@ class FinanceAccountController extends Controller
         }
 
         if (!empty($selectedCategoryId)) {
-            $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId));
+            $query->whereIn('finance_accounts.category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId));
         }
 
         $accounts = $query
@@ -84,7 +84,7 @@ class FinanceAccountController extends Controller
             ->withQueryString();
 
         $accountCounts = FinanceAccount::query()
-            ->when(!empty($selectedCategoryId), fn ($countQuery) => $countQuery->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId)))
+            ->when(!empty($selectedCategoryId), fn ($countQuery) => $countQuery->whereIn('finance_accounts.category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId)))
             ->selectRaw('class_no, COUNT(*) as total')
             ->groupBy('class_no')
             ->pluck('total', 'class_no');

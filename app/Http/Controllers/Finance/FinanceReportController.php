@@ -181,7 +181,7 @@ class FinanceReportController extends Controller
         $this->applySnapshotPeriodToInvoiceQuery($query, $filter);
 
         if (!empty($filter->categoryId) && Schema::hasColumn('finance_invoices', 'category_id')) {
-            $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($filter->categoryId));
+            $query->whereIn('finance_invoices.category_id', app(FinanceCategoryScopeService::class)->idsFor($filter->categoryId));
         } elseif (!empty($filter->categoryId)) {
             $query->whereRaw('1 = 0');
         }
@@ -276,6 +276,7 @@ class FinanceReportController extends Controller
             $statementFilter = $this->buildStatementFilter($filter);
             $exportPayload = $this->reportService->getSnapshotExport($filter);
             $actualSummary = $this->financialStatementService->getDashboardSummary($statementFilter);
+            $categoryMeta = app(FinanceCategoryScopeService::class)->describe($filter->categoryId);
 
             $exported = $this->reportDocumentService->exportSnapshotCollection(
                 $exportPayload['reports'],
@@ -285,7 +286,8 @@ class FinanceReportController extends Controller
                 [
                     'period_label' => $this->buildActualPeriodLabel($selectedPeriodType, $filter),
                     'period_type' => $selectedPeriodType,
-                    'category_name' => $this->resolveFinanceCategoryName($filter->categoryId),
+                    'category_name' => $categoryMeta['selected_name'],
+                    'category_scope' => $categoryMeta['scope_label'],
                     'start_date' => $filter->startDate,
                     'end_date' => $filter->endDate,
                     'comparison_type' => $filter->comparisonType,

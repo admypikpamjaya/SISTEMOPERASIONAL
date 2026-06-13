@@ -35,9 +35,12 @@ class FinanceGeneralLedgerService
         bool $paginate = true
     ): array {
         $batches = $this->getBatchOptions();
-        $selectedBatch = $this->resolveSelectedBatch($batchId, $filter->categoryId);
+        $aggregateByCategory = !empty($filter->categoryId);
+        $selectedBatch = $aggregateByCategory
+            ? null
+            : $this->resolveSelectedBatch($batchId, $filter->categoryId);
 
-        if ($selectedBatch === null) {
+        if ($selectedBatch === null && !$aggregateByCategory) {
             return [
                 'groups' => [],
                 'accounts' => $paginate ? collect([]) : [],
@@ -47,22 +50,12 @@ class FinanceGeneralLedgerService
             ];
         }
 
-        $baseQuery = FinanceGeneralLedgerEntry::query()
-            ->where('batch_id', $selectedBatch->id);
-
-        if (!empty($filter->categoryId)) {
-            $baseQuery->whereIn('category_id', $this->categoryIds($filter->categoryId));
-        }
-
-        if (!empty($filter->accountCode)) {
-            $baseQuery->where('account_code', $filter->accountCode);
-        }
-
+        $baseQuery = $this->buildImportedEntryBaseQuery($filter, $selectedBatch?->id);
         $visibleQuery = clone $baseQuery;
         $this->applyImportedLedgerSearch($visibleQuery, $filter->search);
         $hasDateFilter = $this->applyImportedLedgerPeriodFilter($visibleQuery, $filter);
 
-        $summary = $this->buildImportedSummary($selectedBatch->id, $filter);
+        $summary = $this->buildImportedSummary($selectedBatch?->id, $filter);
         $accountQuery = $this->buildImportedAccountQuery($visibleQuery, $hasDateFilter);
 
         $accounts = $paginate
@@ -84,20 +77,18 @@ class FinanceGeneralLedgerService
                 'groups' => [],
                 'accounts' => $accounts,
                 'summary' => $summary,
-                'batch' => $this->serializeBatch($selectedBatch),
+                'batch' => $selectedBatch !== null ? $this->serializeBatch($selectedBatch) : null,
                 'batches' => $batches->all(),
             ];
         }
 
-        $visibleEntries = $this->buildVisibleEntryQuery($selectedBatch->id, $filter, $accountCodes)
+        $visibleEntries = $this->buildVisibleEntryQuery($selectedBatch?->id, $filter, $accountCodes)
             ->get()
             ->groupBy('account_code');
 
         $openingRows = collect();
         if (!empty($filter->startDate)) {
-            $openingRows = FinanceGeneralLedgerEntry::query()
-                ->where('batch_id', $selectedBatch->id)
-                ->when(!empty($filter->categoryId), fn (Builder $query) => $query->whereIn('category_id', $this->categoryIds($filter->categoryId)))
+            $openingRows = $this->buildImportedEntryBaseQuery($filter, $selectedBatch?->id)
                 ->whereIn('account_code', $accountCodes)
                 ->whereDate('entry_date', '<', $filter->startDate)
                 ->orderBy('account_code')
@@ -193,7 +184,7 @@ class FinanceGeneralLedgerService
             'groups' => $groups,
             'accounts' => $accounts,
             'summary' => $summary,
-            'batch' => $this->serializeBatch($selectedBatch),
+            'batch' => $selectedBatch !== null ? $this->serializeBatch($selectedBatch) : null,
             'batches' => $batches->all(),
         ];
     }
@@ -240,20 +231,19 @@ class FinanceGeneralLedgerService
      */
     public function getImportedAccountOptions(StatementFilterDTO $filter, ?string $batchId = null): array
     {
-        $selectedBatch = $this->resolveSelectedBatch($batchId, $filter->categoryId);
-        if ($selectedBatch === null) {
+        $aggregateByCategory = !empty($filter->categoryId);
+        $selectedBatch = $aggregateByCategory
+            ? null
+            : $this->resolveSelectedBatch($batchId, $filter->categoryId);
+
+        if ($selectedBatch === null && !$aggregateByCategory) {
             return [];
         }
 
         $optionFilter = clone $filter;
         $optionFilter->accountCode = null;
 
-        $query = FinanceGeneralLedgerEntry::query()
-            ->where('batch_id', $selectedBatch->id);
-
-        if (!empty($optionFilter->categoryId)) {
-            $query->whereIn('category_id', $this->categoryIds($optionFilter->categoryId));
-        }
+        $query = $this->buildImportedEntryBaseQuery($optionFilter, $selectedBatch?->id);
 
         $this->applyImportedLedgerSearch($query, $optionFilter->search);
         $hasDateFilter = $this->applyImportedLedgerPeriodFilter($query, $optionFilter);
@@ -415,13 +405,17 @@ class FinanceGeneralLedgerService
 
     public function updateEntry(FinanceGeneralLedgerEntry $entry, array $payload, ?string $actorId): FinanceGeneralLedgerEntry
     {
+        $categoryId = (string) $payload['category_id'];
+        $originalBatchId = (string) $entry->batch_id;
+        $batch = $this->resolveTargetBatch($originalBatchId, $actorId, $categoryId);
         $meta = is_array($entry->meta) ? $entry->meta : [];
         $meta['edited_manually'] = true;
         $meta['edited_at'] = now()->toDateTimeString();
 
-        $entry->update([
+        $attributes = [
+            'batch_id' => (string) $batch->id,
             'row_type' => (string) $payload['row_type'],
-            'category_id' => (string) $payload['category_id'],
+            'category_id' => $categoryId,
             'entry_date' => (string) $payload['entry_date'],
             'account_code' => (string) $payload['account_code'],
             'account_name' => (string) $payload['account_name'],
@@ -447,9 +441,18 @@ class FinanceGeneralLedgerService
             'is_manual' => true,
             'meta' => $meta,
             'updated_by' => $actorId,
-        ]);
+        ];
 
-        $this->recalculateBatchBalances((string) $entry->batch_id);
+        if ((string) $batch->id !== $originalBatchId) {
+            $attributes['sort_order'] = $this->nextSortOrder((string) $batch->id, (string) $payload['account_code']);
+        }
+
+        $entry->update($attributes);
+
+        $this->recalculateBatchBalances($originalBatchId);
+        if ((string) $batch->id !== $originalBatchId) {
+            $this->recalculateBatchBalances((string) $batch->id);
+        }
 
         return $entry->fresh() ?? $entry;
     }
@@ -796,20 +799,40 @@ class FinanceGeneralLedgerService
     {
         $batch = $this->findBatch($batchId);
         if ($batch !== null) {
-            if ($batch->category_id === null) {
+            if ($batch->category_id === null && $batch->source_type === FinanceGeneralLedgerBatch::SOURCE_MANUAL) {
                 $batch->update(['category_id' => $categoryId]);
-            } elseif ((string) $batch->category_id !== $categoryId) {
-                throw new RuntimeException('Kategori baris tidak sama dengan kategori batch buku besar.');
+                return $batch->fresh() ?? $batch;
             }
 
+            if ((string) $batch->category_id === $categoryId) {
+                return $batch;
+            }
+
+            return $this->resolveManualBatchForCategory($actorId, $categoryId);
+        }
+
+        return $this->resolveManualBatchForCategory($actorId, $categoryId);
+    }
+
+    private function resolveManualBatchForCategory(?string $actorId, string $categoryId): FinanceGeneralLedgerBatch
+    {
+        $batch = FinanceGeneralLedgerBatch::query()
+            ->where('source_type', FinanceGeneralLedgerBatch::SOURCE_MANUAL)
+            ->where('category_id', $categoryId)
+            ->orderByDesc('imported_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($batch !== null) {
             return $batch;
         }
 
         return FinanceGeneralLedgerBatch::query()->create([
             'source_type' => FinanceGeneralLedgerBatch::SOURCE_MANUAL,
             'category_id' => $categoryId,
-            'batch_name' => 'Manual Buku Besar',
+            'batch_name' => 'Manual Buku Besar ' . now()->format('Y-m-d H:i'),
             'notes' => 'Batch otomatis untuk entry buku besar manual.',
+            'imported_year' => now()->year,
             'imported_at' => now(),
             'created_by' => $actorId,
             'updated_by' => $actorId,
@@ -829,19 +852,9 @@ class FinanceGeneralLedgerService
     /**
      * @return array{account_count:int,entry_count:int,total_debit:float,total_credit:float,balance_gap:float}
      */
-    private function buildImportedSummary(string $batchId, StatementFilterDTO $filter): array
+    private function buildImportedSummary(?string $batchId, StatementFilterDTO $filter): array
     {
-        $baseQuery = FinanceGeneralLedgerEntry::query()
-            ->where('batch_id', $batchId);
-
-        if (!empty($filter->categoryId)) {
-            $baseQuery->whereIn('category_id', $this->categoryIds($filter->categoryId));
-        }
-
-        if (!empty($filter->accountCode)) {
-            $baseQuery->where('account_code', $filter->accountCode);
-        }
-
+        $baseQuery = $this->buildImportedEntryBaseQuery($filter, $batchId);
         $this->applyImportedLedgerSearch($baseQuery, $filter->search);
         $hasDateFilter = $this->applyImportedLedgerPeriodFilter($baseQuery, $filter);
 
@@ -850,10 +863,7 @@ class FinanceGeneralLedgerService
             ->value('total_accounts');
 
         if ($hasDateFilter) {
-            $accountCount = (int) FinanceGeneralLedgerEntry::query()
-                ->where('batch_id', $batchId)
-                ->when(!empty($filter->categoryId), fn (Builder $query) => $query->whereIn('category_id', $this->categoryIds($filter->categoryId)))
-                ->when(!empty($filter->accountCode), fn (Builder $query) => $query->where('account_code', $filter->accountCode))
+            $accountCount = (int) $this->buildImportedEntryBaseQuery($filter, $batchId)
                 ->tap(fn (Builder $query) => $this->applyImportedLedgerSearch($query, $filter->search))
                 ->tap(fn (Builder $query) => $this->applyImportedLedgerPeriodFilter($query, $filter))
                 ->where('row_type', FinanceGeneralLedgerEntry::ROW_TYPE_ENTRY)
@@ -902,11 +912,9 @@ class FinanceGeneralLedgerService
         return $query;
     }
 
-    private function buildVisibleEntryQuery(string $batchId, StatementFilterDTO $filter, array $accountCodes): Builder
+    private function buildVisibleEntryQuery(?string $batchId, StatementFilterDTO $filter, array $accountCodes): Builder
     {
-        $query = FinanceGeneralLedgerEntry::query()
-            ->where('batch_id', $batchId)
-            ->when(!empty($filter->categoryId), fn (Builder $query) => $query->whereIn('category_id', $this->categoryIds($filter->categoryId)))
+        $query = $this->buildImportedEntryBaseQuery($filter, $batchId)
             ->whereIn('account_code', $accountCodes);
 
         $this->applyImportedLedgerSearch($query, $filter->search);
@@ -918,6 +926,14 @@ class FinanceGeneralLedgerService
             ->orderBy('entry_date')
             ->orderBy('sort_order')
             ->orderBy('id');
+    }
+
+    private function buildImportedEntryBaseQuery(StatementFilterDTO $filter, ?string $batchId = null): Builder
+    {
+        return FinanceGeneralLedgerEntry::query()
+            ->when(!empty($batchId), fn (Builder $query) => $query->where('finance_general_ledger_entries.batch_id', $batchId))
+            ->when(!empty($filter->categoryId), fn (Builder $query) => $query->whereIn('finance_general_ledger_entries.category_id', $this->categoryIds($filter->categoryId)))
+            ->when(!empty($filter->accountCode), fn (Builder $query) => $query->where('finance_general_ledger_entries.account_code', $filter->accountCode));
     }
 
     /**
@@ -939,14 +955,14 @@ class FinanceGeneralLedgerService
             $likeKeyword = '%' . $keyword . '%';
 
             $nestedQuery
-                ->where('account_code', 'like', $likeKeyword)
-                ->orWhere('account_name', 'like', $likeKeyword)
-                ->orWhere('transaction_no', 'like', $likeKeyword)
-                ->orWhere('communication', 'like', $likeKeyword)
-                ->orWhere('partner_name', 'like', $likeKeyword)
-                ->orWhere('label', 'like', $likeKeyword)
-                ->orWhere('reference', 'like', $likeKeyword)
-                ->orWhere('analytic_distribution', 'like', $likeKeyword);
+                ->where('finance_general_ledger_entries.account_code', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.account_name', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.transaction_no', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.communication', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.partner_name', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.label', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.reference', 'like', $likeKeyword)
+                ->orWhere('finance_general_ledger_entries.analytic_distribution', 'like', $likeKeyword);
         });
     }
 
@@ -960,11 +976,11 @@ class FinanceGeneralLedgerService
         }
 
         if ($hasStartDate) {
-            $query->whereDate('entry_date', '>=', $filter->startDate);
+            $query->whereDate('finance_general_ledger_entries.entry_date', '>=', $filter->startDate);
         }
 
         if ($hasEndDate) {
-            $query->whereDate('entry_date', '<=', $filter->endDate);
+            $query->whereDate('finance_general_ledger_entries.entry_date', '<=', $filter->endDate);
         }
 
         return true;

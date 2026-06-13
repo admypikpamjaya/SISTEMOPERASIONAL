@@ -16,7 +16,7 @@ class FinancialStatementDocumentService
             'content' => $this->renderPdfDocument(
                 'Laporan Lembar Saldo',
                 $this->buildSubtitle(__('app.finance.balance_sheet_items') . '.', $filter),
-                $this->buildBalanceSheetLines($report)
+                $this->buildBalanceSheetLines($report, $filter)
             ),
             'filename' => $this->buildFilename('laporan-lembar-saldo', $filter),
             'mime' => 'application/pdf',
@@ -32,7 +32,7 @@ class FinancialStatementDocumentService
             'content' => $this->renderPdfDocument(
                 'Laporan Laba Rugi',
                 $this->buildSubtitle(__('app.finance.profit_loss_items') . '.', $filter),
-                $this->buildProfitLossLines($report)
+                $this->buildProfitLossLines($report, $filter)
             ),
             'filename' => $this->buildFilename('laporan-laba-rugi', $filter),
             'mime' => 'application/pdf',
@@ -48,7 +48,7 @@ class FinancialStatementDocumentService
             'content' => $this->renderPdfDocument(
                 'Buku Besar',
                 $this->buildSubtitle(__('app.finance.general_ledger_description'), $filter),
-                $this->buildGeneralLedgerLines($report)
+                $this->buildGeneralLedgerLines($report, $filter)
             ),
             'filename' => $this->buildFilename('buku-besar', $filter),
             'mime' => 'application/pdf',
@@ -64,7 +64,7 @@ class FinancialStatementDocumentService
             'content' => $this->renderPdfDocument(
                 'Item Jurnal',
                 $this->buildSubtitle(__('app.finance.journal_items_description'), $filter),
-                $this->buildJournalItemLines($report)
+                $this->buildJournalItemLines($report, $filter)
             ),
             'filename' => $this->buildFilename('item-jurnal', $filter),
             'mime' => 'application/pdf',
@@ -74,20 +74,19 @@ class FinancialStatementDocumentService
     /**
      * @return array<int, array<string, int|string|bool>>
      */
-    private function buildBalanceSheetLines(array $report): array
+    private function buildBalanceSheetLines(array $report, StatementFilterDTO $filter): array
     {
         $summary = $report['summary'] ?? [];
         $sections = $report['sections'] ?? [];
         $uncategorizedCount = (int) ($report['uncategorized_count'] ?? 0);
-        $lines = [
-            $this->sectionLine('Ringkasan'),
-            $this->bodyLine('Liabilitas       : ' . $this->formatCurrency((float) ($summary['liabilitas_total'] ?? 0))),
-            $this->bodyLine('Piutang          : ' . $this->formatCurrency((float) ($summary['piutang_total'] ?? 0))),
-            $this->bodyLine('Kas              : ' . $this->formatCurrency((float) ($summary['kas_total'] ?? 0))),
-            $this->bodyLine('Aset             : ' . $this->formatCurrency((float) ($summary['aset_total'] ?? 0))),
-            $this->bodyLine('Total Sisi Aset  : ' . $this->formatCurrency((float) ($summary['asset_side_total'] ?? 0))),
-            $this->bodyLine('Jumlah Akun      : ' . number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.'), false, 0, 6),
-        ];
+        $lines = $this->categoryInfoLines($filter);
+        $lines[] = $this->sectionLine('Ringkasan');
+        $lines[] = $this->bodyLine('Liabilitas       : ' . $this->formatCurrency((float) ($summary['liabilitas_total'] ?? 0)));
+        $lines[] = $this->bodyLine('Piutang          : ' . $this->formatCurrency((float) ($summary['piutang_total'] ?? 0)));
+        $lines[] = $this->bodyLine('Kas              : ' . $this->formatCurrency((float) ($summary['kas_total'] ?? 0)));
+        $lines[] = $this->bodyLine('Aset             : ' . $this->formatCurrency((float) ($summary['aset_total'] ?? 0)));
+        $lines[] = $this->bodyLine('Total Sisi Aset  : ' . $this->formatCurrency((float) ($summary['asset_side_total'] ?? 0)));
+        $lines[] = $this->bodyLine('Jumlah Akun      : ' . number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.'), false, 0, 6);
 
         if ($uncategorizedCount > 0) {
             $lines[] = $this->bodyLine(
@@ -142,27 +141,26 @@ class FinancialStatementDocumentService
     /**
      * @return array<int, array<string, int|string|bool>>
      */
-    private function buildProfitLossLines(array $report): array
+    private function buildProfitLossLines(array $report, StatementFilterDTO $filter): array
     {
         $incomeRows = $report['income_rows'] ?? [];
         $expenseRows = $report['expense_rows'] ?? [];
         $totals = $report['totals'] ?? [];
-        $lines = [
-            $this->sectionLine('Ringkasan'),
-            $this->bodyLine('Total Pemasukan   : ' . $this->formatCurrency((float) ($totals['income'] ?? 0))),
-            $this->bodyLine('Total Pengeluaran : ' . $this->formatCurrency((float) ($totals['expense'] ?? 0))),
-            $this->bodyLine('Laba / Rugi Bersih: ' . $this->formatCurrency((float) ($totals['net_result'] ?? 0)), true, 0, 6),
+        $lines = $this->categoryInfoLines($filter);
+        $lines[] = $this->sectionLine('Ringkasan');
+        $lines[] = $this->bodyLine('Total Pemasukan   : ' . $this->formatCurrency((float) ($totals['income'] ?? 0)));
+        $lines[] = $this->bodyLine('Total Pengeluaran : ' . $this->formatCurrency((float) ($totals['expense'] ?? 0)));
+        $lines[] = $this->bodyLine('Laba / Rugi Bersih: ' . $this->formatCurrency((float) ($totals['net_result'] ?? 0)), true, 0, 6);
 
-            $this->sectionLine('PEMASUKAN'),
-            $this->monoLine(
-                $this->formatColumns([
-                    ['text' => 'Kode', 'width' => 12],
-                    ['text' => 'Nama Akun', 'width' => 44],
-                    ['text' => 'Nominal', 'width' => 22, 'align' => 'right'],
-                ]),
-                true
-            ),
-        ];
+        $lines[] = $this->sectionLine('PEMASUKAN');
+        $lines[] = $this->monoLine(
+            $this->formatColumns([
+                ['text' => 'Kode', 'width' => 12],
+                ['text' => 'Nama Akun', 'width' => 44],
+                ['text' => 'Nominal', 'width' => 22, 'align' => 'right'],
+            ]),
+            true
+        );
 
         if (empty($incomeRows)) {
             $lines[] = $this->bodyLine('Belum ada pemasukan pada periode ini.', false, 2, 4);
@@ -213,18 +211,17 @@ class FinancialStatementDocumentService
     /**
      * @return array<int, array<string, int|string|bool>>
      */
-    private function buildGeneralLedgerLines(array $report): array
+    private function buildGeneralLedgerLines(array $report, StatementFilterDTO $filter): array
     {
         $summary = $report['summary'] ?? [];
         $groups = $report['groups'] ?? [];
-        $lines = [
-            $this->sectionLine('Ringkasan'),
-            $this->bodyLine('Jumlah Akun  : ' . number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.')),
-            $this->bodyLine('Baris Jurnal : ' . number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.')),
-            $this->bodyLine('Total Debit  : ' . $this->formatCurrency((float) ($summary['total_debit'] ?? 0))),
-            $this->bodyLine('Total Kredit : ' . $this->formatCurrency((float) ($summary['total_credit'] ?? 0))),
-            $this->bodyLine('Selisih      : ' . $this->formatCurrency((float) ($summary['balance_gap'] ?? 0)), true, 0, 6),
-        ];
+        $lines = $this->categoryInfoLines($filter);
+        $lines[] = $this->sectionLine('Ringkasan');
+        $lines[] = $this->bodyLine('Jumlah Akun  : ' . number_format((int) ($summary['account_count'] ?? 0), 0, ',', '.'));
+        $lines[] = $this->bodyLine('Baris Jurnal : ' . number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.'));
+        $lines[] = $this->bodyLine('Total Debit  : ' . $this->formatCurrency((float) ($summary['total_debit'] ?? 0)));
+        $lines[] = $this->bodyLine('Total Kredit : ' . $this->formatCurrency((float) ($summary['total_credit'] ?? 0)));
+        $lines[] = $this->bodyLine('Selisih      : ' . $this->formatCurrency((float) ($summary['balance_gap'] ?? 0)), true, 0, 6);
 
         if (empty($groups)) {
             $lines[] = $this->bodyLine('Belum ada data buku besar pada filter aktif.', false, 0, 4);
@@ -303,7 +300,7 @@ class FinancialStatementDocumentService
     /**
      * @return array<int, array<string, int|string|bool>>
      */
-    private function buildJournalItemLines(array $report): array
+    private function buildJournalItemLines(array $report, StatementFilterDTO $filter): array
     {
         $summary = $report['summary'] ?? [];
         $account = $report['account'] ?? ['code' => null, 'name' => null];
@@ -317,27 +314,26 @@ class FinancialStatementDocumentService
             ? '[' . (string) $account['code'] . '] ' . (string) ($account['name'] ?? '-')
             : 'Semua Akun';
 
-        $lines = [
-            $this->sectionLine('Ringkasan'),
-            $this->bodyLine('Akun           : ' . $accountLabel),
-            $this->bodyLine('Baris Jurnal   : ' . number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.')),
-            $this->bodyLine('Nilai Jurnal   : ' . $this->formatCurrency((float) ($summary['total_amount'] ?? 0))),
-            $this->bodyLine('Total Debit    : ' . $this->formatCurrency((float) ($summary['total_debit'] ?? 0))),
-            $this->bodyLine('Total Kredit   : ' . $this->formatCurrency((float) ($summary['total_credit'] ?? 0)), true, 0, 6),
+        $lines = $this->categoryInfoLines($filter);
+        $lines[] = $this->sectionLine('Ringkasan');
+        $lines[] = $this->bodyLine('Akun           : ' . $accountLabel);
+        $lines[] = $this->bodyLine('Baris Jurnal   : ' . number_format((int) ($summary['entry_count'] ?? 0), 0, ',', '.'));
+        $lines[] = $this->bodyLine('Nilai Jurnal   : ' . $this->formatCurrency((float) ($summary['total_amount'] ?? 0)));
+        $lines[] = $this->bodyLine('Total Debit    : ' . $this->formatCurrency((float) ($summary['total_debit'] ?? 0)));
+        $lines[] = $this->bodyLine('Total Kredit   : ' . $this->formatCurrency((float) ($summary['total_credit'] ?? 0)), true, 0, 6);
 
-            $this->sectionLine('DETAIL ITEM JURNAL'),
-            $this->monoLine(
-                $this->formatColumns([
-                    ['text' => 'Tanggal', 'width' => 12],
-                    ['text' => 'No Jurnal', 'width' => 18],
-                    ['text' => 'Akun', 'width' => 14],
-                    ['text' => 'Jumlah', 'width' => 14, 'align' => 'right'],
-                    ['text' => 'Debit', 'width' => 14, 'align' => 'right'],
-                    ['text' => 'Kredit', 'width' => 14, 'align' => 'right'],
-                ]),
-                true
-            ),
-        ];
+        $lines[] = $this->sectionLine('DETAIL ITEM JURNAL');
+        $lines[] = $this->monoLine(
+            $this->formatColumns([
+                ['text' => 'Tanggal', 'width' => 12],
+                ['text' => 'No Jurnal', 'width' => 18],
+                ['text' => 'Akun', 'width' => 14],
+                ['text' => 'Jumlah', 'width' => 14, 'align' => 'right'],
+                ['text' => 'Debit', 'width' => 14, 'align' => 'right'],
+                ['text' => 'Kredit', 'width' => 14, 'align' => 'right'],
+            ]),
+            true
+        );
 
         if (empty($items)) {
             $lines[] = $this->bodyLine('Belum ada item jurnal pada filter aktif.', false, 2, 4);
@@ -694,6 +690,27 @@ class FinancialStatementDocumentService
         return rtrim($description)
             . ' ' . __('app.finance.period_label') . ': ' . $this->resolvePeriodLabel($filter)
             . ' | ' . __('app.finance.printed_at') . ': ' . now()->format('d/m/Y H:i');
+    }
+
+    /**
+     * @return array<int, array<string, int|string|bool>>
+     */
+    private function categoryInfoLines(StatementFilterDTO $filter): array
+    {
+        $categoryMeta = app(FinanceCategoryScopeService::class)->describe($filter->categoryId);
+
+        return [
+            $this->bodyLine(
+                __('app.finance.category_filter_label') . ': ' . (string) $categoryMeta['selected_name'],
+                true
+            ),
+            $this->bodyLine(
+                __('app.finance.category_scope_label') . ': ' . (string) $categoryMeta['scope_label'],
+                false,
+                0,
+                6
+            ),
+        ];
     }
 
     private function buildFilename(string $prefix, StatementFilterDTO $filter): string

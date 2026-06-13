@@ -53,6 +53,9 @@
         } else {
             $assetCategoryLabel = '-';
         }
+
+        $financeCategoryMeta = app(\App\Services\Finance\FinanceCategoryScopeService::class)
+            ->describe($log->category_id ?? null);
     @endphp
 
     <h1>{{ __('app.finance.asset_depreciation_log_detail') }}</h1>
@@ -80,7 +83,11 @@
             </tr>
             <tr>
                 <th>Kategori Finance</th>
-                <td>{{ $log->category?->name ?? '-' }}</td>
+                <td>{{ $financeCategoryMeta['selected_name'] }}</td>
+            </tr>
+            <tr>
+                <th>{{ __('app.finance.category_scope_label') }}</th>
+                <td>{{ $financeCategoryMeta['scope_label'] }}</td>
             </tr>
             <tr>
                 <th>{{ __('app.finance.benefit_period') }}</th>

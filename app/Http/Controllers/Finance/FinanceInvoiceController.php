@@ -490,7 +490,7 @@ class FinanceInvoiceController extends Controller
         $categoryId = trim((string) ($filters['category_id'] ?? ''));
         if ($categoryId !== '') {
             if ($this->hasInvoiceCategoryColumn()) {
-                $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($categoryId));
+                $query->whereIn('finance_invoices.category_id', app(FinanceCategoryScopeService::class)->idsFor($categoryId));
             } else {
                 $query->whereRaw('1 = 0');
             }

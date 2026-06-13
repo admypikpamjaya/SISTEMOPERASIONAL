@@ -211,7 +211,10 @@ class AssetDepreciationController extends Controller
                         'calculator:id,name',
                     ])
                     ->when($selectedCategoryId, function ($query) use ($selectedCategoryId): void {
-                        $query->whereIn('category_id', app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId));
+                        $query->whereIn(
+                            'finance_depreciation_calculation_logs.category_id',
+                            app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId)
+                        );
                     })
                     ->orderByDesc('calculated_at')
                     ->limit(50)
@@ -319,6 +322,7 @@ class AssetDepreciationController extends Controller
         $calculatedAt = $log->calculated_at
             ? $log->calculated_at->timezone(config('app.timezone'))->format('d/m/Y H:i:s')
             : '-';
+        $financeCategoryMeta = app(FinanceCategoryScopeService::class)->describe($log->category_id);
 
         $lines = [
             'DETAIL LOG PENYUSUTAN ASET',
@@ -327,7 +331,8 @@ class AssetDepreciationController extends Controller
             'Kode Akun Asset: ' . (string) ($log->asset?->account_code ?? '-'),
             'Kategori Asset: ' . $this->formatAssetCategory($log->asset?->category),
             'Lokasi Asset: ' . (string) ($log->asset?->location ?? '-'),
-            'Kategori Finance: ' . (string) ($log->category?->name ?? '-'),
+            'Kategori Finance: ' . (string) $financeCategoryMeta['selected_name'],
+            __('app.finance.category_scope_label') . ': ' . (string) $financeCategoryMeta['scope_label'],
             'Periode: ' . $this->formatPeriodLabel(
                 $log->period_start_date,
                 $log->period_end_date,

@@ -28,6 +28,7 @@ class ProfitLossReportDetailDTO
         public float $totalIncome,
         public float $totalExpense,
         public float $totalDepreciation,
-        public float $surplusDeficit
+        public float $surplusDeficit,
+        public ?string $categoryId = null
     ) {}
 }
