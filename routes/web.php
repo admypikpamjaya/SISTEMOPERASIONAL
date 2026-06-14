@@ -140,6 +140,7 @@ Route::prefix('asset-management')
         Route::get('/edit/{id}', 'showEditForm')
             ->middleware('check_access:asset_management.update')
             ->name('edit-form');
+        Route::get('/{id}/qr-code', 'showQrCode')->name('qr-code');
         Route::get('/download-qr-code', 'downloadQrCode')->name('download-qr-code');
         Route::get('/templates/{category}/download', 'downloadTemplate')->name('download-template');
         Route::post('/', 'store')

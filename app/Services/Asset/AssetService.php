@@ -11,6 +11,7 @@ use App\Enums\Asset\ComputerComponent;
 use App\Enums\Asset\AssetUnit;
 use App\Models\Asset\Asset;
 use App\Models\Asset\AssetImportBatch;
+use App\Support\AssetPublicUrl;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -1898,6 +1899,7 @@ class AssetService
             $this->removeDetailByCategory($existingAsset, $previousCategory);
         }
 
+        $this->ensureQrCode($existingAsset);
         $this->persistAssetDetail($existingAsset->fresh(), $dto);
 
         return [
@@ -2009,6 +2011,38 @@ class AssetService
         return AssetDataDTO::fromModel($data);
     }
 
+    public function ensureQrCode(Asset $asset): Asset
+    {
+        $disk = Storage::disk('public');
+        $path = $asset->qr_code_path;
+
+        if (filled($path) && $disk->exists($path)) {
+            return $asset;
+        }
+
+        $asset->qr_code_path = $asset->generateQRCode();
+        $asset->save();
+
+        return $asset;
+    }
+
+    public function getAssetQrCodeDetail(string $id): array
+    {
+        $asset = Asset::find($id);
+        if(empty($asset))
+            throw new \Exception('Asset tidak ditemukan', 404);
+
+        $asset = $this->ensureQrCode($asset);
+        $asset->loadWithRelation();
+
+        return [
+            'asset' => AssetDataDTO::fromModel($asset),
+            'qr_svg' => Storage::disk('public')->get((string) $asset->qr_code_path),
+            'qr_path' => (string) $asset->qr_code_path,
+            'public_url' => AssetPublicUrl::detailUrl((string) $asset->id),
+        ];
+    }
+
     public function registerAsset(RegisterAssetDTO $dto)
     {
         DB::beginTransaction();
@@ -2108,6 +2142,7 @@ class AssetService
         $handler = AssetFactory::createHandler($asset->category);
         $validatedDetail = $handler->validatePayload($dto->detail);
         $handler->update($asset->id, $validatedDetail);
+        $this->ensureQrCode($asset);
 
         return $asset->loadWithRelation();
     }
@@ -2121,7 +2156,7 @@ class AssetService
         DB::transaction(function () use ($asset) {
             $disk = Storage::disk('public');
 
-            if($disk->exists($asset->qr_code_path)) 
+            if(filled($asset->qr_code_path) && $disk->exists($asset->qr_code_path))
                 $disk->delete($asset->qr_code_path);
 
             $asset->delete();
@@ -2141,7 +2176,7 @@ class AssetService
     {
         $disk = Storage::disk('public');
 
-        $query = Asset::whereNotNull('qr_code_path');
+        $query = Asset::query();
 
         if(!empty($ids))
             $query->whereIn('id', $ids);
@@ -2158,7 +2193,7 @@ class AssetService
          */
         if($assets->count() === 1) 
         {
-            $asset = $assets->first();
+            $asset = $this->ensureQrCode($assets->first());
 
             if(!$disk->exists($asset->qr_code_path))
                 throw new \Exception('QR Code tidak ditemukan');
@@ -2183,6 +2218,7 @@ class AssetService
 
         foreach ($assets as $asset) 
         {
+            $asset = $this->ensureQrCode($asset);
             if($disk->exists($asset->qr_code_path)) 
             {
                 $filename = $this->makeSafeFilename($asset->account_code) . '.svg';
@@ -2194,11 +2230,13 @@ class AssetService
         }
 
         $zip->close();
+        $content = file_get_contents($tmpPath);
+        @unlink($tmpPath);
 
         return new DownloadFileDTO(
             filename: 'qr-codes.zip',
             mimeType: 'application/zip',
-            content: file_get_contents($tmpPath)
+            content: $content
         );
     }
 }

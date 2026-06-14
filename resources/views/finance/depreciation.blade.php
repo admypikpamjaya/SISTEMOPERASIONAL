@@ -7,7 +7,9 @@
 @php
     $nowWib = now(config('app.timezone'));
     $financeCategoryOptions = $financeCategoryOptions ?? collect();
+    $assetCategoryOptions = $assetCategoryOptions ?? collect(\App\Enums\Asset\AssetCategory::cases());
     $selectedFinanceCategoryId = old('category_id', $filters['category_id'] ?? request('category_id'));
+    $selectedAssetCategory = old('asset_category', $filters['asset_category'] ?? request('asset_category'));
 @endphp
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -430,10 +432,10 @@
                         {{-- Kategori Finance --}}
                         <div class="ad-form-group">
                             <label for="category_id">
-                                <i class="fas fa-tags"></i> Kategori Finance
+                                <i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}
                             </label>
                             <select id="category_id" name="category_id" class="ad-select" required>
-                                <option value="">Pilih kategori finance</option>
+                                <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                                 @foreach($financeCategoryOptions as $category)
                                     <option value="{{ $category->id }}" @selected($selectedFinanceCategoryId === $category->id)>
                                         {{ $category->name }}
@@ -442,7 +444,26 @@
                             </select>
                             <div class="ad-hint">
                                 <i class="fas fa-filter"></i>
-                                Hasil penyusutan dan jurnal otomatis akan masuk ke kategori ini.
+                                {{ __('app.finance.depreciation_finance_category_hint') }}
+                            </div>
+                        </div>
+
+                        {{-- Kategori Aset --}}
+                        <div class="ad-form-group">
+                            <label for="asset_category">
+                                <i class="fas fa-layer-group"></i> {{ __('app.finance.asset_category_filter') }}
+                            </label>
+                            <select id="asset_category" name="asset_category" class="ad-select">
+                                <option value="">{{ __('app.finance.all_asset_categories') }}</option>
+                                @foreach($assetCategoryOptions as $assetCategory)
+                                    <option value="{{ $assetCategory->value }}" @selected($selectedAssetCategory === $assetCategory->value)>
+                                        {{ $assetCategory->label() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="ad-hint">
+                                <i class="fas fa-database"></i>
+                                {{ __('app.finance.depreciation_asset_category_hint') }}
                             </div>
                         </div>
 
@@ -457,13 +478,14 @@
                                     <option
                                         value="{{ $asset->id }}"
                                         data-asset-label="{{ $asset->display_label }}"
+                                        data-asset-category="{{ $asset->category?->value }}"
                                         data-purchase-price="{{ $asset->purchase_price !== null ? number_format((float) $asset->purchase_price, 2, '.', '') : '' }}"
                                     >
                                         {{ $asset->display_label }}
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="ad-hint">
+                            <div class="ad-hint" id="asset_count_hint" data-template="{{ __('app.finance.total_assets_available', ['count' => '__COUNT__']) }}">
                                 <i class="fas fa-database"></i>
                                 {{ __('app.finance.total_assets_available', ['count' => ($assets ?? collect())->count()]) }}
                             </div>
@@ -632,11 +654,24 @@
                     <form method="GET" action="{{ route('finance.depreciation.index') }}">
                         <div class="form-row" style="gap:0 12px; align-items:flex-end;">
                             <div class="ad-form-group col-md-4" style="padding:0; margin-bottom:0;">
+                                <label for="filter_asset_category">
+                                    <i class="fas fa-layer-group"></i> {{ __('app.finance.asset_category_filter') }}
+                                </label>
+                                <select id="filter_asset_category" name="asset_category" class="ad-select">
+                                    <option value="">{{ __('app.finance.all_asset_categories') }}</option>
+                                    @foreach($assetCategoryOptions as $assetCategory)
+                                        <option value="{{ $assetCategory->value }}" @selected($selectedAssetCategory === $assetCategory->value)>
+                                            {{ $assetCategory->label() }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="ad-form-group col-md-4" style="padding:0; margin-bottom:0;">
                                 <label for="filter_category_id">
-                                    <i class="fas fa-tags"></i> Filter Kategori Finance
+                                    <i class="fas fa-tags"></i> {{ __('app.finance.filter_finance_category') }}
                                 </label>
                                 <select id="filter_category_id" name="category_id" class="ad-select">
-                                    <option value="">Semua kategori</option>
+                                    <option value="">{{ __('app.finance.all_finance_categories') }}</option>
                                     @foreach($financeCategoryOptions as $category)
                                         <option value="{{ $category->id }}" @selected($selectedFinanceCategoryId === $category->id)>
                                             {{ $category->name }}
@@ -646,12 +681,12 @@
                             </div>
                             <div class="ad-form-group" style="padding:0; margin-bottom:0;">
                                 <button type="submit" class="ad-action-link" style="height:42px; padding:0 14px;">
-                                    <i class="fas fa-search"></i> Terapkan
+                                    <i class="fas fa-search"></i> {{ __('app.finance.filter') }}
                                 </button>
                             </div>
                             <div class="ad-form-group" style="padding:0; margin-bottom:0;">
                                 <a href="{{ route('finance.depreciation.index') }}" class="ad-action-link" style="height:42px; padding:0 14px;">
-                                    <i class="fas fa-undo"></i> Reset
+                                    <i class="fas fa-undo"></i> {{ __('app.finance.reset') }}
                                 </a>
                             </div>
                         </div>
@@ -665,7 +700,7 @@
                                 <th><i class="fas fa-hashtag"></i>#</th>
                                 <th><i class="far fa-clock"></i>{{ __('app.finance.calculated_at_wib') }}</th>
                                 <th><i class="fas fa-cube"></i>{{ __('app.finance.asset') }}</th>
-                                <th><i class="fas fa-tags"></i>Kategori Finance</th>
+                                <th><i class="fas fa-tags"></i>{{ __('app.finance.finance_category') }}</th>
                                 <th><i class="fas fa-calendar-alt"></i>{{ __('app.finance.period') }}</th>
                                 <th><i class="fas fa-money-bill-wave"></i>{{ __('app.finance.acquisition_cost') }}</th>
                                 <th><i class="fas fa-hourglass-half"></i>{{ __('app.finance.useful_life_short') }}</th>
@@ -749,11 +784,22 @@
         const alertBox  = document.getElementById('depreciation-alert');
         const logBody   = document.getElementById('depreciation-log-body');
         const assetSelect = document.getElementById('asset_id');
+        const assetCategorySelect = document.getElementById('asset_category');
+        const assetCountHint = document.getElementById('asset_count_hint');
         const acquisitionCostInput = document.getElementById('acquisition_cost');
         const acquisitionCostHint = document.getElementById('acquisition_cost_hint');
         const periodStartInput = document.getElementById('period_start');
         const periodEndInput = document.getElementById('period_end');
         const usefulLifeInput = document.getElementById('useful_life_months');
+        const assetPlaceholderOption = assetSelect
+            ? assetSelect.querySelector('option[value=""]')?.cloneNode(true)
+            : null;
+        const allAssetOptions = assetSelect
+            ? Array.from(assetSelect.querySelectorAll('option[value]:not([value=""])')).map(option => option.cloneNode(true))
+            : [];
+        const assetCountTemplate = assetCountHint
+            ? assetCountHint.getAttribute('data-template')
+            : '';
         const logShowUrlTemplate = @json(route('finance.depreciation.logs.show', ['log' => '__LOG_ID__']));
         const logDownloadUrlTemplate = @json(route('finance.depreciation.logs.download', ['log' => '__LOG_ID__']));
         const depreciationText = {
@@ -785,6 +831,39 @@
             return String(v == null ? '' : v)
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                 .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        }
+
+        function updateAssetCountHint(count) {
+            if (!assetCountHint || !assetCountTemplate) return;
+
+            assetCountHint.innerHTML = `
+                <i class="fas fa-database"></i>
+                ${escapeHtml(assetCountTemplate.replace('__COUNT__', String(count)))}
+            `;
+        }
+
+        function rebuildAssetOptionsByCategory() {
+            if (!assetSelect || !assetPlaceholderOption) return;
+
+            const selectedCategory = assetCategorySelect ? assetCategorySelect.value : '';
+            const currentValue = assetSelect.value;
+            const matchingOptions = allAssetOptions.filter(option => {
+                return !selectedCategory || option.getAttribute('data-asset-category') === selectedCategory;
+            });
+
+            assetSelect.replaceChildren(
+                assetPlaceholderOption.cloneNode(true),
+                ...matchingOptions.map(option => option.cloneNode(true))
+            );
+
+            if (matchingOptions.some(option => option.value === currentValue)) {
+                assetSelect.value = currentValue;
+            } else {
+                assetSelect.value = '';
+            }
+
+            updateAssetCountHint(matchingOptions.length);
+            syncAcquisitionCostFromAsset();
         }
 
         function parsePeriodValue(value) {
@@ -993,9 +1072,13 @@
             if (this.value < 0) this.value = 0;
         });
 
+        if (assetCategorySelect) {
+            assetCategorySelect.addEventListener('change', rebuildAssetOptionsByCategory);
+        }
         assetSelect.addEventListener('change', syncAcquisitionCostFromAsset);
         periodStartInput.addEventListener('input', syncUsefulLifeMonths);
         periodEndInput.addEventListener('input', syncUsefulLifeMonths);
+        rebuildAssetOptionsByCategory();
         syncAcquisitionCostFromAsset();
         syncUsefulLifeMonths();
     })();

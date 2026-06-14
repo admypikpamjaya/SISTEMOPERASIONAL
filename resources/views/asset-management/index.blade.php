@@ -1235,7 +1235,7 @@ $formatSheetCell = match (true) {
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             @endif
-                                            <a href="{{ route('asset-management.download-qr-code', ['ids' => [$asset->id]]) }}" class="app-icon-btn is-success" title="{{ __('app.asset.download_qr') }}" aria-label="{{ __('app.asset.download_qr') }}">
+                                            <a href="{{ route('asset-management.qr-code', $asset->id) }}" target="_blank" rel="noopener" class="app-icon-btn is-success" title="{{ __('app.asset.view_qr') }}" aria-label="{{ __('app.asset.view_qr') }}">
                                                 <i class="fas fa-qrcode"></i>
                                             </a>
                                         </div>
@@ -1301,7 +1301,7 @@ $formatSheetCell = match (true) {
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             @endif
-                                            <a href="{{ route('asset-management.download-qr-code', ['ids' => [$asset->id]]) }}" class="app-icon-btn is-success" title="{{ __('app.asset.download_qr') }}" aria-label="{{ __('app.asset.download_qr') }}">
+                                            <a href="{{ route('asset-management.qr-code', $asset->id) }}" target="_blank" rel="noopener" class="app-icon-btn is-success" title="{{ __('app.asset.view_qr') }}" aria-label="{{ __('app.asset.view_qr') }}">
                                                 <i class="fas fa-qrcode"></i>
                                             </a>
                                         </div>

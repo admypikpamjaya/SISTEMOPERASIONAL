@@ -183,8 +183,19 @@ class AssetDepreciationController extends Controller
                     'uuid',
                     Rule::exists('finance_categories', 'id'),
                 ],
+                'asset_category' => [
+                    'nullable',
+                    'string',
+                    Rule::in(array_map(
+                        static fn (AssetCategory $category): string => $category->value,
+                        AssetCategory::cases()
+                    )),
+                ],
             ]);
             $selectedCategoryId = $filters['category_id'] ?? null;
+            $selectedAssetCategory = filled($filters['asset_category'] ?? null)
+                ? AssetCategory::from($filters['asset_category'])
+                : null;
 
             // The page still needs the asset list because users pick an asset
             // first, then enter finance values manually for the calculation.
@@ -216,6 +227,11 @@ class AssetDepreciationController extends Controller
                             app(FinanceCategoryScopeService::class)->idsFor($selectedCategoryId)
                         );
                     })
+                    ->when($selectedAssetCategory, function ($query) use ($selectedAssetCategory): void {
+                        $query->whereHas('asset', function ($assetQuery) use ($selectedAssetCategory): void {
+                            $assetQuery->where('category', $selectedAssetCategory->value);
+                        });
+                    })
                     ->orderByDesc('calculated_at')
                     ->limit(50)
                     ->get()
@@ -246,8 +262,10 @@ class AssetDepreciationController extends Controller
             return view('finance.depreciation', [
                 'assets' => $assets,
                 'logs' => $logs,
+                'assetCategoryOptions' => collect(AssetCategory::cases()),
                 'filters' => [
                     'category_id' => $selectedCategoryId,
+                    'asset_category' => $selectedAssetCategory?->value,
                 ],
             ]);
         } catch (Throwable $exception) {

@@ -286,6 +286,17 @@ class AssetManagementController extends Controller
         }
     }
 
+    public function showQrCode(string $id): View
+    {
+        try {
+            return view('asset-management.qr-code', $this->service->getAssetQrCodeDetail($id));
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('asset-management.index')
+                ->with('error', $e->getMessage());
+        }
+    }
+
     public function downloadQrCode(Request $request)
     {
         try 
