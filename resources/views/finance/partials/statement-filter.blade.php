@@ -30,9 +30,9 @@
         'account_code' => $showAccountFilter ? null : $accountCode,
         'statement_source' => $statementSource,
         'statement_data_source' => $statementDataSource,
-        'statement_batch_id' => $statementBatchId,
+        'statement_batch_id' => !empty($categoryId) ? $statementBatchId : null,
         'ledger_source' => $ledgerSource,
-        'ledger_batch_id' => $ledgerBatchId,
+        'ledger_batch_id' => !empty($categoryId) ? $ledgerBatchId : null,
         'per_page' => $showPerPage ? $perPage : null,
     ], static fn ($value): bool => $value !== null && $value !== '');
     $monthOptions = collect(range(1, 12))
@@ -231,10 +231,10 @@
 
                 <div class="fs-field" data-span="3">
                     <label class="fs-label" for="statement_category_id">
-                        <i class="fas fa-tags"></i> Kategori Finance
+                        <i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}
                     </label>
                     <select name="category_id" id="statement_category_id" class="fs-control">
-                        <option value="">Semua kategori</option>
+                        <option value="">{{ __('app.finance.all_finance_categories') }}</option>
                         @foreach($financeCategoryOptions as $category)
                             <option value="{{ $category->id }}" {{ (string) $categoryId === (string) $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}{{ ($category->category_type ?? 'single') === 'group' ? ' (Gabungan)' : '' }}

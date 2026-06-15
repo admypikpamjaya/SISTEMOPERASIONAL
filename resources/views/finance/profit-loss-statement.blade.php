@@ -28,6 +28,12 @@
             ?? data_get($filters, 'category_id')
             ?? data_get($selectedBatchMeta, 'category_id')
     );
+    $permissionService = app(\App\Services\AccessControl\PermissionService::class);
+    $canManageStatementMapping = auth()->check()
+        && $permissionService->checkAccess(
+            auth()->user(),
+            \App\Enums\Portal\PortalPermission::FINANCE_REPORT_GENERATE->value
+        );
     $sourceQueryBase = collect($filterQuery ?? [])
         ->except(['statement_data_source', 'statement_batch_id', 'page'])
         ->filter(static fn ($value): bool => $value !== null && $value !== '')
@@ -785,7 +791,7 @@
     </div>
 </div>
 
-@if($isManageMode && $isImportedSource)
+@if($isManageMode && $isImportedSource && $canManageStatementMapping)
     @php
         $profitRowForm = $editImportedRow ?? [
             'section_key' => 'income',
@@ -848,9 +854,9 @@
                         </div>
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_import_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <label class="fs-label" for="profit_import_category_id"><i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}</label>
                         <select name="category_id" id="profit_import_category_id" class="fs-control" required>
-                            <option value="">Pilih kategori</option>
+                            <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                             @foreach($financeCategoryOptions as $category)
                                 <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
@@ -897,9 +903,9 @@
                     <input type="hidden" name="batch_id" value="{{ old('batch_id', $profitRowForm['batch_id'] ?? $selectedBatchId) }}">
                     <input type="hidden" name="period_type" value="{{ data_get($filters, 'period_type', 'ALL') }}">
                     <div class="fs-field">
-                        <label class="fs-label" for="profit_row_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <label class="fs-label" for="profit_row_category_id"><i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}</label>
                         <select name="category_id" id="profit_row_category_id" class="fs-control" required>
-                            <option value="">Pilih kategori</option>
+                            <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                             @foreach($financeCategoryOptions as $category)
                                 <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
@@ -959,10 +965,43 @@
                 </div>
                 <span class="pl-pill">{{ number_format(count($importedRows), 0, ',', '.') }} {{ __('app.finance.rows') }}</span>
             </div>
+            <form
+                id="profit-bulk-category-form"
+                method="POST"
+                action="{{ route('finance.report.profit-loss.rows.category') }}"
+                class="finance-bulk-category-form js-bulk-category-form"
+                data-checkbox-selector=".js-profit-row-checkbox"
+            >
+                @csrf
+                @method('PATCH')
+                <div class="bulk-field">
+                    <label class="fs-label" for="profit_bulk_category_id">
+                        <i class="fas fa-tags"></i> {{ __('app.finance.bulk_category_target') }}
+                    </label>
+                    <select name="category_id" id="profit_bulk_category_id" class="fs-control" required>
+                        <option value="">{{ __('app.finance.choose_finance_category') }}</option>
+                        @foreach($financeCategoryOptions as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="fs-btn fs-btn-primary">
+                    <i class="fas fa-layer-group"></i> {{ __('app.finance.bulk_category_apply') }}
+                </button>
+                <div class="bulk-help">{{ __('app.finance.bulk_category_help') }}</div>
+            </form>
             <div class="table-responsive">
                 <table class="pl-table">
                     <thead>
                         <tr>
+                            <th style="width:52px; text-align:center;">
+                                <input
+                                    type="checkbox"
+                                    class="finance-bulk-checkbox js-bulk-check-all"
+                                    data-checkbox-selector=".js-profit-row-checkbox"
+                                    aria-label="{{ __('app.finance.select_all_rows') }}"
+                                >
+                            </th>
                             <th style="width:120px;">{{ __('app.finance.category') }}</th>
                             <th style="width:140px;">{{ __('app.finance.code') }}</th>
                             <th>{{ __('app.finance.name') }}</th>
@@ -974,6 +1013,17 @@
                     <tbody>
                         @foreach($importedRows as $row)
                             <tr>
+                                <td style="text-align:center;">
+                                    <input
+                                        type="checkbox"
+                                        name="row_ids[]"
+                                        value="{{ $row['id'] }}"
+                                        form="profit-bulk-category-form"
+                                        class="finance-bulk-checkbox js-bulk-row-checkbox js-profit-row-checkbox"
+                                        data-checkbox-group=".js-profit-row-checkbox"
+                                        aria-label="{{ __('app.finance.select_row') }}"
+                                    >
+                                </td>
                                 <td>{{ $row['section_label'] ?? '-' }}</td>
                                 <td><strong>{{ $row['account_code'] ?? '-' }}</strong></td>
                                 <td>
@@ -1247,4 +1297,5 @@
         <div>{!! __('app.finance.no_profit_loss_data_note', ['status' => '<strong>'.e(__('app.finance.posted')).'</strong>']) !!}</div>
     </div>
 @endif
+@include('finance.partials.bulk-category-tools')
 @endsection

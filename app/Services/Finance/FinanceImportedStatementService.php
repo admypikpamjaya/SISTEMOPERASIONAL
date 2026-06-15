@@ -59,12 +59,12 @@ class FinanceImportedStatementService
         ?string $batchId = null
     ): array {
         $batches = $this->getBatchOptions(FinanceStatementBatch::TYPE_BALANCE_SHEET);
-        $aggregateByCategory = !empty($filter->categoryId);
-        $selectedBatch = $aggregateByCategory
+        $aggregateAcrossBatches = !empty($filter->categoryId) || empty($batchId);
+        $selectedBatch = $aggregateAcrossBatches
             ? null
             : $this->resolveSelectedBatch(FinanceStatementBatch::TYPE_BALANCE_SHEET, $batchId, $filter);
 
-        if ($selectedBatch === null && !$aggregateByCategory) {
+        if ($selectedBatch === null && !$aggregateAcrossBatches) {
             return [
                 'sections' => $this->emptyBalanceSections(),
                 'summary' => [
@@ -178,12 +178,12 @@ class FinanceImportedStatementService
         ?string $batchId = null
     ): array {
         $batches = $this->getBatchOptions(FinanceStatementBatch::TYPE_PROFIT_LOSS);
-        $aggregateByCategory = !empty($filter->categoryId);
-        $selectedBatch = $aggregateByCategory
+        $aggregateAcrossBatches = !empty($filter->categoryId) || empty($batchId);
+        $selectedBatch = $aggregateAcrossBatches
             ? null
             : $this->resolveSelectedBatch(FinanceStatementBatch::TYPE_PROFIT_LOSS, $batchId, $filter);
 
-        if ($selectedBatch === null && !$aggregateByCategory) {
+        if ($selectedBatch === null && !$aggregateAcrossBatches) {
             return [
                 'income_rows' => [],
                 'expense_rows' => [],
@@ -401,6 +401,52 @@ class FinanceImportedStatementService
         $row->update($attributes);
 
         return $row->fresh() ?? $row;
+    }
+
+    /**
+     * @param array<int, string> $rowIds
+     */
+    public function bulkUpdateCategory(string $statementType, array $rowIds, string $categoryId, ?string $actorId): int
+    {
+        $statementType = strtoupper($statementType);
+        $rowIds = array_values(array_unique(array_filter($rowIds)));
+
+        if ($rowIds === []) {
+            return 0;
+        }
+
+        $rows = FinanceStatementRow::query()
+            ->whereIn('id', $rowIds)
+            ->whereIn('batch_id', FinanceStatementBatch::query()
+                ->select('id')
+                ->where('statement_type', $statementType))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($rows as $row) {
+            $originalBatchId = (string) $row->batch_id;
+            $batch = $this->resolveTargetBatch($statementType, $originalBatchId, $actorId, $categoryId);
+            $meta = is_array($row->meta) ? $row->meta : [];
+            $meta['bulk_category_updated'] = true;
+            $meta['bulk_category_updated_at'] = now()->toDateTimeString();
+
+            $attributes = [
+                'batch_id' => (string) $batch->id,
+                'category_id' => $categoryId,
+                'is_manual' => true,
+                'meta' => $meta,
+                'updated_by' => $actorId,
+            ];
+
+            if ((string) $batch->id !== $originalBatchId) {
+                $attributes['sort_order'] = $this->nextSortOrder((string) $batch->id);
+            }
+
+            $row->update($attributes);
+        }
+
+        return $rows->count();
     }
 
     public function deleteRow(FinanceStatementRow $row): void

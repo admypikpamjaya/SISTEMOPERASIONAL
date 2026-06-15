@@ -24,8 +24,10 @@ use App\Services\Finance\FinancialStatementSpreadsheetService;
 use App\Services\Finance\FinancialStatementService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 class FinanceStatementController extends Controller
@@ -62,6 +64,10 @@ class FinanceStatementController extends Controller
     {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            if ($request->query->has('category_id') && $filter->categoryId === null) {
+                $filter->statementBatchId = null;
+            }
+
             [$statementDataSource, $resolvedBatchId, $batchOptions] = $this->resolveStatementDataContext(
                 $request,
                 $filter,
@@ -118,6 +124,10 @@ class FinanceStatementController extends Controller
     {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            if ($request->query->has('category_id') && $filter->categoryId === null) {
+                $filter->statementBatchId = null;
+            }
+
             [$statementDataSource, $resolvedBatchId, $batchOptions] = $this->resolveStatementDataContext(
                 $request,
                 $filter,
@@ -184,6 +194,10 @@ class FinanceStatementController extends Controller
     {
         try {
             $filter = StatementFilterDTO::fromArray($request->validated());
+            if ($request->query->has('category_id') && $filter->categoryId === null) {
+                $filter->ledgerBatchId = null;
+            }
+
             $batchOptions = $this->financeGeneralLedgerService->getBatchOptions();
             $hasImportedBatches = $batchOptions->isNotEmpty();
             $hasExplicitSource = $request->query->has('ledger_source') && $request->query('ledger_source') !== '';
@@ -399,6 +413,30 @@ class FinanceStatementController extends Controller
         }
     }
 
+    public function bulkUpdateGeneralLedgerEntriesCategory(Request $request)
+    {
+        $validated = $this->validateBulkCategoryUpdate($request, 'entry_ids');
+
+        try {
+            $updatedCount = $this->financeGeneralLedgerService->bulkUpdateCategory(
+                $validated['entry_ids'],
+                $validated['category_id'],
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return back()->with(
+                $updatedCount > 0 ? 'success' : 'error',
+                $updatedCount > 0
+                    ? __('app.finance.bulk_category_update_success', ['count' => number_format($updatedCount, 0, ',', '.')])
+                    : __('app.finance.bulk_category_update_empty')
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', __('app.finance.bulk_category_update_failed'));
+        }
+    }
+
     public function destroyGeneralLedgerEntry(FinanceStatementFilterRequest $request, FinanceGeneralLedgerEntry $entry)
     {
         try {
@@ -434,6 +472,11 @@ class FinanceStatementController extends Controller
         return $this->updateStatementRow($request, $row, FinanceStatementBatch::TYPE_BALANCE_SHEET);
     }
 
+    public function bulkUpdateBalanceSheetRowsCategory(Request $request)
+    {
+        return $this->bulkUpdateStatementRowsCategory($request, FinanceStatementBatch::TYPE_BALANCE_SHEET);
+    }
+
     public function destroyBalanceSheetRow(FinanceStatementFilterRequest $request, FinanceStatementRow $row)
     {
         return $this->destroyStatementRow($request, $row, FinanceStatementBatch::TYPE_BALANCE_SHEET);
@@ -447,6 +490,11 @@ class FinanceStatementController extends Controller
     public function updateProfitLossRow(FinanceStatementRowUpdateRequest $request, FinanceStatementRow $row)
     {
         return $this->updateStatementRow($request, $row, FinanceStatementBatch::TYPE_PROFIT_LOSS);
+    }
+
+    public function bulkUpdateProfitLossRowsCategory(Request $request)
+    {
+        return $this->bulkUpdateStatementRowsCategory($request, FinanceStatementBatch::TYPE_PROFIT_LOSS);
     }
 
     public function destroyProfitLossRow(FinanceStatementFilterRequest $request, FinanceStatementRow $row)
@@ -561,6 +609,44 @@ class FinanceStatementController extends Controller
                 ->withInput()
                 ->with('error', 'Import Excel laporan gagal: ' . $exception->getMessage());
         }
+    }
+
+    private function bulkUpdateStatementRowsCategory(Request $request, string $statementType)
+    {
+        $validated = $this->validateBulkCategoryUpdate($request, 'row_ids');
+
+        try {
+            $updatedCount = $this->financeImportedStatementService->bulkUpdateCategory(
+                $statementType,
+                $validated['row_ids'],
+                $validated['category_id'],
+                auth()->id() ? (string) auth()->id() : null
+            );
+
+            return back()->with(
+                $updatedCount > 0 ? 'success' : 'error',
+                $updatedCount > 0
+                    ? __('app.finance.bulk_category_update_success', ['count' => number_format($updatedCount, 0, ',', '.')])
+                    : __('app.finance.bulk_category_update_empty')
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', __('app.finance.bulk_category_update_failed'));
+        }
+    }
+
+    private function validateBulkCategoryUpdate(Request $request, string $idField): array
+    {
+        return $request->validate([
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('finance_categories', 'id')->where('status', 'active'),
+            ],
+            $idField => ['required', 'array', 'min:1'],
+            $idField . '.*' => ['required', 'uuid', 'distinct'],
+        ]);
     }
 
     private function storeStatementRow(FinanceStatementRowStoreRequest $request, string $statementType)

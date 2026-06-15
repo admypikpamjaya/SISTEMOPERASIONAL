@@ -886,9 +886,9 @@
                         <input type="file" name="file" id="balance_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
                     </div>
                     <div class="fs-field">
-                        <label class="fs-label" for="balance_import_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <label class="fs-label" for="balance_import_category_id"><i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}</label>
                         <select name="category_id" id="balance_import_category_id" class="fs-control" required>
-                            <option value="">Pilih kategori</option>
+                            <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                             @foreach($financeCategoryOptions as $category)
                                 <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
@@ -936,9 +936,9 @@
                     <input type="hidden" name="start_year" value="{{ data_get($filters, 'start_year') }}">
                     <input type="hidden" name="end_year" value="{{ data_get($filters, 'end_year') }}">
                     <div class="fs-field">
-                        <label class="fs-label" for="balance_row_category_id"><i class="fas fa-tags"></i> Kategori Finance</label>
+                        <label class="fs-label" for="balance_row_category_id"><i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}</label>
                         <select name="category_id" id="balance_row_category_id" class="fs-control" required>
-                            <option value="">Pilih kategori</option>
+                            <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                             @foreach($financeCategoryOptions as $category)
                                 <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
@@ -998,10 +998,43 @@
                 </div>
                 <span class="fs-pill">{{ number_format(count($importedRows), 0, ',', '.') }} {{ __('app.finance.rows') }}</span>
             </div>
+            <form
+                id="balance-bulk-category-form"
+                method="POST"
+                action="{{ route('finance.report.balance-sheet.rows.category') }}"
+                class="finance-bulk-category-form js-bulk-category-form"
+                data-checkbox-selector=".js-balance-row-checkbox"
+            >
+                @csrf
+                @method('PATCH')
+                <div class="bulk-field">
+                    <label class="fs-label" for="balance_bulk_category_id">
+                        <i class="fas fa-tags"></i> {{ __('app.finance.bulk_category_target') }}
+                    </label>
+                    <select name="category_id" id="balance_bulk_category_id" class="fs-control" required>
+                        <option value="">{{ __('app.finance.choose_finance_category') }}</option>
+                        @foreach($financeCategoryOptions as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="fs-btn fs-btn-primary">
+                    <i class="fas fa-layer-group"></i> {{ __('app.finance.bulk_category_apply') }}
+                </button>
+                <div class="bulk-help">{{ __('app.finance.bulk_category_help') }}</div>
+            </form>
             <div class="fs-table-wrap">
                 <table class="fs-table fs-manage-table">
                     <thead>
                         <tr>
+                            <th style="width:52px; text-align:center;">
+                                <input
+                                    type="checkbox"
+                                    class="finance-bulk-checkbox js-bulk-check-all"
+                                    data-checkbox-selector=".js-balance-row-checkbox"
+                                    aria-label="{{ __('app.finance.select_all_rows') }}"
+                                >
+                            </th>
                             <th style="width:120px;">{{ __('app.finance.category') }}</th>
                             <th style="width:140px;">{{ __('app.finance.code') }}</th>
                             <th>{{ __('app.finance.name') }}</th>
@@ -1013,6 +1046,17 @@
                     <tbody>
                         @foreach($importedRows as $row)
                             <tr>
+                                <td style="text-align:center;">
+                                    <input
+                                        type="checkbox"
+                                        name="row_ids[]"
+                                        value="{{ $row['id'] }}"
+                                        form="balance-bulk-category-form"
+                                        class="finance-bulk-checkbox js-bulk-row-checkbox js-balance-row-checkbox"
+                                        data-checkbox-group=".js-balance-row-checkbox"
+                                        aria-label="{{ __('app.finance.select_row') }}"
+                                    >
+                                </td>
                                 <td>{{ $row['section_label'] ?? '-' }}</td>
                                 <td><strong>{{ $row['account_code'] ?? '-' }}</strong></td>
                                 <td>
@@ -1408,4 +1452,5 @@
         <div>{!! __('app.finance.no_balance_sheet_data_note', ['status' => '<strong>'.e(__('app.finance.posted')).'</strong>']) !!}</div>
     </div>
 @endif
+@include('finance.partials.bulk-category-tools')
 @endsection

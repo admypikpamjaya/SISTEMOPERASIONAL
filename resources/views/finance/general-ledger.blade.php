@@ -1090,10 +1090,10 @@
                     <div class="gl-form-grid">
                         <div class="fs-field gl-col-6" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_import_category_id">
-                                <i class="fas fa-tags"></i> Kategori Finance
+                                <i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}
                             </label>
                             <select name="category_id" id="gl_import_category_id" class="fs-control" required>
-                                <option value="">Pilih kategori</option>
+                                <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                                 @foreach($financeCategoryOptions as $category)
                                     <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
@@ -1151,10 +1151,10 @@
                     <div class="gl-form-grid">
                         <div class="fs-field gl-col-3" style="margin-bottom:0;">
                             <label class="fs-label" for="gl_entry_category_id">
-                                <i class="fas fa-tags"></i> Kategori Finance
+                                <i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}
                             </label>
                             <select name="category_id" id="gl_entry_category_id" class="fs-control" required>
-                                <option value="">Pilih kategori</option>
+                                <option value="">{{ __('app.finance.choose_finance_category') }}</option>
                                 @foreach($financeCategoryOptions as $category)
                                     <option value="{{ $category->id }}" {{ (string) $selectedFinanceCategoryId === (string) $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
@@ -1320,6 +1320,36 @@
     @endif
 </div>
 
+@if(!empty($groups) && $isManageMode && $isImportedSource)
+    @permission('finance_report.generate')
+        <form
+            id="gl-bulk-category-form"
+            method="POST"
+            action="{{ route('finance.report.general-ledger.entries.category') }}"
+            class="finance-bulk-category-form js-bulk-category-form"
+            data-checkbox-selector=".js-gl-entry-checkbox"
+        >
+            @csrf
+            @method('PATCH')
+            <div class="bulk-field">
+                <label class="fs-label" for="gl_bulk_category_id">
+                    <i class="fas fa-tags"></i> {{ __('app.finance.bulk_category_target') }}
+                </label>
+                <select name="category_id" id="gl_bulk_category_id" class="fs-control" required>
+                    <option value="">{{ __('app.finance.choose_finance_category') }}</option>
+                    @foreach($financeCategoryOptions as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="fs-btn fs-btn-primary">
+                <i class="fas fa-layer-group"></i> {{ __('app.finance.bulk_category_apply') }}
+            </button>
+            <div class="bulk-help">{{ __('app.finance.bulk_category_help') }}</div>
+        </form>
+    @endpermission
+@endif
+
 @if(!empty($groups))
     <div class="gl-ledger-list">
         @foreach($groups as $group)
@@ -1364,6 +1394,18 @@
                     <table class="gl-table">
                         <thead>
                             <tr>
+                                @if($isImportedSource && $isManageMode)
+                                    @permission('finance_report.generate')
+                                        <th style="width:52px; text-align:center;">
+                                            <input
+                                                type="checkbox"
+                                                class="finance-bulk-checkbox js-bulk-check-all"
+                                                data-checkbox-selector=".js-gl-entry-checkbox"
+                                                aria-label="{{ __('app.finance.select_all_rows') }}"
+                                            >
+                                        </th>
+                                    @endpermission
+                                @endif
                                 <th style="width:120px;">{{ __('app.finance.date') }}</th>
                                 <th style="width:160px;">{{ $isCombinedSource ? __('app.finance.document_no') : ($isImportedSource ? __('app.finance.transaction_no') : __('app.finance.journal_no')) }}</th>
                                 <th style="width:190px;">{{ $isCombinedSource ? __('app.finance.communication_journal') : ($isImportedSource ? __('app.finance.communication') : __('app.finance.journal_name')) }}</th>
@@ -1391,6 +1433,23 @@
                                     ]), static fn ($value): bool => $value !== null && $value !== ''));
                                 @endphp
                                 <tr>
+                                    @if($isImportedSource && $isManageMode)
+                                        @permission('finance_report.generate')
+                                            <td style="text-align:center;">
+                                                @if(!empty($entry['can_edit']) && !empty($entry['entry_id']))
+                                                    <input
+                                                        type="checkbox"
+                                                        name="entry_ids[]"
+                                                        value="{{ $entry['entry_id'] }}"
+                                                        form="gl-bulk-category-form"
+                                                        class="finance-bulk-checkbox js-bulk-row-checkbox js-gl-entry-checkbox"
+                                                        data-checkbox-group=".js-gl-entry-checkbox"
+                                                        aria-label="{{ __('app.finance.select_row') }}"
+                                                    >
+                                                @endif
+                                            </td>
+                                        @endpermission
+                                    @endif
                                     <td>
                                         @if(!empty($entry['accounting_date']))
                                             {{ \Carbon\Carbon::parse($entry['accounting_date'])->format('d/m/Y') }}
@@ -1476,7 +1535,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ $isImportedSource && $isManageMode ? 8 : 7 }}" style="text-align:center; color:var(--gl-muted);">{{ __('app.finance.no_journal_rows_for_account') }}</td>
+                                    <td colspan="{{ $isImportedSource && $isManageMode ? 9 : 7 }}" style="text-align:center; color:var(--gl-muted);">{{ __('app.finance.no_journal_rows_for_account') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -1506,4 +1565,5 @@
         </div>
     </div>
 @endif
+@include('finance.partials.bulk-category-tools')
 @endsection

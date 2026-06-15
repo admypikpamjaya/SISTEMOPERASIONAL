@@ -35,12 +35,12 @@ class FinanceGeneralLedgerService
         bool $paginate = true
     ): array {
         $batches = $this->getBatchOptions();
-        $aggregateByCategory = !empty($filter->categoryId);
-        $selectedBatch = $aggregateByCategory
+        $aggregateAcrossBatches = !empty($filter->categoryId) || empty($batchId);
+        $selectedBatch = $aggregateAcrossBatches
             ? null
             : $this->resolveSelectedBatch($batchId, $filter->categoryId);
 
-        if ($selectedBatch === null && !$aggregateByCategory) {
+        if ($selectedBatch === null && !$aggregateAcrossBatches) {
             return [
                 'groups' => [],
                 'accounts' => $paginate ? collect([]) : [],
@@ -231,12 +231,12 @@ class FinanceGeneralLedgerService
      */
     public function getImportedAccountOptions(StatementFilterDTO $filter, ?string $batchId = null): array
     {
-        $aggregateByCategory = !empty($filter->categoryId);
-        $selectedBatch = $aggregateByCategory
+        $aggregateAcrossBatches = !empty($filter->categoryId) || empty($batchId);
+        $selectedBatch = $aggregateAcrossBatches
             ? null
             : $this->resolveSelectedBatch($batchId, $filter->categoryId);
 
-        if ($selectedBatch === null && !$aggregateByCategory) {
+        if ($selectedBatch === null && !$aggregateAcrossBatches) {
             return [];
         }
 
@@ -455,6 +455,56 @@ class FinanceGeneralLedgerService
         }
 
         return $entry->fresh() ?? $entry;
+    }
+
+    /**
+     * @param array<int, string> $entryIds
+     */
+    public function bulkUpdateCategory(array $entryIds, string $categoryId, ?string $actorId): int
+    {
+        $entryIds = array_values(array_unique(array_filter($entryIds)));
+
+        if ($entryIds === []) {
+            return 0;
+        }
+
+        $entries = FinanceGeneralLedgerEntry::query()
+            ->whereIn('id', $entryIds)
+            ->orderBy('account_code')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+        $affectedBatchIds = [];
+
+        foreach ($entries as $entry) {
+            $originalBatchId = (string) $entry->batch_id;
+            $batch = $this->resolveTargetBatch($originalBatchId, $actorId, $categoryId);
+            $meta = is_array($entry->meta) ? $entry->meta : [];
+            $meta['bulk_category_updated'] = true;
+            $meta['bulk_category_updated_at'] = now()->toDateTimeString();
+
+            $attributes = [
+                'batch_id' => (string) $batch->id,
+                'category_id' => $categoryId,
+                'is_manual' => true,
+                'meta' => $meta,
+                'updated_by' => $actorId,
+            ];
+
+            if ((string) $batch->id !== $originalBatchId) {
+                $attributes['sort_order'] = $this->nextSortOrder((string) $batch->id, (string) $entry->account_code);
+            }
+
+            $entry->update($attributes);
+            $affectedBatchIds[] = $originalBatchId;
+            $affectedBatchIds[] = (string) $batch->id;
+        }
+
+        foreach (array_unique(array_filter($affectedBatchIds)) as $batchId) {
+            $this->recalculateBatchBalances($batchId);
+        }
+
+        return $entries->count();
     }
 
     public function deleteEntry(FinanceGeneralLedgerEntry $entry): void

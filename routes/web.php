@@ -314,6 +314,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.generate')
             ->name('report.balance-sheet.rows.update');
 
+        Route::patch('/report/balance-sheet/rows/category', [FinanceStatementController::class, 'bulkUpdateBalanceSheetRowsCategory'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.balance-sheet.rows.category');
+
         Route::delete('/report/balance-sheet/rows/{row}', [FinanceStatementController::class, 'destroyBalanceSheetRow'])
             ->middleware('check_access:finance_report.generate')
             ->name('report.balance-sheet.rows.destroy');
@@ -342,6 +346,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_report.generate')
             ->name('report.profit-loss.rows.update');
 
+        Route::patch('/report/profit-loss/rows/category', [FinanceStatementController::class, 'bulkUpdateProfitLossRowsCategory'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.profit-loss.rows.category');
+
         Route::delete('/report/profit-loss/rows/{row}', [FinanceStatementController::class, 'destroyProfitLossRow'])
             ->middleware('check_access:finance_report.generate')
             ->name('report.profit-loss.rows.destroy');
@@ -369,6 +377,10 @@ Route::prefix('finance')
         Route::put('/report/general-ledger/entries/{entry}', [FinanceStatementController::class, 'updateGeneralLedgerEntry'])
             ->middleware('check_access:finance_report.generate')
             ->name('report.general-ledger.entries.update');
+
+        Route::patch('/report/general-ledger/entries/category', [FinanceStatementController::class, 'bulkUpdateGeneralLedgerEntriesCategory'])
+            ->middleware('check_access:finance_report.generate')
+            ->name('report.general-ledger.entries.category');
 
         Route::delete('/report/general-ledger/entries/{entry}', [FinanceStatementController::class, 'destroyGeneralLedgerEntry'])
             ->middleware('check_access:finance_report.generate')
