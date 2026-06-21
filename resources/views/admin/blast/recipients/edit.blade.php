@@ -159,12 +159,16 @@
     .form-group label[for="catatan"]::after,
     .form-group label[for="email_wali"]::after,
     .form-group label[for="wa_wali"]::after,
-    .form-group label[for="wa_wali_2"]::after {
+    .form-group label[for="wa_wali_2"]::after,
+    .form-group label[for="education_level"]::after,
+    .form-group label[for="academic_year"]::after,
+    .form-group label[for="student_status"]::after {
         content: "";
         display: none;
     }
 
     .form-group input,
+    .form-group select,
     .form-group textarea {
         padding: 14px 16px;
         border: 1.5px solid var(--border-color);
@@ -178,6 +182,7 @@
     }
 
     .form-group input:focus,
+    .form-group select:focus,
     .form-group textarea:focus {
         outline: none;
         border-color: var(--primary-color);
@@ -345,6 +350,55 @@
         width: 16px;
         height: 16px;
     }
+
+    .history-table-wrap {
+        overflow-x: auto;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+        vertical-align: top;
+        font-size: 13px;
+        color: var(--text-primary);
+    }
+
+    .history-table th {
+        color: var(--text-secondary);
+        background: var(--light-bg);
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+
+    .history-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .history-chip {
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .history-empty {
+        padding: 28px;
+        color: var(--text-secondary);
+        text-align: center;
+        font-size: 14px;
+    }
 </style>
 
 <div class="recipient-form-wrapper">
@@ -440,6 +494,30 @@
                             <div class="form-hint">
                                 {{ __('app.blast.class_format_hint') }}
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="education_level">{{ __('app.blast.education_level') }}</label>
+                            <select name="education_level" id="education_level">
+                                <option value="">{{ __('app.blast.not_assigned') }}</option>
+                                @foreach(['TK', 'SD', 'SMP', 'SMA', 'SMK', 'OTHER'] as $level)
+                                    <option value="{{ $level }}" @selected(old('education_level', $recipient->education_level) === $level)>{{ $level === 'OTHER' ? __('app.blast.other_education_level') : $level }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="academic_year">{{ __('app.blast.academic_year') }}</label>
+                            <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year', $recipient->academic_year) }}" placeholder="2026/2027">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="student_status">{{ __('app.blast.student_status') }}</label>
+                            <select name="student_status" id="student_status">
+                                @foreach(['active', 'unassigned', 'graduated', 'alumni', 'inactive'] as $status)
+                                    <option value="{{ $status }}" @selected(old('student_status', $recipient->student_status ?: 'active') === $status)>{{ __('app.blast.status_' . $status) }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         {{-- Nama Wali --}}
@@ -579,6 +657,54 @@
                     </div>
                 </form>
             </div>
+        </div>
+
+        <div class="form-card">
+            <div class="card-header">
+                <strong>{{ __('app.blast.recipient_group_history') }}</strong>
+                <div class="subtitle">{{ __('app.blast.recipient_group_history_help') }}</div>
+            </div>
+
+            @if($recipient->classHistories->isEmpty())
+                <div class="history-empty">{{ __('app.blast.recipient_group_history_empty') }}</div>
+            @else
+                <div class="history-table-wrap">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>{{ __('app.blast.changed_at') }}</th>
+                                <th>{{ __('app.blast.previous_group') }}</th>
+                                <th>{{ __('app.blast.new_group') }}</th>
+                                <th>{{ __('app.blast.notes') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($recipient->classHistories as $history)
+                                <tr>
+                                    <td>{{ optional($history->created_at)->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <div class="history-summary">
+                                            <span class="history-chip">{{ $history->previous_education_level ?: __('app.blast.not_assigned') }}</span>
+                                            <span class="history-chip">{{ $history->previous_class ?: __('app.blast.not_assigned') }}</span>
+                                            <span class="history-chip">{{ $history->previous_academic_year ?: __('app.blast.not_assigned') }}</span>
+                                            <span class="history-chip">{{ __('app.blast.status_' . ($history->previous_status ?: 'unassigned')) }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="history-summary">
+                                            <span class="history-chip">{{ $history->new_education_level ?: __('app.blast.not_assigned') }}</span>
+                                            <span class="history-chip">{{ $history->new_class ?: __('app.blast.not_assigned') }}</span>
+                                            <span class="history-chip">{{ $history->new_academic_year ?: __('app.blast.not_assigned') }}</span>
+                                            <span class="history-chip">{{ __('app.blast.status_' . ($history->new_status ?: 'unassigned')) }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ $history->notes ?: '-' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
     </div>
 </div>

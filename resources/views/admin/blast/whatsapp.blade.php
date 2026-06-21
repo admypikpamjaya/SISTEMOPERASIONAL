@@ -1257,7 +1257,8 @@ body,
         function normalizeGatewayPhone(user) {
             if (!user || !user.id) return '-';
             const raw = String(user.id);
-            return raw.includes('@') ? raw.split('@')[0] : raw;
+            const localPart = raw.includes('@') ? raw.split('@')[0] : raw;
+            return localPart.includes(':') ? localPart.split(':')[0] : localPart;
         }
 
         let currentProviderMode = 'gateway';
@@ -1288,9 +1289,13 @@ body,
             devices.forEach(device => {
                 const option = document.createElement('option');
                 option.value = device.deviceId;
-                option.textContent = device.label
+                const phone = normalizeGatewayPhone(device.user);
+                const deviceName = device.label
                     ? `${device.label} (${device.deviceId})`
                     : device.deviceId;
+                option.textContent = phone && phone !== '-'
+                    ? `${deviceName} - ${phone}`
+                    : deviceName;
                 selectEl.appendChild(option);
             });
             if (current) {

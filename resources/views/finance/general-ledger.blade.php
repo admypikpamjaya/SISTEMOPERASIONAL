@@ -1085,6 +1085,7 @@
                         <input type="file" name="file" id="gl_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
                         <div class="fs-helper-text">
                             {{ __('app.finance.gl_import_file_help') }}
+                            <br>{{ __('app.finance.general_ledger_template_help') }}
                         </div>
                     </div>
                     <div class="gl-form-grid">
@@ -1120,10 +1121,16 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="fs-btn fs-btn-primary">
-                        <i class="fas fa-upload"></i>
-                        <span>{{ __('app.finance.import_now') }}</span>
-                    </button>
+                    <div class="gl-form-actions">
+                        <a href="{{ route('finance.report.general-ledger.template.download') }}" class="fs-btn fs-btn-muted">
+                            <i class="fas fa-download"></i>
+                            <span>{{ __('app.finance.download_general_ledger_template') }}</span>
+                        </a>
+                        <button type="submit" class="fs-btn fs-btn-primary">
+                            <i class="fas fa-upload"></i>
+                            <span>{{ __('app.finance.import_now') }}</span>
+                        </button>
+                    </div>
                     <div class="gl-panel-help">
                         {{ __('app.finance.gl_import_parser_footer') }}
                     </div>

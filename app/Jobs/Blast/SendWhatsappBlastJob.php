@@ -127,13 +127,12 @@ class SendWhatsappBlastJob implements ShouldQueue
         $providerDeliveryStatus = strtolower(
             trim((string) ($this->payload->meta['provider_delivery_status'] ?? ''))
         );
-
         $responseMessage = $providerMessage !== ''
             ? $providerMessage
             : 'WhatsApp sent successfully.';
 
-        if ($providerDeliveryStatus === 'pending' && $providerMessage === '') {
-            $responseMessage = 'Message is pending and waiting to be processed';
+        if (in_array($providerDeliveryStatus, ['queued', 'pending'], true)) {
+            $responseMessage = 'Diterima antrean gateway; belum ada konfirmasi pesan diterima WhatsApp.';
         }
 
         if ($blastLog) {
@@ -279,13 +278,19 @@ class SendWhatsappBlastJob implements ShouldQueue
             (string) ($this->payload->meta['provider_delivery_status'] ?? '')
         );
 
-        Log::info('[WA BLAST SUCCESS]', [
+        $logLabel = in_array(strtolower($deliveryStatus), ['queued', 'pending'], true)
+            ? '[WA BLAST QUEUED]'
+            : '[WA BLAST SUCCESS]';
+
+        Log::info($logLabel, [
             'phone' => $this->phone,
             'blast_log_id' => $blastLog?->id,
             'blast_message_id' => $blastLog?->blast_message_id,
             'device_id' => $this->resolveDeviceId(),
             'provider_message' => $providerMessage !== '' ? $providerMessage : 'WhatsApp sent successfully.',
             'provider_delivery_status' => $deliveryStatus !== '' ? $deliveryStatus : null,
+            'provider_reference' => $this->payload->meta['provider_reference'] ?? null,
+            'sender_phone' => $this->payload->meta['provider_sender_phone'] ?? null,
             'attachments' => count($this->payload->attachments ?? []),
         ]);
     }

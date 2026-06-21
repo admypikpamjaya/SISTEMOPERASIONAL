@@ -218,12 +218,18 @@
 
                             $hasChildren = $menuChildren->isNotEmpty();
                             $isActiveParent = false;
+                            $isMenuOpen = false;
                             $isHiddenOnCurrentRoute = false;
                             $isAllowedForBlasting = true;
 
                             if ($hasChildren) {
                                 $isActiveParent = $matchesMenuRoute($menu) || $menuChildren
                                     ->contains(fn($child) => $matchesMenuRoute($child));
+
+                                $isMenuOpen = $isActiveParent || (
+                                    $activeRole !== null
+                                    && in_array($activeRole, (array) ($menu['open_for_roles'] ?? []), true)
+                                );
                             }
 
                             if ($blastingOnly) {
@@ -252,7 +258,7 @@
                         ?>
 
                         <?php if ($isAllowedForBlasting && !$isHiddenOnCurrentRoute && $hasRoleAccess($menu) && $canAccessMenu): ?>
-                            <li class="nav-item <?php echo e($hasChildren ? 'has-treeview' : ''); ?> <?php echo e($isActiveParent ? 'menu-open' : ''); ?>">
+                            <li class="nav-item <?php echo e($hasChildren ? 'has-treeview' : ''); ?> <?php echo e($isMenuOpen ? 'menu-open' : ''); ?>">
                                 <?php if (($menu['route'] ?? null) === 'logout'): ?>
                                     <form method="POST" action="<?php echo e(route('logout')); ?>" class="m-0">
                                         <?php echo csrf_field(); ?>

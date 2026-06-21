@@ -6,7 +6,11 @@ use App\Models\BlastRecipient;
 
 class RecipientBulkSaver
 {
-    public function save($dtos): array
+    public function __construct(
+        private RecipientGroupingService $groupingService
+    ) {}
+
+    public function save($dtos, array $context = []): array
     {
         $inserted = 0;
         $duplicates = 0;
@@ -75,6 +79,12 @@ class RecipientBulkSaver
             BlastRecipient::create([
                 'nama_siswa' => $dto->namaSiswa,
                 'kelas' => $dto->kelas,
+                'education_level' => ($context['education_level'] ?? null)
+                    ?: $this->groupingService->inferEducationLevel($dto->kelas),
+                'academic_year' => ($context['academic_year'] ?? null)
+                    ?: $this->groupingService->currentAcademicYear(),
+                'student_status' => ($context['student_status'] ?? null)
+                    ?: RecipientGroupingService::STATUS_ACTIVE,
                 'nama_wali' => $dto->namaWali,
                 'wa_wali' => $dto->phone,
                 'wa_wali_2' => $dto->phoneSecondary,

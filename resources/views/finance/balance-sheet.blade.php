@@ -884,6 +884,9 @@
                     <div class="fs-field full">
                         <label class="fs-label" for="balance_import_file"><i class="fas fa-file-excel"></i> {{ __('app.finance.file_excel') }}</label>
                         <input type="file" name="file" id="balance_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
+                        <div class="fs-helper-text">
+                            {{ __('app.finance.balance_sheet_template_help') }}
+                        </div>
                     </div>
                     <div class="fs-field">
                         <label class="fs-label" for="balance_import_category_id"><i class="fas fa-tags"></i> {{ __('app.finance.finance_category') }}</label>
@@ -905,6 +908,9 @@
                         <input type="text" name="notes" id="balance_import_notes" class="fs-control" value="{{ old('notes') }}">
                     </div>
                     <div class="fs-field full fs-manage-actions">
+                        <a href="{{ route('finance.report.balance-sheet.template.download') }}" class="fs-btn fs-btn-muted">
+                            <i class="fas fa-download"></i> {{ __('app.finance.download_balance_sheet_template') }}
+                        </a>
                         <button type="submit" class="fs-btn fs-btn-primary">
                             <i class="fas fa-upload"></i> {{ __('app.finance.import_excel') }}
                         </button>

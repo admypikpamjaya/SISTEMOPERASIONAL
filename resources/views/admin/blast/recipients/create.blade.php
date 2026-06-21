@@ -166,12 +166,16 @@
     .form-group label[for="catatan"]::after,
     .form-group label[for="email_wali"]::after,
     .form-group label[for="wa_wali"]::after,
-    .form-group label[for="wa_wali_2"]::after {
+    .form-group label[for="wa_wali_2"]::after,
+    .form-group label[for="education_level"]::after,
+    .form-group label[for="academic_year"]::after,
+    .form-group label[for="student_status"]::after {
         content: "";
         display: none;
     }
 
     .form-group input,
+    .form-group select,
     .form-group textarea {
         padding: 14px 16px;
         border: 1.5px solid var(--border-color);
@@ -185,6 +189,7 @@
     }
 
     .form-group input:focus,
+    .form-group select:focus,
     .form-group textarea:focus {
         outline: none;
         border-color: var(--primary-color);
@@ -600,6 +605,30 @@
                             <div class="form-hint">
                                 {{ __('app.blast.class_format_hint') }}
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="education_level">{{ __('app.blast.education_level') }}</label>
+                            <select name="education_level" id="education_level">
+                                <option value="">{{ __('app.blast.not_assigned') }}</option>
+                                @foreach(['TK', 'SD', 'SMP', 'SMA', 'SMK', 'OTHER'] as $level)
+                                    <option value="{{ $level }}" @selected(old('education_level') === $level)>{{ $level === 'OTHER' ? __('app.blast.other_education_level') : $level }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="academic_year">{{ __('app.blast.academic_year') }}</label>
+                            <input type="text" name="academic_year" id="academic_year" value="{{ old('academic_year') }}" placeholder="2026/2027">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="student_status">{{ __('app.blast.student_status') }}</label>
+                            <select name="student_status" id="student_status">
+                                @foreach(['active', 'unassigned', 'graduated', 'alumni', 'inactive'] as $status)
+                                    <option value="{{ $status }}" @selected(old('student_status', 'active') === $status)>{{ __('app.blast.status_' . $status) }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         {{-- Nama Wali --}}

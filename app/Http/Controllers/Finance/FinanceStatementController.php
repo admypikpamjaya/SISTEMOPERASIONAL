@@ -267,14 +267,53 @@ class FinanceStatementController extends Controller
         return $this->downloadStatementDocument($request, 'balance_sheet');
     }
 
+    public function downloadBalanceSheetTemplate()
+    {
+        $templatePath = resource_path('finance-templates/balance-sheet/Lembar Saldo 2025.xlsx');
+
+        if (!is_file($templatePath)) {
+            return redirect()
+                ->route('finance.report.balance-sheet.manage')
+                ->with('error', __('app.finance.balance_sheet_template_missing'));
+        }
+
+        return response()->download($templatePath, 'template-import-lembar-saldo-ypik.xlsx');
+    }
+
     public function downloadProfitLoss(FinanceStatementFilterRequest $request)
     {
         return $this->downloadStatementDocument($request, 'profit_loss');
     }
 
+    public function downloadProfitLossTemplate()
+    {
+        $templatePath = resource_path('finance-templates/profit-loss/Laba Rugi 2025.xlsx');
+
+        if (!is_file($templatePath)) {
+            return redirect()
+                ->route('finance.report.profit-loss.manage')
+                ->with('error', __('app.finance.profit_loss_template_missing'));
+        }
+
+        return response()->download($templatePath, 'template-import-laba-rugi-ypik.xlsx');
+    }
+
     public function downloadGeneralLedger(FinanceStatementFilterRequest $request)
     {
         return $this->downloadStatementDocument($request, 'general_ledger');
+    }
+
+    public function downloadGeneralLedgerTemplate()
+    {
+        $templatePath = resource_path('finance-templates/general-ledger/Rincian Buku Besar 2025.xlsx');
+
+        if (!is_file($templatePath)) {
+            return redirect()
+                ->route('finance.report.general-ledger.manage')
+                ->with('error', __('app.finance.general_ledger_template_missing'));
+        }
+
+        return response()->download($templatePath, 'template-import-buku-besar-ypik.xlsx');
     }
 
     public function importBalanceSheetExcel(FinanceStatementImportRequest $request)

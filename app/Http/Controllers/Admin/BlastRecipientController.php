@@ -11,22 +11,32 @@ use App\Services\Recipient\EmployeeRecipientNormalizer;
 use App\Services\Recipient\EmployeeYpikRecipientBulkSaver;
 use App\Services\Recipient\ExcelImportService;
 use App\Services\Recipient\RecipientBulkSaver;
+use App\Services\Recipient\RecipientGroupingService;
 use App\Services\Recipient\RecipientNormalizer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class BlastRecipientController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, RecipientGroupingService $groupingService)
     {
         $validated = $request->validate([
             'q' => 'nullable|string|max:255',
             'kelas' => 'nullable|string|max:100',
+            'education_level' => 'nullable|string|max:30',
+            'academic_year' => 'nullable|string|max:20',
+            'student_status' => 'nullable|string|max:30',
             'per_page' => 'nullable|integer|min:1|max:500',
         ]);
 
         $search = trim((string) ($validated['q'] ?? ''));
         $selectedClass = trim((string) ($validated['kelas'] ?? ''));
+        $selectedEducationLevel = trim((string) ($validated['education_level'] ?? ''));
+        $selectedAcademicYear = trim((string) ($validated['academic_year'] ?? ''));
+        $selectedStudentStatus = trim((string) ($validated['student_status'] ?? ''));
         $allowedPerPage = [20, 50, 100, 200];
         $perPage = (int) ($validated['per_page'] ?? 50);
 
@@ -34,22 +44,14 @@ class BlastRecipientController extends Controller
             $perPage = 50;
         }
 
-        $query = BlastRecipient::query();
-
-        if ($search !== '') {
-            $query->where(function ($builder) use ($search) {
-                $builder->where('nama_siswa', 'like', '%' . $search . '%')
-                    ->orWhere('kelas', 'like', '%' . $search . '%')
-                    ->orWhere('nama_wali', 'like', '%' . $search . '%')
-                    ->orWhere('wa_wali', 'like', '%' . $search . '%')
-                    ->orWhere('wa_wali_2', 'like', '%' . $search . '%')
-                    ->orWhere('email_wali', 'like', '%' . $search . '%');
-            });
-        }
-
-        if ($selectedClass !== '') {
-            $query->where('kelas', $selectedClass);
-        }
+        $query = $this->applyStudentRecipientFilters(
+            BlastRecipient::query(),
+            $search,
+            $selectedClass,
+            $selectedEducationLevel,
+            $selectedAcademicYear,
+            $selectedStudentStatus
+        );
 
         $recipients = $query
             ->latest()
@@ -63,6 +65,14 @@ class BlastRecipientController extends Controller
             ->distinct()
             ->orderBy('kelas')
             ->pluck('kelas');
+        $academicYearOptions = BlastRecipient::query()
+            ->whereNotNull('academic_year')
+            ->where('academic_year', '!=', '')
+            ->distinct()
+            ->orderByDesc('academic_year')
+            ->pluck('academic_year');
+        $educationLevelOptions = $groupingService->educationLevelOptions();
+        $studentStatusOptions = $groupingService->statusOptions();
 
         $baseStatsQuery = BlastRecipient::query();
         $totalRecipients = (clone $baseStatsQuery)->count();
@@ -86,6 +96,12 @@ class BlastRecipientController extends Controller
             'kelasOptions',
             'search',
             'selectedClass',
+            'selectedEducationLevel',
+            'selectedAcademicYear',
+            'selectedStudentStatus',
+            'academicYearOptions',
+            'educationLevelOptions',
+            'studentStatusOptions',
             'allowedPerPage',
             'perPage',
             'totalRecipients',
@@ -93,6 +109,139 @@ class BlastRecipientController extends Controller
             'incompleteCount',
             'validCount'
         ));
+    }
+
+    public function exportStudents(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'kelas' => 'nullable|string|max:100',
+            'education_level' => 'nullable|string|max:30',
+            'academic_year' => 'nullable|string|max:20',
+            'student_status' => 'nullable|string|max:30',
+        ]);
+
+        $recipients = $this->applyStudentRecipientFilters(
+            BlastRecipient::query(),
+            trim((string) ($validated['q'] ?? '')),
+            trim((string) ($validated['kelas'] ?? '')),
+            trim((string) ($validated['education_level'] ?? '')),
+            trim((string) ($validated['academic_year'] ?? '')),
+            trim((string) ($validated['student_status'] ?? ''))
+        )
+            ->orderBy('education_level')
+            ->orderBy('kelas')
+            ->orderBy('nama_siswa')
+            ->get();
+
+        return response()->streamDownload(function () use ($recipients): void {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Recipient Siswa');
+            $sheet->fromArray([
+                [
+                    'Nama Siswa',
+                    'Jenjang',
+                    'Kelas',
+                    'Tahun Ajaran',
+                    'Status Siswa',
+                    'Nama Wali',
+                    'WhatsApp 1',
+                    'WhatsApp 2',
+                    'Email Wali',
+                    'Valid',
+                    'Catatan',
+                ],
+            ]);
+
+            $rowNumber = 2;
+            foreach ($recipients as $recipient) {
+                $sheet->fromArray([[
+                    $recipient->nama_siswa,
+                    $recipient->education_level,
+                    $recipient->kelas,
+                    $recipient->academic_year,
+                    $recipient->student_status,
+                    $recipient->nama_wali,
+                    $recipient->wa_wali,
+                    $recipient->wa_wali_2,
+                    $recipient->email_wali,
+                    $recipient->is_valid ? 'Ya' : 'Tidak',
+                    $recipient->catatan,
+                ]], null, 'A' . $rowNumber);
+                $rowNumber++;
+            }
+
+            $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+            $sheet->freezePane('A2');
+            foreach (range('A', 'K') as $column) {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+            }
+
+            (new Xlsx($spreadsheet))->save('php://output');
+            $spreadsheet->disconnectWorksheets();
+        }, 'kontak-recipient-siswa-' . now()->format('Y-m-d-His') . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function bulkMoveStudents(Request $request, RecipientGroupingService $groupingService)
+    {
+        $data = $request->validate([
+            'selected_ids' => ['nullable', 'array'],
+            'selected_ids.*' => ['uuid', 'distinct'],
+            'apply_all_filtered' => ['nullable', 'boolean'],
+            'filter_q' => ['nullable', 'string', 'max:255'],
+            'filter_kelas' => ['nullable', 'string', 'max:100'],
+            'filter_education_level' => ['nullable', 'string', 'max:30'],
+            'filter_academic_year' => ['nullable', 'string', 'max:20'],
+            'filter_student_status' => ['nullable', 'string', 'max:30'],
+            'kelas' => ['nullable', 'string', 'max:100'],
+            'education_level' => ['nullable', 'string', 'max:30'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'student_status' => ['nullable', 'string', 'max:30'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if (
+            empty($data['kelas'])
+            && empty($data['education_level'])
+            && empty($data['academic_year'])
+            && empty($data['student_status'])
+        ) {
+            return back()
+                ->withInput()
+                ->with('error', __('app.blast.recipient_group_target_required'));
+        }
+
+        $recipientIds = array_values($data['selected_ids'] ?? []);
+        if (!empty($data['apply_all_filtered'])) {
+            $recipientIds = $this->applyStudentRecipientFilters(
+                BlastRecipient::query(),
+                trim((string) ($data['filter_q'] ?? '')),
+                trim((string) ($data['filter_kelas'] ?? '')),
+                trim((string) ($data['filter_education_level'] ?? '')),
+                trim((string) ($data['filter_academic_year'] ?? '')),
+                trim((string) ($data['filter_student_status'] ?? ''))
+            )
+                ->pluck('id')
+                ->all();
+        }
+
+        if ($recipientIds === []) {
+            return back()->with('error', __('app.blast.choose_min_one_recipient_delete'));
+        }
+
+        $updated = $groupingService->moveRecipients(
+            $recipientIds,
+            $data,
+            auth()->id() ? (string) auth()->id() : null
+        );
+
+        return back()->with(
+            'success',
+            __('app.blast.recipient_group_update_success', ['count' => $updated])
+        );
     }
 
     public function employeeIndex(Request $request)
@@ -675,11 +824,15 @@ class BlastRecipientController extends Controller
      */
     public function store(
         Request $request,
-        RecipientNormalizer $normalizer
+        RecipientNormalizer $normalizer,
+        RecipientGroupingService $groupingService
     ) {
         $data = $request->validate([
             'nama_siswa' => 'required|string',
             'kelas' => 'required|string',
+            'education_level' => 'nullable|string|max:30',
+            'academic_year' => 'nullable|string|max:20',
+            'student_status' => 'nullable|string|max:30',
             'nama_wali' => 'required|string',
             'email_wali' => 'nullable|email',
             'wa_wali' => 'nullable|string',
@@ -706,6 +859,9 @@ class BlastRecipientController extends Controller
         BlastRecipient::create([
             'nama_siswa' => $dto->namaSiswa,
             'kelas' => $dto->kelas,
+            'education_level' => ($data['education_level'] ?? null) ?: $groupingService->inferEducationLevel($dto->kelas),
+            'academic_year' => ($data['academic_year'] ?? null) ?: $groupingService->currentAcademicYear(),
+            'student_status' => ($data['student_status'] ?? null) ?: RecipientGroupingService::STATUS_ACTIVE,
             'nama_wali' => $dto->namaWali,
             'email_wali' => $dto->email,
             'wa_wali' => $dto->phone,
@@ -727,7 +883,13 @@ class BlastRecipientController extends Controller
      */
     public function edit(string $id)
     {
-        $recipient = BlastRecipient::findOrFail($id);
+        $recipient = BlastRecipient::query()
+            ->with([
+                'classHistories' => fn ($query) => $query
+                    ->latest()
+                    ->limit(20),
+            ])
+            ->findOrFail($id);
 
         return view('admin.blast.recipients.edit', compact('recipient'));
     }
@@ -738,13 +900,17 @@ class BlastRecipientController extends Controller
     public function update(
         Request $request,
         string $id,
-        RecipientNormalizer $normalizer
+        RecipientNormalizer $normalizer,
+        RecipientGroupingService $groupingService
     ) {
         $recipient = BlastRecipient::findOrFail($id);
 
         $data = $request->validate([
             'nama_siswa' => 'required|string',
             'kelas' => 'required|string',
+            'education_level' => 'nullable|string|max:30',
+            'academic_year' => 'nullable|string|max:20',
+            'student_status' => 'nullable|string|max:30',
             'nama_wali' => 'required|string',
             'email_wali' => 'nullable|email',
             'wa_wali' => 'nullable|string',
@@ -768,9 +934,21 @@ class BlastRecipientController extends Controller
             'catatan' => $data['catatan'] ?? null,
         ]);
 
+        $targetGrouping = [
+            'kelas' => $dto->kelas,
+            'education_level' => ($data['education_level'] ?? null)
+                ?: $groupingService->inferEducationLevel($dto->kelas),
+            'academic_year' => ($data['academic_year'] ?? null)
+                ?: $recipient->academic_year
+                ?: $groupingService->currentAcademicYear(),
+            'student_status' => ($data['student_status'] ?? null)
+                ?: $recipient->student_status
+                ?: RecipientGroupingService::STATUS_ACTIVE,
+            'notes' => 'Perubahan melalui form edit recipient.',
+        ];
+
         $recipient->update([
             'nama_siswa' => $dto->namaSiswa,
-            'kelas' => $dto->kelas,
             'nama_wali' => $dto->namaWali,
             'email_wali' => $dto->email,
             'wa_wali' => $dto->phone,
@@ -781,6 +959,19 @@ class BlastRecipientController extends Controller
                 ? null
                 : implode(', ', $dto->errors),
         ]);
+
+        if (
+            $recipient->kelas !== $targetGrouping['kelas']
+            || $recipient->education_level !== $targetGrouping['education_level']
+            || $recipient->academic_year !== $targetGrouping['academic_year']
+            || $recipient->student_status !== $targetGrouping['student_status']
+        ) {
+            $groupingService->moveRecipients(
+                [(string) $recipient->id],
+                $targetGrouping,
+                auth()->id() ? (string) auth()->id() : null
+            );
+        }
 
         return redirect()
             ->route('admin.blast.recipients.index')
@@ -794,11 +985,15 @@ class BlastRecipientController extends Controller
         Request $request,
         ExcelImportService $importService,
         RecipientBulkSaver $bulkSaver,
-        EmployeeRecipientBulkSaver $employeeBulkSaver
+        EmployeeRecipientBulkSaver $employeeBulkSaver,
+        RecipientGroupingService $groupingService
     ) {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,csv,xls',
             'import_type' => 'nullable|in:siswa,karyawan',
+            'education_level' => 'nullable|string|max:30',
+            'academic_year' => 'nullable|string|max:20',
+            'student_status' => 'nullable|string|max:30',
         ]);
 
         $uploadedFile = $request->file('file');
@@ -846,7 +1041,11 @@ class BlastRecipientController extends Controller
 
         $summary = $importType === 'karyawan'
             ? $employeeBulkSaver->save(collect($result->valid))
-            : $bulkSaver->save(collect($result->valid));
+            : $bulkSaver->save(collect($result->valid), [
+                'education_level' => $request->input('education_level'),
+                'academic_year' => $request->input('academic_year') ?: $groupingService->currentAcademicYear(),
+                'student_status' => $request->input('student_status') ?: RecipientGroupingService::STATUS_ACTIVE,
+            ]);
         $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
         $messagePrefix = $importType === 'karyawan'
             ? 'Import data karyawan selesai.'
@@ -1050,5 +1249,45 @@ class BlastRecipientController extends Controller
             ->delete();
 
         return back()->with('success', "Semua data recipient YPIK Pam Jaya berhasil dihapus ({$total} data).");
+    }
+
+    private function applyStudentRecipientFilters(
+        Builder $query,
+        string $search,
+        string $class,
+        string $educationLevel,
+        string $academicYear,
+        string $studentStatus
+    ): Builder {
+        if ($search !== '') {
+            $query->where(function (Builder $builder) use ($search): void {
+                $builder->where('nama_siswa', 'like', '%' . $search . '%')
+                    ->orWhere('kelas', 'like', '%' . $search . '%')
+                    ->orWhere('education_level', 'like', '%' . $search . '%')
+                    ->orWhere('academic_year', 'like', '%' . $search . '%')
+                    ->orWhere('nama_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_wali', 'like', '%' . $search . '%')
+                    ->orWhere('wa_wali_2', 'like', '%' . $search . '%')
+                    ->orWhere('email_wali', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($class !== '') {
+            $query->where('kelas', $class);
+        }
+
+        if ($educationLevel !== '') {
+            $query->where('education_level', $educationLevel);
+        }
+
+        if ($academicYear !== '') {
+            $query->where('academic_year', $academicYear);
+        }
+
+        if ($studentStatus !== '') {
+            $query->where('student_status', $studentStatus);
+        }
+
+        return $query;
     }
 }

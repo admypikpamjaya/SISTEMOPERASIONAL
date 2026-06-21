@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class BlastRecipient extends Model
@@ -19,6 +20,9 @@ class BlastRecipient extends Model
         'id',
         'nama_siswa',
         'kelas',
+        'education_level',
+        'academic_year',
+        'student_status',
         'nama_wali',
         'wa_wali',
         'wa_wali_2',
@@ -40,5 +44,10 @@ class BlastRecipient extends Model
                 $model->id = (string) Str::uuid();
             }
         });
+    }
+
+    public function classHistories(): HasMany
+    {
+        return $this->hasMany(BlastRecipientClassHistory::class, 'recipient_id');
     }
 }

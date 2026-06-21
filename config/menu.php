@@ -124,7 +124,8 @@ return array_map($withFallbackLabel, [
         'label_key' => 'app.menu.blast_message',
         'icon'  => 'fas fa-paper-plane',
         'route' => 'admin.blast.index',
-        'hide_on_routes' => ['finance.*'],
+        'active_routes' => ['admin.blast.*', 'admin.announcements.*'],
+        'open_for_roles' => [UserRole::IT_SUPPORT->value],
         'children' => [
             [
                 'label_key' => 'app.menu.whatsapp_blast',
@@ -144,6 +145,7 @@ return array_map($withFallbackLabel, [
                 'route' => 'admin.blast.whatsapp.manage',
                 'module_name' => 'admin_blast',
                 'roles' => [UserRole::IT_SUPPORT->value],
+                'active_routes' => ['admin.blast.whatsapp.manage', 'admin.blast.whatsapp.gateway-*'],
             ],
             [
                 'label_key' => 'app.menu.email_blast',
@@ -155,35 +157,45 @@ return array_map($withFallbackLabel, [
                 'icon'  => 'fas fa-users',
                 'route' => 'admin.blast.recipients.index',
                 'module_name' => 'admin_blast',
+                'active_routes' => [
+                    'admin.blast.recipients.index',
+                    'admin.blast.recipients.create',
+                    'admin.blast.recipients.edit',
+                ],
             ],
             [
                 'label_key' => 'app.menu.recipient_koperasi',
                 'icon'  => 'fas fa-id-badge',
                 'route' => 'admin.blast.recipients.employees.index',
                 'module_name' => 'admin_blast',
+                'active_routes' => ['admin.blast.recipients.employees.*'],
             ],
             [
                 'label_key' => 'app.menu.recipient_ypik',
                 'icon'  => 'fas fa-address-card',
                 'route' => 'admin.blast.recipients.employees-ypik.index',
                 'module_name' => 'admin_blast',
+                'active_routes' => ['admin.blast.recipients.employees-ypik.*'],
             ],
             [
                 'label_key' => 'app.menu.recipient_pamjaya',
                 'icon'  => 'fas fa-id-card',
                 'route' => 'admin.blast.recipients.employees-ypik-pamjaya.index',
                 'module_name' => 'admin_blast',
+                'active_routes' => ['admin.blast.recipients.employees-ypik-pamjaya.*'],
             ],
             [
                 'label_key' => 'app.menu.template_blast',
                 'icon'  => 'fas fa-layer-group',
                 'route' => 'admin.blast.templates.index',
                 'module_name' => 'blast_template',
+                'active_routes' => ['admin.blast.templates.*'],
             ],
             [
                 'label_key' => 'app.menu.announcement',
                 'icon'  => 'fas fa-bullhorn',
                 'route' => 'admin.announcements.index',
+                'active_routes' => ['admin.announcements.*'],
             ],
         ],
         

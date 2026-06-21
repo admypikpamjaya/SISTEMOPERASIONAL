@@ -218,39 +218,83 @@
     .search-box::placeholder { color: #94a3b8; }
 
     .toolbar-area {
-        padding: 14px 20px;
-        border-bottom: 1px solid var(--border);
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        background: #f8fafc;
+        background: var(--white);
     }
 
-    .toolbar-row {
+    .toolbar-section {
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .toolbar-section:last-child {
+        border-bottom: 0;
+    }
+
+    .toolbar-section-head {
         display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
         align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: var(--text-dark);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .toolbar-section-head i {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--blue-light);
+        color: var(--blue-primary);
+        font-size: 11px;
     }
 
     .recipient-filter-form {
+        display: grid;
+        grid-template-columns: minmax(230px, 1.8fr) repeat(5, minmax(125px, 1fr)) auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .filter-field {
+        min-width: 0;
+    }
+
+    .filter-field label {
         display: flex;
-        gap: 10px;
         align-items: center;
-        flex: 1 1 520px;
-        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 16px;
+        margin: 0 0 6px;
+        color: var(--text-light);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .filter-form-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .filter-select {
+        width: 100%;
         border: 1.5px solid var(--border);
         border-radius: var(--radius-sm);
-        padding: 9px 10px;
+        padding: 9px 30px 9px 11px;
         font-size: 12.5px;
         font-family: 'Plus Jakarta Sans', sans-serif;
         color: var(--text-dark);
         background: white;
-        min-width: 115px;
-        height: 38px;
+        min-width: 0;
+        height: 40px;
     }
 
     .filter-select:focus {
@@ -271,10 +315,11 @@
         text-decoration: none;
         white-space: nowrap;
         transition: all 0.2s;
-        height: 38px;
+        height: 40px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 7px;
     }
 
     .btn-filter {
@@ -311,7 +356,7 @@
         color: var(--text-mid);
         position: relative;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        height: 38px;
+        height: 40px;
     }
 
     .btn-import:hover { background: #f1f5f9; border-color: var(--blue-primary); color: var(--blue-primary); }
@@ -336,7 +381,7 @@
         text-decoration: none;
         font-family: 'Plus Jakarta Sans', sans-serif;
         box-shadow: 0 2px 8px rgba(26,86,219,0.3);
-        height: 38px;
+        height: 40px;
     }
 
     .btn-add:hover {
@@ -360,7 +405,7 @@
         background: #fef2f2;
         color: var(--red);
         font-family: 'Plus Jakarta Sans', sans-serif;
-        height: 38px;
+        height: 40px;
     }
 
     .btn-delete-all:hover {
@@ -384,7 +429,7 @@
         background: #ffffff;
         color: var(--red);
         font-family: 'Plus Jakarta Sans', sans-serif;
-        height: 38px;
+        height: 40px;
     }
 
     .btn-delete-selected:hover {
@@ -401,18 +446,183 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 10px;
+        justify-content: space-between;
+        gap: 12px 18px;
+        width: 100%;
+    }
+
+    .toolbar-action-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toolbar-action-group.is-danger {
+        margin-left: auto;
+    }
+
+    .bulk-group-panel {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        align-items: end;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .bulk-group-heading {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .bulk-group-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--text-dark);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .bulk-group-title i {
+        color: var(--blue-primary);
+    }
+
+    .bulk-group-heading .bulk-group-help {
+        max-width: 620px;
+        text-align: right;
+    }
+
+    .bulk-group-field label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--text-mid);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .bulk-group-field input,
+    .bulk-group-field select {
+        width: 100%;
+        height: 38px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        background: white;
+        color: var(--text-dark);
+        font: 12.5px 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .bulk-group-help {
+        color: var(--text-light);
+        font-size: 11.5px;
+        line-height: 1.5;
+    }
+
+    .bulk-group-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
         justify-content: flex-end;
-        flex: 1 1 360px;
+        gap: 10px;
+        padding-top: 2px;
+    }
+
+    .bulk-apply-all {
+        min-height: 40px;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-mid);
+        background: var(--white);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        margin: 0;
     }
 
     .search-box-wrap {
-        min-width: 220px;
-        flex: 1 1 220px;
+        min-width: 0;
     }
 
     .search-box {
-        height: 38px;
+        height: 40px;
+    }
+
+    body.dark-mode .toolbar-area,
+    body.dark-mode .toolbar-section {
+        background: #0f192a;
+        border-color: #26354c;
+    }
+
+    body.dark-mode .toolbar-section-head,
+    body.dark-mode .bulk-group-title {
+        color: #e7eef9;
+    }
+
+    body.dark-mode .toolbar-section-head i {
+        background: #173b79;
+        color: #8bb7ff;
+    }
+
+    body.dark-mode .filter-field label,
+    body.dark-mode .bulk-group-field label,
+    body.dark-mode .bulk-group-help {
+        color: #91a6c3;
+    }
+
+    body.dark-mode .search-box,
+    body.dark-mode .filter-select,
+    body.dark-mode .bulk-group-field input,
+    body.dark-mode .bulk-group-field select {
+        background: #162236;
+        border-color: #2a3b55;
+        color: #edf4ff;
+    }
+
+    body.dark-mode .search-box::placeholder,
+    body.dark-mode .bulk-group-field input::placeholder {
+        color: #7186a5;
+    }
+
+    body.dark-mode .btn-filter,
+    body.dark-mode .btn-reset,
+    body.dark-mode .btn-import,
+    body.dark-mode .bulk-apply-all {
+        background: #162236;
+        border-color: #304461;
+        color: #dbe8fb;
+    }
+
+    body.dark-mode .btn-filter:hover,
+    body.dark-mode .btn-reset:hover,
+    body.dark-mode .btn-import:hover,
+    body.dark-mode .bulk-apply-all:hover {
+        background: #1d2d46;
+        border-color: #4c7fd3;
+        color: #ffffff;
+    }
+
+    body.dark-mode .bulk-group-panel {
+        background: #111d30;
+        border-color: #2a3b55;
+    }
+
+    body.dark-mode .bulk-group-heading {
+        border-color: #2a3b55;
     }
 
     .bulk-checkbox {
@@ -766,23 +976,60 @@
     }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 1100px) {
+    @media (max-width: 1280px) {
         .main-layout { grid-template-columns: 1fr; }
         .stats-grid  { grid-template-columns: repeat(2, 1fr); }
         .sidebar-panel { display: grid; grid-template-columns: 1fr 1fr; }
+        .bulk-group-panel { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+        .recipient-filter-form { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+        .filter-field:first-child { grid-column: span 2; }
+        .filter-form-actions { grid-column: 1 / -1; }
     }
 
     @media (max-width: 640px) {
         .page-wrapper { padding: 16px; }
-        .stats-grid  { grid-template-columns: 1fr 1fr; }
-        .recipient-filter-form {
-            flex-wrap: wrap;
+        .stats-grid  { grid-template-columns: 1fr; }
+        .toolbar-section { padding: 16px; }
+        .recipient-filter-form { grid-template-columns: 1fr; }
+        .filter-field:first-child,
+        .filter-form-actions { grid-column: auto; }
+        .filter-form-actions,
+        .filter-form-actions > * { width: 100%; }
+        .toolbar-actions { align-items: stretch; }
+        .toolbar-action-group,
+        .toolbar-action-group.is-danger { width: 100%; margin-left: 0; }
+        .toolbar-action-group > *,
+        .toolbar-action-group form,
+        .toolbar-action-group form > button { flex: 1 1 100%; width: 100%; }
+        .bulk-group-panel { grid-template-columns: 1fr; }
+        .bulk-group-heading { flex-direction: column; gap: 6px; }
+        .bulk-group-heading .bulk-group-help { text-align: left; }
+        .bulk-group-actions { flex-direction: column; align-items: stretch; }
+        .bulk-group-actions > * { width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+        .page-header {
+            align-items: flex-start;
+            margin-bottom: 20px;
         }
-        .recipient-filter-form .search-box-wrap {
-            min-width: 100%;
+
+        .page-header-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
         }
-        .toolbar-actions {
-            justify-content: flex-start;
+
+        .page-header-text h1 {
+            font-size: 20px;
+        }
+
+        .stat-card {
+            min-height: 88px;
+        }
+
+        .table-card-header {
+            padding: 16px;
         }
     }
 </style>
@@ -868,81 +1115,211 @@
 
             {{-- Toolbar --}}
             <div class="toolbar-area">
-                <div class="toolbar-row">
-                    <form method="GET" action="{{ route('admin.blast.recipients.index') }}" class="recipient-filter-form">
-                        <div class="search-box-wrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
-                            <input type="text" class="search-box" placeholder="{{ __('app.blast.search_student_placeholder') }}" id="searchInput" name="q" value="{{ $search ?? '' }}">
-                        </div>
-                        <select name="kelas" class="filter-select" aria-label="{{ __('app.blast.filter_class_aria') }}">
-                            <option value="">{{ __('app.blast.all_classes') }}</option>
-                            @foreach(($kelasOptions ?? collect()) as $kelasOption)
-                                <option value="{{ $kelasOption }}" @selected(($selectedClass ?? '') === $kelasOption)>{{ $kelasOption }}</option>
-                            @endforeach
-                        </select>
-                        <select name="per_page" class="filter-select" aria-label="{{ __('app.blast.per_page_aria') }}">
-                            @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
-                                <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ __('app.blast.per_page_suffix', ['count' => $size]) }}</option>
-                            @endforeach
-                        </select>
-                        <button type="submit" class="btn-filter">{{ __('app.blast.apply_filter') }}</button>
-                        @if(!empty($search) || !empty($selectedClass))
-                            <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">{{ __('app.blast.reset') }}</a>
-                        @endif
-                    </form>
-
-                    <div class="toolbar-actions">
-                        <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
-                            @csrf
-                            <input type="hidden" name="import_type" value="siswa">
-                            <button type="button" class="btn-import" id="importExcelBtn">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                </svg>
-                                {{ __('app.blast.import_excel') }}
-                                <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
-                            </button>
-                        </form>
-
-                        <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter" style="text-decoration:none;">
-                            {{ __('app.blast.data_cooperative') }}
-                        </a>
-
-                        <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter" style="text-decoration:none;">
-                            {{ __('app.blast.data_ypik_employees') }}
-                        </a>
-                        <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="btn-filter" style="text-decoration:none;">
-                            {{ __('app.blast.data_ypik_pamjaya') }}
-                        </a>
-
-                        <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                        </form>
-                        <button type="submit" class="btn-delete-selected" id="bulkDeleteBtn" form="bulk-delete-form" disabled>
-                            {{ __('app.blast.delete_selected') }}
-                        </button>
-
-                        <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" data-confirm-message="{{ __('app.blast.delete_all_students_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn-delete-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                </svg>
-                                {{ __('app.blast.delete_all') }}
-                            </button>
-                        </form>
-
-                        <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:14px;height:14px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            {{ __('app.blast.add_data') }}
-                        </a>
+                <div class="toolbar-section">
+                    <div class="toolbar-section-head">
+                        <i class="fas fa-filter"></i>
+                        {{ __('app.blast.recipient_filter_title') }}
                     </div>
+                    <form method="GET" action="{{ route('admin.blast.recipients.index') }}" class="recipient-filter-form">
+                        <div class="filter-field">
+                            <label for="searchInput"><i class="fas fa-search"></i> {{ __('app.blast.search') }}</label>
+                            <div class="search-box-wrap">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                                <input type="text" class="search-box" placeholder="{{ __('app.blast.search_student_placeholder') }}" id="searchInput" name="q" value="{{ $search ?? '' }}">
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label for="recipientClassFilter"><i class="fas fa-chalkboard"></i> {{ __('app.blast.class') }}</label>
+                            <select name="kelas" id="recipientClassFilter" class="filter-select">
+                                <option value="">{{ __('app.blast.all_classes') }}</option>
+                                @foreach(($kelasOptions ?? collect()) as $kelasOption)
+                                    <option value="{{ $kelasOption }}" @selected(($selectedClass ?? '') === $kelasOption)>{{ $kelasOption }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="recipientLevelFilter"><i class="fas fa-layer-group"></i> {{ __('app.blast.education_level') }}</label>
+                            <select name="education_level" id="recipientLevelFilter" class="filter-select">
+                                <option value="">{{ __('app.blast.all_education_levels') }}</option>
+                                @foreach(($educationLevelOptions ?? []) as $levelValue => $levelLabel)
+                                    <option value="{{ $levelValue }}" @selected(($selectedEducationLevel ?? '') === $levelValue)>{{ $levelLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="recipientYearFilter"><i class="fas fa-calendar-alt"></i> {{ __('app.blast.academic_year') }}</label>
+                            <select name="academic_year" id="recipientYearFilter" class="filter-select">
+                                <option value="">{{ __('app.blast.all_academic_years') }}</option>
+                                @foreach(($academicYearOptions ?? collect()) as $academicYearOption)
+                                    <option value="{{ $academicYearOption }}" @selected(($selectedAcademicYear ?? '') === $academicYearOption)>{{ $academicYearOption }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="recipientStatusFilter"><i class="fas fa-user-check"></i> {{ __('app.blast.student_status') }}</label>
+                            <select name="student_status" id="recipientStatusFilter" class="filter-select">
+                                <option value="">{{ __('app.blast.all_student_statuses') }}</option>
+                                @foreach(($studentStatusOptions ?? []) as $statusValue => $statusLabel)
+                                    <option value="{{ $statusValue }}" @selected(($selectedStudentStatus ?? '') === $statusValue)>{{ __('app.blast.status_' . $statusValue) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="recipientPageSize"><i class="fas fa-list-ol"></i> {{ __('app.blast.per_page') }}</label>
+                            <select name="per_page" id="recipientPageSize" class="filter-select">
+                                @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
+                                    <option value="{{ $size }}" @selected((int) ($perPage ?? 50) === (int) $size)>{{ __('app.blast.per_page_suffix', ['count' => $size]) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="filter-form-actions">
+                            <button type="submit" class="btn-add">
+                                <i class="fas fa-search"></i>
+                                {{ __('app.blast.apply_filter') }}
+                            </button>
+                            @if(!empty($search) || !empty($selectedClass) || !empty($selectedEducationLevel) || !empty($selectedAcademicYear) || !empty($selectedStudentStatus))
+                                <a href="{{ route('admin.blast.recipients.index', ['per_page' => $perPage ?? 50]) }}" class="btn-reset">
+                                    <i class="fas fa-undo"></i>
+                                    {{ __('app.blast.reset') }}
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+
+                <div class="toolbar-section">
+                    <div class="toolbar-section-head">
+                        <i class="fas fa-sliders-h"></i>
+                        {{ __('app.blast.recipient_actions_title') }}
+                    </div>
+                    <div class="toolbar-actions">
+                        <div class="toolbar-action-group">
+                            <a href="{{ route('admin.blast.recipients.create') }}" class="btn-add">
+                                <i class="fas fa-plus"></i>
+                                {{ __('app.blast.add_data') }}
+                            </a>
+                            <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="import_type" value="siswa">
+                                <input type="hidden" name="education_level" value="{{ $selectedEducationLevel ?? '' }}">
+                                <input type="hidden" name="academic_year" value="{{ $selectedAcademicYear ?? '' }}">
+                                <input type="hidden" name="student_status" value="{{ $selectedStudentStatus ?: 'active' }}">
+                                <button type="button" class="btn-import" id="importExcelBtn">
+                                    <i class="fas fa-file-import"></i>
+                                    {{ __('app.blast.import_excel') }}
+                                    <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
+                                </button>
+                            </form>
+                            <a
+                                href="{{ route('admin.blast.recipients.export', array_filter([
+                                    'q' => $search ?? null,
+                                    'kelas' => $selectedClass ?? null,
+                                    'education_level' => $selectedEducationLevel ?? null,
+                                    'academic_year' => $selectedAcademicYear ?? null,
+                                    'student_status' => $selectedStudentStatus ?? null,
+                                ])) }}"
+                                class="btn-filter"
+                            >
+                                <i class="fas fa-file-export"></i>
+                                {{ __('app.blast.export_contacts') }}
+                            </a>
+                        </div>
+
+                        <div class="toolbar-action-group">
+                            <a href="{{ route('admin.blast.recipients.employees.index') }}" class="btn-filter">
+                                <i class="fas fa-building"></i>
+                                {{ __('app.blast.data_cooperative') }}
+                            </a>
+                            <a href="{{ route('admin.blast.recipients.employees-ypik.index') }}" class="btn-filter">
+                                <i class="fas fa-id-badge"></i>
+                                {{ __('app.blast.data_ypik_employees') }}
+                            </a>
+                            <a href="{{ route('admin.blast.recipients.employees-ypik-pamjaya.index') }}" class="btn-filter">
+                                <i class="fas fa-address-card"></i>
+                                {{ __('app.blast.data_ypik_pamjaya') }}
+                            </a>
+                        </div>
+
+                        <div class="toolbar-action-group is-danger">
+                            <form id="bulk-delete-form" method="POST" action="{{ route('admin.blast.recipients.bulk-delete') }}" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                            <button type="submit" class="btn-delete-selected" id="bulkDeleteBtn" form="bulk-delete-form" disabled>
+                                <i class="fas fa-trash-alt"></i>
+                                {{ __('app.blast.delete_selected') }}
+                            </button>
+
+                            <form method="POST" action="{{ route('admin.blast.recipients.destroy-all') }}" class="d-inline" data-confirm-message="{{ __('app.blast.delete_all_students_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-delete-all">
+                                    <i class="fas fa-trash"></i>
+                                    {{ __('app.blast.delete_all') }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toolbar-section">
+                    <form method="POST" action="{{ route('admin.blast.recipients.bulk-group') }}" id="bulk-group-form" class="bulk-group-panel">
+                        @csrf
+                        <input type="hidden" name="filter_q" value="{{ $search ?? '' }}">
+                        <input type="hidden" name="filter_kelas" value="{{ $selectedClass ?? '' }}">
+                        <input type="hidden" name="filter_education_level" value="{{ $selectedEducationLevel ?? '' }}">
+                        <input type="hidden" name="filter_academic_year" value="{{ $selectedAcademicYear ?? '' }}">
+                        <input type="hidden" name="filter_student_status" value="{{ $selectedStudentStatus ?? '' }}">
+                        <div class="bulk-group-heading">
+                            <div class="bulk-group-title">
+                                <i class="fas fa-random"></i>
+                                {{ __('app.blast.bulk_group_title') }}
+                            </div>
+                            <div class="bulk-group-help">{{ __('app.blast.bulk_group_help') }}</div>
+                        </div>
+                        <div class="bulk-group-field">
+                            <label for="bulk_target_class">{{ __('app.blast.target_class') }}</label>
+                            <input type="text" name="kelas" id="bulk_target_class" placeholder="Contoh: 4A">
+                        </div>
+                        <div class="bulk-group-field">
+                            <label for="bulk_target_level">{{ __('app.blast.target_education_level') }}</label>
+                            <select name="education_level" id="bulk_target_level">
+                                <option value="">-</option>
+                                @foreach(($educationLevelOptions ?? []) as $levelValue => $levelLabel)
+                                    <option value="{{ $levelValue }}">{{ $levelLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="bulk-group-field">
+                            <label for="bulk_target_year">{{ __('app.blast.target_academic_year') }}</label>
+                            <input type="text" name="academic_year" id="bulk_target_year" placeholder="2026/2027">
+                        </div>
+                        <div class="bulk-group-field">
+                            <label for="bulk_target_status">{{ __('app.blast.target_student_status') }}</label>
+                            <select name="student_status" id="bulk_target_status">
+                                <option value="">-</option>
+                                @foreach(($studentStatusOptions ?? []) as $statusValue => $statusLabel)
+                                    <option value="{{ $statusValue }}">{{ __('app.blast.status_' . $statusValue) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="bulk-group-field">
+                            <label for="bulk_group_notes">{{ __('app.blast.change_notes') }}</label>
+                            <input type="text" name="notes" id="bulk_group_notes" placeholder="{{ __('app.blast.bulk_group_title') }}">
+                        </div>
+                        <div class="bulk-group-actions">
+                            <label class="bulk-apply-all">
+                                <input type="checkbox" name="apply_all_filtered" value="1" id="applyAllFiltered">
+                                {{ __('app.blast.apply_all_filtered') }}
+                            </label>
+                            <button type="submit" class="btn-add" id="bulkGroupBtn" disabled>
+                                <i class="fas fa-check"></i>
+                                {{ __('app.blast.apply_group_update') }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -956,7 +1333,10 @@
                             </th>
                             <th style="width:90px;">{{ __('app.blast.table_status') }}</th>
                             <th style="width:130px;">{{ __('app.blast.student_name') }}</th>
+                            <th style="width:75px;">{{ __('app.blast.education_level') }}</th>
                             <th style="width:75px;">{{ __('app.blast.class') }}</th>
+                            <th style="width:105px;">{{ __('app.blast.academic_year') }}</th>
+                            <th style="width:105px;">{{ __('app.blast.student_status') }}</th>
                             <th style="width:120px;">{{ __('app.blast.guardian') }}</th>
                             <th style="width:170px;">{{ __('app.blast.guardian_whatsapp') }}</th>
                             <th style="width:145px;">{{ __('app.blast.guardian_email') }}</th>
@@ -1008,7 +1388,18 @@
                                     <div class="student-name" title="{{ $r->nama_siswa }}">{{ $r->nama_siswa }}</div>
                                 </td>
                                 <td>
+                                    <span class="class-badge">{{ $r->education_level ?: __('app.blast.not_assigned') }}</span>
+                                </td>
+                                <td>
                                     <span class="class-badge">{{ $r->kelas }}</span>
+                                </td>
+                                <td>
+                                    <div class="cell-text">{{ $r->academic_year ?: __('app.blast.not_assigned') }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge {{ in_array($r->student_status, ['active'], true) ? 'badge-valid' : 'badge-kurang' }}">
+                                        {{ __('app.blast.status_' . ($r->student_status ?: 'unassigned')) }}
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="cell-text" title="{{ $r->nama_wali }}">{{ $r->nama_wali }}</div>
@@ -1039,7 +1430,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9">
+                                <td colspan="12">
                                     <div class="empty-state">
                                         <div class="empty-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -1096,6 +1487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteSelected: @json(__('app.blast.delete_selected')),
         chooseMinOneDelete: @json(__('app.blast.choose_min_one_recipient_delete')),
         deleteSelectedConfirm: @json(__('app.blast.delete_selected_students_confirm', ['count' => '__COUNT__'])),
+        groupTargetRequired: @json(__('app.blast.recipient_group_target_required')),
     };
 
     // Import form submission
@@ -1142,8 +1534,11 @@ function initBulkSelection() {
     const selectAll = document.getElementById('selectAllStudents');
     const checkboxes = Array.from(document.querySelectorAll('.student-checkbox'));
     const deleteBtn = document.getElementById('bulkDeleteBtn');
+    const groupForm = document.getElementById('bulk-group-form');
+    const groupBtn = document.getElementById('bulkGroupBtn');
+    const applyAllFiltered = document.getElementById('applyAllFiltered');
 
-    if (!form || !deleteBtn || checkboxes.length === 0) {
+    if (!form || !deleteBtn) {
         if (deleteBtn) {
             deleteBtn.disabled = true;
         }
@@ -1156,6 +1551,9 @@ function initBulkSelection() {
         const totalCount = checkboxes.length;
 
         deleteBtn.disabled = selectedCount === 0;
+        if (groupBtn) {
+            groupBtn.disabled = selectedCount === 0 && !applyAllFiltered?.checked;
+        }
         const text = window.recipientText || {};
         deleteBtn.textContent = selectedCount > 0
             ? `${text.deleteSelected || 'Delete Selected'} (${selectedCount})`
@@ -1176,6 +1574,9 @@ function initBulkSelection() {
     }
 
     checkboxes.forEach(cb => cb.addEventListener('change', updateState));
+    if (applyAllFiltered) {
+        applyAllFiltered.addEventListener('change', updateState);
+    }
 
     form.addEventListener('submit', (event) => {
         const selected = checkboxes.filter(cb => cb.checked);
@@ -1191,6 +1592,38 @@ function initBulkSelection() {
             event.preventDefault();
         }
     });
+
+    if (groupForm) {
+        groupForm.addEventListener('submit', (event) => {
+            const selected = checkboxes.filter(cb => cb.checked);
+            const text = window.recipientText || {};
+            const hasTarget = Array.from(groupForm.querySelectorAll('[name="kelas"], [name="education_level"], [name="academic_year"], [name="student_status"]'))
+                .some(input => String(input.value || '').trim() !== '');
+
+            groupForm.querySelectorAll('.bulk-group-recipient-id').forEach(input => input.remove());
+
+            if (selected.length === 0 && !applyAllFiltered?.checked) {
+                event.preventDefault();
+                alert(text.chooseMinOneDelete || 'Select at least one recipient.');
+                return;
+            }
+
+            if (!hasTarget) {
+                event.preventDefault();
+                alert(text.groupTargetRequired || 'Choose at least one target grouping field.');
+                return;
+            }
+
+            selected.forEach(checkbox => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_ids[]';
+                input.value = checkbox.value;
+                input.className = 'bulk-group-recipient-id';
+                groupForm.appendChild(input);
+            });
+        });
+    }
 
     updateState();
 }

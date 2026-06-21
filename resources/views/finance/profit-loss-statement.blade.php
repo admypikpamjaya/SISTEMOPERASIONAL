@@ -851,6 +851,7 @@
                         <input type="file" name="file" id="profit_import_file" class="fs-control" accept=".xlsx,.xls,.csv" required>
                         <div class="fs-helper-text">
                             {{ __('app.finance.profit_import_file_help') }}
+                            <br>{{ __('app.finance.profit_loss_template_help') }}
                         </div>
                     </div>
                     <div class="fs-field">
@@ -879,6 +880,9 @@
                         </div>
                     </div>
                     <div class="fs-field full pl-manage-actions">
+                        <a href="{{ route('finance.report.profit-loss.template.download') }}" class="fs-btn fs-btn-muted">
+                            <i class="fas fa-download"></i> {{ __('app.finance.download_profit_loss_template') }}
+                        </a>
                         <button type="submit" class="fs-btn fs-btn-primary">
                             <i class="fas fa-upload"></i> {{ __('app.finance.import_excel') }}
                         </button>

@@ -302,6 +302,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_balance_sheet.read')
             ->name('report.balance-sheet.download');
 
+        Route::get('/report/balance-sheet/template/download', [FinanceStatementController::class, 'downloadBalanceSheetTemplate'])
+            ->middleware('check_access:finance_balance_sheet.read')
+            ->name('report.balance-sheet.template.download');
+
         Route::post('/report/balance-sheet/import', [FinanceStatementController::class, 'importBalanceSheetExcel'])
             ->middleware('check_access:finance_report.generate')
             ->name('report.balance-sheet.import');
@@ -334,6 +338,10 @@ Route::prefix('finance')
             ->middleware('check_access:finance_profit_loss.read')
             ->name('report.profit-loss.download');
 
+        Route::get('/report/profit-loss/template/download', [FinanceStatementController::class, 'downloadProfitLossTemplate'])
+            ->middleware('check_access:finance_profit_loss.read')
+            ->name('report.profit-loss.template.download');
+
         Route::post('/report/profit-loss/import', [FinanceStatementController::class, 'importProfitLossExcel'])
             ->middleware('check_access:finance_report.generate')
             ->name('report.profit-loss.import');
@@ -365,6 +373,10 @@ Route::prefix('finance')
         Route::get('/report/general-ledger/download', [FinanceStatementController::class, 'downloadGeneralLedger'])
             ->middleware('check_access:finance_general_ledger.read')
             ->name('report.general-ledger.download');
+
+        Route::get('/report/general-ledger/template/download', [FinanceStatementController::class, 'downloadGeneralLedgerTemplate'])
+            ->middleware('check_access:finance_general_ledger.read')
+            ->name('report.general-ledger.template.download');
 
         Route::post('/report/general-ledger/import', [FinanceStatementController::class, 'importGeneralLedgerExcel'])
             ->middleware('check_access:finance_report.generate')
@@ -774,6 +786,11 @@ Route::prefix('admin')
                     Route::post('/', [BlastRecipientController::class, 'store'])
                         ->middleware('check_access:blast_recipient.create')
                         ->name('store');
+                    Route::get('/export', [BlastRecipientController::class, 'exportStudents'])
+                        ->name('export');
+                    Route::post('/bulk-group', [BlastRecipientController::class, 'bulkMoveStudents'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('bulk-group');
                     Route::get('/{id}/edit', [BlastRecipientController::class, 'edit'])
                         ->middleware('check_access:blast_recipient.update')
                         ->name('edit');

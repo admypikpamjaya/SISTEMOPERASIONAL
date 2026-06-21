@@ -5,11 +5,18 @@ namespace Tests\Unit\Providers;
 use App\DataTransferObjects\BlastAttachment;
 use App\DataTransferObjects\BlastPayload;
 use App\Providers\Messaging\GatewayWhatsappProvider;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class GatewayWhatsappProviderTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Cache::flush();
+    }
+
     public function test_send_text_success(): void
     {
         config([
@@ -19,6 +26,20 @@ class GatewayWhatsappProviderTest extends TestCase
         ]);
 
         Http::fake(function ($request) {
+            if ($request->url() === 'http://gateway.test/devices') {
+                return Http::response([
+                    'success' => true,
+                    'data' => [
+                        'activeDeviceId' => 'default',
+                        'devices' => [[
+                            'deviceId' => 'default',
+                            'status' => 'connected',
+                            'user' => ['id' => '628999999999@s.whatsapp.net'],
+                        ]],
+                    ],
+                ], 200);
+            }
+
             $this->assertSame('http://gateway.test/send-message', $request->url());
             $this->assertSame('POST', $request->method());
             $this->assertSame('628123456789', $request['phone']);
@@ -37,6 +58,8 @@ class GatewayWhatsappProviderTest extends TestCase
 
         $this->assertTrue($result);
         $this->assertSame('Message queued', $payload->meta['provider_message'] ?? null);
+        $this->assertSame('queued', $payload->meta['provider_delivery_status'] ?? null);
+        $this->assertSame('default', $payload->meta['device_id'] ?? null);
     }
 
     public function test_send_file_success_with_api_key(): void
@@ -52,6 +75,20 @@ class GatewayWhatsappProviderTest extends TestCase
         ]);
 
         Http::fake(function ($request) {
+            if ($request->url() === 'http://gateway.test/devices') {
+                return Http::response([
+                    'success' => true,
+                    'data' => [
+                        'activeDeviceId' => 'default',
+                        'devices' => [[
+                            'deviceId' => 'default',
+                            'status' => 'connected',
+                            'user' => ['id' => '628999999999@s.whatsapp.net'],
+                        ]],
+                    ],
+                ], 200);
+            }
+
             $this->assertSame('http://gateway.test/send-file', $request->url());
             $this->assertSame('POST', $request->method());
             $this->assertSame('secret-key', $request->header('X-API-KEY')[0] ?? null);
@@ -85,6 +122,17 @@ class GatewayWhatsappProviderTest extends TestCase
         ]);
 
         Http::fake([
+            'http://gateway.test/devices' => Http::response([
+                'success' => true,
+                'data' => [
+                    'activeDeviceId' => 'default',
+                    'devices' => [[
+                        'deviceId' => 'default',
+                        'status' => 'connected',
+                        'user' => ['id' => '628999999999@s.whatsapp.net'],
+                    ]],
+                ],
+            ], 200),
             '*' => Http::response([
                 'success' => false,
                 'message' => 'Rejected',
@@ -98,5 +146,91 @@ class GatewayWhatsappProviderTest extends TestCase
 
         $this->assertFalse($result);
         $this->assertSame('Rejected', $payload->meta['provider_error'] ?? null);
+    }
+
+    public function test_selected_device_is_kept_even_when_target_matches_sender_number(): void
+    {
+        config([
+            'services.whatsapp_gateway.base_url' => 'http://gateway-switch.test',
+            'services.whatsapp_gateway.api_key' => '',
+            'services.whatsapp_gateway.timeout' => 10,
+        ]);
+
+        Http::fake(function ($request) {
+            if ($request->url() === 'http://gateway-switch.test/devices') {
+                return Http::response([
+                    'success' => true,
+                    'data' => [
+                        'activeDeviceId' => 'default',
+                        'devices' => [
+                            [
+                                'deviceId' => 'default',
+                                'status' => 'connected',
+                                'user' => ['id' => '62895333867173:43@s.whatsapp.net'],
+                            ],
+                            [
+                                'deviceId' => 'device-alternate',
+                                'status' => 'connected',
+                                'user' => ['id' => '6287888370352:23@s.whatsapp.net'],
+                            ],
+                        ],
+                    ],
+                ], 200);
+            }
+
+            $this->assertSame('http://gateway-switch.test/send-message', $request->url());
+            $this->assertSame('default', $request['deviceId']);
+
+            return Http::response([
+                'success' => true,
+                'message' => 'Message queued',
+            ], 200);
+        });
+
+        $provider = new GatewayWhatsappProvider();
+        $payload = new BlastPayload('Halo');
+        $payload->setMeta('device_id', 'default');
+
+        $result = $provider->send('62895333867173', $payload);
+
+        $this->assertTrue($result);
+        $this->assertSame('default', $payload->meta['device_id'] ?? null);
+        $this->assertSame('62895333867173', $payload->meta['provider_sender_phone'] ?? null);
+    }
+
+    public function test_selected_disconnected_device_is_rejected(): void
+    {
+        config([
+            'services.whatsapp_gateway.base_url' => 'http://gateway-block.test',
+            'services.whatsapp_gateway.api_key' => '',
+            'services.whatsapp_gateway.timeout' => 10,
+        ]);
+
+        Http::fake([
+            'http://gateway-block.test/devices' => Http::response([
+                'success' => true,
+                'data' => [
+                    'activeDeviceId' => 'default',
+                    'devices' => [[
+                        'deviceId' => 'default',
+                        'status' => 'disconnected',
+                        'user' => ['id' => '62895333867173:43@s.whatsapp.net'],
+                    ]],
+                ],
+            ], 200),
+        ]);
+
+        $provider = new GatewayWhatsappProvider();
+        $payload = new BlastPayload('Halo');
+        $payload->setMeta('device_id', 'default');
+
+        $result = $provider->send('628123456789', $payload);
+
+        $this->assertFalse($result);
+        $this->assertStringContainsString(
+            'tidak terhubung',
+            $payload->meta['provider_error'] ?? ''
+        );
+        Http::assertSentCount(1);
     }
 }
