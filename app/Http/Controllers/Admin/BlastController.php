@@ -1931,13 +1931,9 @@ class BlastController extends Controller
             $wibTimestamp = $timestamp?->copy()->timezone(self::WIB_TIMEZONE);
             $status = strtoupper((string) $log->status);
             $responseMessage = trim((string) ($log->response ?? ''));
-            $queuedAtGateway = $status === 'SENT' && (
-                str_contains(strtolower($responseMessage), 'queued')
-                || str_contains(strtolower($responseMessage), 'antrean gateway')
-            );
             $statusKey = match ($status) {
                 'FAILED' => 'failed',
-                'SENT' => $queuedAtGateway ? 'pending' : 'success',
+                'SENT' => 'success',
                 default => 'pending',
             };
 
@@ -1949,7 +1945,7 @@ class BlastController extends Controller
                 'studentClass' => $recipient?->kelas ?: '-',
                 'parentName' => $recipient?->nama_wali ?: '-',
                 'status' => $statusKey,
-                'rawStatus' => $queuedAtGateway ? 'QUEUED' : $status,
+                'rawStatus' => $status,
                 'canRetry' => $status === 'FAILED',
                 'canDelete' => true,
                 'errorMessage' => trim((string) ($log->error_message ?? '')),

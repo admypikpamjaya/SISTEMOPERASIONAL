@@ -105,7 +105,14 @@ class GatewayWhatsappProvider implements WhatsappProviderInterface
             }
 
             if (!$response->successful()) {
-                $payload->setMeta('provider_error', 'Gateway HTTP error.');
+                $decoded = $response->json();
+                $providerError = is_array($decoded)
+                    ? trim((string) ($decoded['message'] ?? ''))
+                    : '';
+                $payload->setMeta(
+                    'provider_error',
+                    $providerError !== '' ? $providerError : 'Gateway HTTP error.'
+                );
                 Log::error('[WA GATEWAY FAILED]', [
                     'to' => $to,
                     'status' => $response->status(),

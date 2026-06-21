@@ -47,7 +47,12 @@ class GatewayWhatsappProviderTest extends TestCase
 
             return Http::response([
                 'success' => true,
-                'message' => 'Message queued',
+                'message' => 'Message sent',
+                'data' => [
+                    'messageId' => 'wa-message-1',
+                    'deliveryStatus' => 'sent',
+                    'deviceId' => 'default',
+                ],
             ], 200);
         });
 
@@ -57,8 +62,9 @@ class GatewayWhatsappProviderTest extends TestCase
         $result = $provider->send('628123456789', $payload);
 
         $this->assertTrue($result);
-        $this->assertSame('Message queued', $payload->meta['provider_message'] ?? null);
-        $this->assertSame('queued', $payload->meta['provider_delivery_status'] ?? null);
+        $this->assertSame('Message sent', $payload->meta['provider_message'] ?? null);
+        $this->assertSame('sent', $payload->meta['provider_delivery_status'] ?? null);
+        $this->assertSame('wa-message-1', $payload->meta['provider_reference'] ?? null);
         $this->assertSame('default', $payload->meta['device_id'] ?? null);
     }
 
@@ -95,7 +101,12 @@ class GatewayWhatsappProviderTest extends TestCase
 
             return Http::response([
                 'success' => true,
-                'message' => 'File queued',
+                'message' => 'File sent',
+                'data' => [
+                    'messageId' => 'wa-file-1',
+                    'deliveryStatus' => 'sent',
+                    'deviceId' => 'default',
+                ],
             ], 200);
         });
 
@@ -106,7 +117,9 @@ class GatewayWhatsappProviderTest extends TestCase
         $result = $provider->send('628123456789', $payload);
 
         $this->assertTrue($result);
-        $this->assertSame('File queued', $payload->meta['provider_message'] ?? null);
+        $this->assertSame('File sent', $payload->meta['provider_message'] ?? null);
+        $this->assertSame('sent', $payload->meta['provider_delivery_status'] ?? null);
+        $this->assertSame('wa-file-1', $payload->meta['provider_reference'] ?? null);
 
         if (is_file($filePath)) {
             unlink($filePath);

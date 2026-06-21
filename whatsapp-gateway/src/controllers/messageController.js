@@ -1,4 +1,8 @@
 ﻿const { queue } = require('../queue/queue');
+const fs = require('fs/promises');
+const env = require('../config/env');
+const { processJob } = require('../services/messageService');
+const { sleep } = require('../utils/sleep');
 const { ok, fail } = require('../utils/response');
 const {
   normalizePhone,
@@ -31,6 +35,16 @@ function sanitizeNumbers(numbers) {
     .filter((value) => isValidPhone(value));
 }
 
+async function processDirectJob(jobData) {
+  const result = await processJob(jobData);
+
+  if (env.MESSAGE_DELAY_MS > 0) {
+    await sleep(env.MESSAGE_DELAY_MS);
+  }
+
+  return result;
+}
+
 async function sendMessage(req, res, next) {
   try {
     const phone = normalizePhone(req.body.phone);
@@ -41,12 +55,16 @@ async function sendMessage(req, res, next) {
       return fail(res, 'Invalid phone or message');
     }
 
-    const job = await queue.add('send', {
+    const result = await processDirectJob({
       type: 'text',
       payload: { phone, message, deviceId }
     });
 
-    return ok(res, 'Message queued', { jobId: job.id });
+    return ok(res, 'Message sent', {
+      messageId: result?.key?.id || null,
+      deliveryStatus: 'sent',
+      deviceId
+    });
   } catch (err) {
     return next(err);
   }
@@ -67,18 +85,26 @@ async function sendFile(req, res, next) {
       return fail(res, 'File is required');
     }
 
-    const job = await queue.add('send', {
-      type: 'file',
-      payload: {
-        phone,
-        filePath: file.path,
-        caption,
-        originalName: file.originalname,
-        deviceId
-      }
-    });
+    try {
+      const result = await processDirectJob({
+        type: 'file',
+        payload: {
+          phone,
+          filePath: file.path,
+          caption,
+          originalName: file.originalname,
+          deviceId
+        }
+      });
 
-    return ok(res, 'File queued', { jobId: job.id });
+      return ok(res, 'File sent', {
+        messageId: result?.key?.id || null,
+        deliveryStatus: 'sent',
+        deviceId
+      });
+    } finally {
+      await fs.unlink(file.path).catch(() => {});
+    }
   } catch (err) {                              
     return next(err);
   }
