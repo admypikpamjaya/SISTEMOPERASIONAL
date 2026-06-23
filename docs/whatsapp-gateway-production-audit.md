@@ -104,6 +104,18 @@ Respons `/health` yang benar harus memiliki:
 Job lama seperti `587`, `588`, dan `589` dapat berstatus `waiting`, `active`,
 `completed`, `failed`, atau `unknown`.
 
+Untuk membersihkan job menunggu dan tertunda setelah versi baru aktif:
+
+```bash
+curl -s -X POST \
+  -H "${API_KEY_HEADER:-x-api-key}: $API_KEY" \
+  https://whatsapp.pradita.website/queue/clear
+```
+
+Operasi ini mempertahankan job `active` agar tidak menimbulkan pengiriman
+duplikat. Jika masih ada job `active` yang tidak bergerak, restart PM2 agar
+BullMQ mendeteksi job tersebut sebagai stalled dan menjalankan mekanisme retry.
+
 ## 7. Tes Pengiriman Langsung
 
 Perintah berikut benar-benar mengirim pesan. Ganti nomor tujuan terlebih dahulu.
@@ -136,6 +148,8 @@ Untuk device kedua, gunakan:
 - Respons masih `Message queued`: proses PM2 masih memakai kode lama.
 - Redis bukan `PONG`: BullMQ tidak dapat memproses antrean lama.
 - Banyak job `waiting` dan tidak ada `active`: worker gateway tidak berjalan.
+- Satu job terus `active` dan job lain tertahan: socket device kemungkinan stale.
+  Versi baru membatasi proses kirim selama 15 detik lalu menjalankan reconnect.
 - Job `failed`: baca `failedReason` dari `/jobs/{jobId}` dan log PM2.
 - `Message sent` memiliki `messageId`, tetapi penerima tidak menerima: periksa
   blokir/spam/rate limit WhatsApp serta log koneksi Baileys pada device tersebut.

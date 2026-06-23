@@ -279,6 +279,84 @@ class BlastController extends Controller
         ]);
     }
 
+    public function whatsappGatewayQueueStatus()
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        return $this->proxyGatewayQueueRequest('GET', '/queue/status');
+    }
+
+    public function whatsappGatewayQueueClear()
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+                'data' => [],
+            ], 403);
+        }
+
+        $response = $this->proxyGatewayQueueRequest('POST', '/queue/clear');
+        if ($response->getStatusCode() >= 400) {
+            return $response;
+        }
+
+        $clearedLogsQuery = BlastLog::query()
+            ->whereHas('message', fn ($query) => $query->where('channel', 'WHATSAPP'))
+            ->where('status', 'PENDING')
+            ->whereIn('provider_status', [
+                'delayed',
+                'paused',
+                'pending',
+                'prioritized',
+                'queued',
+                'waiting',
+                'waiting-children',
+            ]);
+
+        $campaignIds = (clone $clearedLogsQuery)
+            ->pluck('blast_message_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $clearedLogsQuery->update([
+                'status' => 'FAILED',
+                'provider_status' => 'cancelled',
+                'provider_checked_at' => now(),
+                'response' => 'Gateway queue cleared by superadmin.',
+                'error_message' => 'Pengiriman dibatalkan saat antrean gateway dibersihkan.',
+                'sent_at' => now(),
+            ]);
+
+        foreach ($campaignIds as $campaignId) {
+            $pendingExists = BlastLog::query()
+                ->where('blast_message_id', $campaignId)
+                ->where('status', 'PENDING')
+                ->exists();
+
+            if (!$pendingExists) {
+                BlastMessage::query()
+                    ->whereKey($campaignId)
+                    ->whereNotIn('campaign_status', ['PAUSED', 'STOPPED'])
+                    ->update([
+                        'campaign_status' => 'COMPLETED',
+                        'completed_at' => now(),
+                    ]);
+            }
+        }
+
+        return $response;
+    }
+
     public function whatsappGatewayDevices(WhatsAppGatewayDeviceService $deviceService)
     {
         $user = Auth::user();
@@ -2843,6 +2921,48 @@ class BlastController extends Controller
         $client = Http::timeout($timeout)->withHeaders($headers);
 
         return [$baseUrl, $client];
+    }
+
+    private function proxyGatewayQueueRequest(string $method, string $path)
+    {
+        try {
+            [$baseUrl, $client] = $this->buildGatewayClient();
+            $response = strtoupper($method) === 'POST'
+                ? $client->post($baseUrl . $path)
+                : $client->get($baseUrl . $path);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'data' => [],
+            ], 502);
+        }
+
+        $payload = $response->json();
+        if (!is_array($payload)) {
+            $payload = [];
+        }
+
+        if (!$response->successful()) {
+            $message = $response->status() === 404
+                ? 'Gateway belum menggunakan versi antrean terbaru. Deploy dan restart PM2 Google Cloud terlebih dahulu.'
+                : (string) ($payload['message'] ?? 'Gateway merespon error.');
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'data' => [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ],
+            ], 502);
+        }
+
+        return response()->json([
+            'success' => (bool) ($payload['success'] ?? true),
+            'message' => (string) ($payload['message'] ?? 'OK'),
+            'data' => $payload['data'] ?? $payload,
+        ]);
     }
 
     private function sanitizeDeviceId(?string $raw): ?string

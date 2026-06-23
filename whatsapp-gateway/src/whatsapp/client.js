@@ -346,11 +346,40 @@ function toJid(phone) {
   return jidNormalizedUser(`${clean}@s.whatsapp.net`);
 }
 
+async function sendWithTimeout(deviceId, operation) {
+  let timeout;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new Error(
+        `WhatsApp send timeout after ${env.WA_SEND_TIMEOUT_MS}ms on device ${deviceId}`
+      ));
+    }, env.WA_SEND_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([operation(), timeoutPromise]);
+  } catch (err) {
+    if (String(err?.message || '').includes('WhatsApp send timeout')) {
+      logger.warn(`[${deviceId}] Send timed out. Reconnecting device.`);
+      forceReconnect(deviceId).catch((reconnectError) => {
+        logger.error(`[${deviceId}] Reconnect after send timeout failed: ${reconnectError.message}`);
+      });
+    }
+
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function sendText(phone, message, deviceId = activeDeviceId) {
   await ensureReady(deviceId);
   const jid = toJid(phone);
   const state = getDeviceState(deviceId);
-  return state.sock.sendMessage(jid, { text: message });
+  return sendWithTimeout(
+    deviceId,
+    () => state.sock.sendMessage(jid, { text: message })
+  );
 }
 
 async function sendFile(phone, filePath, caption, originalName, deviceId = activeDeviceId) {
@@ -362,18 +391,30 @@ async function sendFile(phone, filePath, caption, originalName, deviceId = activ
   const state = getDeviceState(deviceId);
 
   if (mimetype.startsWith('image/')) {
-    return state.sock.sendMessage(jid, { image: buffer, mimetype, caption });
+    return sendWithTimeout(
+      deviceId,
+      () => state.sock.sendMessage(jid, { image: buffer, mimetype, caption })
+    );
   }
 
   if (mimetype.startsWith('video/')) {
-    return state.sock.sendMessage(jid, { video: buffer, mimetype, caption });
+    return sendWithTimeout(
+      deviceId,
+      () => state.sock.sendMessage(jid, { video: buffer, mimetype, caption })
+    );
   }
 
   if (mimetype.startsWith('audio/')) {
-    return state.sock.sendMessage(jid, { audio: buffer, mimetype });
+    return sendWithTimeout(
+      deviceId,
+      () => state.sock.sendMessage(jid, { audio: buffer, mimetype })
+    );
   }
 
-  return state.sock.sendMessage(jid, { document: buffer, mimetype, fileName: filename, caption });
+  return sendWithTimeout(
+    deviceId,
+    () => state.sock.sendMessage(jid, { document: buffer, mimetype, fileName: filename, caption })
+  );
 }
 
 function getStatus(deviceId = activeDeviceId) {

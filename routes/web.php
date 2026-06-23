@@ -648,6 +648,10 @@ Route::prefix('admin')
                     ->name('whatsapp.gateway-status');
                 Route::post('/whatsapp/gateway-reconnect', [BlastController::class, 'whatsappGatewayReconnect'])
                     ->name('whatsapp.gateway-reconnect');
+                Route::get('/whatsapp/gateway-queue', [BlastController::class, 'whatsappGatewayQueueStatus'])
+                    ->name('whatsapp.gateway-queue');
+                Route::post('/whatsapp/gateway-queue/clear', [BlastController::class, 'whatsappGatewayQueueClear'])
+                    ->name('whatsapp.gateway-queue.clear');
                 Route::get('/whatsapp/gateway-devices', [BlastController::class, 'whatsappGatewayDevices'])
                     ->name('whatsapp.gateway-devices');
                 Route::post('/whatsapp/gateway-devices', [BlastController::class, 'whatsappGatewayDeviceCreate'])

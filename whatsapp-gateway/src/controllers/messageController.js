@@ -310,6 +310,48 @@ async function queueStatus(req, res, next) {
   }
 }
 
+async function clearQueue(req, res, next) {
+  try {
+    const before = await queue.getJobCounts(
+      'waiting',
+      'active',
+      'completed',
+      'failed',
+      'delayed',
+      'paused'
+    );
+
+    await queue.pause();
+
+    try {
+      await queue.drain(true);
+      await queue.clean(0, 10000, 'completed');
+      await queue.clean(0, 10000, 'failed');
+    } finally {
+      await queue.resume();
+    }
+
+    const after = await queue.getJobCounts(
+      'waiting',
+      'active',
+      'completed',
+      'failed',
+      'delayed',
+      'paused'
+    );
+
+    return ok(res, 'Queue cleared', {
+      deliveryMode: 'direct',
+      queueName: env.QUEUE_NAME,
+      before,
+      after,
+      activeRetained: Number(after.active || 0)
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 function status(req, res) {
   const deviceId = sanitizeDeviceId(req.query.deviceId || '');
   return ok(res, 'Status', getStatus(deviceId || undefined));
@@ -436,6 +478,7 @@ module.exports = {
   jobStatus,
   jobsStatus,
   queueStatus,
+  clearQueue,
   status,
   reconnect,
   devices,

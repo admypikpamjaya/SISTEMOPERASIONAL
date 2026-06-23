@@ -23,6 +23,7 @@ const env = {
   WA_AUTH_FOLDER: process.env.WA_AUTH_FOLDER || path.join(process.cwd(), 'sessions'),
   WA_PRINT_QR: process.env.WA_PRINT_QR !== 'false',
   WA_DEFAULT_DEVICE: process.env.WA_DEFAULT_DEVICE || 'default',
+  WA_SEND_TIMEOUT_MS: Math.max(5000, parseInteger(process.env.WA_SEND_TIMEOUT_MS, 15000)),
   SOCKET_ENABLED: process.env.SOCKET_ENABLED === 'true',
   RUN_WORKER: process.env.RUN_WORKER !== 'false',
   API_KEY: process.env.API_KEY || '',

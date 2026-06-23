@@ -1093,6 +1093,7 @@ body,
             gatewayProcessing: @json(__('app.blast.gateway_processing')),
             gatewayCompleted: @json(__('app.blast.gateway_completed')),
             gatewayFailed: @json(__('app.blast.gateway_failed')),
+            gatewayCancelled: @json(__('app.blast.gateway_cancelled')),
             gatewayUnknown: @json(__('app.blast.gateway_unknown')),
             gatewayLegacyQueued: @json(__('app.blast.gateway_legacy_queued')),
             gatewayReference: @json(__('app.blast.gateway_reference')),
@@ -1906,6 +1907,7 @@ body,
                 const providerStatus = String(activity.providerStatus || 'unknown').toLowerCase();
                 const providerCompleted = ['completed', 'sent', 'success'].includes(providerStatus);
                 const providerFailed = providerStatus === 'failed';
+                const providerCancelled = providerStatus === 'cancelled';
                 const providerProcessing = ['active', 'processing'].includes(providerStatus);
                 const providerQueued = ['delayed', 'paused', 'pending', 'prioritized', 'queued', 'waiting', 'waiting-children'].includes(providerStatus);
                 const providerLegacyQueued = providerStatus === 'legacy_queued';
@@ -1914,6 +1916,8 @@ body,
                     ? blastText.gatewayCompleted
                     : providerFailed
                         ? blastText.gatewayFailed
+                        : providerCancelled
+                            ? blastText.gatewayCancelled
                         : providerProcessing
                             ? blastText.gatewayProcessing
                             : providerQueued

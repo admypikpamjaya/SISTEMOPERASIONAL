@@ -38,5 +38,6 @@ router.post('/send-template', controller.sendTemplate);
 router.get('/jobs/:jobId', controller.jobStatus);
 router.post('/jobs/status', controller.jobsStatus);
 router.get('/queue/status', controller.queueStatus);
+router.post('/queue/clear', controller.clearQueue);
 
 module.exports = router;

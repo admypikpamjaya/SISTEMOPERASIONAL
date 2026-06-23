@@ -107,6 +107,17 @@ body,
 }
 .wa-provider-badge.gateway { background: var(--blue-lighter); color: var(--blue-primary); border-color: var(--blue-border); }
 .wa-provider-badge.wablas { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow-border); }
+.wa-queue-card { padding: 16px 20px; margin-bottom: 16px; }
+.wa-queue-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+.wa-queue-title { font-size: 14px; font-weight: 800; color: var(--navy); }
+.wa-queue-note { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; max-width: 760px; }
+.wa-queue-grid { display: grid; grid-template-columns: repeat(7, minmax(90px, 1fr)); gap: 8px; margin-top: 14px; }
+.wa-queue-stat { border: 1px solid var(--blue-border); background: var(--blue-lighter); border-radius: 9px; padding: 9px 10px; min-width: 0; }
+.wa-queue-stat-label { font-size: 9.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
+.wa-queue-stat-value { font-size: 16px; color: var(--navy); font-weight: 800; margin-top: 3px; overflow-wrap: anywhere; }
+.wa-queue-message { margin-top: 10px; font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
+.wa-queue-message.error { color: var(--red); }
+.wa-queue-message.success { color: var(--green); }
 
 .wa-device-list {
     border: 1px solid var(--blue-border); border-radius: var(--radius-sm);
@@ -137,10 +148,12 @@ body,
 
 @media (max-width: 1024px) {
     .wa-device-grid { grid-template-columns: 1fr; }
+    .wa-queue-grid { grid-template-columns: repeat(3, minmax(90px, 1fr)); }
 }
 @media (max-width: 768px) {
     .wa-manage-page { padding: 12px; }
     .wa-header-actions { width: 100%; justify-content: flex-start; }
+    .wa-queue-grid { grid-template-columns: repeat(2, minmax(90px, 1fr)); }
 }
 </style>
 
@@ -173,6 +186,49 @@ body,
                 <button type="button" class="wa-btn" id="waProviderToggleBtn">{{ __('app.blast.activate_wablas') }}</button>
             </div>
         </div>
+    </div>
+
+    <div class="wa-card wa-queue-card" id="waQueueCard">
+        <div class="wa-queue-head">
+            <div>
+                <div class="wa-queue-title">{{ __('app.blast.gateway_queue_title') }}</div>
+                <div class="wa-queue-note">{{ __('app.blast.gateway_queue_note') }}</div>
+            </div>
+            <button type="button" class="wa-btn danger" id="waClearQueueBtn">
+                {{ __('app.blast.clear_gateway_queue') }}
+            </button>
+        </div>
+        <div class="wa-queue-grid">
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_delivery_mode') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueMode">-</div>
+            </div>
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_worker') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueWorker">-</div>
+            </div>
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_queue_waiting') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueWaiting">0</div>
+            </div>
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_queue_active') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueActive">0</div>
+            </div>
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_queue_delayed') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueDelayed">0</div>
+            </div>
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_queue_failed') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueFailed">0</div>
+            </div>
+            <div class="wa-queue-stat">
+                <div class="wa-queue-stat-label">{{ __('app.blast.gateway_queue_completed') }}</div>
+                <div class="wa-queue-stat-value" id="waQueueCompleted">0</div>
+            </div>
+        </div>
+        <div class="wa-queue-message" id="waQueueMessage"></div>
     </div>
 
     <div class="wa-card wa-device-card" id="waDeviceCard">
@@ -261,6 +317,8 @@ body,
         const gatewayDeviceRenameUrl = @json(route('admin.blast.whatsapp.gateway-devices.rename', ['deviceId' => '__DEVICE__']));
         const gatewayDeviceDeleteUrl = @json(route('admin.blast.whatsapp.gateway-devices.delete', ['deviceId' => '__DEVICE__']));
         const gatewayDevicesResetUrl = @json(route('admin.blast.whatsapp.gateway-devices.reset'));
+        const gatewayQueueStatusUrl = @json(route('admin.blast.whatsapp.gateway-queue'));
+        const gatewayQueueClearUrl = @json(route('admin.blast.whatsapp.gateway-queue.clear'));
         const providerStatusUrl = @json(route('admin.blast.whatsapp.provider-status'));
         const providerUpdateUrl = @json(route('admin.blast.whatsapp.provider-update'));
 
@@ -288,6 +346,15 @@ body,
         const waProviderBadge = document.getElementById('waProviderBadge');
         const waProviderNote = document.getElementById('waProviderNote');
         const waProviderToggleBtn = document.getElementById('waProviderToggleBtn');
+        const waClearQueueBtn = document.getElementById('waClearQueueBtn');
+        const waQueueMode = document.getElementById('waQueueMode');
+        const waQueueWorker = document.getElementById('waQueueWorker');
+        const waQueueWaiting = document.getElementById('waQueueWaiting');
+        const waQueueActive = document.getElementById('waQueueActive');
+        const waQueueDelayed = document.getElementById('waQueueDelayed');
+        const waQueueFailed = document.getElementById('waQueueFailed');
+        const waQueueCompleted = document.getElementById('waQueueCompleted');
+        const waQueueMessage = document.getElementById('waQueueMessage');
         const csrfToken = document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content') || '';
         const blastText = {
             gateway: @json(__('app.blast.gateway')),
@@ -333,6 +400,12 @@ body,
             deleteDeviceFailed: @json(__('app.blast.delete_device_failed')),
             resetDevicesConfirm: @json(__('app.blast.reset_devices_confirm')),
             resetDevicesFailed: @json(__('app.blast.reset_devices_failed')),
+            workerEnabled: @json(__('app.blast.gateway_worker_enabled')),
+            workerDisabled: @json(__('app.blast.gateway_worker_disabled')),
+            clearQueueConfirm: @json(__('app.blast.clear_gateway_queue_confirm')),
+            clearQueueSuccess: @json(__('app.blast.clear_gateway_queue_success')),
+            clearQueueFailed: @json(__('app.blast.clear_gateway_queue_failed')),
+            queueVersionRequired: @json(__('app.blast.gateway_queue_version_required')),
         };
 
         let devices = [];
@@ -379,6 +452,89 @@ body,
         }
 
         updateProviderUi(currentProvider);
+
+        function updateQueueUi(data) {
+            const counts = data?.counts || {};
+            if (waQueueMode) waQueueMode.textContent = data?.deliveryMode || '-';
+            if (waQueueWorker) waQueueWorker.textContent = data?.workerEnabled
+                ? blastText.workerEnabled
+                : blastText.workerDisabled;
+            if (waQueueWaiting) waQueueWaiting.textContent = Number(counts.waiting || 0);
+            if (waQueueActive) waQueueActive.textContent = Number(counts.active || 0);
+            if (waQueueDelayed) waQueueDelayed.textContent = Number(counts.delayed || 0);
+            if (waQueueFailed) waQueueFailed.textContent = Number(counts.failed || 0);
+            if (waQueueCompleted) waQueueCompleted.textContent = Number(counts.completed || 0);
+        }
+
+        async function fetchQueueStatus() {
+            if (!gatewayQueueStatusUrl) return;
+            try {
+                const response = await fetch(gatewayQueueStatusUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const payload = await response.json();
+                if (!response.ok || payload?.success === false) {
+                    throw new Error(payload?.message || blastText.queueVersionRequired);
+                }
+                updateQueueUi(payload?.data || {});
+                if (waQueueMessage) {
+                    waQueueMessage.className = 'wa-queue-message';
+                    waQueueMessage.textContent = '';
+                }
+                if (waClearQueueBtn) waClearQueueBtn.disabled = false;
+            } catch (error) {
+                if (waQueueMessage) {
+                    waQueueMessage.className = 'wa-queue-message error';
+                    waQueueMessage.textContent = error?.message || blastText.queueVersionRequired;
+                }
+                if (waClearQueueBtn) waClearQueueBtn.disabled = true;
+            }
+        }
+
+        async function clearGatewayQueue() {
+            if (!gatewayQueueClearUrl || !confirm(blastText.clearQueueConfirm)) return;
+            const originalText = waClearQueueBtn?.textContent || '';
+            if (waClearQueueBtn) {
+                waClearQueueBtn.disabled = true;
+                waClearQueueBtn.textContent = '...';
+            }
+            try {
+                const response = await fetch(gatewayQueueClearUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({})
+                });
+                const payload = await response.json();
+                if (!response.ok || payload?.success === false) {
+                    throw new Error(payload?.message || blastText.clearQueueFailed);
+                }
+                const after = payload?.data?.after || {};
+                updateQueueUi({
+                    ...(payload?.data || {}),
+                    counts: after
+                });
+                if (waQueueMessage) {
+                    waQueueMessage.className = 'wa-queue-message success';
+                    waQueueMessage.textContent = blastText.clearQueueSuccess;
+                }
+            } catch (error) {
+                if (waQueueMessage) {
+                    waQueueMessage.className = 'wa-queue-message error';
+                    waQueueMessage.textContent = error?.message || blastText.clearQueueFailed;
+                }
+            } finally {
+                if (waClearQueueBtn) {
+                    waClearQueueBtn.disabled = false;
+                    waClearQueueBtn.textContent = originalText;
+                }
+                await fetchQueueStatus();
+            }
+        }
 
         async function fetchProviderStatus() {
             if (!providerStatusUrl) return;
@@ -730,6 +886,7 @@ body,
 
         fetchDevices();
         fetchProviderStatus();
+        fetchQueueStatus();
 
         if (waRefreshStatusBtn) {
             waRefreshStatusBtn.addEventListener('click', function() {
@@ -786,10 +943,18 @@ body,
                 toggleProvider();
             });
         }
+        if (waClearQueueBtn) {
+            waClearQueueBtn.addEventListener('click', function() {
+                clearGatewayQueue();
+            });
+        }
 
         setInterval(() => {
             if (document.visibilityState !== 'hidden') fetchDevices();
         }, 5000);
+        setInterval(() => {
+            if (document.visibilityState !== 'hidden') fetchQueueStatus();
+        }, 10000);
     });
 </script>
 
