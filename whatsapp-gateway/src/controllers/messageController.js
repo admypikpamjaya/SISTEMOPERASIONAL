@@ -62,7 +62,9 @@ async function sendMessage(req, res, next) {
 
     return ok(res, 'Message sent', {
       messageId: result?.key?.id || null,
-      deliveryStatus: 'sent',
+      deliveryStatus: result?.gatewayDeliveryStatus || 'server_ack',
+      messageStatus: result?.gatewayMessageStatus ?? null,
+      recipientJid: result?.recipientJid || null,
       deviceId
     });
   } catch (err) {
@@ -99,7 +101,9 @@ async function sendFile(req, res, next) {
 
       return ok(res, 'File sent', {
         messageId: result?.key?.id || null,
-        deliveryStatus: 'sent',
+        deliveryStatus: result?.gatewayDeliveryStatus || 'server_ack',
+        messageStatus: result?.gatewayMessageStatus ?? null,
+        recipientJid: result?.recipientJid || null,
         deviceId
       });
     } finally {

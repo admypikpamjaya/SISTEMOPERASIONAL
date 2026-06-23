@@ -8,7 +8,8 @@ const {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  jidNormalizedUser
+  jidNormalizedUser,
+  WAMessageStatus
 } = require('@whiskeysockets/baileys');
 
 const env = require('../config/env');
@@ -64,7 +65,9 @@ function createDeviceState(id) {
     lastQrAt: null,
     qrRefreshTimer: null,
     reconnectTimer: null,
-    initPromise: null
+    initPromise: null,
+    messageStatuses: new Map(),
+    pendingMessageAcks: new Map()
   };
 }
 
@@ -200,6 +203,57 @@ function buildStatus(state) {
   };
 }
 
+function messageStatusName(status) {
+  const names = {
+    [WAMessageStatus.ERROR]: 'error',
+    [WAMessageStatus.PENDING]: 'pending',
+    [WAMessageStatus.SERVER_ACK]: 'server_ack',
+    [WAMessageStatus.DELIVERY_ACK]: 'delivered',
+    [WAMessageStatus.READ]: 'read',
+    [WAMessageStatus.PLAYED]: 'played'
+  };
+
+  return names[status] || 'unknown';
+}
+
+function settlePendingMessageAck(state, messageId, status) {
+  if (!messageId || !Number.isInteger(status)) return;
+
+  state.messageStatuses.set(messageId, {
+    status,
+    updatedAt: Date.now()
+  });
+
+  if (state.messageStatuses.size > 500) {
+    const oldestId = state.messageStatuses.keys().next().value;
+    state.messageStatuses.delete(oldestId);
+  }
+
+  const pending = state.pendingMessageAcks.get(messageId);
+  if (!pending) return;
+
+  if (status === WAMessageStatus.ERROR) {
+    clearTimeout(pending.timer);
+    state.pendingMessageAcks.delete(messageId);
+    pending.reject(new Error(`WhatsApp rejected message ${messageId}`));
+    return;
+  }
+
+  if (status >= WAMessageStatus.SERVER_ACK) {
+    clearTimeout(pending.timer);
+    state.pendingMessageAcks.delete(messageId);
+    pending.resolve(status);
+  }
+}
+
+function rejectPendingMessageAcks(state, reason) {
+  state.pendingMessageAcks.forEach((pending) => {
+    clearTimeout(pending.timer);
+    pending.reject(new Error(reason));
+  });
+  state.pendingMessageAcks.clear();
+}
+
 async function initDevice(deviceId, { io } = {}) {
   const state = getDeviceState(deviceId);
   if (state.sock) return state.sock;
@@ -232,6 +286,18 @@ async function initDevice(deviceId, { io } = {}) {
     });
 
     state.sock.ev.on('creds.update', saveCreds);
+
+    state.sock.ev.on('messages.update', (updates) => {
+      updates.forEach(({ key, update }) => {
+        const status = update?.status;
+        if (!key?.fromMe || !key?.id || !Number.isInteger(status)) return;
+
+        logger.info(
+          `[${state.id}] Outgoing message ${key.id} status=${messageStatusName(status)} (${status})`
+        );
+        settlePendingMessageAck(state, key.id, status);
+      });
+    });
 
     state.sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
@@ -268,6 +334,10 @@ async function initDevice(deviceId, { io } = {}) {
 
         state.connectionStatus = 'disconnected';
         clearQrRefreshTimer(state);
+        rejectPendingMessageAcks(
+          state,
+          `WhatsApp disconnected before server acknowledgement on device ${state.id}`
+        );
         state.connectedUser = null;
         state.connectedAt = null;
         emit('wa:status', { deviceId: state.id, status: state.connectionStatus });
@@ -346,6 +416,77 @@ function toJid(phone) {
   return jidNormalizedUser(`${clean}@s.whatsapp.net`);
 }
 
+async function resolveRecipientJid(state, phone) {
+  const fallbackJid = toJid(phone);
+  const clean = normalizePhone(phone);
+  const results = await state.sock.onWhatsApp(clean);
+  const recipient = Array.isArray(results)
+    ? results.find((item) => item?.exists)
+    : null;
+
+  if (!recipient) {
+    throw new Error(`WhatsApp number ${clean} is not registered`);
+  }
+
+  const jid = jidNormalizedUser(recipient.jid || fallbackJid);
+  logger.info(
+    `[${state.id}] Recipient ${clean} resolved to ${jid}${recipient.lid ? ` (lid=${recipient.lid})` : ''}`
+  );
+
+  return jid;
+}
+
+function waitForServerAck(state, result) {
+  const messageId = result?.key?.id;
+  if (!messageId) {
+    return Promise.reject(new Error('WhatsApp did not return a message ID'));
+  }
+
+  const initialStatus = Number.isInteger(result?.status)
+    ? result.status
+    : state.messageStatuses.get(messageId)?.status;
+
+  if (initialStatus === WAMessageStatus.ERROR) {
+    return Promise.reject(new Error(`WhatsApp rejected message ${messageId}`));
+  }
+
+  if (Number.isInteger(initialStatus) && initialStatus >= WAMessageStatus.SERVER_ACK) {
+    return Promise.resolve(initialStatus);
+  }
+
+  return new Promise((resolve, reject) => {
+    const cachedStatus = state.messageStatuses.get(messageId)?.status;
+    if (Number.isInteger(cachedStatus) && cachedStatus >= WAMessageStatus.SERVER_ACK) {
+      resolve(cachedStatus);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      state.pendingMessageAcks.delete(messageId);
+      reject(new Error(
+        `WhatsApp server acknowledgement timeout after ${env.WA_ACK_TIMEOUT_MS}ms for message ${messageId} on device ${state.id}`
+      ));
+    }, env.WA_ACK_TIMEOUT_MS);
+
+    state.pendingMessageAcks.set(messageId, { resolve, reject, timer });
+  });
+}
+
+async function sendConfirmedMessage(state, deviceId, jid, content) {
+  const result = await sendWithTimeout(
+    deviceId,
+    () => state.sock.sendMessage(jid, content)
+  );
+  const status = await waitForServerAck(state, result);
+
+  return {
+    ...result,
+    gatewayDeliveryStatus: messageStatusName(status),
+    gatewayMessageStatus: status,
+    recipientJid: jid
+  };
+}
+
 async function sendWithTimeout(deviceId, operation) {
   let timeout;
   const timeoutPromise = new Promise((_, reject) => {
@@ -374,46 +515,51 @@ async function sendWithTimeout(deviceId, operation) {
 
 async function sendText(phone, message, deviceId = activeDeviceId) {
   await ensureReady(deviceId);
-  const jid = toJid(phone);
   const state = getDeviceState(deviceId);
-  return sendWithTimeout(
-    deviceId,
-    () => state.sock.sendMessage(jid, { text: message })
-  );
+  const jid = await resolveRecipientJid(state, phone);
+  return sendConfirmedMessage(state, deviceId, jid, { text: message });
 }
 
 async function sendFile(phone, filePath, caption, originalName, deviceId = activeDeviceId) {
   await ensureReady(deviceId);
-  const jid = toJid(phone);
+  const state = getDeviceState(deviceId);
+  const jid = await resolveRecipientJid(state, phone);
   const buffer = fs.readFileSync(filePath);
   const mimetype = mime.lookup(filePath) || 'application/octet-stream';
   const filename = originalName || path.basename(filePath);
-  const state = getDeviceState(deviceId);
 
   if (mimetype.startsWith('image/')) {
-    return sendWithTimeout(
+    return sendConfirmedMessage(
+      state,
       deviceId,
-      () => state.sock.sendMessage(jid, { image: buffer, mimetype, caption })
+      jid,
+      { image: buffer, mimetype, caption }
     );
   }
 
   if (mimetype.startsWith('video/')) {
-    return sendWithTimeout(
+    return sendConfirmedMessage(
+      state,
       deviceId,
-      () => state.sock.sendMessage(jid, { video: buffer, mimetype, caption })
+      jid,
+      { video: buffer, mimetype, caption }
     );
   }
 
   if (mimetype.startsWith('audio/')) {
-    return sendWithTimeout(
+    return sendConfirmedMessage(
+      state,
       deviceId,
-      () => state.sock.sendMessage(jid, { audio: buffer, mimetype })
+      jid,
+      { audio: buffer, mimetype }
     );
   }
 
-  return sendWithTimeout(
+  return sendConfirmedMessage(
+    state,
     deviceId,
-    () => state.sock.sendMessage(jid, { document: buffer, mimetype, fileName: filename, caption })
+    jid,
+    { document: buffer, mimetype, fileName: filename, caption }
   );
 }
 
