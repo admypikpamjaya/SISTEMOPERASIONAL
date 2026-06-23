@@ -124,16 +124,34 @@ class SendWhatsappBlastJob implements ShouldQueue
         $providerMessage = trim(
             (string) ($this->payload->meta['provider_message'] ?? '')
         );
+        $providerStatus = strtolower(trim(
+            (string) ($this->payload->meta['provider_delivery_status'] ?? '')
+        ));
+        $queuedAtGateway = in_array(
+            $providerStatus,
+            ['active', 'delayed', 'pending', 'prioritized', 'queued', 'waiting'],
+            true
+        );
         $responseMessage = $providerMessage !== ''
             ? $providerMessage
             : 'WhatsApp sent successfully.';
 
         if ($blastLog) {
             $updates = [
-                'status' => 'SENT',
+                'status' => $queuedAtGateway ? 'PENDING' : 'SENT',
+                'provider_status' => $providerStatus !== ''
+                    ? $providerStatus
+                    : 'sent',
+                'provider_reference' => $this->nullableMeta('provider_reference'),
+                'provider_message_id' => $this->nullableMeta('provider_message_id')
+                    ?? (!$queuedAtGateway
+                        ? $this->nullableMeta('provider_reference')
+                        : null),
+                'provider_sender_phone' => $this->nullableMeta('provider_sender_phone'),
+                'provider_checked_at' => now(),
                 'error_message' => null,
                 'response' => $responseMessage,
-                'sent_at' => now(),
+                'sent_at' => $queuedAtGateway ? null : now(),
                 'attempt' => $this->attempts(),
             ];
 
@@ -146,9 +164,9 @@ class SendWhatsappBlastJob implements ShouldQueue
 
         if ($announcementLog) {
             $announcementLog->update([
-                'status' => 'SENT',
+                'status' => $queuedAtGateway ? 'PENDING' : 'SENT',
                 'response' => $responseMessage,
-                'sent_at' => now(),
+                'sent_at' => $queuedAtGateway ? null : now(),
             ]);
         }
     }
@@ -167,6 +185,10 @@ class SendWhatsappBlastJob implements ShouldQueue
         if ($blastLog) {
             $updates = [
                 'status' => 'FAILED',
+                'provider_status' => 'failed',
+                'provider_reference' => $this->nullableMeta('provider_reference'),
+                'provider_sender_phone' => $this->nullableMeta('provider_sender_phone'),
+                'provider_checked_at' => now(),
                 'error_message' => $errorMessage,
                 'response' => $errorMessage,
                 'sent_at' => now(),
@@ -306,5 +328,11 @@ class SendWhatsappBlastJob implements ShouldQueue
     {
         $deviceId = trim((string) ($this->payload->meta['device_id'] ?? ''));
         return $deviceId !== '' ? $deviceId : null;
+    }
+
+    private function nullableMeta(string $key): ?string
+    {
+        $value = trim((string) ($this->payload->meta[$key] ?? ''));
+        return $value !== '' ? $value : null;
     }
 }

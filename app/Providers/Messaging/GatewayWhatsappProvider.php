@@ -149,6 +149,11 @@ class GatewayWhatsappProvider implements WhatsappProviderInterface
                 if ($providerReference !== null) {
                     $payload->setMeta('provider_reference', $providerReference);
                 }
+
+                $providerMessageId = $this->resolveProviderMessageId($decoded);
+                if ($providerMessageId !== null) {
+                    $payload->setMeta('provider_message_id', $providerMessageId);
+                }
             }
 
             return true;
@@ -345,5 +350,19 @@ class GatewayWhatsappProvider implements WhatsappProviderInterface
         ));
 
         return $reference !== '' ? $reference : null;
+    }
+
+    private function resolveProviderMessageId(array $decoded): ?string
+    {
+        $data = is_array($decoded['data'] ?? null) ? $decoded['data'] : [];
+        $messageId = trim((string) (
+            $data['messageId']
+            ?? $data['message_id']
+            ?? $decoded['messageId']
+            ?? $decoded['message_id']
+            ?? ''
+        ));
+
+        return $messageId !== '' ? $messageId : null;
     }
 }

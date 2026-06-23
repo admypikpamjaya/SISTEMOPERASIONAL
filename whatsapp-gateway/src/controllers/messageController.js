@@ -223,6 +223,93 @@ async function sendTemplate(req, res, next) {
   }
 }
 
+async function serializeJob(jobId) {
+  const normalizedJobId = String(jobId || '').trim();
+  if (!normalizedJobId) {
+    return {
+      jobId: normalizedJobId,
+      state: 'unknown',
+      exists: false
+    };
+  }
+
+  const job = await queue.getJob(normalizedJobId);
+  if (!job) {
+    return {
+      jobId: normalizedJobId,
+      state: 'unknown',
+      exists: false
+    };
+  }
+
+  const state = await job.getState();
+  const result = job.returnvalue && typeof job.returnvalue === 'object'
+    ? job.returnvalue
+    : {};
+
+  return {
+    jobId: String(job.id),
+    exists: true,
+    state,
+    messageId: result?.key?.id || result?.messageId || null,
+    failedReason: job.failedReason || null,
+    attemptsMade: job.attemptsMade || 0,
+    timestamp: job.timestamp || null,
+    processedOn: job.processedOn || null,
+    finishedOn: job.finishedOn || null,
+    deviceId: job.data?.payload?.deviceId || null,
+    phone: job.data?.payload?.phone || null
+  };
+}
+
+async function jobStatus(req, res, next) {
+  try {
+    const job = await serializeJob(req.params.jobId);
+    return ok(res, 'Job status', { job });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function jobsStatus(req, res, next) {
+  try {
+    const jobIds = Array.isArray(req.body.jobIds)
+      ? req.body.jobIds.slice(0, 200)
+      : [];
+
+    if (!jobIds.length) {
+      return fail(res, 'jobIds is required');
+    }
+
+    const jobs = await Promise.all(jobIds.map((jobId) => serializeJob(jobId)));
+    return ok(res, 'Jobs status', { jobs });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function queueStatus(req, res, next) {
+  try {
+    const counts = await queue.getJobCounts(
+      'waiting',
+      'active',
+      'completed',
+      'failed',
+      'delayed',
+      'paused'
+    );
+
+    return ok(res, 'Queue status', {
+      deliveryMode: 'direct',
+      workerEnabled: env.RUN_WORKER,
+      queueName: env.QUEUE_NAME,
+      counts
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 function status(req, res) {
   const deviceId = sanitizeDeviceId(req.query.deviceId || '');
   return ok(res, 'Status', getStatus(deviceId || undefined));
@@ -346,6 +433,9 @@ module.exports = {
   blastCustom,
   blastFile,
   sendTemplate,
+  jobStatus,
+  jobsStatus,
+  queueStatus,
   status,
   reconnect,
   devices,

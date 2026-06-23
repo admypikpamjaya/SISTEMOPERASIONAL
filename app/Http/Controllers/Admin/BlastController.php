@@ -18,6 +18,7 @@ use App\Services\Blast\TemplateRenderer;
 use App\Services\Blast\RecipientSelectorService;
 use App\Services\Blast\TunggakanMessageContextService;
 use App\Services\Blast\WhatsAppGatewayDeviceService;
+use App\Services\Blast\WhatsAppGatewayJobStatusService;
 use App\Services\Blast\WhatsAppProviderSelector;
 use App\Services\Blast\WhatsAppDeviceLabelStore;
 use App\Enums\User\UserRole;
@@ -44,10 +45,15 @@ class BlastController extends Controller
 
     public function whatsapp(
         WhatsAppProviderSelector $providerSelector,
-        WhatsAppDeviceLabelStore $labelStore
+        WhatsAppDeviceLabelStore $labelStore,
+        WhatsAppGatewayJobStatusService $jobStatusService
     )
     {
         session()->forget('campaign_id');
+
+        if ($providerSelector->getProvider() === 'gateway') {
+            $jobStatusService->syncPendingLogs();
+        }
 
         $recipients = $this->getRecipientsByChannel('whatsapp');
         $recipientClasses = $recipients
@@ -740,7 +746,8 @@ class BlastController extends Controller
 
     public function activity(
         Request $request,
-        WhatsAppDeviceLabelStore $labelStore
+        WhatsAppDeviceLabelStore $labelStore,
+        WhatsAppGatewayJobStatusService $jobStatusService
     )
     {
         $validated = $request->validate([
@@ -751,6 +758,7 @@ class BlastController extends Controller
         $recipients = $this->getRecipientsByChannel($channel);
         $deviceLabels = [];
         if ($channel === 'whatsapp') {
+            $jobStatusService->syncPendingLogs();
             $deviceLabels = $labelStore->getLabels();
         }
         $activityData = $this->buildChannelActivityData(
@@ -1931,9 +1939,33 @@ class BlastController extends Controller
             $wibTimestamp = $timestamp?->copy()->timezone(self::WIB_TIMEZONE);
             $status = strtoupper((string) $log->status);
             $responseMessage = trim((string) ($log->response ?? ''));
+            $providerStatus = strtolower(trim((string) ($log->provider_status ?? '')));
+            if (
+                $providerStatus === ''
+                && str_contains(strtolower($responseMessage), 'queued')
+            ) {
+                $providerStatus = 'legacy_queued';
+            }
+            if ($providerStatus === '') {
+                $providerStatus = match ($status) {
+                    'FAILED' => 'failed',
+                    'SENT' => 'sent',
+                    default => 'pending',
+                };
+            }
+            $providerPending = in_array($providerStatus, [
+                'active',
+                'delayed',
+                'paused',
+                'pending',
+                'prioritized',
+                'queued',
+                'waiting',
+                'waiting-children',
+            ], true);
             $statusKey = match ($status) {
                 'FAILED' => 'failed',
-                'SENT' => 'success',
+                'SENT' => $providerPending ? 'pending' : 'success',
                 default => 'pending',
             };
 
@@ -1950,6 +1982,13 @@ class BlastController extends Controller
                 'canDelete' => true,
                 'errorMessage' => trim((string) ($log->error_message ?? '')),
                 'responseMessage' => $responseMessage,
+                'providerStatus' => $providerStatus,
+                'providerReference' => trim((string) ($log->provider_reference ?? '')),
+                'providerMessageId' => trim((string) ($log->provider_message_id ?? '')),
+                'providerSenderPhone' => trim((string) ($log->provider_sender_phone ?? '')),
+                'providerCheckedAt' => $log->provider_checked_at?->copy()
+                    ->timezone(self::WIB_TIMEZONE)
+                    ->format('d/m/Y H:i:s'),
                 'campaignId' => (string) $log->blast_message_id,
             ];
 

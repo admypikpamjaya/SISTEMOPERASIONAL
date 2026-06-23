@@ -1,9 +1,21 @@
 ﻿const router = require('express').Router();
 const controller = require('../controllers/messageController');
 const { upload } = require('../utils/upload');
+const env = require('../config/env');
+const packageInfo = require('../../package.json');
 
 router.get('/health', (req, res) => {
-  return res.json({ success: true, message: 'OK', data: {} });
+  return res.json({
+    success: true,
+    message: 'OK',
+    data: {
+      version: packageInfo.version,
+      deliveryMode: 'direct',
+      workerEnabled: env.RUN_WORKER,
+      queueName: env.QUEUE_NAME,
+      gitCommit: process.env.GIT_COMMIT || null
+    }
+  });
 });
 
 router.get('/status', controller.status);
@@ -23,5 +35,8 @@ router.post('/blast', controller.blast);
 router.post('/blast-custom', controller.blastCustom);
 router.post('/blast-file', upload.single('file'), controller.blastFile);
 router.post('/send-template', controller.sendTemplate);
+router.get('/jobs/:jobId', controller.jobStatus);
+router.post('/jobs/status', controller.jobsStatus);
+router.get('/queue/status', controller.queueStatus);
 
 module.exports = router;

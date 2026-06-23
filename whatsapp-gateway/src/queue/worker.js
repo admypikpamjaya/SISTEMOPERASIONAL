@@ -17,11 +17,13 @@ async function startWorker() {
     queueName,
     async (job) => {
       logger.info(`Processing job ${job.id} (${job.data.type})`);
-      await processJob(job.data);
+      const result = await processJob(job.data);
 
       if (env.MESSAGE_DELAY_MS > 0) {
         await sleep(env.MESSAGE_DELAY_MS);
       }
+
+      return result;
     },
     {
       connection,

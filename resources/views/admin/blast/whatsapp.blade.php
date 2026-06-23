@@ -552,22 +552,23 @@ body,
 .search-input-small::placeholder { color: var(--text-light); }
 .activity-clear-form { display: flex; }
 
-.activity-table { font-size: 12px; }
+.activity-table { font-size: 12px; overflow-x: auto; }
 .activity-table-header {
     display: grid;
-    grid-template-columns: 105px 1fr 100px 1fr 140px 110px 1.2fr 150px;
+    grid-template-columns: 95px minmax(130px,1fr) 80px minmax(130px,1fr) 125px 110px 100px 150px minmax(160px,1.2fr) 130px;
     gap: 10px; padding: 11px 16px;
     background: linear-gradient(90deg, var(--navy) 0%, var(--navy-light) 100%);
     border-radius: var(--radius-sm); font-weight: 700; color: #ffffff;
     margin-bottom: 6px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+    min-width: 1320px;
 }
-.activity-table-body { max-height: 320px; overflow-y: auto; }
+.activity-table-body { max-height: 380px; overflow-y: auto; min-width: 1320px; }
 .activity-table-body::-webkit-scrollbar { width: 5px; }
 .activity-table-body::-webkit-scrollbar-thumb { background: var(--blue-border); border-radius: 4px; }
 .activity-empty { text-align: center; color: var(--text-muted); padding: 56px 20px; font-size: 13px; font-weight: 500; }
 .activity-row {
     display: grid;
-    grid-template-columns: 105px 1fr 100px 1fr 140px 110px 1.2fr 150px;
+    grid-template-columns: 95px minmax(130px,1fr) 80px minmax(130px,1fr) 125px 110px 100px 150px minmax(160px,1.2fr) 130px;
     gap: 10px; padding: 11px 16px;
     border-bottom: 1px solid var(--blue-border);
     align-items: center; font-size: 12px; transition: background .12s;
@@ -595,6 +596,8 @@ body,
 .status-badge.success { background: var(--green-bg); color: var(--green); }
 .status-badge.failed  { background: var(--red-bg);   color: var(--red); }
 .status-badge.pending { background: var(--yellow-bg); color: var(--yellow); }
+.gateway-status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.gateway-status-meta { color: var(--text-light); font-size: 9.5px; line-height: 1.35; word-break: break-all; }
 
 /* ─── TIPS ──────────────────────────────────── */
 .wa-tips {
@@ -625,7 +628,7 @@ body,
     .wa-provider-grid       { grid-template-columns: 1fr; }
     .wa-device-select-grid  { grid-template-columns: 1fr; }
     .activity-table-header,
-    .activity-row           { grid-template-columns: 90px 1fr 90px 1fr 120px 120px 90px 1.2fr 130px; font-size: 11px; }
+    .activity-row           { font-size: 11px; }
 }
 @media (max-width: 768px) {
     .wa-page                { padding: 12px; }
@@ -1003,6 +1006,7 @@ body,
                     <div>{{ __('app.blast.whatsapp_number') }}</div>
                     <div>{{ __('app.blast.device') }}</div>
                     <div>{{ __('app.blast.status') }}</div>
+                    <div>{{ __('app.blast.gateway_status') }}</div>
                     <div>{{ __('app.blast.error') }}</div>
                     <div>{{ __('app.blast.action') }}</div>
                 </div>
@@ -1085,6 +1089,15 @@ body,
             sent: @json(__('app.blast.sent')),
             failed: @json(__('app.blast.failed')),
             pending: @json(__('app.blast.pending')),
+            gatewayQueued: @json(__('app.blast.gateway_queued')),
+            gatewayProcessing: @json(__('app.blast.gateway_processing')),
+            gatewayCompleted: @json(__('app.blast.gateway_completed')),
+            gatewayFailed: @json(__('app.blast.gateway_failed')),
+            gatewayUnknown: @json(__('app.blast.gateway_unknown')),
+            gatewayLegacyQueued: @json(__('app.blast.gateway_legacy_queued')),
+            gatewayReference: @json(__('app.blast.gateway_reference')),
+            gatewayMessageId: @json(__('app.blast.gateway_message_id')),
+            gatewaySender: @json(__('app.blast.gateway_sender')),
             sendFailedMessage: @json(__('app.blast.send_failed_message')),
             retry: @json(__('app.blast.retry')),
             delete: @json(__('app.blast.delete')),
@@ -1890,6 +1903,24 @@ body,
                 const row = document.createElement('div'); row.className = 'activity-row'; row.setAttribute('data-campaign-id', String(activity.campaignId || ''));
                 const statusClass = activity.status === 'success' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending';
                 const statusText = activity.status === 'success' ? blastText.sent : activity.status === 'failed' ? blastText.failed : blastText.pending;
+                const providerStatus = String(activity.providerStatus || 'unknown').toLowerCase();
+                const providerCompleted = ['completed', 'sent', 'success'].includes(providerStatus);
+                const providerFailed = providerStatus === 'failed';
+                const providerProcessing = ['active', 'processing'].includes(providerStatus);
+                const providerQueued = ['delayed', 'paused', 'pending', 'prioritized', 'queued', 'waiting', 'waiting-children'].includes(providerStatus);
+                const providerLegacyQueued = providerStatus === 'legacy_queued';
+                const providerStatusClass = providerCompleted ? 'success' : providerFailed ? 'failed' : 'pending';
+                const providerStatusText = providerCompleted
+                    ? blastText.gatewayCompleted
+                    : providerFailed
+                        ? blastText.gatewayFailed
+                        : providerProcessing
+                            ? blastText.gatewayProcessing
+                            : providerQueued
+                                ? blastText.gatewayQueued
+                                : providerLegacyQueued
+                                    ? blastText.gatewayLegacyQueued
+                                : blastText.gatewayUnknown;
                 const logId = Number(activity.logId || 0);
                 const canRetry = Boolean(activity.canRetry) && activity.status === 'failed' && logId > 0;
                 const errorText = activity.status === 'failed'
@@ -1899,7 +1930,14 @@ body,
                 if (canRetry) actionButtons.push(`<button type="button" class="activity-action-btn retry" data-action="retry" data-log-id="${logId}">${blastText.retry}</button>`);
                 if (logId > 0) actionButtons.push(`<button type="button" class="activity-action-btn delete" data-action="delete" data-log-id="${logId}">${blastText.delete}</button>`);
                 const deviceText = activity.deviceLabel || activity.deviceId || '-';
-                row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${activity.date}</div><div class="waktu-time">${activity.time}</div></div><div class="col-siswa"><div class="siswa-name">${activity.studentName}</div></div><div class="col-kelas">${activity.studentClass}</div><div class="col-wali"><div class="wali-name">${activity.parentName}</div></div><div class="col-wa">${activity.phone}</div><div class="col-device">${deviceText}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="col-error">${errorText}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
+                const providerDetails = [];
+                if (activity.providerReference) providerDetails.push(`${blastText.gatewayReference}: ${activity.providerReference}`);
+                if (activity.providerMessageId) providerDetails.push(`${blastText.gatewayMessageId}: ${activity.providerMessageId}`);
+                if (activity.providerSenderPhone) providerDetails.push(`${blastText.gatewaySender}: ${activity.providerSenderPhone}`);
+                const providerMeta = providerDetails.length > 0
+                    ? `<div class="gateway-status-meta">${escapeHtml(providerDetails.join(' | '))}</div>`
+                    : '';
+                row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${escapeHtml(activity.date)}</div><div class="waktu-time">${escapeHtml(activity.time)}</div></div><div class="col-siswa"><div class="siswa-name">${escapeHtml(activity.studentName)}</div></div><div class="col-kelas">${escapeHtml(activity.studentClass)}</div><div class="col-wali"><div class="wali-name">${escapeHtml(activity.parentName)}</div></div><div class="col-wa">${escapeHtml(activity.phone)}</div><div class="col-device">${escapeHtml(deviceText)}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="gateway-status-cell"><span class="status-badge ${providerStatusClass}">${providerStatusText}</span>${providerMeta}</div><div class="col-error">${escapeHtml(errorText)}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
                 activityLog.appendChild(row);
             });
         }

@@ -14,6 +14,11 @@ class BlastLog extends Model
         'blast_target_id',
         'device_id',
         'status',
+        'provider_status',
+        'provider_reference',
+        'provider_message_id',
+        'provider_sender_phone',
+        'provider_checked_at',
         'message_snapshot',
         'response',
         'error_message',
@@ -23,6 +28,7 @@ class BlastLog extends Model
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'provider_checked_at' => 'datetime',
     ];
 
     public function message()
