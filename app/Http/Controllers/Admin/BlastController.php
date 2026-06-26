@@ -207,7 +207,7 @@ class BlastController extends Controller
         ]);
     }
 
-    public function whatsappGatewayStatus()
+    public function whatsappGatewayStatus(Request $request)
     {
         $user = Auth::user();
         if (!$user) {
@@ -219,10 +219,16 @@ class BlastController extends Controller
         }
 
         $isSuperAdmin = $user->role === UserRole::IT_SUPPORT->value;
+        $deviceId = $this->sanitizeDeviceId(
+            $request->query('device_id') ?? $request->query('deviceId')
+        );
 
         try {
             [$baseUrl, $client] = $this->buildGatewayClient();
-            $response = $client->get($baseUrl . '/status');
+            $response = $client->get(
+                $baseUrl . '/status',
+                $deviceId !== null ? ['deviceId' => $deviceId] : []
+            );
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,

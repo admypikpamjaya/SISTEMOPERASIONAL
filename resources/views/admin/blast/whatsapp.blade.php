@@ -1233,6 +1233,9 @@ body,
         let activities = @json($activityLogs ?? []);
         let isRefreshingActivities = false;
         let recipientNumbers = [];
+        let gatewayDevicesCache = [];
+        let gatewayActiveDeviceId = null;
+        let gatewayActiveStatus = 'init';
         const overrideState = {};
         const attachmentBufferByKey = {};
 
@@ -1276,6 +1279,44 @@ body,
             return localPart.includes(':') ? localPart.split(':')[0] : localPart;
         }
 
+        function normalizeGatewayDeviceId(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function isGatewayDeviceConnected(device) {
+            return String(device?.status || '').toLowerCase() === 'connected';
+        }
+
+        function findGatewayDevice(deviceId) {
+            const normalized = normalizeGatewayDeviceId(deviceId);
+            if (!normalized) return null;
+            return gatewayDevicesCache.find(device => normalizeGatewayDeviceId(device.deviceId) === normalized) || null;
+        }
+
+        function getSelectedGatewayDeviceIds() {
+            return [deviceStudentSelect?.value, deviceEmployeeSelect?.value, deviceManualSelect?.value]
+                .map(normalizeGatewayDeviceId)
+                .filter(Boolean)
+                .filter((value, index, list) => list.indexOf(value) === index);
+        }
+
+        function getFirstConnectedGatewayDevice() {
+            return gatewayDevicesCache.find(isGatewayDeviceConnected) || null;
+        }
+
+        function getPreferredGatewayDevice() {
+            const selectedIds = getSelectedGatewayDeviceIds();
+            for (const deviceId of selectedIds) {
+                const device = findGatewayDevice(deviceId);
+                if (isGatewayDeviceConnected(device)) return device;
+            }
+
+            const activeDevice = findGatewayDevice(gatewayActiveDeviceId);
+            if (isGatewayDeviceConnected(activeDevice)) return activeDevice;
+
+            return getFirstConnectedGatewayDevice();
+        }
+
         let currentProviderMode = 'gateway';
 
         function updateProviderBadge(provider) {
@@ -1304,6 +1345,7 @@ body,
             devices.forEach(device => {
                 const option = document.createElement('option');
                 option.value = device.deviceId;
+                option.dataset.status = String(device.status || '');
                 const phone = normalizeGatewayPhone(device.user);
                 const deviceName = device.label
                     ? `${device.label} (${device.deviceId})`
@@ -1328,10 +1370,20 @@ body,
                 const payload = await response.json();
                 if (payload?.success === false) return;
                 const data = payload?.data || {};
-                const devices = Array.isArray(data.devices) ? data.devices : [];
+                gatewayActiveDeviceId = data.activeDeviceId || gatewayActiveDeviceId;
+                gatewayDevicesCache = Array.isArray(data.devices) ? data.devices : [];
+                const devices = gatewayDevicesCache;
                 populateDeviceSelect(deviceStudentSelect, devices, blastText.defaultLabel || @json(__('app.blast.default')));
                 populateDeviceSelect(deviceEmployeeSelect, devices, blastText.defaultLabel || @json(__('app.blast.default')));
                 populateDeviceSelect(deviceManualSelect, devices, blastText.followStudent || @json(__('app.blast.follow_student')));
+                updateGatewaySendState(gatewayActiveStatus);
+                const preferredDevice = getPreferredGatewayDevice();
+                if (preferredDevice && !isGatewayDeviceConnected(findGatewayDevice(gatewayActiveDeviceId))) {
+                    updateGatewayUi({
+                        ...preferredDevice,
+                        activeDeviceId: preferredDevice.deviceId,
+                    });
+                }
             } catch (error) {
                 // ignore
             }
@@ -1347,8 +1399,15 @@ body,
                 }
                 return;
             }
-            const normalized = String(status || '').toLowerCase();
-            const connected = normalized === 'connected';
+            gatewayActiveStatus = String(status || '').toLowerCase();
+            const selectedIds = getSelectedGatewayDeviceIds();
+            const selectedConnected = selectedIds.some(deviceId => isGatewayDeviceConnected(findGatewayDevice(deviceId)));
+            const activeConnected = gatewayActiveStatus === 'connected'
+                || isGatewayDeviceConnected(findGatewayDevice(gatewayActiveDeviceId));
+            const fallbackConnected = Boolean(getFirstConnectedGatewayDevice());
+            const connected = selectedIds.length > 0
+                ? selectedConnected
+                : (activeConnected || fallbackConnected);
             sendButton.disabled = !connected;
             if (waGatewayStatusNote) {
                 if (connected) {
@@ -1363,7 +1422,13 @@ body,
         async function refreshGatewayStatusForSend() {
             if (!gatewayStatusUrl) return;
             try {
-                const response = await fetch(gatewayStatusUrl, {
+                const preferredDeviceId = getPreferredGatewayDevice()?.deviceId
+                    || getSelectedGatewayDeviceIds()[0]
+                    || '';
+                const statusUrl = preferredDeviceId
+                    ? `${gatewayStatusUrl}?device_id=${encodeURIComponent(preferredDeviceId)}`
+                    : gatewayStatusUrl;
+                const response = await fetch(statusUrl, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 if (!response.ok) {
@@ -1372,6 +1437,7 @@ body,
                 }
                 const payload = await response.json();
                 const data = payload?.data || payload;
+                gatewayActiveDeviceId = data?.activeDeviceId || gatewayActiveDeviceId;
                 updateGatewaySendState(data?.status || 'disconnected');
             } catch (error) {
                 updateGatewaySendState('disconnected');
@@ -1413,7 +1479,7 @@ body,
             }
 
             if (waActiveDevice) {
-                waActiveDevice.textContent = data?.activeDeviceId || '-';
+                waActiveDevice.textContent = data?.deviceId || data?.activeDeviceId || '-';
             }
 
             const qrData = data?.qrDataUrl || '';
@@ -1435,7 +1501,13 @@ body,
         async function fetchGatewayStatus() {
             if (!waDeviceCard || !gatewayStatusUrl) return;
             try {
-                const response = await fetch(gatewayStatusUrl, {
+                const preferredDeviceId = getPreferredGatewayDevice()?.deviceId
+                    || getSelectedGatewayDeviceIds()[0]
+                    || '';
+                const statusUrl = preferredDeviceId
+                    ? `${gatewayStatusUrl}?device_id=${encodeURIComponent(preferredDeviceId)}`
+                    : gatewayStatusUrl;
+                const response = await fetch(statusUrl, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 if (!response.ok) {
@@ -1447,7 +1519,9 @@ body,
                     if (waStatusSub && payload?.message) waStatusSub.textContent = payload.message;
                     return;
                 }
-                updateGatewayUi(payload?.data || {});
+                const data = payload?.data || {};
+                gatewayActiveDeviceId = data?.activeDeviceId || gatewayActiveDeviceId;
+                updateGatewayUi(data);
             } catch (error) {
                 updateGatewayUi({ status: 'disconnected' });
                 if (waStatusSub) waStatusSub.textContent = blastText.gatewayUnreachable;
@@ -2078,6 +2152,14 @@ body,
         updateGatewaySendState('init');
         refreshGatewayStatusForSend();
         refreshDeviceSelects();
+        [deviceStudentSelect, deviceEmployeeSelect, deviceManualSelect].forEach(selectEl => {
+            if (!selectEl) return;
+            selectEl.addEventListener('change', function() {
+                updateGatewaySendState(gatewayActiveStatus);
+                refreshGatewayStatusForSend();
+                fetchGatewayStatus();
+            });
+        });
         setInterval(() => {
             if (document.visibilityState !== 'hidden') refreshGatewayStatusForSend();
         }, 5000);
