@@ -100,6 +100,41 @@ class WhatsAppGatewayJobStatusServiceTest extends TestCase
         $this->assertSame('COMPLETED', $message->campaign_status);
     }
 
+    public function test_it_promotes_acknowledged_pending_log_to_sent_without_queue_lookup(): void
+    {
+        $message = BlastMessage::query()->create([
+            'channel' => 'WHATSAPP',
+            'message' => 'Test',
+            'campaign_status' => 'RUNNING',
+        ]);
+
+        $log = BlastLog::query()->create([
+            'blast_message_id' => $message->id,
+            'status' => 'PENDING',
+            'provider_status' => 'server_ack',
+            'provider_reference' => '3EB085B6DFFF83A12286C4',
+            'provider_message_id' => '3EB085B6DFFF83A12286C4',
+            'response' => 'Message sent',
+        ]);
+
+        Http::fake([
+            'http://gateway.test/jobs/status' => Http::response([
+                'success' => true,
+                'data' => ['jobs' => []],
+            ]),
+        ]);
+
+        app(WhatsAppGatewayJobStatusService::class)->syncPendingLogs();
+
+        $log->refresh();
+        $message->refresh();
+
+        $this->assertSame('SENT', $log->status);
+        $this->assertSame('server_ack', $log->provider_status);
+        $this->assertNotNull($log->sent_at);
+        $this->assertSame('COMPLETED', $message->campaign_status);
+    }
+
     public function test_queued_gateway_response_stays_pending(): void
     {
         $message = BlastMessage::query()->create([

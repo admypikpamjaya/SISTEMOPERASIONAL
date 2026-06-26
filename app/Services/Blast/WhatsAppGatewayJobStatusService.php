@@ -13,6 +13,18 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppGatewayJobStatusService
 {
+    private const DONE_STATES = [
+        'completed',
+        'delivered',
+        'delivery_ack',
+        'done',
+        'played',
+        'read',
+        'sent',
+        'server_ack',
+        'success',
+    ];
+
     private const PENDING_STATES = [
         'active',
         'delayed',
@@ -26,6 +38,8 @@ class WhatsAppGatewayJobStatusService
 
     public function syncPendingLogs(int $limit = 100): void
     {
+        $this->promoteAcknowledgedPendingLogs($limit);
+
         $unsupportedCacheKey = 'whatsapp-gateway-job-status-unsupported';
         if (Cache::get($unsupportedCacheKey) === true) {
             return;
@@ -128,10 +142,10 @@ class WhatsAppGatewayJobStatusService
             $updates['provider_message_id'] = $messageId;
         }
 
-        if ($state === 'completed') {
+        if (in_array($state, self::DONE_STATES, true)) {
             $updates['status'] = 'SENT';
             $updates['error_message'] = null;
-            $updates['response'] = 'Message sent by gateway worker.';
+            $updates['response'] = 'Message completed by WhatsApp gateway.';
             $updates['sent_at'] = $this->timestampFromMilliseconds(
                 $job['finishedOn'] ?? null
             ) ?? now();
@@ -153,6 +167,49 @@ class WhatsAppGatewayJobStatusService
         }
 
         $log->update($updates);
+    }
+
+    private function promoteAcknowledgedPendingLogs(int $limit): void
+    {
+        $logs = BlastLog::query()
+            ->whereHas('message', fn ($query) => $query->where('channel', 'WHATSAPP'))
+            ->where('status', 'PENDING')
+            ->latest('updated_at')
+            ->limit(max(1, min($limit, 200)))
+            ->get();
+
+        if ($logs->isEmpty()) {
+            return;
+        }
+
+        $campaignIds = collect();
+        foreach ($logs as $log) {
+            $providerStatus = strtolower(trim((string) ($log->provider_status ?? '')));
+            $hasProviderMessageId = trim((string) ($log->provider_message_id ?? '')) !== '';
+            $isPendingProvider = in_array($providerStatus, self::PENDING_STATES, true);
+            $isFailedProvider = $providerStatus === 'failed';
+            $isDone = in_array($providerStatus, self::DONE_STATES, true)
+                || ($hasProviderMessageId && !$isPendingProvider && !$isFailedProvider);
+
+            if (!$isDone) {
+                continue;
+            }
+
+            $log->update([
+                'status' => 'SENT',
+                'provider_status' => $providerStatus !== '' ? $providerStatus : 'sent',
+                'provider_checked_at' => now(),
+                'error_message' => null,
+                'response' => trim((string) ($log->response ?? '')) !== ''
+                    ? $log->response
+                    : 'Message completed by WhatsApp gateway.',
+                'sent_at' => $log->sent_at ?? now(),
+            ]);
+
+            $campaignIds->push((string) $log->blast_message_id);
+        }
+
+        $this->refreshCampaigns($campaignIds);
     }
 
     private function refreshCampaigns(Collection $campaignIds): void

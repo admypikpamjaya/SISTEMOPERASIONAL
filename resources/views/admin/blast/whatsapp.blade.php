@@ -1086,6 +1086,7 @@ body,
             noRecipientSearchResults: @json(__('app.blast.no_recipient_search_results')),
             noActivity: @json(__('app.blast.no_activity')),
             noSearchResults: @json(__('app.blast.no_search_results')),
+            done: @json(__('app.blast.done')),
             sent: @json(__('app.blast.sent')),
             failed: @json(__('app.blast.failed')),
             pending: @json(__('app.blast.pending')),
@@ -1903,9 +1904,9 @@ body,
             filteredActivities.forEach(activity => {
                 const row = document.createElement('div'); row.className = 'activity-row'; row.setAttribute('data-campaign-id', String(activity.campaignId || ''));
                 const statusClass = activity.status === 'success' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending';
-                const statusText = activity.status === 'success' ? blastText.sent : activity.status === 'failed' ? blastText.failed : blastText.pending;
+                const statusText = activity.status === 'success' ? blastText.done : activity.status === 'failed' ? blastText.failed : blastText.pending;
                 const providerStatus = String(activity.providerStatus || 'unknown').toLowerCase();
-                const providerCompleted = ['completed', 'sent', 'success'].includes(providerStatus);
+                const providerCompleted = ['completed', 'delivered', 'delivery_ack', 'done', 'played', 'read', 'sent', 'server_ack', 'success'].includes(providerStatus);
                 const providerFailed = providerStatus === 'failed';
                 const providerCancelled = providerStatus === 'cancelled';
                 const providerProcessing = ['active', 'processing'].includes(providerStatus);
@@ -1926,7 +1927,7 @@ body,
                                     ? blastText.gatewayLegacyQueued
                                 : blastText.gatewayUnknown;
                 const logId = Number(activity.logId || 0);
-                const canRetry = Boolean(activity.canRetry) && activity.status === 'failed' && logId > 0;
+                const canRetry = Boolean(activity.canRetry) && logId > 0;
                 const errorText = activity.status === 'failed'
                     ? (activity.errorMessage || activity.responseMessage || blastText.sendFailedMessage)
                     : '-';

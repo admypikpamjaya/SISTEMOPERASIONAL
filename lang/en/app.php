@@ -377,6 +377,7 @@ return [
         'connected_number' => 'Connected Number',
         'connected_since' => 'Connected Since',
         'total' => 'Total',
+        'done' => 'Done',
         'sent' => 'Sent',
         'failed' => 'Failed',
         'pending' => 'Pending',

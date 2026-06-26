@@ -33,6 +33,28 @@ use Illuminate\Support\Str;
 class BlastController extends Controller
 {
     private const WIB_TIMEZONE = 'Asia/Jakarta';
+    private const WHATSAPP_PENDING_RETRY_AFTER_SECONDS = 15;
+    private const WHATSAPP_GATEWAY_DONE_STATES = [
+        'completed',
+        'delivered',
+        'delivery_ack',
+        'done',
+        'played',
+        'read',
+        'sent',
+        'server_ack',
+        'success',
+    ];
+    private const WHATSAPP_GATEWAY_PENDING_STATES = [
+        'active',
+        'delayed',
+        'paused',
+        'pending',
+        'prioritized',
+        'queued',
+        'waiting',
+        'waiting-children',
+    ];
 
     /* =======================
      |  VIEW
@@ -940,10 +962,21 @@ class BlastController extends Controller
             );
         }
 
-        if (strtoupper((string) $blastLog->status) !== 'FAILED') {
+        $currentStatus = strtoupper((string) $blastLog->status);
+        $isStaleWhatsappPending = $requestedChannel === 'WHATSAPP'
+            && $currentStatus === 'PENDING'
+            && $this->pendingLogAgeSeconds($blastLog) >= self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS;
+
+        if ($currentStatus !== 'FAILED' && !$isStaleWhatsappPending) {
+            $message = $requestedChannel === 'WHATSAPP' && $currentStatus === 'PENDING'
+                ? 'Log masih diproses gateway. Tombol retry aktif setelah '
+                    . self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS
+                    . ' detik jika status belum berubah.'
+                : 'Hanya activity log dengan status gagal yang bisa di-retry.';
+
             return $this->activityActionError(
                 $request,
-                'Hanya activity log dengan status gagal yang bisa di-retry.',
+                $message,
                 422
             );
         }
@@ -1020,6 +1053,11 @@ class BlastController extends Controller
             'status' => 'PENDING',
             'response' => 'Retry requested by operator.',
             'error_message' => null,
+            'provider_status' => 'pending',
+            'provider_reference' => null,
+            'provider_message_id' => null,
+            'provider_sender_phone' => null,
+            'provider_checked_at' => null,
             'sent_at' => null,
             'attempt' => 0,
         ]);
@@ -2031,21 +2069,22 @@ class BlastController extends Controller
                     default => 'pending',
                 };
             }
-            $providerPending = in_array($providerStatus, [
-                'active',
-                'delayed',
-                'paused',
-                'pending',
-                'prioritized',
-                'queued',
-                'waiting',
-                'waiting-children',
-            ], true);
+            $providerDone = in_array($providerStatus, self::WHATSAPP_GATEWAY_DONE_STATES, true);
+            $providerPending = in_array($providerStatus, self::WHATSAPP_GATEWAY_PENDING_STATES, true);
             $statusKey = match ($status) {
                 'FAILED' => 'failed',
                 'SENT' => $providerPending ? 'pending' : 'success',
-                default => 'pending',
+                default => $providerDone ? 'success' : 'pending',
             };
+            $pendingAgeSeconds = $statusKey === 'pending'
+                ? $this->pendingLogAgeSeconds($log)
+                : 0;
+            $canRetry = $status === 'FAILED'
+                || (
+                    $normalizedChannel === 'WHATSAPP'
+                    && $statusKey === 'pending'
+                    && $pendingAgeSeconds >= self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS
+                );
 
             $row = [
                 'logId' => (int) $log->id,
@@ -2056,7 +2095,7 @@ class BlastController extends Controller
                 'parentName' => $recipient?->nama_wali ?: '-',
                 'status' => $statusKey,
                 'rawStatus' => $status,
-                'canRetry' => $status === 'FAILED',
+                'canRetry' => $canRetry,
                 'canDelete' => true,
                 'errorMessage' => trim((string) ($log->error_message ?? '')),
                 'responseMessage' => $responseMessage,
@@ -2067,6 +2106,8 @@ class BlastController extends Controller
                 'providerCheckedAt' => $log->provider_checked_at?->copy()
                     ->timezone(self::WIB_TIMEZONE)
                     ->format('d/m/Y H:i:s'),
+                'pendingAgeSeconds' => $pendingAgeSeconds,
+                'retryAfterSeconds' => self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS,
                 'campaignId' => (string) $log->blast_message_id,
             ];
 
@@ -2114,6 +2155,16 @@ class BlastController extends Controller
             'stats' => $stats,
             'logs' => $mappedLogs,
         ];
+    }
+
+    private function pendingLogAgeSeconds(BlastLog $log): int
+    {
+        $timestamp = $log->updated_at ?? $log->created_at;
+        if (!$timestamp) {
+            return 0;
+        }
+
+        return max(0, (int) $timestamp->diffInSeconds(now()));
     }
 
     private function getRecipientsByChannel(string $channel)
