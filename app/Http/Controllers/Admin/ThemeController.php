@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Theme\ThemeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Throwable;
 
@@ -37,6 +38,10 @@ class ThemeController extends Controller
 
             return back()->with('success', __('app.website_theme.saved_success'));
         } catch (Throwable $exception) {
+            Log::warning('[WEBSITE THEME MANUAL SAVE FAILED]', [
+                'user_id' => $request->user()?->id,
+                'message' => $exception->getMessage(),
+            ]);
             report($exception);
 
             return back()
@@ -48,7 +53,11 @@ class ThemeController extends Controller
     public function image(Request $request, ThemeService $themeService): RedirectResponse
     {
         $validated = $request->validate([
-            'theme_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'theme_image' => [
+                'required',
+                'file',
+                'max:8192',
+            ],
         ]);
 
         try {
@@ -56,6 +65,14 @@ class ThemeController extends Controller
 
             return back()->with('success', __('app.website_theme.image_success'));
         } catch (Throwable $exception) {
+            Log::warning('[WEBSITE THEME IMAGE SAVE FAILED]', [
+                'user_id' => $request->user()?->id,
+                'file_name' => $request->file('theme_image')?->getClientOriginalName(),
+                'mime' => $request->file('theme_image')?->getMimeType(),
+                'message' => $exception->getMessage(),
+            ]);
+            report($exception);
+
             return back()->with('error', $exception->getMessage() ?: __('app.website_theme.image_failed'));
         }
     }

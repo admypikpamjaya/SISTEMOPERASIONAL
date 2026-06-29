@@ -27,7 +27,7 @@ return [
         'default_theme' => 'Tema awal',
         'image_palette' => 'Ambil Tema dari Gambar',
         'image_palette_hint' => 'Upload gambar/logo untuk mengambil palet warna otomatis.',
-        'image_help' => 'Format JPG, PNG, atau WEBP maksimal 4 MB. Sistem akan memilih warna dominan yang tetap nyaman dibaca.',
+        'image_help' => 'Format gambar umum seperti JPG, PNG, WEBP, GIF, BMP, AVIF, atau SVG maksimal 8 MB. Sistem akan memilih warna dominan yang tetap nyaman dibaca.',
         'apply_image' => 'Terapkan dari Gambar',
         'behavior_title' => 'Cara Kerja',
         'behavior_hint' => 'Tema berlaku global untuk semua halaman yang memakai layout utama.',

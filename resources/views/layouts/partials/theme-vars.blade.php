@@ -1,5 +1,9 @@
-@php($websiteThemeVariables = app(\App\Services\Theme\ThemeService::class)->cssVariables())
-@php($websiteThemeDarkBrandVariables = collect($websiteThemeVariables)->only([
+@php($websiteThemeService = app(\App\Services\Theme\ThemeService::class))
+@php($websiteTheme = $websiteTheme ?? $websiteThemeService->current())
+@php($websiteThemeVariables = $websiteThemeService->cssVariables($websiteTheme))
+@php($websiteThemeImportantSuffix = !empty($websiteThemeImportant) ? ' !important' : '')
+@php($websiteThemeStyleId = $websiteThemeStyleId ?? 'website-theme-vars')
+@php($websiteThemeBrandVariables = collect($websiteThemeVariables)->only([
     '--app-accent',
     '--app-accent-strong',
     '--app-sidebar-bg',
@@ -28,17 +32,30 @@
     '--tg-primary',
     '--tg-primary-soft',
 ])->all())
-<style id="website-theme-vars">
+@php($websiteThemeDarkVariables = ($websiteTheme['source'] ?? 'default') === 'default' ? $websiteThemeBrandVariables : $websiteThemeVariables)
+<style id="{{ $websiteThemeStyleId }}">
     :root {
         @foreach($websiteThemeVariables as $name => $value)
-            {{ $name }}: {{ $value }};
+            {{ $name }}: {{ $value }}{{ $websiteThemeImportantSuffix }};
         @endforeach
     }
 
     body.dark-mode {
-        @foreach($websiteThemeDarkBrandVariables as $name => $value)
-            {{ $name }}: {{ $value }};
+        @foreach($websiteThemeDarkVariables as $name => $value)
+            {{ $name }}: {{ $value }}{{ $websiteThemeImportantSuffix }};
         @endforeach
+    }
+
+    body,
+    body .content-wrapper {
+        background: var(--app-bg) !important;
+        color: var(--app-text) !important;
+    }
+
+    body.dark-mode,
+    body.dark-mode .content-wrapper {
+        background: var(--app-bg) !important;
+        color: var(--app-text) !important;
     }
 
     .main-sidebar .nav-sidebar .nav-link.active,
@@ -75,5 +92,22 @@
 
     .border-primary {
         border-color: var(--app-accent) !important;
+    }
+
+    .main-header.navbar {
+        border-bottom-color: var(--app-border) !important;
+    }
+
+    .card,
+    .modal-content,
+    .dropdown-menu,
+    .theme-panel,
+    .theme-hero,
+    body.dark-mode .card,
+    body.dark-mode .modal-content,
+    body.dark-mode .dropdown-menu,
+    body.dark-mode .theme-panel,
+    body.dark-mode .theme-hero {
+        border-color: var(--app-border) !important;
     }
 </style>

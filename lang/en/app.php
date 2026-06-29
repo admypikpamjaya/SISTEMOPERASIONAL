@@ -27,7 +27,7 @@ return [
         'default_theme' => 'Original theme',
         'image_palette' => 'Create Theme from Image',
         'image_palette_hint' => 'Upload an image/logo to generate an automatic color palette.',
-        'image_help' => 'JPG, PNG, or WEBP up to 4 MB. The system chooses dominant colors that remain readable.',
+        'image_help' => 'Common image formats such as JPG, PNG, WEBP, GIF, BMP, AVIF, or SVG up to 8 MB. The system chooses dominant colors that remain readable.',
         'apply_image' => 'Apply from Image',
         'behavior_title' => 'How It Works',
         'behavior_hint' => 'The theme applies globally to pages that use the main layout.',

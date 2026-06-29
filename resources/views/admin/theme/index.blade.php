@@ -543,7 +543,7 @@
             <div class="theme-panel-body">
                 <form method="POST" action="{{ route('admin.theme.image') }}" enctype="multipart/form-data" class="theme-upload">
                     @csrf
-                    <input type="file" name="theme_image" accept="image/png,image/jpeg,image/webp" required>
+                    <input type="file" name="theme_image" accept="image/*,.svg" required>
                     <p class="theme-help">{{ __('app.website_theme.image_help') }}</p>
                     <div class="theme-actions mt-0">
                         <button type="submit" class="theme-btn primary">

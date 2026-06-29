@@ -34,7 +34,7 @@
     <!-- Extras -->
     @php($appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time())
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $appCssVersion }}">
-    @include('layouts.partials.theme-vars')
+    @include('layouts.partials.theme-vars', ['websiteThemeStyleId' => 'website-theme-vars-head'])
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -335,6 +335,10 @@
         <section class="content">
             <div class="container-fluid">
                 @yield('content')
+                @include('layouts.partials.theme-vars', [
+                    'websiteThemeStyleId' => 'website-theme-vars-body',
+                    'websiteThemeImportant' => true,
+                ])
             </div>
         </section>
 
