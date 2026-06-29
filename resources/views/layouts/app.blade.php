@@ -34,6 +34,7 @@
     <!-- Extras -->
     @php($appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time())
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $appCssVersion }}">
+    @include('layouts.partials.theme-vars')
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">

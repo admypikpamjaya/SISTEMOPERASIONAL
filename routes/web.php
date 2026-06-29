@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\BlastController;
 use App\Http\Controllers\Admin\BlastRecipientController;
 use App\Http\Controllers\Admin\BlastMessageTemplateController;
 use App\Http\Controllers\Admin\BlastTunggakanController;
+use App\Http\Controllers\Admin\ThemeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -577,6 +578,17 @@ Route::prefix('admin')
     ->name('admin.')
     ->middleware('auth')
     ->group(function () {
+
+        Route::prefix('theme')
+            ->name('theme.')
+            ->middleware('role:' . UserRole::IT_SUPPORT->value)
+            ->controller(ThemeController::class)
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::put('/', 'update')->name('update');
+                Route::post('/image', 'image')->name('image');
+                Route::delete('/reset', 'reset')->name('reset');
+            });
 
         /* ================= ANNOUNCEMENTS ================= */
         Route::prefix('announcements')

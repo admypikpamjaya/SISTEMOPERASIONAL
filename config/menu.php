@@ -200,11 +200,19 @@ return array_map($withFallbackLabel, [
         ],
         
     ],
- [
+    [
         'module_name' => 'admin_reminder',
         'label_key' => 'app.menu.reminders',
         'icon'  => 'fas fa-bell',
         'route' => 'admin.reminders.index',
+    ],
+
+    [
+        'label_key' => 'app.menu.website_theme',
+        'icon'  => 'fas fa-palette',
+        'route' => 'admin.theme.index',
+        'active_routes' => ['admin.theme.*'],
+        'roles' => [UserRole::IT_SUPPORT->value],
     ],
    
 
