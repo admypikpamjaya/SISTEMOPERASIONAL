@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
@@ -44,33 +45,12 @@ class ThemeService
     {
         $defaults = $this->defaults();
 
-        if (! $this->settingsTableAvailable()) {
-            return $defaults;
-        }
-
         try {
             return Cache::rememberForever(self::CACHE_KEY, function () use ($defaults) {
-                $setting = AppSetting::query()
-                    ->where('key', self::SETTING_KEY)
-                    ->first();
-
-                $value = is_array($setting?->value) ? $setting->value : [];
-                $colors = is_array($value['colors'] ?? null) ? $value['colors'] : [];
-
-                if ($colors === []) {
-                    return $defaults;
-                }
-
-                return $this->buildTheme(
-                    array_merge($defaults['colors'], $colors),
-                    (string) ($value['source'] ?? 'manual'),
-                    $value['source_name'] ?? null,
-                    $value['updated_by'] ?? null,
-                    $setting?->updated_at?->toDateTimeString()
-                );
+                return $this->resolveCurrent($defaults);
             });
         } catch (Throwable) {
-            return $defaults;
+            return $this->resolveCurrent($defaults);
         }
     }
 
@@ -89,15 +69,18 @@ class ThemeService
     public function reset(): void
     {
         if (! $this->settingsTableAvailable()) {
-            Cache::forget(self::CACHE_KEY);
-            return;
+            $this->forgetCache();
+        } else {
+            AppSetting::query()
+                ->where('key', self::SETTING_KEY)
+                ->delete();
         }
 
-        AppSetting::query()
-            ->where('key', self::SETTING_KEY)
-            ->delete();
+        if (File::exists($this->fallbackPath())) {
+            File::delete($this->fallbackPath());
+        }
 
-        Cache::forget(self::CACHE_KEY);
+        $this->forgetCache();
     }
 
     public function cssVariables(): array
@@ -149,27 +132,127 @@ class ThemeService
 
     private function save(array $colors, string $source, ?string $sourceName, ?int $userId): array
     {
-        if (! $this->settingsTableAvailable()) {
-            throw new RuntimeException('Theme setting table is not available.');
+        $theme = $this->buildTheme($colors, $source, $sourceName, $userId);
+        $payload = [
+            'colors' => $theme['colors'],
+            'source' => $source,
+            'source_name' => $sourceName,
+            'updated_by' => $userId,
+            'updated_at' => now()->toDateTimeString(),
+        ];
+        $databaseSaved = false;
+
+        if ($this->settingsTableAvailable()) {
+            try {
+                AppSetting::query()->updateOrCreate(
+                    ['key' => self::SETTING_KEY],
+                    ['value' => $payload]
+                );
+
+                $databaseSaved = true;
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
 
-        $theme = $this->buildTheme($colors, $source, $sourceName, $userId);
+        if (! $databaseSaved) {
+            $this->writeFallbackValue($payload);
+        } else {
+            $this->writeFallbackValue($payload, true);
+        }
 
-        AppSetting::query()->updateOrCreate(
-            ['key' => self::SETTING_KEY],
-            [
-                'value' => [
-                    'colors' => $theme['colors'],
-                    'source' => $source,
-                    'source_name' => $sourceName,
-                    'updated_by' => $userId,
-                ],
-            ]
-        );
-
-        Cache::forget(self::CACHE_KEY);
+        $this->forgetCache();
 
         return $this->current();
+    }
+
+    private function resolveCurrent(array $defaults): array
+    {
+        $stored = $this->readStoredValue();
+        $colors = is_array($stored['colors'] ?? null) ? $stored['colors'] : [];
+
+        if ($colors === []) {
+            return $defaults;
+        }
+
+        return $this->buildTheme(
+            array_merge($defaults['colors'], $colors),
+            (string) ($stored['source'] ?? 'manual'),
+            $stored['source_name'] ?? null,
+            $stored['updated_by'] ?? null,
+            $stored['updated_at'] ?? null
+        );
+    }
+
+    private function readStoredValue(): array
+    {
+        if ($this->settingsTableAvailable()) {
+            try {
+                $setting = AppSetting::query()
+                    ->where('key', self::SETTING_KEY)
+                    ->first();
+
+                if (is_array($setting?->value)) {
+                    return $setting->value;
+                }
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return $this->readFallbackValue();
+    }
+
+    private function readFallbackValue(): array
+    {
+        $path = $this->fallbackPath();
+
+        if (! File::exists($path)) {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode((string) File::get($path), true, 512, JSON_THROW_ON_ERROR);
+
+            return is_array($decoded) ? $decoded : [];
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return [];
+        }
+    }
+
+    private function writeFallbackValue(array $payload, bool $bestEffort = false): void
+    {
+        try {
+            $directory = dirname($this->fallbackPath());
+
+            if (! File::isDirectory($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            File::put($this->fallbackPath(), json_encode($payload, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            if (! $bestEffort) {
+                throw new RuntimeException(__('app.website_theme.saved_failed'));
+            }
+        }
+    }
+
+    private function fallbackPath(): string
+    {
+        return storage_path('app/website-theme.json');
+    }
+
+    private function forgetCache(): void
+    {
+        try {
+            Cache::forget(self::CACHE_KEY);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function buildTheme(

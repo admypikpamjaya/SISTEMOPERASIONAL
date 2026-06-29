@@ -36,7 +36,9 @@ class ThemeController extends Controller
             $themeService->saveManual($validated, $request->user()?->id);
 
             return back()->with('success', __('app.website_theme.saved_success'));
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return back()
                 ->withInput()
                 ->with('error', __('app.website_theme.saved_failed'));
