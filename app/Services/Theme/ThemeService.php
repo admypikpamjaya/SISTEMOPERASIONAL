@@ -54,12 +54,12 @@ class ThemeService
         }
     }
 
-    public function saveManual(array $colors, ?int $userId = null): array
+    public function saveManual(array $colors, int|string|null $userId = null): array
     {
         return $this->save($colors, 'manual', null, $userId);
     }
 
-    public function saveFromImage(UploadedFile $image, ?int $userId = null): array
+    public function saveFromImage(UploadedFile $image, int|string|null $userId = null): array
     {
         $colors = $this->extractPaletteFromImage($image);
 
@@ -130,7 +130,7 @@ class ThemeService
         ];
     }
 
-    private function save(array $colors, string $source, ?string $sourceName, ?int $userId): array
+    private function save(array $colors, string $source, ?string $sourceName, int|string|null $userId): array
     {
         $theme = $this->buildTheme($colors, $source, $sourceName, $userId);
         $payload = [
@@ -259,7 +259,7 @@ class ThemeService
         array $colors,
         string $source,
         ?string $sourceName,
-        ?int $updatedBy,
+        int|string|null $updatedBy,
         ?string $updatedAt = null
     ): array {
         $base = [
