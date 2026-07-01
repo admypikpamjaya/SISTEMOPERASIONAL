@@ -2,6 +2,7 @@
 
 namespace App\Models\Log;
 
+use App\Support\AssetPublicUrl;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,7 +41,7 @@ class MaintenanceDocumentation extends Model
 
     public function getUrlAttribute(): string 
     {
-        return asset('storage/' . $this->document_path);
+        return AssetPublicUrl::storageUrl((string) $this->document_path);
     }
 
     public function maintenanceLog()

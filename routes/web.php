@@ -168,6 +168,7 @@ Route::prefix('asset-management')
 */
 Route::prefix('maintenance-report')
     ->name('maintenance-report.')
+    ->middleware('redirect_legacy_asset_host')
     ->controller(MaintenanceReportController::class)
     ->group(function () {
         Route::middleware(['auth', 'check_access:maintenance_report.read'])->group(function () {

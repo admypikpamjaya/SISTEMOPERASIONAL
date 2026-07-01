@@ -4,11 +4,22 @@ namespace App\Support;
 
 class AssetPublicUrl
 {
+    private const DEFAULT_PUBLIC_BASE_URL = 'https://soy.ypikpamjaya.com';
+
     public static function baseUrl(): string
     {
-        $configured = trim((string) config('asset.public_base_url', config('app.url')));
+        $configured = trim((string) config('asset.public_base_url', self::DEFAULT_PUBLIC_BASE_URL));
         if ($configured === '') {
-            $configured = trim((string) config('app.url'));
+            $configured = self::DEFAULT_PUBLIC_BASE_URL;
+        }
+
+        if (! preg_match('/^https?:\/\//i', $configured)) {
+            $configured = 'https://' . ltrim($configured, '/');
+        }
+
+        $host = parse_url($configured, PHP_URL_HOST);
+        if (self::isLegacyHost(is_string($host) ? $host : null)) {
+            $configured = self::DEFAULT_PUBLIC_BASE_URL;
         }
 
         return rtrim($configured, '/');
@@ -21,7 +32,17 @@ class AssetPublicUrl
 
     public static function detailUrl(string $assetId): string
     {
-        return self::baseUrl() . self::detailPath($assetId);
+        return self::urlForPath(self::detailPath($assetId));
+    }
+
+    public static function storageUrl(string $path): string
+    {
+        return self::urlForPath('/storage/' . ltrim($path, '/'));
+    }
+
+    public static function urlForPath(string $path): string
+    {
+        return self::baseUrl() . '/' . ltrim($path, '/');
     }
 
     public static function currentHost(): string

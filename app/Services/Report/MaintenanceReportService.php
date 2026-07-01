@@ -10,6 +10,7 @@ use App\Enums\Report\Maintenance\AssetMaintenanceReportStatus;
 use App\Models\Log\MaintenanceDocumentation;
 use App\Models\Log\MaintenanceLog;
 use App\Services\Asset\AssetFactory;
+use App\Support\AssetPublicUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -560,7 +561,7 @@ class MaintenanceReportService
             : null;
 
         return $documentationPath
-            ? asset('storage/' . $documentationPath)
+            ? AssetPublicUrl::storageUrl($documentationPath)
             : 'No Documentation';
     }
 

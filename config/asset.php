@@ -11,7 +11,7 @@ return [
     | berubah saat domain panel/admin atau environment aplikasi berpindah.
     |
     */
-    'public_base_url' => env('ASSET_PUBLIC_URL', env('APP_URL')),
+    'public_base_url' => env('ASSET_PUBLIC_URL', 'https://soy.ypikpamjaya.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -25,6 +25,6 @@ return [
     */
     'legacy_hosts' => array_values(array_filter(array_map(
         static fn (string $host): string => trim($host),
-        explode(',', (string) env('ASSET_LEGACY_HOSTS', 'ypik.pradita.website'))
+        explode(',', (string) env('ASSET_LEGACY_HOSTS', 'ypik.pradita.website,www.ypik.pradita.website'))
     ))),
 ];
