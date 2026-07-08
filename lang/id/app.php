@@ -880,6 +880,7 @@ return [
         'delete_asset' => 'Hapus Aset',
         'view_qr' => 'Lihat QR Aset',
         'download_qr' => 'Unduh QR Aset',
+        'download_qr_pdf' => 'Unduh PDF QR',
         'qr_detail_title' => 'Detail QR Aset',
         'qr_detail_subtitle' => 'QR ini membuka halaman detail publik aset dan dibuat otomatis dari data aset terbaru.',
         'qr_image' => 'Gambar QR Aset',

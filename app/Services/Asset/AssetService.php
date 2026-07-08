@@ -2,6 +2,8 @@
 
 namespace App\Services\Asset;
 
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Encoder\Encoder as BaconQrEncoder;
 use App\DTOs\Asset\AssetDataDTO;
 use App\DTOs\Asset\RegisterAssetDTO;
 use App\DTOs\Asset\RegisterAssetViaFileDTO;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as SpreadsheetDate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -1913,6 +1916,364 @@ class AssetService
         return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
     }
 
+    private function buildAssetQrPdf(AssetDataDTO $asset, string $publicUrl): string
+    {
+        $qrImage = $this->makeQrJpegImage($publicUrl);
+        $stream = $this->buildAssetQrPdfStream($asset, $publicUrl, $qrImage !== null);
+
+        return $this->buildAssetQrPdfBinary($stream, $qrImage);
+    }
+
+    /**
+     * @return array{width:int,height:int,data:string}|null
+     */
+    private function makeQrJpegImage(string $publicUrl): ?array
+    {
+        if (! function_exists('imagecreatetruecolor') || ! function_exists('imagejpeg')) {
+            return null;
+        }
+
+        $qrCode = BaconQrEncoder::encode($publicUrl, ErrorCorrectionLevel::M(), BaconQrEncoder::DEFAULT_BYTE_MODE_ECODING);
+        $matrix = $qrCode->getMatrix();
+        $matrixWidth = $matrix->getWidth();
+        $matrixHeight = $matrix->getHeight();
+        $margin = 4;
+        $moduleSize = 12;
+        $width = ($matrixWidth + ($margin * 2)) * $moduleSize;
+        $height = ($matrixHeight + ($margin * 2)) * $moduleSize;
+
+        $image = imagecreatetruecolor($width, $height);
+        if ($image === false) {
+            return null;
+        }
+
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $black = imagecolorallocate($image, 0, 0, 0);
+        imagefilledrectangle($image, 0, 0, $width, $height, $white);
+
+        for ($y = 0; $y < $matrixHeight; $y++) {
+            for ($x = 0; $x < $matrixWidth; $x++) {
+                if ((int) $matrix->get($x, $y) !== 1) {
+                    continue;
+                }
+
+                $left = ($x + $margin) * $moduleSize;
+                $top = ($y + $margin) * $moduleSize;
+                imagefilledrectangle(
+                    $image,
+                    $left,
+                    $top,
+                    $left + $moduleSize - 1,
+                    $top + $moduleSize - 1,
+                    $black
+                );
+            }
+        }
+
+        ob_start();
+        imagejpeg($image, null, 100);
+        $data = (string) ob_get_clean();
+        imagedestroy($image);
+
+        return [
+            'width' => $width,
+            'height' => $height,
+            'data' => $data,
+        ];
+    }
+
+    private function buildAssetQrPdfStream(AssetDataDTO $asset, string $publicUrl, bool $hasQrImage): string
+    {
+        $stream = '';
+        $stream .= $this->pdfRect(0, 0, 595, 842, [248, 250, 252]);
+        $stream .= $this->pdfRect(40, 760, 515, 50, [37, 99, 235]);
+        $stream .= $this->pdfText('Detail QR Aset', 58, 790, 20, 'F2', [255, 255, 255]);
+        $stream .= $this->pdfText('SOY YPIK PAM JAYA', 58, 772, 10, 'F2', [219, 234, 254]);
+        $stream .= $this->pdfText('Dicetak: ' . now()->format('d/m/Y H:i'), 420, 772, 9, 'F1', [219, 234, 254]);
+
+        $stream .= $this->pdfRect(40, 430, 228, 300, [255, 255, 255]);
+        $stream .= $this->pdfStrokeRect(40, 430, 228, 300, [203, 213, 225]);
+        if ($hasQrImage) {
+            $stream .= "q\n210 0 0 210 49 502 cm\n/Qr Do\nQ\n";
+        } else {
+            $stream .= $this->pdfText('QR image tidak tersedia', 75, 612, 11, 'F2', [71, 85, 105]);
+        }
+
+        $stream .= $this->pdfText('Tujuan QR', 58, 475, 9, 'F2', [71, 85, 105]);
+        $targetY = 458;
+        foreach (array_slice($this->wrapPdfText($publicUrl, 38), 0, 4) as $line) {
+            $stream .= $this->pdfText($line, 58, $targetY, 8, 'F1', [37, 99, 235]);
+            $targetY -= 11;
+        }
+
+        $rowY = 698;
+        foreach ($this->assetQrPdfBasicRows($asset) as $row) {
+            $stream .= $this->pdfFieldBox(290, $rowY, 265, (string) $row['label'], (string) $row['value']);
+            $rowY -= 43;
+        }
+
+        $stream .= $this->pdfText('Detail Aset', 40, 382, 14, 'F2', [15, 23, 42]);
+        $detailRows = $this->assetQrPdfDetailRows($asset);
+        $maxDetailRows = 12;
+        $detailY = 342;
+        foreach (array_chunk(array_slice($detailRows, 0, $maxDetailRows), 2) as $chunk) {
+            $stream .= $this->pdfFieldBox(40, $detailY, 248, (string) $chunk[0]['label'], (string) $chunk[0]['value']);
+            if (isset($chunk[1])) {
+                $stream .= $this->pdfFieldBox(307, $detailY, 248, (string) $chunk[1]['label'], (string) $chunk[1]['value']);
+            }
+            $detailY -= 43;
+        }
+
+        if (count($detailRows) > $maxDetailRows) {
+            $stream .= $this->pdfText(
+                'Detail lanjutan tersedia pada halaman web detail aset.',
+                40,
+                max(54, $detailY),
+                9,
+                'F1',
+                [71, 85, 105]
+            );
+        }
+
+        return $stream;
+    }
+
+    /**
+     * @return array<int, array{label:string,value:string}>
+     */
+    private function assetQrPdfBasicRows(AssetDataDTO $asset): array
+    {
+        return [
+            ['label' => 'Kategori Aset', 'value' => $asset->category->label()],
+            ['label' => 'Kode Akun', 'value' => $asset->accountCode],
+            ['label' => 'Nomor Serial', 'value' => $asset->serialNumber ?: '-'],
+            ['label' => 'Unit', 'value' => $asset->unit?->value ?? '-'],
+            ['label' => 'Lokasi', 'value' => $asset->location ?: '-'],
+            ['label' => 'Tahun Pembelian', 'value' => $asset->purchaseYear ?: '-'],
+            [
+                'label' => 'Harga / Nilai Perolehan',
+                'value' => $asset->purchasePrice !== null
+                    ? 'Rp ' . number_format((float) $asset->purchasePrice, 2, ',', '.')
+                    : '-',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array{label:string,value:string}>
+     */
+    private function assetQrPdfDetailRows(AssetDataDTO $asset): array
+    {
+        $rows = [];
+        $detail = $asset->detail;
+        $isListDetail = is_array($detail)
+            && $detail !== []
+            && array_keys($detail) === range(0, count($detail) - 1);
+
+        if ($isListDetail) {
+            foreach ($detail as $index => $item) {
+                $items = is_array($item) ? $item : ['value' => $item];
+                foreach ($items as $key => $value) {
+                    if (in_array($key, ['id', 'asset_id', 'created_at', 'updated_at'], true)) {
+                        continue;
+                    }
+
+                    $rows[] = [
+                        'label' => 'Detail ' . ($index + 1) . ' - ' . Str::headline((string) $key),
+                        'value' => $this->formatAssetQrPdfValue($value),
+                    ];
+                }
+            }
+        } elseif (is_array($detail)) {
+            foreach ($detail as $key => $value) {
+                if (in_array($key, ['id', 'asset_id', 'created_at', 'updated_at'], true)) {
+                    continue;
+                }
+
+                $rows[] = [
+                    'label' => Str::headline((string) $key),
+                    'value' => $this->formatAssetQrPdfValue($value),
+                ];
+            }
+        }
+
+        return $rows !== []
+            ? $rows
+            : [['label' => 'Detail', 'value' => '-']];
+    }
+
+    private function formatAssetQrPdfValue(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '-';
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Ya' : 'Tidak';
+        }
+
+        if (is_array($value)) {
+            $filtered = array_filter($value, static fn (mixed $item): bool => $item !== null && $item !== '');
+
+            return $filtered !== [] ? implode(', ', array_map('strval', $filtered)) : '-';
+        }
+
+        return (string) $value;
+    }
+
+    private function pdfFieldBox(float $x, float $y, float $width, string $label, string $value): string
+    {
+        $stream = $this->pdfRect($x, $y, $width, 34, [255, 255, 255]);
+        $stream .= $this->pdfStrokeRect($x, $y, $width, 34, [203, 213, 225]);
+        $stream .= $this->pdfText($label, $x + 10, $y + 21, 7, 'F2', [100, 116, 139]);
+
+        $valueLines = $this->wrapPdfText($value, (int) max(18, floor($width / 6)));
+        $stream .= $this->pdfText($valueLines[0] ?? '-', $x + 10, $y + 8, 9, 'F2', [15, 23, 42]);
+
+        return $stream;
+    }
+
+    private function buildAssetQrPdfBinary(string $pageStream, ?array $qrImage): string
+    {
+        $objects = [];
+        $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+        $objects[2] = '<< /Type /Pages /Kids [ 6 0 R ] /Count 1 >>';
+        $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+        $objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+
+        $xObjectResource = '';
+        if ($qrImage !== null) {
+            $objects[5] = "<< /Type /XObject /Subtype /Image /Width {$qrImage['width']} /Height {$qrImage['height']} "
+                . "/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "
+                . strlen($qrImage['data']) . " >>\nstream\n"
+                . $qrImage['data'] . "\nendstream";
+            $xObjectResource = ' /XObject << /Qr 5 0 R >>';
+        }
+
+        $contentObjectId = $qrImage !== null ? 7 : 5;
+        $pageObjectId = 6;
+        $objects[$contentObjectId] = "<< /Length " . strlen($pageStream) . " >>\nstream\n"
+            . $pageStream . "\nendstream";
+        $objects[$pageObjectId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << "
+            . "/Font << /F1 3 0 R /F2 4 0 R >>{$xObjectResource} "
+            . ">> /Contents {$contentObjectId} 0 R >>";
+
+        ksort($objects);
+
+        $pdf = "%PDF-1.4\n";
+        $offsets = [0];
+        foreach ($objects as $id => $body) {
+            $offsets[$id] = strlen($pdf);
+            $pdf .= $id . " 0 obj\n" . $body . "\nendobj\n";
+        }
+
+        $xrefOffset = strlen($pdf);
+        $maxObjectId = max(array_keys($objects));
+        $pdf .= "xref\n0 " . ($maxObjectId + 1) . "\n";
+        $pdf .= "0000000000 65535 f \n";
+        for ($i = 1; $i <= $maxObjectId; $i++) {
+            $offset = $offsets[$i] ?? 0;
+            $pdf .= sprintf('%010d 00000 n ', $offset) . "\n";
+        }
+
+        $pdf .= "trailer\n<< /Size " . ($maxObjectId + 1) . " /Root 1 0 R >>\n";
+        $pdf .= "startxref\n{$xrefOffset}\n%%EOF";
+
+        return $pdf;
+    }
+
+    private function pdfRect(float $x, float $y, float $width, float $height, array $rgb): string
+    {
+        return sprintf(
+            "%.3F %.3F %.3F rg\n%.2F %.2F %.2F %.2F re f\n",
+            $rgb[0] / 255,
+            $rgb[1] / 255,
+            $rgb[2] / 255,
+            $x,
+            $y,
+            $width,
+            $height
+        );
+    }
+
+    private function pdfStrokeRect(float $x, float $y, float $width, float $height, array $rgb): string
+    {
+        return sprintf(
+            "%.3F %.3F %.3F RG\n0.8 w\n%.2F %.2F %.2F %.2F re S\n",
+            $rgb[0] / 255,
+            $rgb[1] / 255,
+            $rgb[2] / 255,
+            $x,
+            $y,
+            $width,
+            $height
+        );
+    }
+
+    private function pdfText(string $text, float $x, float $y, int $size, string $font, array $rgb): string
+    {
+        return sprintf(
+            "%.3F %.3F %.3F rg\nBT /%s %d Tf %.2F %.2F Td (%s) Tj ET\n",
+            $rgb[0] / 255,
+            $rgb[1] / 255,
+            $rgb[2] / 255,
+            $font,
+            $size,
+            $x,
+            $y,
+            $this->escapePdfText($text)
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function wrapPdfText(string $text, int $maxChars): array
+    {
+        $text = trim((string) preg_replace('/\s+/', ' ', $this->normalizePdfText($text)));
+        if ($text === '') {
+            return ['-'];
+        }
+
+        $lines = [];
+        $line = '';
+        foreach (explode(' ', $text) as $word) {
+            if ($line === '') {
+                $line = $word;
+                continue;
+            }
+
+            if (strlen($line . ' ' . $word) <= $maxChars) {
+                $line .= ' ' . $word;
+                continue;
+            }
+
+            $lines[] = $line;
+            $line = $word;
+        }
+
+        if ($line !== '') {
+            $lines[] = $line;
+        }
+
+        return $lines !== [] ? $lines : ['-'];
+    }
+
+    private function escapePdfText(string $text): string
+    {
+        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $this->normalizePdfText($text));
+    }
+
+    private function normalizePdfText(string $text): string
+    {
+        $normalized = iconv('UTF-8', 'Windows-1252//TRANSLIT//IGNORE', $text);
+        if ($normalized === false) {
+            $normalized = preg_replace('/[^\x20-\x7E]/', '?', $text);
+        }
+
+        return (string) ($normalized ?? '');
+    }
+
     public function getAssets(
         ?string $keyword = null,
         ?AssetCategory $category = null,
@@ -2041,6 +2402,21 @@ class AssetService
             'qr_path' => (string) $asset->qr_code_path,
             'public_url' => AssetPublicUrl::detailUrl((string) $asset->id),
         ];
+    }
+
+    public function downloadQrCodePdf(string $id): DownloadFileDTO
+    {
+        $detail = $this->getAssetQrCodeDetail($id);
+        /** @var AssetDataDTO $asset */
+        $asset = $detail['asset'];
+        $publicUrl = (string) $detail['public_url'];
+        $filename = $this->makeSafeFilename($asset->accountCode ?: 'asset-qr') . '-qr-detail.pdf';
+
+        return new DownloadFileDTO(
+            filename: $filename,
+            mimeType: 'application/pdf',
+            content: $this->buildAssetQrPdf($asset, $publicUrl)
+        );
     }
 
     public function registerAsset(RegisterAssetDTO $dto)

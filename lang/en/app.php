@@ -880,6 +880,7 @@ return [
         'delete_asset' => 'Delete Asset',
         'view_qr' => 'View Asset QR',
         'download_qr' => 'Download Asset QR',
+        'download_qr_pdf' => 'Download QR PDF',
         'qr_detail_title' => 'Asset QR Detail',
         'qr_detail_subtitle' => 'This QR opens the public asset detail page and is generated automatically from the latest asset data.',
         'qr_image' => 'Asset QR Image',

@@ -314,4 +314,20 @@ class AssetManagementController extends Controller
             return redirect()->route('asset-management.index')->with('error', $e->getMessage());
         }
     }
+
+    public function downloadQrCodePdf(string $id)
+    {
+        try {
+            $file = $this->service->downloadQrCodePdf($id);
+
+            return response($file->content, 200, [
+                'Content-Type' => $file->mimeType,
+                'Content-Disposition' => 'attachment; filename="'.$file->filename.'"',
+            ]);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('asset-management.qr-code', $id)
+                ->with('error', $e->getMessage());
+        }
+    }
 }

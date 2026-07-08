@@ -216,6 +216,10 @@
                         <i class="fas fa-download"></i>
                         <span>{{ __('app.asset.download_qr') }}</span>
                     </a>
+                    <a href="{{ route('asset-management.qr-code.pdf', $asset->id) }}" class="asset-qr-btn">
+                        <i class="far fa-file-pdf"></i>
+                        <span>{{ __('app.asset.download_qr_pdf') }}</span>
+                    </a>
                 </div>
             </div>
         </section>
