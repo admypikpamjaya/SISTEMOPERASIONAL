@@ -782,6 +782,23 @@ Route::prefix('admin')
                         ->name('employees-ypik.index');
                     Route::get('/employees-ypik-pamjaya', [BlastRecipientController::class, 'employeeYpikPamJayaIndex'])
                         ->name('employees-ypik-pamjaya.index');
+                    Route::get('/general', [BlastRecipientController::class, 'generalIndex'])
+                        ->name('general.index');
+                    Route::get('/general/create', [BlastRecipientController::class, 'generalCreate'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('general.create');
+                    Route::post('/general', [BlastRecipientController::class, 'generalStore'])
+                        ->middleware('check_access:blast_recipient.create')
+                        ->name('general.store');
+                    Route::get('/general/{id}/edit', [BlastRecipientController::class, 'generalEdit'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('general.edit');
+                    Route::put('/general/{id}', [BlastRecipientController::class, 'generalUpdate'])
+                        ->middleware('check_access:blast_recipient.update')
+                        ->name('general.update');
+                    Route::post('/general/import', [BlastRecipientController::class, 'importGeneral'])
+                        ->middleware('check_access:blast_recipient.import')
+                        ->name('general.import');
                     Route::get('/employees-ypik/create', [BlastRecipientController::class, 'employeeYpikCreate'])
                         ->middleware('check_access:blast_recipient.create')
                         ->name('employees-ypik.create');
@@ -835,6 +852,15 @@ Route::prefix('admin')
                     Route::delete('/employees-ypik-pamjaya/delete-all', [BlastRecipientController::class, 'destroyAllEmployeesYpikPamJaya'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('employees-ypik-pamjaya.destroy-all');
+                    Route::delete('/general/delete-all', [BlastRecipientController::class, 'destroyAllGeneral'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('general.destroy-all');
+                    Route::delete('/general/bulk-delete', [BlastRecipientController::class, 'destroySelectedGeneral'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('general.bulk-delete');
+                    Route::delete('/general/{id}', [BlastRecipientController::class, 'destroyGeneral'])
+                        ->middleware('check_access:blast_recipient.delete')
+                        ->name('general.destroy');
                     Route::delete('/employees-ypik/bulk-delete', [BlastRecipientController::class, 'destroySelectedEmployeesYpik'])
                         ->middleware('check_access:blast_recipient.delete')
                         ->name('employees-ypik.bulk-delete');

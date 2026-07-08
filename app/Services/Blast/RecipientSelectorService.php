@@ -4,6 +4,7 @@ namespace App\Services\Blast;
 
 use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastEmployeeYpikRecipient;
+use App\Models\BlastGeneralRecipient;
 use App\Models\BlastRecipient;
 use Illuminate\Support\Collection;
 
@@ -94,9 +95,30 @@ class RecipientSelectorService
                 ];
             });
 
+        $generalRecipients = collect();
+        if ($channel === 'whatsapp') {
+            $generalRecipients = BlastGeneralRecipient::query()
+                ->where('is_valid', true)
+                ->whereNotNull('whatsapp')
+                ->orderBy('nama')
+                ->get()
+                ->map(function (BlastGeneralRecipient $recipient) {
+                    return [
+                        'id' => $recipient->id,
+                        'nama_siswa' => $recipient->nama,
+                        'kelas' => 'Umum',
+                        'nama_wali' => $recipient->nama,
+                        'email_wali' => null,
+                        'wa_wali' => $recipient->whatsapp,
+                        'wa_wali_2' => null,
+                    ];
+                });
+        }
+
         return $students
             ->merge($employees)
             ->merge($employeesYpik)
+            ->merge($generalRecipients)
             ->values();
     }
 
@@ -151,9 +173,27 @@ class RecipientSelectorService
                 ];
             });
 
+        $generalRecipients = BlastGeneralRecipient::query()
+            ->whereIn('id', $ids)
+            ->where('is_valid', true)
+            ->whereNotNull('whatsapp')
+            ->get()
+            ->map(function (BlastGeneralRecipient $recipient) {
+                return [
+                    'id' => $recipient->id,
+                    'nama_siswa' => $recipient->nama,
+                    'kelas' => 'Umum',
+                    'nama_wali' => $recipient->nama,
+                    'email_wali' => null,
+                    'wa_wali' => $recipient->whatsapp,
+                    'wa_wali_2' => null,
+                ];
+            });
+
         return $students
             ->merge($employees)
             ->merge($employeesYpik)
+            ->merge($generalRecipients)
             ->values();
     }
 }

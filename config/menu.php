@@ -185,6 +185,13 @@ return array_map($withFallbackLabel, [
                 'active_routes' => ['admin.blast.recipients.employees-ypik-pamjaya.*'],
             ],
             [
+                'label_key' => 'app.menu.recipient_general',
+                'icon'  => 'fas fa-address-book',
+                'route' => 'admin.blast.recipients.general.index',
+                'module_name' => 'admin_blast',
+                'active_routes' => ['admin.blast.recipients.general.*'],
+            ],
+            [
                 'label_key' => 'app.menu.template_blast',
                 'icon'  => 'fas fa-layer-group',
                 'route' => 'admin.blast.templates.index',

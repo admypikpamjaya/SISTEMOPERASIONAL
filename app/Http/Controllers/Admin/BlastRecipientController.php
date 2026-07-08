@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastEmployeeYpikRecipient;
+use App\Models\BlastGeneralRecipient;
 use App\Models\BlastRecipient;
 use App\Services\Recipient\EmployeeRecipientBulkSaver;
 use App\Services\Recipient\EmployeeRecipientNormalizer;
 use App\Services\Recipient\EmployeeYpikRecipientBulkSaver;
 use App\Services\Recipient\ExcelImportService;
+use App\Services\Recipient\GeneralRecipientBulkSaver;
+use App\Services\Recipient\GeneralRecipientNormalizer;
 use App\Services\Recipient\RecipientBulkSaver;
 use App\Services\Recipient\RecipientGroupingService;
 use App\Services\Recipient\RecipientNormalizer;
@@ -481,6 +484,60 @@ class BlastRecipientController extends Controller
         ));
     }
 
+    public function generalIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'status' => 'nullable|in:all,valid,invalid',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        $search = trim((string) ($validated['q'] ?? ''));
+        $selectedStatus = strtolower((string) ($validated['status'] ?? 'all'));
+        $allowedPerPage = [20, 50, 100, 200];
+        $perPage = (int) ($validated['per_page'] ?? 50);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        $query = BlastGeneralRecipient::query();
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('nama', 'like', '%' . $search . '%')
+                    ->orWhere('whatsapp', 'like', '%' . $search . '%')
+                    ->orWhere('catatan', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($selectedStatus === 'valid') {
+            $query->where('is_valid', true);
+        } elseif ($selectedStatus === 'invalid') {
+            $query->where('is_valid', false);
+        }
+
+        $recipients = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $baseStatsQuery = BlastGeneralRecipient::query();
+        $totalRecipients = (clone $baseStatsQuery)->count();
+        $validCount = (clone $baseStatsQuery)->where('is_valid', true)->count();
+        $invalidCount = (clone $baseStatsQuery)->where('is_valid', false)->count();
+
+        return view('admin.blast.recipients.general', compact(
+            'recipients',
+            'search',
+            'selectedStatus',
+            'allowedPerPage',
+            'perPage',
+            'totalRecipients',
+            'validCount',
+            'invalidCount'
+        ));
+    }
+
     public function employeeCreate()
     {
         return view('admin.blast.recipients.employee-manual-form', [
@@ -812,6 +869,120 @@ class BlastRecipientController extends Controller
                     : 'admin.blast.recipients.employees-ypik.index'
             )
             ->with('success', 'Data karyawan YPIK berhasil diperbarui.');
+    }
+
+    public function generalCreate()
+    {
+        return view('admin.blast.recipients.general-form', [
+            'isEdit' => false,
+            'recipient' => null,
+        ]);
+    }
+
+    public function generalStore(
+        Request $request,
+        GeneralRecipientNormalizer $normalizer
+    ) {
+        $data = $request->validate([
+            'nama' => 'required|string|max:255',
+            'whatsapp' => 'required|string|max:50',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $dto = $normalizer->normalize([
+            'nama' => $data['nama'],
+            'wa' => $data['whatsapp'],
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        if (!$dto->isValid) {
+            return back()->withErrors([
+                'whatsapp' => implode(', ', $dto->errors),
+            ])->withInput();
+        }
+
+        $exists = BlastGeneralRecipient::query()
+            ->where('whatsapp', $dto->phone)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'whatsapp' => 'Data dengan WhatsApp tersebut sudah ada.',
+            ])->withInput();
+        }
+
+        BlastGeneralRecipient::query()->create([
+            'nama' => $dto->nama,
+            'whatsapp' => $dto->phone,
+            'catatan' => $dto->catatan,
+            'source' => 'manual:admin_general',
+            'is_valid' => true,
+            'validation_error' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.general.index')
+            ->with('success', 'Penerima umum berhasil ditambahkan.');
+    }
+
+    public function generalEdit(string $id)
+    {
+        $recipient = BlastGeneralRecipient::findOrFail($id);
+
+        return view('admin.blast.recipients.general-form', [
+            'isEdit' => true,
+            'recipient' => $recipient,
+        ]);
+    }
+
+    public function generalUpdate(
+        Request $request,
+        string $id,
+        GeneralRecipientNormalizer $normalizer
+    ) {
+        $recipient = BlastGeneralRecipient::findOrFail($id);
+
+        $data = $request->validate([
+            'nama' => 'required|string|max:255',
+            'whatsapp' => 'required|string|max:50',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $dto = $normalizer->normalize([
+            'nama' => $data['nama'],
+            'wa' => $data['whatsapp'],
+            'catatan' => $data['catatan'] ?? null,
+        ]);
+
+        if (!$dto->isValid) {
+            return back()->withErrors([
+                'whatsapp' => implode(', ', $dto->errors),
+            ])->withInput();
+        }
+
+        $exists = BlastGeneralRecipient::query()
+            ->where('id', '!=', $recipient->id)
+            ->where('whatsapp', $dto->phone)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'whatsapp' => 'Data dengan WhatsApp tersebut sudah ada.',
+            ])->withInput();
+        }
+
+        $recipient->update([
+            'nama' => $dto->nama,
+            'whatsapp' => $dto->phone,
+            'catatan' => $dto->catatan,
+            'source' => $recipient->source ?: 'manual:admin_general',
+            'is_valid' => true,
+            'validation_error' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.blast.recipients.general.index')
+            ->with('success', 'Penerima umum berhasil diperbarui.');
     }
 
     public function create()
@@ -1147,6 +1318,58 @@ class BlastRecipientController extends Controller
             ->with('success', $message);
     }
 
+    public function importGeneral(
+        Request $request,
+        ExcelImportService $importService,
+        GeneralRecipientBulkSaver $bulkSaver
+    ) {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,xls',
+        ]);
+
+        $uploadedFile = $request->file('file');
+
+        if ($uploadedFile === null) {
+            return redirect()
+                ->route('admin.blast.recipients.general.index')
+                ->with('error', 'Import gagal: file tidak ditemukan.');
+        }
+
+        try {
+            $result = $importService->importGeneral($uploadedFile->getPathname());
+        } catch (\Throwable $e) {
+            Log::error('[GENERAL RECIPIENT IMPORT FAILED]', [
+                'file' => $uploadedFile->getClientOriginalName(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('admin.blast.recipients.general.index')
+                ->with('error', 'Import gagal: ' . $e->getMessage());
+        }
+
+        if (empty($result->valid) && empty($result->invalid)) {
+            return redirect()
+                ->route('admin.blast.recipients.general.index')
+                ->with('error', 'Import gagal: file tidak berisi data yang dapat diproses.');
+        }
+
+        $summary = $bulkSaver->save(collect($result->valid));
+        $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
+        $message = 'Import penerima umum selesai. '
+            . "Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
+
+        if ((int) $summary['inserted'] === 0) {
+            return redirect()
+                ->route('admin.blast.recipients.general.index')
+                ->with('error', $message . ' Tidak ada data baru yang disimpan.');
+        }
+
+        return redirect()
+            ->route('admin.blast.recipients.general.index')
+            ->with('success', $message);
+    }
+
     public function destroy(string $id)
     {
         BlastRecipient::findOrFail($id)->delete();
@@ -1249,6 +1472,35 @@ class BlastRecipientController extends Controller
             ->delete();
 
         return back()->with('success', "Semua data recipient YPIK Pam Jaya berhasil dihapus ({$total} data).");
+    }
+
+    public function destroyGeneral(string $id)
+    {
+        BlastGeneralRecipient::findOrFail($id)->delete();
+
+        return back()->with('success', 'Penerima umum berhasil dihapus.');
+    }
+
+    public function destroySelectedGeneral(Request $request)
+    {
+        $data = $request->validate([
+            'selected_ids' => ['required', 'array', 'min:1'],
+            'selected_ids.*' => ['uuid'],
+        ]);
+
+        $deleted = BlastGeneralRecipient::query()
+            ->whereIn('id', $data['selected_ids'])
+            ->delete();
+
+        return back()->with('success', "Penerima umum terpilih berhasil dihapus ({$deleted} data).");
+    }
+
+    public function destroyAllGeneral()
+    {
+        $total = BlastGeneralRecipient::query()->count();
+        BlastGeneralRecipient::query()->delete();
+
+        return back()->with('success', "Semua penerima umum berhasil dihapus ({$total} data).");
     }
 
     private function applyStudentRecipientFilters(

@@ -1213,6 +1213,24 @@ body, .content-wrapper {
             list.innerHTML = Array.from(buffer.files).map((file, index) => `<div class="message-override-file-item"><span>${escapeHtml(file.name)}</span><button type="button" class="message-override-file-remove" data-index="${index}" title="${blastText.deleteFile}">&times;</button></div>`).join('');
         }
 
+        function syncAttachmentInputsFromBuffers() {
+            if (!recipientMessageMatrix) return;
+            recipientMessageMatrix.querySelectorAll('.message-override-item').forEach(item => {
+                const key = item.getAttribute('data-key');
+                const input = item.querySelector('.message-override-file-input');
+                if (!key || !input || !attachmentBufferByKey[key]) return;
+                input.files = attachmentBufferByKey[key].files;
+            });
+        }
+
+        function hasRecipientAttachmentFiles() {
+            return Object.values(attachmentBufferByKey).some(buffer => buffer.files && buffer.files.length > 0);
+        }
+
+        function hasGlobalAttachmentFiles() {
+            return fileBuffer.files && fileBuffer.files.length > 0;
+        }
+
         function escapeHtml(value) { return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
         function getSelectedRecipients() {
@@ -1601,22 +1619,24 @@ body, .content-wrapper {
 
         if (emailForm) {
             emailForm.addEventListener('submit', function(e) {
+                syncAttachmentInputsFromBuffers();
                 const activeOverrides = syncMessageOverridesField();
                 const selectedDbRecipients = Array.from(document.querySelectorAll('.recipient-db-checkbox:checked'));
                 const hasDbRecipients = selectedDbRecipients.length > 0;
                 const hasManualTargets = emails.length > 0;
                 const hasDbTemplate = dbTemplateSelect && dbTemplateSelect.value.trim() !== '';
                 const hasGlobalMessage = messageTextarea.value.trim() !== '';
+                const hasAttachmentContent = hasGlobalAttachmentFiles() || hasRecipientAttachmentFiles();
                 const overrideValues = Object.values(activeOverrides);
                 const hasPerRecipientManual = overrideValues.some(o => o.mode === 'manual' && (o.message || '').trim() !== '');
                 const hasPerRecipientTemplate = overrideValues.some(o => o.mode === 'template');
                 const hasPerRecipientGlobal = overrideValues.some(o => o.mode === 'global');
                 const hasPerRecipientContent = hasPerRecipientManual || (hasPerRecipientTemplate && hasDbTemplate) || (hasPerRecipientGlobal && hasGlobalMessage);
                 if (hasPerRecipientTemplate && !hasDbTemplate) { e.preventDefault(); alert(blastText.templateModeRequiresDbTemplate); if (dbTemplateSelect) dbTemplateSelect.focus(); return; }
-                if (hasPerRecipientGlobal && !hasGlobalMessage) { e.preventDefault(); alert(blastText.emailGlobalMessageRequired); messageTextarea.focus(); return; }
+                if (hasPerRecipientGlobal && !hasGlobalMessage && !hasAttachmentContent) { e.preventDefault(); alert(blastText.emailGlobalMessageRequired); messageTextarea.focus(); return; }
                 if (!hasDbRecipients && !hasManualTargets) { e.preventDefault(); alert(blastText.emailRecipientRequired); emailInput.focus(); return; }
                 if (!emailSubject.value.trim()) { e.preventDefault(); alert(blastText.emailSubjectRequired); emailSubject.focus(); return; }
-                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent) { e.preventDefault(); alert(blastText.messageRequired); messageTextarea.focus(); return; }
+                if (!hasDbTemplate && !hasGlobalMessage && !hasPerRecipientContent && !hasAttachmentContent) { e.preventDefault(); alert(blastText.messageRequired); messageTextarea.focus(); return; }
                 if (scheduledAtInput) scheduledAtInput.value = '';
                 if (priorityInput) priorityInput.value = 'normal';
                 if (rateLimitInput) rateLimitInput.value = '5000';

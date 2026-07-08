@@ -10,7 +10,8 @@ class ExcelImportService
 {
     public function __construct(
         protected RecipientNormalizer $normalizer,
-        protected EmployeeRecipientNormalizer $employeeNormalizer
+        protected EmployeeRecipientNormalizer $employeeNormalizer,
+        protected GeneralRecipientNormalizer $generalNormalizer
     ) {}
 
     public function import(string $path): RecipientImportResultDTO
@@ -48,6 +49,26 @@ class ExcelImportService
             }
 
             $this->appendEmployeeRowsToResult($rows, $result);
+        }
+
+        return $result;
+    }
+
+    public function importGeneral(string $path): RecipientImportResultDTO
+    {
+        if (!file_exists($path)) {
+            throw new RuntimeException("File tidak ditemukan: {$path}");
+        }
+
+        $result = new RecipientImportResultDTO();
+        $allSheetRows = $this->loadSheetRows($path);
+
+        foreach ($allSheetRows as $rows) {
+            if (empty($rows)) {
+                continue;
+            }
+
+            $this->appendGeneralRowsToResult($rows, $result);
         }
 
         return $result;
@@ -131,6 +152,45 @@ class ExcelImportService
             ];
 
             $dto = $this->employeeNormalizer->normalize($raw, true);
+
+            if ($dto->isValid) {
+                $result->valid[] = $dto;
+                continue;
+            }
+
+            $result->invalid[] = $dto;
+        }
+    }
+
+    /**
+     * @param array<int, array<int, mixed>> $rows
+     */
+    private function appendGeneralRowsToResult(array $rows, RecipientImportResultDTO $result): void
+    {
+        [$headerMap, $headerIndex] = $this->resolveHeaderMap(
+            $rows,
+            fn (string $header): ?string => $this->canonicalGeneralHeader($header),
+            false
+        );
+
+        $usePositionalFallback = empty($headerMap);
+
+        foreach ($rows as $index => $row) {
+            if ($index === $headerIndex) {
+                continue;
+            }
+
+            if (!is_array($row) || $this->isRowEmpty($row)) {
+                continue;
+            }
+
+            $raw = [
+                'nama' => $this->resolveCell($row, $headerMap, 'nama', 0, $usePositionalFallback),
+                'wa' => $this->resolveCell($row, $headerMap, 'wa', 1, $usePositionalFallback),
+                'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 2, $usePositionalFallback),
+            ];
+
+            $dto = $this->generalNormalizer->normalize($raw);
 
             if ($dto->isValid) {
                 $result->valid[] = $dto;
@@ -304,6 +364,44 @@ class ExcelImportService
 
         if (
             in_array($normalized, ['catatan', 'keterangan', 'notes', 'note', 'catatanoptional'], true) ||
+            str_starts_with($normalized, 'catatan') ||
+            str_starts_with($normalized, 'keterangan') ||
+            str_starts_with($normalized, 'note')
+        ) {
+            return 'catatan';
+        }
+
+        return null;
+    }
+
+    private function canonicalGeneralHeader(string $header): ?string
+    {
+        $normalized = $this->normalizeHeaderToken($header);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (
+            in_array($normalized, ['nama', 'name', 'namapenerima', 'penerima'], true) ||
+            str_starts_with($normalized, 'nama')
+        ) {
+            return 'nama';
+        }
+
+        if (
+            in_array($normalized, ['nowhatsapp', 'nomorwhatsapp', 'whatsapp', 'wa', 'nomorwa', 'nohp', 'phone'], true) ||
+            str_contains($normalized, 'whatsapp') ||
+            str_contains($normalized, 'nomor') ||
+            str_ends_with($normalized, 'wa')
+        ) {
+            return 'wa';
+        }
+
+        if (
+            in_array($normalized, ['catatan', 'keterangan', 'notes', 'note'], true) ||
+            str_contains($normalized, 'sertifikat') ||
+            str_contains($normalized, 'gambar') ||
             str_starts_with($normalized, 'catatan') ||
             str_starts_with($normalized, 'keterangan') ||
             str_starts_with($normalized, 'note')

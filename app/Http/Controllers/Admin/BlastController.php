@@ -8,6 +8,7 @@ use App\DataTransferObjects\BlastAttachment;
 use App\Jobs\Blast\QueueBlastDeliveryJob;
 use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastEmployeeYpikRecipient;
+use App\Models\BlastGeneralRecipient;
 use App\Models\BlastRecipient;
 use App\Models\BlastMessageTemplate;
 use App\Models\BlastMessage;
@@ -1384,6 +1385,74 @@ class BlastController extends Controller
                     );
                 }
             }
+
+            $generalRecipients = BlastGeneralRecipient::query()
+                ->whereIn('id', $recipientIds)
+                ->whereNotNull('whatsapp')
+                ->where('is_valid', true)
+                ->get();
+
+            foreach ($generalRecipients as $generalRecipient) {
+                $recipient = $this->toPseudoRecipientFromGeneral($generalRecipient);
+                $targets = $this->collectWhatsappTargets($recipient);
+                if (empty($targets)) {
+                    continue;
+                }
+
+                $message = $this->resolveDbRecipientWhatsappMessage(
+                    recipient: $recipient,
+                    renderer: $renderer,
+                    template: $template,
+                    globalMessage: $validated['message'] ?? '',
+                    useGlobalDefault: $useGlobalDefault,
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
+                );
+
+                if ($blastMessage === null) {
+                    $blastMessage = $this->createBlastMessageRecord(
+                        channel: 'WHATSAPP',
+                        subject: null,
+                        fallbackMessage: $validated['message'] ?? '',
+                        template: $template,
+                        campaignOptions: $campaignOptions
+                    );
+                }
+
+                foreach ($targets as $target) {
+                    $blastLog = $this->createBlastLogRecord(
+                        blastMessage: $blastMessage,
+                        target: $target,
+                        messageSnapshot: $message
+                    );
+
+                    $payload = new BlastPayload($message);
+                    $payload->setMeta('channel', 'WHATSAPP');
+                    $payload->setMeta('sent_by', Auth::id());
+                    $payload->setMeta('recipient_id', $generalRecipient->id);
+                    $payload->setMeta('recipient_source', 'umum');
+                    $payload->setMeta('blast_log_id', $blastLog->id);
+                    $payload->setMeta('blast_message_id', $blastMessage->id);
+                    $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                    $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                    $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                    $this->applyDeviceToPayload($payload, $deviceManual);
+                    $this->attachWhatsappFilesToPayload(
+                        $payload,
+                        $attachments,
+                        $recipientAttachmentOverrides['db:' . $generalRecipient->id] ?? []
+                    );
+
+                    $this->dispatchQueuedBlastDelivery(
+                        channel: 'WHATSAPP',
+                        target: $target,
+                        subject: null,
+                        payload: $payload,
+                        campaignOptions: $campaignOptions,
+                        dispatchIndex: $dispatchIndex
+                    );
+                }
+            }
         }
 
         $rawTargets = array_filter(
@@ -2254,9 +2323,20 @@ class BlastController extends Controller
                     $this->toPseudoRecipientFromEmployeeYpik($employeeYpik)
             );
 
+        $generalRecipients = BlastGeneralRecipient::query()
+            ->whereNotNull('whatsapp')
+            ->where('is_valid', true)
+            ->orderBy('nama')
+            ->get()
+            ->map(
+                fn (BlastGeneralRecipient $recipient) =>
+                    $this->toPseudoRecipientFromGeneral($recipient)
+            );
+
         return $studentRecipients
             ->merge($employeeRecipients)
             ->merge($employeeYpikRecipients)
+            ->merge($generalRecipients)
             ->values();
     }
 
@@ -2893,6 +2973,23 @@ class BlastController extends Controller
             'catatan' => $employeeYpik->catatan,
             'is_valid' => (bool) $employeeYpik->is_valid,
             'source' => 'karyawan_ypik',
+        ]);
+    }
+
+    private function toPseudoRecipientFromGeneral(
+        BlastGeneralRecipient $recipient
+    ): BlastRecipient {
+        return new BlastRecipient([
+            'id' => $recipient->id,
+            'nama_siswa' => (string) $recipient->nama,
+            'kelas' => 'Umum',
+            'nama_wali' => (string) $recipient->nama,
+            'wa_wali' => $recipient->whatsapp,
+            'wa_wali_2' => null,
+            'email_wali' => null,
+            'catatan' => $recipient->catatan,
+            'is_valid' => (bool) $recipient->is_valid,
+            'source' => 'umum',
         ]);
     }
 
