@@ -6,47 +6,71 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-:root {
-    --gen-teal-900: #134e4a;
-    --gen-teal-800: #0f766e;
-    --gen-teal-700: #14b8a6;
-    --gen-teal-100: #ccfbf1;
-    --gen-teal-50: #f0fdfa;
-    --gen-text-900: #0f172a;
-    --gen-text-700: #334155;
-    --gen-text-500: #64748b;
-    --gen-border: #dbe4f0;
-}
-
 .general-page {
+    --gen-primary: var(--app-accent);
+    --gen-primary-strong: var(--app-accent-strong);
+    --gen-bg: var(--app-bg);
+    --gen-surface: var(--app-surface);
+    --gen-surface-soft: var(--app-surface-soft);
+    --gen-surface-muted: var(--app-surface-muted);
+    --gen-border: var(--app-border);
+    --gen-text: var(--app-text);
+    --gen-text-soft: var(--app-text-soft);
+    --gen-text-muted: var(--app-text-muted);
+    --gen-row-hover: var(--app-row-hover);
+    --gen-shadow: var(--app-shadow);
+    --gen-success: var(--success-color, #10b981);
+    --gen-danger: var(--danger-color, #ef4444);
     font-family: 'Plus Jakarta Sans', sans-serif;
-    color: var(--gen-text-900);
-    padding: 4px 2px 16px;
+    color: var(--gen-text);
+    padding: 6px 4px 18px;
 }
 
 .general-head {
-    border-radius: 14px;
+    border-radius: var(--radius-md, 14px);
     padding: 20px 22px;
     margin-bottom: 14px;
-    background: linear-gradient(135deg, var(--gen-teal-900) 0%, var(--gen-teal-800) 62%, var(--gen-teal-700) 100%);
-    box-shadow: 0 12px 24px rgba(20, 184, 166, .22);
+    background: var(--grad-hero);
+    box-shadow: var(--gen-shadow);
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     flex-wrap: wrap;
     gap: 12px;
 }
 
+.general-head-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 260px;
+}
+
+.general-head-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm, 8px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .22);
+    flex: 0 0 auto;
+}
+
 .general-head-title {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 800;
     color: #fff;
     margin-bottom: 4px;
+    letter-spacing: 0;
 }
 
 .general-head-sub {
-    font-size: 12px;
+    font-size: 12.5px;
     color: rgba(255, 255, 255, .88);
+    line-height: 1.45;
 }
 
 .general-head-actions,
@@ -58,7 +82,8 @@
 }
 
 .general-btn {
-    border-radius: 8px;
+    min-height: 36px;
+    border-radius: var(--radius-sm, 8px);
     border: 1px solid transparent;
     font-size: 12px;
     font-weight: 700;
@@ -67,12 +92,15 @@
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    transition: .15s;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    white-space: nowrap;
 }
 
 .general-btn:hover {
     transform: translateY(-1px);
+    text-decoration: none;
 }
 
 .general-btn.ghost {
@@ -82,26 +110,34 @@
 }
 
 .general-btn.primary {
-    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    background: linear-gradient(135deg, var(--gen-primary-strong), var(--gen-primary));
+    border-color: transparent;
     color: #fff;
+    box-shadow: 0 8px 18px var(--app-row-selected-strong);
 }
 
 .general-btn.light {
-    background: #fff;
-    border-color: #99f6e4;
-    color: #0f766e;
+    background: var(--gen-surface);
+    border-color: var(--gen-border);
+    color: var(--gen-primary-strong);
+}
+
+.general-btn.neutral {
+    background: var(--gen-surface-soft);
+    border-color: var(--gen-border);
+    color: var(--gen-text-soft);
 }
 
 .general-btn.danger {
-    background: #fee2e2;
-    border-color: #fecaca;
-    color: #b91c1c;
+    background: var(--red-bg, rgba(239, 68, 68, .12));
+    border-color: var(--red-border, rgba(239, 68, 68, .22));
+    color: var(--gen-danger);
 }
 
 .general-btn.danger:hover {
-    background: #b91c1c;
+    background: var(--gen-danger);
     color: #fff;
-    border-color: #b91c1c;
+    border-color: var(--gen-danger);
 }
 
 .general-btn:disabled {
@@ -112,18 +148,18 @@
 
 .general-panel {
     border: 1px solid var(--gen-border);
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, .06);
+    border-radius: var(--radius-md, 14px);
+    background: var(--gen-surface);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
 }
 
 .general-panel-body {
-    padding: 16px;
+    padding: 16px 16px 18px;
 }
 
 .general-alert {
-    border-radius: 10px;
+    border-radius: var(--radius-sm, 8px);
     padding: 10px 12px;
     font-size: 12.5px;
     font-weight: 600;
@@ -131,15 +167,15 @@
 }
 
 .general-alert.success {
-    border: 1px solid #86efac;
-    background: #f0fdf4;
-    color: #166534;
+    border: 1px solid var(--green-border);
+    background: var(--green-bg);
+    color: var(--success-color);
 }
 
 .general-alert.error {
-    border: 1px solid #fecaca;
-    background: #fef2f2;
-    color: #991b1b;
+    border: 1px solid var(--red-border);
+    background: var(--red-bg);
+    color: var(--gen-danger);
 }
 
 .general-stats {
@@ -151,42 +187,68 @@
 
 .general-stat {
     border: 1px solid var(--gen-border);
-    border-radius: 12px;
-    background: var(--gen-teal-50);
-    padding: 12px;
+    border-radius: var(--radius, 12px);
+    background: var(--gen-surface-soft);
+    padding: 13px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 78px;
+}
+
+.general-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm, 8px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--app-row-selected);
+    color: var(--gen-primary-strong);
+    flex: 0 0 auto;
 }
 
 .general-stat-label {
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .04em;
-    color: var(--gen-text-500);
+    letter-spacing: .03em;
+    color: var(--gen-text-muted);
     margin-bottom: 4px;
 }
 
 .general-stat-value {
-    font-size: 26px;
+    font-size: 25px;
     font-weight: 800;
-    color: var(--gen-teal-800);
+    color: var(--gen-text);
     line-height: 1;
 }
 
 .general-toolbar {
     border: 1px solid var(--gen-border);
-    border-radius: 12px;
-    background: var(--gen-teal-50);
+    border-radius: var(--radius, 12px);
+    background: var(--gen-surface-soft);
     padding: 12px;
     margin-bottom: 12px;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: flex-end;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+}
+
+.general-filter {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.3fr) minmax(140px, .6fr) minmax(112px, .45fr) auto auto;
+    align-items: flex-end;
+    gap: 8px;
 }
 
 .general-field {
     min-width: 170px;
+}
+
+.general-field.compact {
+    min-width: 112px;
 }
 
 .general-label {
@@ -194,16 +256,16 @@
     margin-bottom: 5px;
     font-size: 12px;
     font-weight: 700;
-    color: var(--gen-text-700);
+    color: var(--gen-text-soft);
 }
 
 .general-input,
 .general-select {
     width: 100%;
     border: 1px solid var(--gen-border);
-    border-radius: 8px;
-    background: #fff;
-    color: var(--gen-text-900);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--gen-surface);
+    color: var(--gen-text);
     font-size: 12.5px;
     font-family: inherit;
     height: 36px;
@@ -213,18 +275,29 @@
 .general-input:focus,
 .general-select:focus {
     outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, .14);
+    border-color: var(--gen-primary);
+    box-shadow: 0 0 0 3px var(--app-row-selected);
+}
+
+.general-select option {
+    background: var(--gen-surface);
+    color: var(--gen-text);
 }
 
 .general-file-btn {
     cursor: pointer;
 }
 
+.general-import-wrap {
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
 .general-table-wrap {
     border: 1px solid var(--gen-border);
-    border-radius: 12px;
+    border-radius: var(--radius, 12px);
     overflow: auto;
+    background: var(--gen-surface);
 }
 
 .general-table {
@@ -234,10 +307,10 @@
 }
 
 .general-table th {
-    background: #f8fbff;
-    color: var(--gen-text-500);
+    background: var(--gen-surface-soft);
+    color: var(--gen-text-muted);
     text-transform: uppercase;
-    letter-spacing: .04em;
+    letter-spacing: .03em;
     font-size: 10.5px;
     font-weight: 800;
     padding: 10px 12px;
@@ -247,9 +320,9 @@
 
 .general-table td {
     padding: 11px 12px;
-    border-bottom: 1px solid #eef3fb;
+    border-bottom: 1px solid var(--gen-border);
     font-size: 12.5px;
-    color: var(--gen-text-700);
+    color: var(--gen-text-soft);
     vertical-align: top;
 }
 
@@ -258,19 +331,19 @@
 }
 
 .general-table tr:hover td {
-    background: #f8fbff;
+    background: var(--gen-row-hover);
 }
 
 .general-checkbox {
     width: 16px;
     height: 16px;
-    accent-color: var(--gen-teal-800);
+    accent-color: var(--gen-primary-strong);
     cursor: pointer;
 }
 
 .general-name {
     font-weight: 700;
-    color: var(--gen-text-900);
+    color: var(--gen-text);
 }
 
 .general-badge {
@@ -284,25 +357,90 @@
 }
 
 .general-badge.valid {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--green-bg);
+    color: var(--success-color);
+    border: 1px solid var(--green-border);
 }
 
 .general-badge.invalid {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--red-bg);
+    color: var(--gen-danger);
+    border: 1px solid var(--red-border);
 }
 
 .general-error-detail {
     margin-top: 3px;
     font-size: 11px;
-    color: var(--gen-text-500);
+    color: var(--gen-text-muted);
 }
 
 .general-empty {
     text-align: center;
-    color: var(--gen-text-500);
-    padding: 22px 12px;
+    color: var(--gen-text-muted);
+    padding: 28px 12px;
+}
+
+.general-row-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.general-icon-btn {
+    width: 32px;
+    min-height: 32px;
+    padding: 0;
+}
+
+.general-table-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.general-table-footer .pagination {
+    margin: 0;
+}
+
+.general-table-footer .page-link {
+    background: var(--gen-surface);
+    border-color: var(--gen-border);
+    color: var(--gen-text-soft);
+}
+
+.general-table-footer .page-item.active .page-link {
+    background: var(--gen-primary);
+    border-color: var(--gen-primary);
+    color: #fff;
+}
+
+.general-table-footer .page-link:hover {
+    background: var(--gen-row-hover);
+    color: var(--gen-primary-strong);
+}
+
+body.dark-mode .general-head {
+    box-shadow: 0 18px 38px rgba(0, 0, 0, .24);
+}
+
+body.dark-mode .general-panel,
+body.dark-mode .general-stat,
+body.dark-mode .general-toolbar,
+body.dark-mode .general-table-wrap {
+    box-shadow: none;
+}
+
+body.dark-mode .general-btn.primary {
+    box-shadow: none;
+}
+
+body.dark-mode .general-btn.light,
+body.dark-mode .general-btn.neutral {
+    background: var(--gen-surface-soft);
+}
+
+body.dark-mode .general-table td {
+    background: transparent;
 }
 
 @media (max-width: 900px) {
@@ -310,17 +448,47 @@
         grid-template-columns: 1fr;
     }
 
+    .general-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .general-filter {
+        grid-template-columns: 1fr;
+    }
+
     .general-field {
         min-width: 100%;
+    }
+
+    .general-import-wrap {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .general-head {
+        align-items: flex-start;
+    }
+
+    .general-head-main,
+    .general-head-actions,
+    .general-import-wrap,
+    .general-btn {
+        width: 100%;
     }
 }
 </style>
 
 <div class="general-page">
     <div class="general-head">
-        <div>
-            <div class="general-head-title">{{ __('app.blast.general_recipient_title') }}</div>
-            <div class="general-head-sub">{{ __('app.blast.general_recipient_subtitle') }}</div>
+        <div class="general-head-main">
+            <div class="general-head-icon">
+                <i class="fas fa-address-book"></i>
+            </div>
+            <div>
+                <div class="general-head-title">{{ __('app.blast.general_recipient_title') }}</div>
+                <div class="general-head-sub">{{ __('app.blast.general_recipient_subtitle') }}</div>
+            </div>
         </div>
         <div class="general-head-actions">
             <a href="{{ route('admin.blast.recipients.index') }}" class="general-btn ghost">
@@ -351,16 +519,25 @@
 
             <div class="general-stats">
                 <div class="general-stat">
-                    <div class="general-stat-label">{{ __('app.blast.total_general_recipients') }}</div>
-                    <div class="general-stat-value">{{ $totalRecipients ?? $recipients->total() }}</div>
+                    <div class="general-stat-icon"><i class="fas fa-address-book"></i></div>
+                    <div>
+                        <div class="general-stat-label">{{ __('app.blast.total_general_recipients') }}</div>
+                        <div class="general-stat-value">{{ $totalRecipients ?? $recipients->total() }}</div>
+                    </div>
                 </div>
                 <div class="general-stat">
-                    <div class="general-stat-label">{{ __('app.blast.valid_data') }}</div>
-                    <div class="general-stat-value">{{ $validCount ?? 0 }}</div>
+                    <div class="general-stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div>
+                        <div class="general-stat-label">{{ __('app.blast.valid_data') }}</div>
+                        <div class="general-stat-value">{{ $validCount ?? 0 }}</div>
+                    </div>
                 </div>
                 <div class="general-stat">
-                    <div class="general-stat-label">{{ __('app.blast.invalid_data') }}</div>
-                    <div class="general-stat-value">{{ $invalidCount ?? 0 }}</div>
+                    <div class="general-stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <div>
+                        <div class="general-stat-label">{{ __('app.blast.invalid_data') }}</div>
+                        <div class="general-stat-value">{{ $invalidCount ?? 0 }}</div>
+                    </div>
                 </div>
             </div>
 
@@ -378,7 +555,7 @@
                             <option value="invalid" @selected(($selectedStatus ?? 'all') === 'invalid')>{{ __('app.blast.invalid_upper') }}</option>
                         </select>
                     </div>
-                    <div style="min-width:120px;">
+                    <div class="general-field compact">
                         <label class="general-label">{{ __('app.blast.per_page') }}</label>
                         <select name="per_page" class="general-select">
                             @foreach(($allowedPerPage ?? [20, 50, 100, 200]) as $size)
@@ -389,7 +566,7 @@
                     <button type="submit" class="general-btn primary">
                         <i class="fas fa-filter"></i> {{ __('app.blast.apply_filter') }}
                     </button>
-                    <a href="{{ route('admin.blast.recipients.general.index') }}" class="general-btn light">
+                    <a href="{{ route('admin.blast.recipients.general.index') }}" class="general-btn neutral">
                         {{ __('app.blast.reset') }}
                     </a>
                 </form>
@@ -418,7 +595,7 @@
                         </label>
                     </form>
                     <button type="submit" class="general-btn danger" id="bulkDeleteGeneralBtn" form="bulk-delete-general-form" disabled>
-                        <i class="fas fa-trash-alt"></i> {{ __('app.blast.delete_selected') }}
+                        <i class="fas fa-trash-alt"></i> <span class="general-btn-label">{{ __('app.blast.delete_selected') }}</span>
                     </button>
                     <form method="POST" action="{{ route('admin.blast.recipients.general.destroy-all') }}" data-confirm-message="{{ __('app.blast.delete_all_general_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                         @csrf
@@ -472,14 +649,14 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <div style="display:flex;gap:6px;">
-                                        <a href="{{ route('admin.blast.recipients.general.edit', $recipient->id) }}" class="general-btn light" style="padding:6px 9px;" title="{{ __('app.blast.edit_recipient') }}" aria-label="{{ __('app.blast.edit_recipient') }}">
+                                    <div class="general-row-actions">
+                                        <a href="{{ route('admin.blast.recipients.general.edit', $recipient->id) }}" class="general-btn light general-icon-btn" title="{{ __('app.blast.edit_recipient') }}" aria-label="{{ __('app.blast.edit_recipient') }}">
                                             <i class="fas fa-pen"></i>
                                         </a>
                                         <form method="POST" action="{{ route('admin.blast.recipients.general.destroy', $recipient->id) }}" data-confirm-message="{{ __('app.blast.delete_general_confirm') }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="general-btn danger" type="submit" style="padding:6px 9px;" title="{{ __('app.blast.delete_recipient') }}" aria-label="{{ __('app.blast.delete_recipient') }}">
+                                            <button class="general-btn danger general-icon-btn" type="submit" title="{{ __('app.blast.delete_recipient') }}" aria-label="{{ __('app.blast.delete_recipient') }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -497,7 +674,7 @@
                 </table>
             </div>
 
-            <div class="mt-3">
+            <div class="general-table-footer">
                 {{ $recipients->links() }}
             </div>
         </div>
@@ -527,11 +704,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const selected = checkboxes.filter(cb => cb.checked);
         const selectedCount = selected.length;
         const totalCount = checkboxes.length;
+        const deleteLabel = deleteBtn.querySelector('.general-btn-label');
 
         deleteBtn.disabled = selectedCount === 0;
-        deleteBtn.textContent = selectedCount > 0
+        const labelText = selectedCount > 0
             ? `${generalText.deleteSelected} (${selectedCount})`
             : generalText.deleteSelected;
+        if (deleteLabel) {
+            deleteLabel.textContent = labelText;
+        } else {
+            deleteBtn.textContent = labelText;
+        }
 
         if (selectAll) {
             selectAll.checked = selectedCount > 0 && selectedCount === totalCount;

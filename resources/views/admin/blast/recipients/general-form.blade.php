@@ -12,48 +12,81 @@
 
 @section('content')
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 .general-manual-wrap {
-    max-width: 780px;
+    --gm-primary: var(--app-accent);
+    --gm-primary-strong: var(--app-accent-strong);
+    --gm-bg: var(--app-bg);
+    --gm-surface: var(--app-surface);
+    --gm-surface-soft: var(--app-surface-soft);
+    --gm-border: var(--app-border);
+    --gm-text: var(--app-text);
+    --gm-text-soft: var(--app-text-soft);
+    --gm-text-muted: var(--app-text-muted);
+    --gm-danger: var(--danger-color, #ef4444);
+    max-width: 880px;
     margin: 0 auto;
+    color: var(--gm-text);
+    font-family: 'Plus Jakarta Sans', 'Source Sans Pro', sans-serif;
 }
 
 .general-manual-head {
-    border: 1px solid #dbe4f0;
-    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: var(--radius-md, 14px);
     padding: 20px 22px;
     margin-bottom: 14px;
-    background: linear-gradient(135deg, #0f766e, #0f172a);
+    background: var(--grad-hero);
     color: #fff;
+    box-shadow: var(--app-shadow);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.general-manual-head-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm, 8px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .14);
+    border: 1px solid rgba(255, 255, 255, .22);
+    flex: 0 0 auto;
 }
 
 .general-manual-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     margin: 0 0 5px;
+    letter-spacing: 0;
 }
 
 .general-manual-sub {
     margin: 0;
-    font-size: 13px;
+    font-size: 12.5px;
+    line-height: 1.45;
     opacity: .92;
 }
 
 .general-manual-card {
-    border: 1px solid #dbe4f0;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    border: 1px solid var(--gm-border);
+    border-radius: var(--radius-md, 14px);
+    background: var(--gm-surface);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
 .general-manual-card-body {
-    padding: 20px;
+    padding: 20px 22px 22px;
 }
 
 .general-manual-alert {
-    border: 1px solid #fecaca;
-    border-radius: 10px;
-    background: #fef2f2;
-    color: #991b1b;
+    border: 1px solid var(--red-border);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--red-bg);
+    color: var(--gm-danger);
     font-size: 12.5px;
     font-weight: 600;
     padding: 10px 12px;
@@ -75,24 +108,26 @@
     margin-bottom: 6px;
     font-size: 12.5px;
     font-weight: 700;
-    color: #334155;
+    color: var(--gm-text-soft);
 }
 
 .general-manual-input,
 .general-manual-textarea {
     width: 100%;
-    border: 1px solid #dbe4f0;
-    border-radius: 9px;
+    border: 1px solid var(--gm-border);
+    border-radius: var(--radius-sm, 8px);
     font-size: 13px;
     padding: 9px 11px;
-    background: #fff;
+    background: var(--gm-surface);
+    color: var(--gm-text);
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
 
 .general-manual-input:focus,
 .general-manual-textarea:focus {
     outline: none;
-    border-color: #0f766e;
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, .14);
+    border-color: var(--gm-primary);
+    box-shadow: 0 0 0 3px var(--app-row-selected);
 }
 
 .general-manual-textarea {
@@ -103,18 +138,19 @@
 .general-manual-note {
     margin-top: 8px;
     font-size: 11.5px;
-    color: #64748b;
+    color: var(--gm-text-muted);
 }
 
 .general-manual-actions {
-    margin-top: 14px;
+    margin-top: 16px;
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
 }
 
 .general-manual-btn {
-    border-radius: 9px;
+    min-height: 38px;
+    border-radius: var(--radius-sm, 8px);
     border: 1px solid transparent;
     padding: 9px 12px;
     font-size: 12.5px;
@@ -122,18 +158,45 @@
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.general-manual-btn:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
 }
 
 .general-manual-btn.primary {
-    background: #0f766e;
+    background: linear-gradient(135deg, var(--gm-primary-strong), var(--gm-primary));
+    border-color: transparent;
     color: #fff;
+    box-shadow: 0 8px 18px var(--app-row-selected-strong);
 }
 
 .general-manual-btn.light {
-    background: #f0fdfa;
-    border-color: #dbe4f0;
-    color: #334155;
+    background: var(--gm-surface-soft);
+    border-color: var(--gm-border);
+    color: var(--gm-text-soft);
+}
+
+body.dark-mode .general-manual-head {
+    box-shadow: 0 18px 38px rgba(0, 0, 0, .24);
+}
+
+body.dark-mode .general-manual-card {
+    box-shadow: none;
+}
+
+body.dark-mode .general-manual-btn.primary {
+    box-shadow: none;
+}
+
+body.dark-mode .general-manual-input,
+body.dark-mode .general-manual-textarea,
+body.dark-mode .general-manual-btn.light {
+    background: var(--gm-surface-soft);
 }
 
 @media (max-width: 760px) {
@@ -144,13 +207,27 @@
     .general-manual-field.full {
         grid-column: span 1;
     }
+
+    .general-manual-head {
+        align-items: flex-start;
+    }
+
+    .general-manual-actions,
+    .general-manual-btn {
+        width: 100%;
+    }
 }
 </style>
 
 <div class="general-manual-wrap">
     <div class="general-manual-head">
-        <h2 class="general-manual-title">{{ $modeTitle }}</h2>
-        <p class="general-manual-sub">{{ __('app.blast.general_recipient_manual_subtitle') }}</p>
+        <div class="general-manual-head-icon">
+            <i class="{{ $isEditMode ? 'fas fa-pen' : 'fas fa-plus' }}"></i>
+        </div>
+        <div>
+            <h2 class="general-manual-title">{{ $modeTitle }}</h2>
+            <p class="general-manual-sub">{{ __('app.blast.general_recipient_manual_subtitle') }}</p>
+        </div>
     </div>
 
     <div class="general-manual-card">
