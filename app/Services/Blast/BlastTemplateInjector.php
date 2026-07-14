@@ -24,6 +24,10 @@ class BlastTemplateInjector
             'email'      => $recipient->email_wali,
             'wa'         => $primaryWhatsapp,
             'wa_2'       => $recipient->wa_wali_2,
+            'catatan'    => $recipient->catatan,
+            'sertifikat' => $recipient->getAttribute('sertifikat'),
+            'link_sertifikat' => $recipient->getAttribute('sertifikat'),
+            'certificate' => $recipient->getAttribute('sertifikat'),
         ];
 
         // MERGE CONTEXT (tagihan, jatuh tempo, dll)

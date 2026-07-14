@@ -735,6 +735,23 @@ Route::prefix('admin')
 
                 // Email
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
+                Route::get('/email/accounts', [BlastController::class, 'emailAccounts'])
+                    ->name('email.accounts');
+                Route::post('/email/accounts', [BlastController::class, 'storeEmailAccount'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.accounts.store');
+                Route::put('/email/accounts/{emailAccount}', [BlastController::class, 'updateEmailAccount'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.accounts.update');
+                Route::post('/email/accounts/{emailAccount}/activate', [BlastController::class, 'activateEmailAccount'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.accounts.activate');
+                Route::post('/email/accounts/{emailAccount}/test', [BlastController::class, 'testEmailAccount'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.accounts.test');
+                Route::delete('/email/accounts/{emailAccount}', [BlastController::class, 'destroyEmailAccount'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.accounts.destroy');
                 Route::post('/email/send', [BlastController::class, 'sendEmail'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('email.send');
@@ -765,6 +782,9 @@ Route::prefix('admin')
                     ->middleware('check_access:blast_recipient.read')
                     ->group(function () {
                     Route::get('/', [BlastRecipientController::class, 'index'])->name('index');
+                    Route::get('/templates/{template}/download', [BlastRecipientController::class, 'downloadTemplate'])
+                        ->name('templates.download')
+                        ->where('template', 'siswa|karyawan|umum');
                     Route::get('/employees', [BlastRecipientController::class, 'employeeIndex'])
                         ->name('employees.index');
                     Route::get('/employees/create', [BlastRecipientController::class, 'employeeCreate'])

@@ -187,6 +187,9 @@ class ExcelImportService
             $raw = [
                 'nama' => $this->resolveCell($row, $headerMap, 'nama', 0, $usePositionalFallback),
                 'wa' => $this->resolveCell($row, $headerMap, 'wa', 1, $usePositionalFallback),
+                'instansi' => $this->resolveCell($row, $headerMap, 'instansi', null, false),
+                'email' => $this->resolveCell($row, $headerMap, 'email', null, false),
+                'sertifikat' => $this->resolveCell($row, $headerMap, 'sertifikat', null, false),
                 'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 2, $usePositionalFallback),
             ];
 
@@ -399,8 +402,30 @@ class ExcelImportService
         }
 
         if (
-            in_array($normalized, ['catatan', 'keterangan', 'notes', 'note'], true) ||
+            in_array($normalized, ['instansi', 'instansipekerjaan', 'pekerjaan', 'perusahaan', 'lembaga', 'unit'], true) ||
+            str_contains($normalized, 'instansi') ||
+            str_contains($normalized, 'pekerjaan')
+        ) {
+            return 'instansi';
+        }
+
+        if (
+            in_array($normalized, ['email', 'alamatemail'], true) ||
+            str_contains($normalized, 'email')
+        ) {
+            return 'email';
+        }
+
+        if (
+            in_array($normalized, ['sertifikat', 'linksertifikat', 'certificate'], true) ||
             str_contains($normalized, 'sertifikat') ||
+            str_contains($normalized, 'certificate')
+        ) {
+            return 'sertifikat';
+        }
+
+        if (
+            in_array($normalized, ['catatan', 'keterangan', 'notes', 'note'], true) ||
             str_contains($normalized, 'gambar') ||
             str_starts_with($normalized, 'catatan') ||
             str_starts_with($normalized, 'keterangan') ||

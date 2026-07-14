@@ -428,6 +428,9 @@
                     <a href="{{ route('admin.blast.recipients.employees-ypik.create') }}" class="ypk-btn" style="background:#ccfbf1;border-color:#99f6e4;color:#0f766e;">
                         <i class="fas fa-plus"></i> {{ __('app.blast.manual_input') }}
                     </a>
+                    <a href="{{ route('admin.blast.recipients.templates.download', ['template' => 'karyawan']) }}" class="ypk-btn" style="background:#fff;border-color:#99f6e4;color:#0f766e;">
+                        <i class="fas fa-download"></i> {{ __('app.blast.download_employee_recipient_template') }}
+                    </a>
                     <form action="{{ route('admin.blast.recipients.employees-ypik.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="dataset" value="ypik">

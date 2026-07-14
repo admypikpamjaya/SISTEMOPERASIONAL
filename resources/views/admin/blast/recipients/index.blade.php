@@ -1212,6 +1212,10 @@
                                     <input type="file" name="file" class="file-input" id="excelFileInput" accept=".xlsx,.xls,.csv" required>
                                 </button>
                             </form>
+                            <a href="{{ route('admin.blast.recipients.templates.download', ['template' => 'siswa']) }}" class="btn-filter">
+                                <i class="fas fa-download"></i>
+                                {{ __('app.blast.download_student_recipient_template') }}
+                            </a>
                             <a
                                 href="{{ route('admin.blast.recipients.export', array_filter([
                                     'q' => $search ?? null,

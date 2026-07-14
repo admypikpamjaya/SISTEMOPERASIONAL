@@ -267,6 +267,39 @@ body.dark-mode .general-manual-btn.light {
                         <div class="general-manual-note">{{ __('app.blast.general_format_note') }}</div>
                     </div>
 
+                    <div class="general-manual-field">
+                        <label class="general-manual-label">{{ __('app.blast.institution') }}</label>
+                        <input
+                            type="text"
+                            name="instansi"
+                            class="general-manual-input"
+                            value="{{ old('instansi', $recipient?->instansi) }}"
+                            placeholder="{{ __('app.blast.general_institution_placeholder') }}"
+                        >
+                    </div>
+
+                    <div class="general-manual-field">
+                        <label class="general-manual-label">{{ __('app.blast.email') }}</label>
+                        <input
+                            type="email"
+                            name="email"
+                            class="general-manual-input"
+                            value="{{ old('email', $recipient?->email) }}"
+                            placeholder="{{ __('app.blast.general_email_placeholder') }}"
+                        >
+                    </div>
+
+                    <div class="general-manual-field full">
+                        <label class="general-manual-label">{{ __('app.blast.certificate_link') }}</label>
+                        <input
+                            type="text"
+                            name="sertifikat"
+                            class="general-manual-input"
+                            value="{{ old('sertifikat', $recipient?->sertifikat) }}"
+                            placeholder="{{ __('app.blast.certificate_link_placeholder') }}"
+                        >
+                    </div>
+
                     <div class="general-manual-field full">
                         <label class="general-manual-label">{{ __('app.blast.notes') }}</label>
                         <textarea name="catatan" class="general-manual-textarea" placeholder="{{ __('app.blast.general_notes_placeholder') }}">{{ old('catatan', $recipient?->catatan) }}</textarea>

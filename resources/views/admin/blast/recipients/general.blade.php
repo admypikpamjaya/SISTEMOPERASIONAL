@@ -303,7 +303,7 @@
 .general-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 820px;
+    min-width: 1120px;
 }
 
 .general-table th {
@@ -344,6 +344,20 @@
 .general-name {
     font-weight: 700;
     color: var(--gen-text);
+}
+
+.general-muted {
+    color: var(--gen-text-muted);
+}
+
+.general-link {
+    color: var(--gen-primary-strong);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.general-link:hover {
+    text-decoration: underline;
 }
 
 .general-badge {
@@ -580,6 +594,9 @@ body.dark-mode .general-table td {
                     <a href="{{ route('admin.blast.recipients.general.create') }}" class="general-btn light">
                         <i class="fas fa-plus"></i> {{ __('app.blast.manual_input') }}
                     </a>
+                    <a href="{{ route('admin.blast.recipients.templates.download', 'umum') }}" class="general-btn light">
+                        <i class="fas fa-file-download"></i> {{ __('app.blast.download_general_recipient_template') }}
+                    </a>
                     <form action="{{ route('admin.blast.recipients.general.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <label class="general-btn light general-file-btn">
@@ -617,6 +634,9 @@ body.dark-mode .general-table td {
                             <th style="width:56px;">{{ __('app.blast.no') }}</th>
                             <th>{{ __('app.blast.general_name') }}</th>
                             <th>{{ __('app.blast.whatsapp') }}</th>
+                            <th>{{ __('app.blast.institution') }}</th>
+                            <th>{{ __('app.blast.email') }}</th>
+                            <th>{{ __('app.blast.certificate_link') }}</th>
                             <th>{{ __('app.blast.notes') }}</th>
                             <th style="width:150px;">{{ __('app.blast.table_status') }}</th>
                             <th style="width:140px;">{{ __('app.blast.action') }}</th>
@@ -637,7 +657,23 @@ body.dark-mode .general-table td {
                                 <td>{{ ($recipients->currentPage() - 1) * $recipients->perPage() + $loop->iteration }}</td>
                                 <td><div class="general-name">{{ $recipient->nama }}</div></td>
                                 <td>{{ $recipient->whatsapp ?? '-' }}</td>
-                                <td>{{ $recipient->catatan ?? '-' }}</td>
+                                <td>{{ $recipient->instansi ?? '-' }}</td>
+                                <td>{{ $recipient->email ?? '-' }}</td>
+                                <td>
+                                    @php($certificate = trim((string) ($recipient->sertifikat ?? '')))
+                                    @if($certificate !== '')
+                                        @if(\Illuminate\Support\Str::startsWith($certificate, ['http://', 'https://']))
+                                            <a href="{{ $certificate }}" class="general-link" target="_blank" rel="noopener">
+                                                {{ __('app.blast.open_certificate') }}
+                                            </a>
+                                        @else
+                                            {{ \Illuminate\Support\Str::limit($certificate, 42) }}
+                                        @endif
+                                    @else
+                                        <span class="general-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>{!! $recipient->catatan ? nl2br(e($recipient->catatan)) : '<span class="general-muted">-</span>' !!}</td>
                                 <td>
                                     @if($recipient->is_valid)
                                         <span class="general-badge valid">{{ __('app.blast.valid_upper') }}</span>
@@ -665,7 +701,7 @@ body.dark-mode .general-table td {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="general-empty">
+                                <td colspan="10" class="general-empty">
                                     {{ __('app.blast.no_general_recipient_data') }}
                                 </td>
                             </tr>

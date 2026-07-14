@@ -188,6 +188,39 @@ class BlastRecipientController extends Controller
         ]);
     }
 
+    public function downloadTemplate(string $template)
+    {
+        $templateMap = [
+            'siswa' => [
+                'path' => resource_path('recipient-templates/recipent siswa.xlsx'),
+                'download_name' => 'recipent siswa.xlsx',
+            ],
+            'karyawan' => [
+                'path' => resource_path('recipient-templates/Template_karyawan.xlsx'),
+                'download_name' => 'Template_karyawan.xlsx',
+            ],
+            'umum' => [
+                'path' => resource_path('recipient-templates/data penerima umum.xlsx'),
+                'download_name' => 'data penerima umum.xlsx',
+            ],
+        ];
+
+        $templateConfig = $templateMap[$template] ?? null;
+        if ($templateConfig === null) {
+            abort(404);
+        }
+
+        if (!is_file($templateConfig['path'])) {
+            return back()->with('error', __('app.blast.recipient_template_missing'));
+        }
+
+        return response()->download(
+            $templateConfig['path'],
+            $templateConfig['download_name'],
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
+    }
+
     public function bulkMoveStudents(Request $request, RecipientGroupingService $groupingService)
     {
         $data = $request->validate([
@@ -506,6 +539,9 @@ class BlastRecipientController extends Controller
             $query->where(function ($builder) use ($search): void {
                 $builder->where('nama', 'like', '%' . $search . '%')
                     ->orWhere('whatsapp', 'like', '%' . $search . '%')
+                    ->orWhere('instansi', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('sertifikat', 'like', '%' . $search . '%')
                     ->orWhere('catatan', 'like', '%' . $search . '%');
             });
         }
@@ -886,12 +922,18 @@ class BlastRecipientController extends Controller
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'whatsapp' => 'required|string|max:50',
+            'instansi' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'sertifikat' => 'nullable|string|max:2048',
             'catatan' => 'nullable|string',
         ]);
 
         $dto = $normalizer->normalize([
             'nama' => $data['nama'],
             'wa' => $data['whatsapp'],
+            'instansi' => $data['instansi'] ?? null,
+            'email' => $data['email'] ?? null,
+            'sertifikat' => $data['sertifikat'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -914,6 +956,9 @@ class BlastRecipientController extends Controller
         BlastGeneralRecipient::query()->create([
             'nama' => $dto->nama,
             'whatsapp' => $dto->phone,
+            'instansi' => $dto->instansi,
+            'email' => $dto->email,
+            'sertifikat' => $dto->sertifikat,
             'catatan' => $dto->catatan,
             'source' => 'manual:admin_general',
             'is_valid' => true,
@@ -945,12 +990,18 @@ class BlastRecipientController extends Controller
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'whatsapp' => 'required|string|max:50',
+            'instansi' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'sertifikat' => 'nullable|string|max:2048',
             'catatan' => 'nullable|string',
         ]);
 
         $dto = $normalizer->normalize([
             'nama' => $data['nama'],
             'wa' => $data['whatsapp'],
+            'instansi' => $data['instansi'] ?? null,
+            'email' => $data['email'] ?? null,
+            'sertifikat' => $data['sertifikat'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -974,6 +1025,9 @@ class BlastRecipientController extends Controller
         $recipient->update([
             'nama' => $dto->nama,
             'whatsapp' => $dto->phone,
+            'instansi' => $dto->instansi,
+            'email' => $dto->email,
+            'sertifikat' => $dto->sertifikat,
             'catatan' => $dto->catatan,
             'source' => $recipient->source ?: 'manual:admin_general',
             'is_valid' => true,

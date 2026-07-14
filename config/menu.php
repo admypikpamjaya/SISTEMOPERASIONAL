@@ -153,6 +153,14 @@ return array_map($withFallbackLabel, [
                 'route' => 'admin.blast.email',
             ],
             [
+                'label_key' => 'app.menu.manage_email',
+                'icon'  => 'fas fa-at',
+                'route' => 'admin.blast.email.accounts',
+                'module_name' => 'admin_blast',
+                'roles' => [UserRole::IT_SUPPORT->value],
+                'active_routes' => ['admin.blast.email.accounts*'],
+            ],
+            [
                 'label_key' => 'app.menu.recipient_data',
                 'icon'  => 'fas fa-users',
                 'route' => 'admin.blast.recipients.index',

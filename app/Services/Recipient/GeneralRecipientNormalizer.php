@@ -16,6 +16,9 @@ class GeneralRecipientNormalizer
 
         $nama = trim((string) ($row['nama'] ?? ''));
         $waRaw = trim((string) ($row['wa'] ?? ''));
+        $instansi = trim((string) ($row['instansi'] ?? ''));
+        $email = trim((string) ($row['email'] ?? ''));
+        $sertifikat = trim((string) ($row['sertifikat'] ?? ''));
         $catatan = trim((string) ($row['catatan'] ?? ''));
 
         if ($nama === '') {
@@ -39,6 +42,9 @@ class GeneralRecipientNormalizer
         return new GeneralRecipientRowDTO(
             nama: $nama !== '' ? $nama : null,
             phone: $wa,
+            instansi: $instansi !== '' ? $instansi : null,
+            email: $email !== '' ? strtolower($email) : null,
+            sertifikat: $sertifikat !== '' ? $sertifikat : null,
             catatan: $catatan !== '' ? $catatan : null,
             isValid: empty($errors),
             errors: $errors

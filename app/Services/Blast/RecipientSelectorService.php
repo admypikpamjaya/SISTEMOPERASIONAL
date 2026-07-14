@@ -41,7 +41,9 @@ class RecipientSelectorService
                 'wa_wali',
                 'wa_wali_2',
             ])
-            ->map(fn (BlastRecipient $recipient) => $recipient->toArray());
+            ->map(fn (BlastRecipient $recipient) => $recipient->toArray())
+            ->values()
+            ->toBase();
 
         $employeeQuery = BlastEmployeeRecipient::query()
             ->where('is_valid', true);
@@ -67,7 +69,9 @@ class RecipientSelectorService
                     'wa_wali' => $employee->wa_karyawan,
                     'wa_wali_2' => null,
                 ];
-            });
+            })
+            ->values()
+            ->toBase();
 
         $employeeYpikQuery = BlastEmployeeYpikRecipient::query()
             ->where('is_valid', true);
@@ -93,27 +97,27 @@ class RecipientSelectorService
                     'wa_wali' => $employee->wa_karyawan,
                     'wa_wali_2' => null,
                 ];
-            });
+            })
+            ->values()
+            ->toBase();
 
-        $generalRecipients = collect();
-        if ($channel === 'whatsapp') {
-            $generalRecipients = BlastGeneralRecipient::query()
-                ->where('is_valid', true)
-                ->whereNotNull('whatsapp')
-                ->orderBy('nama')
-                ->get()
-                ->map(function (BlastGeneralRecipient $recipient) {
-                    return [
-                        'id' => $recipient->id,
-                        'nama_siswa' => $recipient->nama,
-                        'kelas' => 'Umum',
-                        'nama_wali' => $recipient->nama,
-                        'email_wali' => null,
-                        'wa_wali' => $recipient->whatsapp,
-                        'wa_wali_2' => null,
-                    ];
-                });
+        $generalQuery = BlastGeneralRecipient::query()
+            ->where('is_valid', true);
+
+        if ($channel === 'email') {
+            $generalQuery->whereNotNull('email');
         }
+
+        if ($channel === 'whatsapp') {
+            $generalQuery->whereNotNull('whatsapp');
+        }
+
+        $generalRecipients = $generalQuery
+            ->orderBy('nama')
+            ->get()
+            ->map(fn (BlastGeneralRecipient $recipient) => $this->mapGeneralRecipient($recipient))
+            ->values()
+            ->toBase();
 
         return $students
             ->merge($employees)
@@ -139,7 +143,9 @@ class RecipientSelectorService
                 'wa_wali',
                 'wa_wali_2',
             ])
-            ->map(fn (BlastRecipient $recipient) => $recipient->toArray());
+            ->map(fn (BlastRecipient $recipient) => $recipient->toArray())
+            ->values()
+            ->toBase();
 
         $employees = BlastEmployeeRecipient::query()
             ->whereIn('id', $ids)
@@ -155,7 +161,9 @@ class RecipientSelectorService
                     'wa_wali' => $employee->wa_karyawan,
                     'wa_wali_2' => null,
                 ];
-            });
+            })
+            ->values()
+            ->toBase();
 
         $employeesYpik = BlastEmployeeYpikRecipient::query()
             ->whereIn('id', $ids)
@@ -171,29 +179,37 @@ class RecipientSelectorService
                     'wa_wali' => $employee->wa_karyawan,
                     'wa_wali_2' => null,
                 ];
-            });
+            })
+            ->values()
+            ->toBase();
 
         $generalRecipients = BlastGeneralRecipient::query()
             ->whereIn('id', $ids)
             ->where('is_valid', true)
-            ->whereNotNull('whatsapp')
             ->get()
-            ->map(function (BlastGeneralRecipient $recipient) {
-                return [
-                    'id' => $recipient->id,
-                    'nama_siswa' => $recipient->nama,
-                    'kelas' => 'Umum',
-                    'nama_wali' => $recipient->nama,
-                    'email_wali' => null,
-                    'wa_wali' => $recipient->whatsapp,
-                    'wa_wali_2' => null,
-                ];
-            });
+            ->map(fn (BlastGeneralRecipient $recipient) => $this->mapGeneralRecipient($recipient))
+            ->values()
+            ->toBase();
 
         return $students
             ->merge($employees)
             ->merge($employeesYpik)
             ->merge($generalRecipients)
             ->values();
+    }
+
+    private function mapGeneralRecipient(BlastGeneralRecipient $recipient): array
+    {
+        return [
+            'id' => $recipient->id,
+            'nama_siswa' => $recipient->nama,
+            'kelas' => $recipient->instansi ?: 'Umum',
+            'nama_wali' => $recipient->nama,
+            'email_wali' => $recipient->email,
+            'wa_wali' => $recipient->whatsapp,
+            'wa_wali_2' => null,
+            'sertifikat' => $recipient->sertifikat,
+            'source' => 'umum',
+        ];
     }
 }

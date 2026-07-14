@@ -8,6 +8,7 @@ use App\DataTransferObjects\BlastAttachment;
 use App\Jobs\Blast\QueueBlastDeliveryJob;
 use App\Models\BlastEmployeeRecipient;
 use App\Models\BlastEmployeeYpikRecipient;
+use App\Models\BlastEmailAccount;
 use App\Models\BlastGeneralRecipient;
 use App\Models\BlastRecipient;
 use App\Models\BlastMessageTemplate;
@@ -16,6 +17,7 @@ use App\Models\BlastTarget;
 use App\Models\BlastLog;
 use App\Models\Announcement;
 use App\Services\Blast\TemplateRenderer;
+use App\Services\Blast\EmailBlastService;
 use App\Services\Blast\RecipientSelectorService;
 use App\Services\Blast\TunggakanMessageContextService;
 use App\Services\Blast\WhatsAppGatewayDeviceService;
@@ -30,6 +32,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class BlastController extends Controller
 {
@@ -844,10 +847,198 @@ class BlastController extends Controller
         $activityData = $this->buildChannelActivityData('EMAIL', $recipients);
         $activityLogs = $activityData['logs'];
         $activityStats = $activityData['stats'];
+        $emailAccounts = BlastEmailAccount::query()
+            ->enabled()
+            ->orderByDesc('is_active')
+            ->orderBy('label')
+            ->get();
+        $activeEmailAccount = $emailAccounts->firstWhere('is_active', true);
+        $mailConfigSummary = $this->mailConfigSummary();
 
         return view(
             'admin.blast.email',
-            compact('recipients', 'recipientClasses', 'templates', 'announcementOptions', 'activityLogs', 'activityStats')
+            compact(
+                'recipients',
+                'recipientClasses',
+                'templates',
+                'announcementOptions',
+                'activityLogs',
+                'activityStats',
+                'emailAccounts',
+                'activeEmailAccount',
+                'mailConfigSummary'
+            )
+        );
+    }
+
+    public function emailAccounts()
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        $emailAccounts = BlastEmailAccount::query()
+            ->orderByDesc('is_active')
+            ->orderByDesc('is_enabled')
+            ->orderBy('label')
+            ->get();
+        $activeEmailAccount = $emailAccounts->firstWhere('is_active', true);
+        $mailConfigSummary = $this->mailConfigSummary();
+
+        return view(
+            'admin.blast.email-accounts',
+            compact('emailAccounts', 'activeEmailAccount', 'mailConfigSummary')
+        );
+    }
+
+    public function storeEmailAccount(Request $request)
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        $data = $this->validatedEmailAccountData($request);
+        $makeActive = $request->boolean('make_active')
+            || !BlastEmailAccount::query()->enabled()->active()->exists();
+
+        if ($makeActive) {
+            BlastEmailAccount::query()->update(['is_active' => false]);
+        }
+
+        $account = BlastEmailAccount::query()->create(array_merge($data, [
+            'is_enabled' => $request->boolean('is_enabled', true),
+            'is_active' => $makeActive,
+        ]));
+
+        return back()->with(
+            'success',
+            __('app.blast.email_account_saved', ['account' => $account->senderLabel()])
+        );
+    }
+
+    public function updateEmailAccount(Request $request, BlastEmailAccount $emailAccount)
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        $data = $this->validatedEmailAccountData($request, $emailAccount);
+        if (!array_key_exists('password', $data)) {
+            unset($data['password']);
+        }
+
+        $data['is_enabled'] = $request->boolean('is_enabled', false);
+        if (!$data['is_enabled']) {
+            $data['is_active'] = false;
+        }
+
+        $emailAccount->update($data);
+
+        if (
+            !$emailAccount->is_active
+            && !BlastEmailAccount::query()->enabled()->active()->exists()
+        ) {
+            BlastEmailAccount::query()
+                ->enabled()
+                ->where('id', '<>', $emailAccount->id)
+                ->orderBy('label')
+                ->first()
+                ?->update(['is_active' => true]);
+        }
+
+        return back()->with(
+            'success',
+            __('app.blast.email_account_updated', ['account' => $emailAccount->fresh()?->senderLabel() ?? $emailAccount->senderLabel()])
+        );
+    }
+
+    public function activateEmailAccount(BlastEmailAccount $emailAccount)
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        if (!$emailAccount->is_enabled) {
+            return back()->withErrors([
+                'email_account' => __('app.blast.email_account_activate_disabled'),
+            ]);
+        }
+
+        BlastEmailAccount::query()->update(['is_active' => false]);
+        $emailAccount->update(['is_active' => true]);
+
+        return back()->with(
+            'success',
+            __('app.blast.email_account_activated', ['account' => $emailAccount->senderLabel()])
+        );
+    }
+
+    public function testEmailAccount(
+        Request $request,
+        BlastEmailAccount $emailAccount,
+        EmailBlastService $emailBlastService
+    ) {
+        $this->ensureEmailAccountControlAccess();
+
+        $validated = $request->validate([
+            'test_email' => 'required|email|max:191',
+        ]);
+
+        $payload = new BlastPayload(__('app.blast.email_account_test_body', [
+            'account' => $emailAccount->senderLabel(),
+            'time' => now(self::WIB_TIMEZONE)->format('d/m/Y H:i:s'),
+        ]));
+        $this->applyEmailAccountToPayload($payload, $emailAccount);
+
+        try {
+            $sent = $emailBlastService->send(
+                (string) $validated['test_email'],
+                __('app.blast.email_account_test_subject'),
+                $payload
+            );
+
+            if (!$sent) {
+                throw new \RuntimeException(__('app.blast.email_account_test_failed'));
+            }
+
+            $emailAccount->update([
+                'last_tested_at' => now(),
+                'last_test_status' => 'success',
+                'last_test_message' => __('app.blast.email_account_test_sent_to', [
+                    'email' => $validated['test_email'],
+                ]),
+            ]);
+
+            return back()->with(
+                'success',
+                __('app.blast.email_account_test_sent_to', ['email' => $validated['test_email']])
+            );
+        } catch (\Throwable $exception) {
+            $emailAccount->update([
+                'last_tested_at' => now(),
+                'last_test_status' => 'failed',
+                'last_test_message' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'test_email' => __('app.blast.email_account_test_error', [
+                    'message' => $exception->getMessage(),
+                ]),
+            ]);
+        }
+    }
+
+    public function destroyEmailAccount(BlastEmailAccount $emailAccount)
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        $wasActive = $emailAccount->is_active;
+        $label = $emailAccount->senderLabel();
+        $emailAccount->delete();
+
+        if ($wasActive) {
+            BlastEmailAccount::query()
+                ->enabled()
+                ->orderBy('label')
+                ->first()
+                ?->update(['is_active' => true]);
+        }
+
+        return back()->with(
+            'success',
+            __('app.blast.email_account_deleted', ['account' => $label])
         );
     }
 
@@ -1051,6 +1242,12 @@ class BlastController extends Controller
         $payload->setMeta('queue_name', $queueName);
         $payload->setMeta('retry_attempts', $retryAttempts);
         $payload->setMeta('retry_backoff_seconds', $retryBackoffSeconds);
+        if ($channel === 'EMAIL') {
+            $emailAccountId = trim((string) data_get($blastLog->message->meta, 'email_account.id', ''));
+            if ($emailAccountId !== '') {
+                $payload->setMeta('email_account_id', $emailAccountId);
+            }
+        }
 
         $subject = $channel === 'EMAIL'
             ? trim((string) $blastLog->message->subject)
@@ -1538,6 +1735,7 @@ class BlastController extends Controller
             'recipient_ids' => 'nullable|array',
             'recipient_ids.*' => 'string',
             'template_id' => 'nullable|string',
+            'email_account_id' => 'nullable|string',
 
             'targets' => 'nullable|string',
             'subject' => 'required|string',
@@ -1574,6 +1772,7 @@ class BlastController extends Controller
             validatedData: $validated,
             channel: 'EMAIL'
         );
+        $emailAccount = $this->resolveSelectedEmailAccount($validated['email_account_id'] ?? null);
         $dispatchIndex = 0;
 
         $template = null;
@@ -1623,7 +1822,8 @@ class BlastController extends Controller
                         subject: $validated['subject'],
                         fallbackMessage: $validated['message'] ?? '',
                         template: $template,
-                        campaignOptions: $campaignOptions
+                        campaignOptions: $campaignOptions,
+                        emailAccount: $emailAccount
                     );
                 }
 
@@ -1642,6 +1842,7 @@ class BlastController extends Controller
                 $payload->setMeta('queue_name', $campaignOptions['queue_name']);
                 $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
                 $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                $this->applyEmailAccountToPayload($payload, $emailAccount);
                 $this->attachFilesToPayload($payload, $attachments);
                 $this->attachFilesToPayload(
                     $payload,
@@ -1687,7 +1888,8 @@ class BlastController extends Controller
                         subject: $validated['subject'],
                         fallbackMessage: $validated['message'] ?? '',
                         template: $template,
-                        campaignOptions: $campaignOptions
+                        campaignOptions: $campaignOptions,
+                        emailAccount: $emailAccount
                     );
                 }
 
@@ -1707,6 +1909,7 @@ class BlastController extends Controller
                 $payload->setMeta('queue_name', $campaignOptions['queue_name']);
                 $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
                 $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                $this->applyEmailAccountToPayload($payload, $emailAccount);
                 $this->attachFilesToPayload($payload, $attachments);
                 $this->attachFilesToPayload(
                     $payload,
@@ -1752,7 +1955,8 @@ class BlastController extends Controller
                         subject: $validated['subject'],
                         fallbackMessage: $validated['message'] ?? '',
                         template: $template,
-                        campaignOptions: $campaignOptions
+                        campaignOptions: $campaignOptions,
+                        emailAccount: $emailAccount
                     );
                 }
 
@@ -1772,6 +1976,7 @@ class BlastController extends Controller
                 $payload->setMeta('queue_name', $campaignOptions['queue_name']);
                 $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
                 $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                $this->applyEmailAccountToPayload($payload, $emailAccount);
                 $this->attachFilesToPayload($payload, $attachments);
                 $this->attachFilesToPayload(
                     $payload,
@@ -1781,6 +1986,82 @@ class BlastController extends Controller
                 $this->dispatchQueuedBlastDelivery(
                     channel: 'EMAIL',
                     target: (string) $employeeYpik->email_karyawan,
+                    subject: $validated['subject'],
+                    payload: $payload,
+                    campaignOptions: $campaignOptions,
+                    dispatchIndex: $dispatchIndex
+                );
+            }
+
+            $generalRecipients = BlastGeneralRecipient::query()
+                ->whereIn('id', $recipientIds)
+                ->whereNotNull('email')
+                ->where('is_valid', true)
+                ->get()
+                ->filter(
+                    fn (BlastGeneralRecipient $generalRecipient) =>
+                        filter_var($generalRecipient->email, FILTER_VALIDATE_EMAIL)
+                )
+                ->values();
+
+            foreach ($generalRecipients as $generalRecipient) {
+                $recipient = $this->toPseudoRecipientFromGeneral($generalRecipient);
+                $message = $this->resolveDbRecipientEmailMessage(
+                    recipient: $recipient,
+                    renderer: $renderer,
+                    template: $template,
+                    globalMessage: $validated['message'] ?? '',
+                    useGlobalDefault: $useGlobalDefault,
+                    messageOverrides: $messageOverrides,
+                    tunggakanContextService: $tunggakanContextService
+                );
+                $message = $this->appendCertificateToEmailMessage(
+                    $message,
+                    (string) ($generalRecipient->sertifikat ?? '')
+                );
+
+                if ($blastMessage === null) {
+                    $blastMessage = $this->createBlastMessageRecord(
+                        channel: 'EMAIL',
+                        subject: $validated['subject'],
+                        fallbackMessage: $validated['message'] ?? '',
+                        template: $template,
+                        campaignOptions: $campaignOptions,
+                        emailAccount: $emailAccount
+                    );
+                }
+
+                $blastLog = $this->createBlastLogRecord(
+                    blastMessage: $blastMessage,
+                    target: (string) $generalRecipient->email,
+                    messageSnapshot: $message
+                );
+
+                $payload = new BlastPayload($message);
+                $payload->setMeta('channel', 'EMAIL');
+                $payload->setMeta('sent_by', Auth::id());
+                $payload->setMeta('recipient_id', $generalRecipient->id);
+                $payload->setMeta('recipient_source', 'umum');
+                $payload->setMeta('certificate_link', trim((string) ($generalRecipient->sertifikat ?? '')) ?: null);
+                $payload->setMeta('blast_log_id', $blastLog->id);
+                $payload->setMeta('blast_message_id', $blastMessage->id);
+                $payload->setMeta('queue_name', $campaignOptions['queue_name']);
+                $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
+                $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+                $this->applyEmailAccountToPayload($payload, $emailAccount);
+                $this->attachFilesToPayload($payload, $attachments);
+                $this->attachFilesToPayload(
+                    $payload,
+                    $this->certificateAttachmentsForGeneralRecipient($generalRecipient)
+                );
+                $this->attachFilesToPayload(
+                    $payload,
+                    $recipientAttachmentOverrides['db:' . $generalRecipient->id] ?? []
+                );
+
+                $this->dispatchQueuedBlastDelivery(
+                    channel: 'EMAIL',
+                    target: (string) $generalRecipient->email,
                     subject: $validated['subject'],
                     payload: $payload,
                     campaignOptions: $campaignOptions,
@@ -1809,7 +2090,8 @@ class BlastController extends Controller
                     subject: $validated['subject'],
                     fallbackMessage: $validated['message'] ?? '',
                     template: $template,
-                    campaignOptions: $campaignOptions
+                    campaignOptions: $campaignOptions,
+                    emailAccount: $emailAccount
                 );
             }
 
@@ -1827,6 +2109,7 @@ class BlastController extends Controller
             $payload->setMeta('queue_name', $campaignOptions['queue_name']);
             $payload->setMeta('retry_attempts', $campaignOptions['retry_attempts']);
             $payload->setMeta('retry_backoff_seconds', $campaignOptions['retry_backoff_seconds']);
+            $this->applyEmailAccountToPayload($payload, $emailAccount);
             $this->attachFilesToPayload($payload, $attachments);
             $this->attachFilesToPayload(
                 $payload,
@@ -2288,9 +2571,25 @@ class BlastController extends Controller
                 )
                 ->values();
 
+            $generalRecipients = BlastGeneralRecipient::query()
+                ->whereNotNull('email')
+                ->where('is_valid', true)
+                ->orderBy('nama')
+                ->get()
+                ->filter(
+                    fn (BlastGeneralRecipient $recipient) =>
+                        filter_var($recipient->email, FILTER_VALIDATE_EMAIL)
+                )
+                ->map(
+                    fn (BlastGeneralRecipient $recipient) =>
+                        $this->toPseudoRecipientFromGeneral($recipient)
+                )
+                ->values();
+
             return $studentRecipients
                 ->merge($employeeRecipients)
                 ->merge($employeeYpikRecipients)
+                ->merge($generalRecipients)
                 ->values();
         }
 
@@ -2345,31 +2644,42 @@ class BlastController extends Controller
         ?string $subject,
         string $fallbackMessage,
         ?BlastMessageTemplate $template,
-        array $campaignOptions
+        array $campaignOptions,
+        ?BlastEmailAccount $emailAccount = null
     ): BlastMessage {
         $message = trim($fallbackMessage) !== ''
             ? $fallbackMessage
             : (string) ($template?->content ?? '');
 
+        $meta = [
+            'template_id' => $template?->id,
+            'campaign' => [
+                'scheduled_at' => $campaignOptions['scheduled_at'] instanceof CarbonInterface
+                    ? $campaignOptions['scheduled_at']->toIso8601String()
+                    : null,
+                'rate_limit_per_minute' => $campaignOptions['rate_limit_per_minute'],
+                'batch_size' => $campaignOptions['batch_size'],
+                'batch_delay_seconds' => $campaignOptions['batch_delay_seconds'],
+                'retry_attempts' => $campaignOptions['retry_attempts'],
+                'retry_backoff_seconds' => $campaignOptions['retry_backoff_seconds'],
+                'priority' => $campaignOptions['priority'],
+                'queue_name' => $campaignOptions['queue_name'],
+            ],
+        ];
+
+        if (strtoupper($channel) === 'EMAIL' && $emailAccount !== null) {
+            $meta['email_account'] = [
+                'id' => $emailAccount->id,
+                'label' => $emailAccount->label,
+                'email_address' => $emailAccount->email_address,
+            ];
+        }
+
         return BlastMessage::query()->create([
             'channel' => strtoupper($channel),
             'subject' => $subject,
             'message' => $message,
-            'meta' => [
-                'template_id' => $template?->id,
-                'campaign' => [
-                    'scheduled_at' => $campaignOptions['scheduled_at'] instanceof CarbonInterface
-                        ? $campaignOptions['scheduled_at']->toIso8601String()
-                        : null,
-                    'rate_limit_per_minute' => $campaignOptions['rate_limit_per_minute'],
-                    'batch_size' => $campaignOptions['batch_size'],
-                    'batch_delay_seconds' => $campaignOptions['batch_delay_seconds'],
-                    'retry_attempts' => $campaignOptions['retry_attempts'],
-                    'retry_backoff_seconds' => $campaignOptions['retry_backoff_seconds'],
-                    'priority' => $campaignOptions['priority'],
-                    'queue_name' => $campaignOptions['queue_name'],
-                ],
-            ],
+            'meta' => $meta,
             'campaign_status' => $campaignOptions['initial_status'],
             'priority' => $campaignOptions['priority'],
             'scheduled_at' => $campaignOptions['scheduled_at'],
@@ -2399,6 +2709,110 @@ class BlastController extends Controller
             'sent_at' => null,
             'attempt' => 0,
         ]);
+    }
+
+    private function ensureEmailAccountControlAccess(): void
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+            abort(403);
+        }
+    }
+
+    private function validatedEmailAccountData(
+        Request $request,
+        ?BlastEmailAccount $emailAccount = null
+    ): array {
+        $rules = [
+            'label' => 'required|string|max:100',
+            'email_address' => 'required|email|max:191',
+            'from_name' => 'nullable|string|max:191',
+            'host' => 'required|string|max:191',
+            'port' => 'required|integer|min:1|max:65535',
+            'encryption' => 'nullable|in:tls,ssl,none',
+            'username' => 'nullable|string|max:191',
+            'password' => ($emailAccount === null ? 'required' : 'nullable') . '|string|max:2048',
+            'is_enabled' => 'nullable|boolean',
+            'make_active' => 'nullable|boolean',
+        ];
+
+        $data = $request->validate($rules);
+
+        foreach (['from_name', 'username'] as $key) {
+            $data[$key] = trim((string) ($data[$key] ?? ''));
+            if ($data[$key] === '') {
+                $data[$key] = null;
+            }
+        }
+
+        $data['label'] = trim((string) $data['label']);
+        $data['email_address'] = strtolower(trim((string) $data['email_address']));
+        $data['host'] = trim((string) $data['host']);
+        $data['port'] = (int) $data['port'];
+        $data['encryption'] = strtolower(trim((string) ($data['encryption'] ?? '')));
+        if ($data['encryption'] === '' || $data['encryption'] === 'none') {
+            $data['encryption'] = null;
+        }
+
+        if (array_key_exists('password', $data)) {
+            $data['password'] = trim((string) $data['password']);
+            if ($data['password'] === '' && $emailAccount !== null) {
+                unset($data['password']);
+            }
+        }
+
+        unset($data['is_enabled'], $data['make_active']);
+
+        return $data;
+    }
+
+    private function resolveSelectedEmailAccount(?string $emailAccountId): ?BlastEmailAccount
+    {
+        $emailAccountId = trim((string) $emailAccountId);
+
+        if ($emailAccountId === '') {
+            return BlastEmailAccount::query()
+                ->enabled()
+                ->active()
+                ->first();
+        }
+
+        $emailAccount = BlastEmailAccount::query()
+            ->enabled()
+            ->whereKey($emailAccountId)
+            ->first();
+
+        if ($emailAccount === null) {
+            throw ValidationException::withMessages([
+                'email_account_id' => __('app.blast.email_account_invalid'),
+            ]);
+        }
+
+        return $emailAccount;
+    }
+
+    private function applyEmailAccountToPayload(
+        BlastPayload $payload,
+        ?BlastEmailAccount $emailAccount
+    ): void {
+        if ($emailAccount === null) {
+            return;
+        }
+
+        $payload->setMeta('email_account_id', $emailAccount->id);
+        $payload->setMeta('email_account_label', $emailAccount->senderLabel());
+        $payload->setMeta('email_account_address', $emailAccount->email_address);
+    }
+
+    private function mailConfigSummary(): array
+    {
+        return [
+            'mailer' => (string) config('mail.default', 'smtp'),
+            'host' => (string) config('mail.mailers.smtp.host', '-'),
+            'port' => (string) config('mail.mailers.smtp.port', '-'),
+            'from_address' => (string) config('mail.from.address', '-'),
+            'from_name' => (string) config('mail.from.name', '-'),
+        ];
     }
 
     private function resolveCampaignOptions(array $validatedData, string $channel): array
@@ -2685,6 +3099,88 @@ class BlastController extends Controller
         foreach ($attachments as $attachment) {
             $payload->addAttachment($attachment);
         }
+    }
+
+    private function appendCertificateToEmailMessage(
+        string $message,
+        string $certificate
+    ): string {
+        $certificate = trim($certificate);
+        if ($certificate === '' || str_contains($message, $certificate)) {
+            return $message;
+        }
+
+        return rtrim($message) . "\n\n" . __('app.blast.certificate_email_label') . ":\n" . $certificate;
+    }
+
+    /**
+     * @return BlastAttachment[]
+     */
+    private function certificateAttachmentsForGeneralRecipient(
+        BlastGeneralRecipient $recipient
+    ): array {
+        $certificate = trim((string) ($recipient->sertifikat ?? ''));
+        if ($certificate === '' || $this->isUrl($certificate)) {
+            return [];
+        }
+
+        $path = $this->resolveLocalCertificatePath($certificate);
+        if ($path === null) {
+            return [];
+        }
+
+        $filename = basename($path) ?: ('sertifikat-' . Str::slug((string) $recipient->nama) . '.pdf');
+        $mime = function_exists('mime_content_type')
+            ? (mime_content_type($path) ?: 'application/octet-stream')
+            : 'application/octet-stream';
+
+        return [
+            new BlastAttachment($path, $filename, $mime),
+        ];
+    }
+
+    private function resolveLocalCertificatePath(string $certificate): ?string
+    {
+        $relative = ltrim(str_replace('\\', '/', $certificate), '/');
+        $candidates = [
+            $certificate,
+            public_path($relative),
+            storage_path('app/public/' . $relative),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $realPath = realpath($candidate);
+            if ($realPath === false || !is_file($realPath) || !is_readable($realPath)) {
+                continue;
+            }
+
+            if (
+                $this->pathIsInside($realPath, public_path())
+                || $this->pathIsInside($realPath, storage_path('app/public'))
+            ) {
+                return $realPath;
+            }
+        }
+
+        return null;
+    }
+
+    private function pathIsInside(string $path, string $basePath): bool
+    {
+        $realBase = realpath($basePath);
+        if ($realBase === false) {
+            return false;
+        }
+
+        $normalizedPath = rtrim(str_replace('\\', '/', $path), '/') . '/';
+        $normalizedBase = rtrim(str_replace('\\', '/', $realBase), '/') . '/';
+
+        return str_starts_with($normalizedPath, $normalizedBase);
+    }
+
+    private function isUrl(string $value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_URL) !== false;
     }
 
     /**
@@ -2979,18 +3475,24 @@ class BlastController extends Controller
     private function toPseudoRecipientFromGeneral(
         BlastGeneralRecipient $recipient
     ): BlastRecipient {
-        return new BlastRecipient([
+        $pseudoRecipient = new BlastRecipient([
             'id' => $recipient->id,
             'nama_siswa' => (string) $recipient->nama,
-            'kelas' => 'Umum',
+            'kelas' => trim((string) ($recipient->instansi ?? '')) !== ''
+                ? (string) $recipient->instansi
+                : 'Umum',
             'nama_wali' => (string) $recipient->nama,
             'wa_wali' => $recipient->whatsapp,
             'wa_wali_2' => null,
-            'email_wali' => null,
+            'email_wali' => $recipient->email,
             'catatan' => $recipient->catatan,
             'is_valid' => (bool) $recipient->is_valid,
             'source' => 'umum',
         ]);
+
+        $pseudoRecipient->setAttribute('sertifikat', $recipient->sertifikat);
+
+        return $pseudoRecipient;
     }
 
     private function renderManualWhatsappTemplate(

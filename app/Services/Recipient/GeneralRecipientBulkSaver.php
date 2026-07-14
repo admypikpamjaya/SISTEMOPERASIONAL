@@ -33,6 +33,9 @@ class GeneralRecipientBulkSaver
             BlastGeneralRecipient::query()->create([
                 'nama' => $dto->nama,
                 'whatsapp' => $dto->phone,
+                'instansi' => $dto->instansi,
+                'email' => $dto->email,
+                'sertifikat' => $dto->sertifikat,
                 'catatan' => $dto->catatan,
                 'source' => 'excel:penerima_umum',
                 'is_valid' => $isValid,

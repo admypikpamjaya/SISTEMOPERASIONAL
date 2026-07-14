@@ -521,6 +521,9 @@ body.dark-mode .emp-table td form button.emp-btn {
                     <a href="{{ route('admin.blast.recipients.employees.create') }}" class="emp-btn" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">
                         <i class="fas fa-plus"></i> {{ __('app.blast.manual_input') }}
                     </a>
+                    <a href="{{ route('admin.blast.recipients.templates.download', ['template' => 'karyawan']) }}" class="emp-btn" style="background:#fff;border-color:#93c5fd;color:#1d4ed8;">
+                        <i class="fas fa-download"></i> {{ __('app.blast.download_employee_recipient_template') }}
+                    </a>
                     <form action="{{ route('admin.blast.recipients.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="import_type" value="karyawan">

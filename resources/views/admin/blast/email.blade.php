@@ -7,44 +7,44 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-:root {
-    --navy: #1e2a4a;
-    --navy-light: #2d3d66;
-    --blue-primary: #2563eb;
-    --blue-mid: #3b82f6;
-    --blue-light: #dbeafe;
-    --blue-lighter: #eff6ff;
-    --blue-border: #bfdbfe;
-    --accent: #1d4ed8;
-    --text-dark: #0f172a;
-    --text-mid: #1e293b;
-    --text-muted: #64748b;
-    --text-light: #94a3b8;
-    --border: #e2e8f0;
-    --border-blue: #bfdbfe;
-    --bg: #f0f4fd;
-    --white: #ffffff;
-    --green: #16a34a;
+.eb-wrap {
+    --navy: var(--app-accent-strong, #1e2a4a);
+    --navy-light: var(--app-accent, #2563eb);
+    --blue-primary: var(--app-accent, #2563eb);
+    --blue-mid: var(--app-accent, #3b82f6);
+    --blue-light: var(--app-row-selected-strong, #dbeafe);
+    --blue-lighter: var(--app-surface-soft, #eff6ff);
+    --blue-border: var(--app-border, #bfdbfe);
+    --accent: var(--app-accent-strong, #1d4ed8);
+    --text-dark: var(--app-text, #0f172a);
+    --text-mid: var(--app-text-soft, #1e293b);
+    --text-muted: var(--app-text-muted, #64748b);
+    --text-light: var(--app-text-muted, #94a3b8);
+    --border: var(--app-border, #e2e8f0);
+    --border-blue: var(--app-border, #bfdbfe);
+    --bg: var(--app-bg, #f0f4fd);
+    --white: var(--app-surface, #ffffff);
+    --green: var(--success-color, #16a34a);
     --green-bg: #dcfce7;
     --green-border: #86efac;
-    --red: #dc2626;
+    --red: var(--danger-color, #dc2626);
     --red-bg: #fee2e2;
     --red-border: #fca5a5;
-    --yellow: #d97706;
+    --yellow: var(--warning-color, #d97706);
     --yellow-bg: #fef3c7;
     --yellow-border: #fcd34d;
     --shadow-sm: 0 1px 4px rgba(15,23,42,.06);
-    --shadow: 0 4px 20px rgba(15,23,42,.09);
-    --shadow-lg: 0 8px 32px rgba(15,23,42,.12);
-    --shadow-blue: 0 8px 24px rgba(37,99,235,.15);
-    --radius: 14px;
-    --radius-sm: 9px;
+    --shadow: var(--app-shadow, 0 4px 20px rgba(15,23,42,.09));
+    --shadow-lg: var(--app-shadow, 0 8px 32px rgba(15,23,42,.12));
+    --shadow-blue: 0 8px 24px var(--app-row-selected-strong, rgba(37,99,235,.15));
+    --radius: var(--radius-md, 12px);
+    --radius-sm: 8px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
 body, .content-wrapper {
-    background: var(--bg) !important;
+    background: var(--app-bg, #f0f4fd) !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 
@@ -62,7 +62,7 @@ body, .content-wrapper {
     justify-content: space-between;
     gap: 16px;
     padding: 18px 22px;
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    background: var(--grad-hero, linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%));
     border-radius: var(--radius);
     margin-bottom: 18px;
     position: relative;
@@ -70,20 +70,10 @@ body, .content-wrapper {
     box-shadow: var(--shadow-lg);
 }
 .eb-page-header::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 160px; height: 160px;
-    background: radial-gradient(circle, rgba(59,130,246,.22) 0%, transparent 70%);
-    border-radius: 50%;
+    content: none;
 }
 .eb-page-header::after {
-    content: '';
-    position: absolute;
-    bottom: -30px; left: 30%;
-    width: 120px; height: 120px;
-    background: radial-gradient(circle, rgba(59,130,246,.12) 0%, transparent 70%);
-    border-radius: 50%;
+    content: none;
 }
 
 .eb-header-left {
@@ -136,7 +126,7 @@ body, .content-wrapper {
     background: var(--white);
     border: 1px solid var(--border-blue);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ── SECTION TITLE ──────────────────────── */
@@ -300,7 +290,7 @@ body, .content-wrapper {
     padding: 12px;
     background: var(--blue-lighter);
 }
-.recipient-db-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.recipient-db-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
 .recipient-db-title { font-size: 12.5px; font-weight: 700; color: var(--navy); }
 .recipient-db-count { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
 .recipient-db-filters {
@@ -353,18 +343,34 @@ body, .content-wrapper {
     display: flex;
     align-items: flex-start;
     gap: 9px;
-    padding: 8px 10px;
+    padding: 9px 10px;
     border: 1px solid var(--border);
     border-radius: 9px;
     background: var(--white);
     cursor: pointer;
-    transition: border-color .15s;
+    transition: border-color .15s, background .15s, box-shadow .15s;
 }
-.recipient-db-item:hover { border-color: var(--blue-border); }
+.recipient-db-item:hover { border-color: var(--blue-border); box-shadow: 0 4px 12px rgba(15,23,42,.06); }
 .recipient-db-checkbox { margin-top: 2px; accent-color: var(--blue-primary); }
-.recipient-db-info { display: flex; flex-direction: column; gap: 2px; }
+.recipient-db-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .recipient-db-name { font-size: 12px; font-weight: 700; color: var(--text-dark); }
 .recipient-db-email { font-size: 11px; color: var(--text-muted); }
+.recipient-db-info > .recipient-db-email { display: none; }
+.recipient-db-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.recipient-db-certificate {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    border: 1px solid var(--green-border);
+    border-radius: 999px;
+    background: var(--green-bg);
+    color: var(--green);
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+}
 .recipient-db-empty { font-size: 12px; color: var(--text-muted); font-style: italic; padding: 6px 0; }
 
 /* Excel Import */
@@ -382,6 +388,38 @@ body, .content-wrapper {
 
 /* ── FORM ELEMENTS ──────────────────────── */
 .eb-form-group { margin-bottom: 14px; }
+.email-sender-panel {
+    border: 1px solid var(--border-blue);
+    border-radius: var(--radius-sm);
+    background: var(--blue-lighter);
+    padding: 14px;
+    margin-bottom: 14px;
+}
+.email-sender-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+.email-sender-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.email-sender-note {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+.email-sender-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
 .eb-label {
     display: block;
     font-size: 12px;
@@ -432,7 +470,7 @@ body, .content-wrapper {
 }
 .template-action-link {
     border: 1px solid var(--border-blue);
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-xs, 6px);
     background: var(--white);
     color: var(--blue-primary);
     text-decoration: none;
@@ -454,13 +492,13 @@ body, .content-wrapper {
     overflow-y: auto;
     border: 1px solid var(--border-blue);
     border-radius: var(--radius-sm);
-    background: var(--white);
+    background: var(--blue-lighter);
     padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
-.message-override-item { border: 1px solid var(--border); border-radius: 9px; background: #fafafa; padding: 10px; }
+.message-override-item { border: 1px solid var(--border); border-radius: 9px; background: var(--white); padding: 10px; }
 .message-override-item.mode-template { border-color: #a7f3d0; background: #f0fdf4; }
 .message-override-item.mode-manual { border-color: var(--border-blue); background: var(--blue-lighter); }
 .message-override-item.mode-global { border-color: var(--yellow-border); background: var(--yellow-bg); }
@@ -484,7 +522,7 @@ body, .content-wrapper {
 .message-override-mode label { display: flex; align-items: center; gap: 4px; margin: 0; font-weight: 600; }
 .message-override-text { width: 100%; min-height: 72px; border: 1px solid var(--border-blue); border-radius: 8px; padding: 8px 10px; font-size: 12px; font-family: inherit; outline: none; resize: vertical; transition: border-color .2s; }
 .message-override-text:focus { border-color: var(--blue-mid); }
-.message-override-text:disabled { background: #f3f4f6; color: var(--text-light); }
+.message-override-text:disabled { background: var(--blue-lighter); color: var(--text-light); }
 .message-override-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 .global-default-toggle { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
@@ -566,7 +604,7 @@ body, .content-wrapper {
 .search-input-small::placeholder { color: var(--text-light); }
 .activity-clear-form { display: flex; }
 
-.activity-table { font-size: 12px; }
+.activity-table { font-size: 12px; overflow-x: auto; }
 .activity-table-header {
     display: grid;
     grid-template-columns: 120px 1fr 80px 1fr 180px 1fr 100px 100px 130px;
@@ -580,6 +618,7 @@ body, .content-wrapper {
     font-size: 11px;
     letter-spacing: .04em;
     text-transform: uppercase;
+    min-width: 1080px;
 }
 .activity-table-header > div { color: #ffffff !important; }
 .activity-table-body { max-height: 300px; overflow-y: auto; }
@@ -595,6 +634,7 @@ body, .content-wrapper {
     align-items: center;
     font-size: 12px;
     transition: background .12s;
+    min-width: 1080px;
 }
 .activity-row:hover { background: var(--blue-lighter); }
 .waktu-date { font-size: 11px; color: var(--text-dark); font-weight: 700; margin-bottom: 1px; }
@@ -631,6 +671,26 @@ body, .content-wrapper {
 .status-badge.success { background: var(--green-bg); color: var(--green); }
 .status-badge.failed { background: var(--red-bg); color: var(--red); }
 .status-badge.pending { background: var(--yellow-bg); color: var(--yellow); }
+
+body.dark-mode .eb-wrap {
+    --green-bg: rgba(16, 185, 129, .14);
+    --green-border: rgba(16, 185, 129, .28);
+    --red-bg: rgba(239, 68, 68, .14);
+    --red-border: rgba(239, 68, 68, .28);
+    --yellow-bg: rgba(217, 119, 6, .16);
+    --yellow-border: rgba(217, 119, 6, .3);
+    --shadow-sm: none;
+}
+
+body.dark-mode .eb-card,
+body.dark-mode .eb-tips {
+    box-shadow: none;
+}
+
+body.dark-mode .recipient-db-item:hover,
+body.dark-mode .template-action-link:hover {
+    box-shadow: none;
+}
 
 /* ── TIPS SECTION ───────────────────────── */
 .eb-tips {
@@ -779,10 +839,19 @@ body, .content-wrapper {
                         </div>
                         <div class="recipient-db-list">
                             @forelse($recipients as $recipient)
+                                @php($recipientCertificate = trim((string) ($recipient->getAttribute('sertifikat') ?? '')))
                                 <label class="recipient-db-item" for="recipient_{{ $recipient->id }}" data-kelas="{{ strtolower(trim((string) $recipient->kelas)) }}">
-                                    <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-email="{{ $recipient->email_wali }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}">
+                                    <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-email="{{ $recipient->email_wali }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}" data-certificate="{{ $recipientCertificate }}">
                                     <div class="recipient-db-info">
                                         <div class="recipient-db-name">{{ $recipient->nama_siswa }} ({{ $recipient->kelas }})</div>
+                                        <div class="recipient-db-meta">
+                                            <span class="recipient-db-email">{{ $recipient->nama_wali }} - {{ $recipient->email_wali }}</span>
+                                            @if($recipientCertificate !== '')
+                                                <span class="recipient-db-certificate">
+                                                    <i class="fas fa-certificate"></i> {{ __('app.blast.certificate_auto_badge') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="recipient-db-email">{{ $recipient->nama_wali }} — {{ $recipient->email_wali }}</div>
                                     </div>
                                 </label>
@@ -803,6 +872,43 @@ body, .content-wrapper {
                 {{-- ── RIGHT: PESAN ── --}}
                 <div class="eb-card eb-message-card">
                     <div class="eb-section-title"><i class="fas fa-envelope-open-text"></i> {{ __('app.blast.email_message_box') }}</div>
+                    @php($selectedEmailAccountId = old('email_account_id', $activeEmailAccount?->id))
+
+                    <div class="email-sender-panel">
+                        <div class="email-sender-head">
+                            <div>
+                                <div class="email-sender-title">
+                                    <i class="fas fa-at"></i> {{ __('app.blast.email_sender_account') }}
+                                </div>
+                                <div class="email-sender-note">{{ __('app.blast.email_sender_account_note') }}</div>
+                            </div>
+                            @if(auth()->user()?->role === \App\Enums\User\UserRole::IT_SUPPORT->value)
+                                <a href="{{ route('admin.blast.email.accounts') }}" class="template-action-link">
+                                    {{ __('app.blast.manage_email_accounts') }}
+                                </a>
+                            @endif
+                        </div>
+                        <select name="email_account_id" id="emailAccountSelect" class="eb-select">
+                            <option value="" @selected($selectedEmailAccountId === null || $selectedEmailAccountId === '')>
+                                {{ __('app.blast.email_sender_default_config') }}
+                            </option>
+                            @foreach(($emailAccounts ?? collect()) as $emailAccount)
+                                <option
+                                    value="{{ $emailAccount->id }}"
+                                    @selected((string) $selectedEmailAccountId === (string) $emailAccount->id)
+                                >
+                                    {{ $emailAccount->senderLabel() }}{{ $emailAccount->is_active ? ' - ' . __('app.blast.active') : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="email-sender-meta">
+                            {{ __('app.blast.email_sender_default_meta', [
+                                'from' => $mailConfigSummary['from_address'] ?? '-',
+                                'host' => $mailConfigSummary['host'] ?? '-',
+                                'port' => $mailConfigSummary['port'] ?? '-',
+                            ]) }}
+                        </div>
+                    </div>
 
                     <div class="eb-form-group">
                         <label class="eb-label">{{ __('app.blast.student_name') }}</label>
@@ -1028,12 +1134,21 @@ body, .content-wrapper {
             emailSubjectRequired: @json(__('app.blast.email_subject_required')),
             messageRequired: @json(__('app.blast.message_required')),
             emailSendConfirm: @json(__('app.blast.email_send_confirm')),
+            certificateEmailSubject: @json(__('app.blast.certificate_email_subject')),
+            certificateManualMessage: @json(__('app.blast.certificate_manual_message')),
             sending: @json(__('app.blast.sending')),
         };
 
         function translateBlastTemplate(template, replacements = {}) {
             return String(template || '').replace(/:([A-Za-z0-9_]+)/g, (match, key) => {
                 return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match;
+            });
+        }
+
+        function buildCertificateManualMessage(name, certificate) {
+            return translateBlastTemplate(blastText.certificateManualMessage, {
+                name: name || '-',
+                certificate,
             });
         }
 
@@ -1239,9 +1354,11 @@ body, .content-wrapper {
                 if (!cb.checked) return;
                 const key = `db:${cb.value}`;
                 const label = cb.closest('.recipient-db-item')?.querySelector('.recipient-db-name')?.textContent?.trim() || cb.value;
-                recipients.push({ key, label: `${blastText.dbLabel} - ${label}`, kind: 'db', ref: cb.value });
+                const name = (cb.getAttribute('data-student-name') || label).trim();
+                const certificate = (cb.getAttribute('data-certificate') || '').trim();
+                recipients.push({ key, label: `${blastText.dbLabel} - ${label}`, kind: 'db', ref: cb.value, name, certificate });
             });
-            emails.forEach(email => { recipients.push({ key: `manual:${email.trim().toLowerCase()}`, label: `${blastText.manualLabel} - ${email}`, kind: 'manual', ref: email }); });
+            emails.forEach(email => { recipients.push({ key: `manual:${email.trim().toLowerCase()}`, label: `${blastText.manualLabel} - ${email}`, kind: 'manual', ref: email, name: email, certificate: '' }); });
             return recipients;
         }
 
@@ -1272,8 +1389,21 @@ body, .content-wrapper {
                 recipientMessageMatrix.innerHTML = `<div class="recipient-db-empty">${blastText.emailOverrideEmpty}</div>`;
                 syncMessageOverridesField(); return;
             }
-            recipientMessageMatrix.innerHTML = recipients.map(({ key, label, kind, ref }) => {
+            let hasCertificateMessage = false;
+            recipientMessageMatrix.innerHTML = recipients.map(({ key, label, kind, ref, name, certificate }) => {
                 const state = overrideState[key] || {};
+                overrideState[key] = state;
+                const certificateLink = String(certificate || '').trim();
+                if (kind === 'db' && certificateLink !== '' && !state.certificatePrefilled) {
+                    if (!state.message || state.message.trim() === '') {
+                        state.message = buildCertificateManualMessage(name || label, certificateLink);
+                    }
+                    state.mode = state.mode || 'manual';
+                    state.certificatePrefilled = true;
+                }
+                if (kind === 'db' && certificateLink !== '') {
+                    hasCertificateMessage = true;
+                }
                 const mode = (state.mode || 'manual').toLowerCase();
                 const manualChecked = mode === 'manual'; const templateChecked = mode === 'template'; const globalChecked = mode === 'global';
                 const effectiveMode = templateChecked ? 'template' : (globalChecked ? 'global' : 'manual');
@@ -1286,6 +1416,9 @@ body, .content-wrapper {
                 const textPlaceholder = effectiveMode === 'template' ? blastText.templateModePlaceholder : (effectiveMode === 'global' ? blastText.globalModePlaceholder : blastText.manualModePlaceholder);
                 return `<div class="message-override-item ${modeClass}" data-key="${escapeHtml(key)}" data-kind="${escapeHtml(kind)}" data-ref="${escapeHtml(ref)}"><div class="message-override-head"><div class="message-override-title">${escapeHtml(label)}</div><div class="message-override-actions"><span class="message-override-badge ${modeClass}">${badgeText}</span><button type="button" class="message-override-remove" title="${blastText.delete}">&times;</button></div></div><div class="message-override-mode"><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="manual" ${manualChecked ? 'checked' : ''}> ${blastText.manualMode}</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="template" ${templateChecked ? 'checked' : ''}> ${blastText.templateMode}</label><label><input type="radio" name="${radioGroup}" class="message-override-mode-input" data-mode="global" ${globalChecked ? 'checked' : ''}> ${blastText.globalMode}</label></div><textarea class="message-override-text" placeholder="${textPlaceholder}" ${(templateChecked || globalChecked) ? 'disabled' : ''}>${message}</textarea><div class="message-override-file-wrap"><div class="message-override-file-label">${blastText.recipientCustomFile}</div><input type="hidden" name="attachment_override_keys[${keyToken}]" value="${escapeHtml(key)}"><input type="file" class="message-override-file-input" name="attachment_overrides[${keyToken}][]" multiple><div class="message-override-file-list"></div></div><div class="message-override-hint">${hintText}</div></div>`;
             }).join('');
+            if (hasCertificateMessage && emailSubject && emailSubject.value.trim() === '') {
+                emailSubject.value = blastText.certificateEmailSubject;
+            }
             recipientMessageMatrix.querySelectorAll('.message-override-item').forEach(item => {
                 const key = item.getAttribute('data-key');
                 if (key) renderAttachmentPreview(item, key);
