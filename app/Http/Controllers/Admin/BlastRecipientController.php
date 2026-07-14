@@ -521,11 +521,13 @@ class BlastRecipientController extends Controller
     {
         $validated = $request->validate([
             'q' => 'nullable|string|max:255',
+            'event_name' => 'nullable|string|max:255',
             'status' => 'nullable|in:all,valid,invalid',
             'per_page' => 'nullable|integer|min:1|max:500',
         ]);
 
         $search = trim((string) ($validated['q'] ?? ''));
+        $selectedEventName = trim((string) ($validated['event_name'] ?? ''));
         $selectedStatus = strtolower((string) ($validated['status'] ?? 'all'));
         $allowedPerPage = [20, 50, 100, 200];
         $perPage = (int) ($validated['per_page'] ?? 50);
@@ -542,8 +544,13 @@ class BlastRecipientController extends Controller
                     ->orWhere('instansi', 'like', '%' . $search . '%')
                     ->orWhere('email', 'like', '%' . $search . '%')
                     ->orWhere('sertifikat', 'like', '%' . $search . '%')
+                    ->orWhere('event_name', 'like', '%' . $search . '%')
                     ->orWhere('catatan', 'like', '%' . $search . '%');
             });
+        }
+
+        if ($selectedEventName !== '') {
+            $query->where('event_name', $selectedEventName);
         }
 
         if ($selectedStatus === 'valid') {
@@ -561,16 +568,25 @@ class BlastRecipientController extends Controller
         $totalRecipients = (clone $baseStatsQuery)->count();
         $validCount = (clone $baseStatsQuery)->where('is_valid', true)->count();
         $invalidCount = (clone $baseStatsQuery)->where('is_valid', false)->count();
+        $eventOptions = BlastGeneralRecipient::query()
+            ->whereNotNull('event_name')
+            ->where('event_name', '!=', '')
+            ->select('event_name')
+            ->distinct()
+            ->orderBy('event_name')
+            ->pluck('event_name');
 
         return view('admin.blast.recipients.general', compact(
             'recipients',
             'search',
+            'selectedEventName',
             'selectedStatus',
             'allowedPerPage',
             'perPage',
             'totalRecipients',
             'validCount',
-            'invalidCount'
+            'invalidCount',
+            'eventOptions'
         ));
     }
 
@@ -925,6 +941,7 @@ class BlastRecipientController extends Controller
             'instansi' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'sertifikat' => 'nullable|string|max:2048',
+            'event_name' => 'nullable|string|max:255',
             'catatan' => 'nullable|string',
         ]);
 
@@ -934,6 +951,7 @@ class BlastRecipientController extends Controller
             'instansi' => $data['instansi'] ?? null,
             'email' => $data['email'] ?? null,
             'sertifikat' => $data['sertifikat'] ?? null,
+            'event_name' => $data['event_name'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -945,6 +963,9 @@ class BlastRecipientController extends Controller
 
         $exists = BlastGeneralRecipient::query()
             ->where('whatsapp', $dto->phone)
+            ->where(function (Builder $query) use ($dto): void {
+                $this->applyGeneralEventScope($query, $dto->eventName);
+            })
             ->exists();
 
         if ($exists) {
@@ -959,6 +980,7 @@ class BlastRecipientController extends Controller
             'instansi' => $dto->instansi,
             'email' => $dto->email,
             'sertifikat' => $dto->sertifikat,
+            'event_name' => $dto->eventName,
             'catatan' => $dto->catatan,
             'source' => 'manual:admin_general',
             'is_valid' => true,
@@ -993,6 +1015,7 @@ class BlastRecipientController extends Controller
             'instansi' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'sertifikat' => 'nullable|string|max:2048',
+            'event_name' => 'nullable|string|max:255',
             'catatan' => 'nullable|string',
         ]);
 
@@ -1002,6 +1025,7 @@ class BlastRecipientController extends Controller
             'instansi' => $data['instansi'] ?? null,
             'email' => $data['email'] ?? null,
             'sertifikat' => $data['sertifikat'] ?? null,
+            'event_name' => $data['event_name'] ?? null,
             'catatan' => $data['catatan'] ?? null,
         ]);
 
@@ -1014,6 +1038,9 @@ class BlastRecipientController extends Controller
         $exists = BlastGeneralRecipient::query()
             ->where('id', '!=', $recipient->id)
             ->where('whatsapp', $dto->phone)
+            ->where(function (Builder $query) use ($dto): void {
+                $this->applyGeneralEventScope($query, $dto->eventName);
+            })
             ->exists();
 
         if ($exists) {
@@ -1028,6 +1055,7 @@ class BlastRecipientController extends Controller
             'instansi' => $dto->instansi,
             'email' => $dto->email,
             'sertifikat' => $dto->sertifikat,
+            'event_name' => $dto->eventName,
             'catatan' => $dto->catatan,
             'source' => $recipient->source ?: 'manual:admin_general',
             'is_valid' => true,
@@ -1379,6 +1407,7 @@ class BlastRecipientController extends Controller
     ) {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,csv,xls',
+            'event_name' => 'nullable|string|max:255',
         ]);
 
         $uploadedFile = $request->file('file');
@@ -1389,8 +1418,15 @@ class BlastRecipientController extends Controller
                 ->with('error', 'Import gagal: file tidak ditemukan.');
         }
 
+        $eventName = $this->normalizeGeneralEventName($request->input('event_name'));
+        if ($eventName === null) {
+            $eventName = $this->normalizeGeneralEventName(
+                pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME)
+            );
+        }
+
         try {
-            $result = $importService->importGeneral($uploadedFile->getPathname());
+            $result = $importService->importGeneral($uploadedFile->getPathname(), $eventName);
         } catch (\Throwable $e) {
             Log::error('[GENERAL RECIPIENT IMPORT FAILED]', [
                 'file' => $uploadedFile->getClientOriginalName(),
@@ -1412,6 +1448,9 @@ class BlastRecipientController extends Controller
         $invalidCount = count($result->invalid) + (int) ($summary['invalid'] ?? 0);
         $message = 'Import penerima umum selesai. '
             . "Inserted: {$summary['inserted']}, Duplicate: {$summary['duplicates']}, Invalid: {$invalidCount}";
+        if ($eventName !== null) {
+            $message .= ". Event: {$eventName}";
+        }
 
         if ((int) $summary['inserted'] === 0) {
             return redirect()
@@ -1555,6 +1594,27 @@ class BlastRecipientController extends Controller
         BlastGeneralRecipient::query()->delete();
 
         return back()->with('success', "Semua penerima umum berhasil dihapus ({$total} data).");
+    }
+
+    private function normalizeGeneralEventName(?string $value): ?string
+    {
+        $eventName = trim((string) $value);
+
+        return $eventName !== '' ? $eventName : null;
+    }
+
+    private function applyGeneralEventScope(Builder $query, ?string $eventName): Builder
+    {
+        $normalizedEventName = $this->normalizeGeneralEventName($eventName);
+
+        if ($normalizedEventName !== null) {
+            return $query->where('event_name', $normalizedEventName);
+        }
+
+        return $query->where(function (Builder $builder): void {
+            $builder->whereNull('event_name')
+                ->orWhere('event_name', '');
+        });
     }
 
     private function applyStudentRecipientFilters(

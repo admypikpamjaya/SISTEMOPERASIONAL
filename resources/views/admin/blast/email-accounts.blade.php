@@ -67,6 +67,8 @@
 }
 .email-control-alert.success { color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; }
 .email-control-alert.error { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
+.email-control-alert.page-error { align-items: flex-start; }
+.email-control-alert.page-error i { margin-top: 2px; }
 .email-control-stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -141,6 +143,7 @@
 .email-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .email-badge { border-radius: 999px; padding: 4px 8px; font-size: 10.5px; font-weight: 800; }
 .email-badge.active { background: rgba(34, 197, 94, .12); color: #16a34a; }
+.email-badge.sender { background: var(--app-row-selected, rgba(37, 99, 235, .12)); color: var(--app-accent-strong, #1d4ed8); }
 .email-badge.inactive { background: rgba(100, 116, 139, .12); color: var(--app-text-muted, #64748b); }
 .email-badge.failed { background: rgba(239, 68, 68, .12); color: #dc2626; }
 .email-account-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
@@ -153,6 +156,30 @@
 .email-account-details { border-top: 1px solid var(--app-border, #d7e0ee); padding-top: 10px; }
 .email-account-details summary { cursor: pointer; color: var(--app-accent-strong, #1d4ed8); font-size: 12px; font-weight: 800; margin-bottom: 10px; }
 .email-empty { border: 1px dashed var(--app-border, #d7e0ee); border-radius: 10px; padding: 24px; text-align: center; color: var(--app-text-muted, #64748b); font-size: 13px; }
+.email-success-popup {
+    border-radius: 16px !important;
+    padding: 18px 20px 20px !important;
+    color: var(--app-text, #0f172a) !important;
+}
+.email-success-popup .swal2-title {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+}
+.email-success-popup .swal2-html-container,
+.email-success-popup .swal2-content {
+    color: var(--app-text-soft, #334155) !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+}
+.email-success-confirm {
+    border: none;
+    border-radius: 9px;
+    background: var(--app-accent, #2563eb);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 9px 16px;
+}
 @media (max-width: 1100px) {
     .email-control-grid,
     .email-guide-grid,
@@ -181,13 +208,8 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="email-control-alert success">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
     @if($errors->any())
-        <div class="email-control-alert error">
+        <div class="email-control-alert error page-error">
             <i class="fas fa-exclamation-triangle"></i> {{ $errors->first() }}
         </div>
     @endif
@@ -332,12 +354,14 @@
                                 <div class="email-account-address">{{ $account->email_address }}</div>
                             </div>
                             <div class="email-badges">
-                                <span class="email-badge {{ $account->is_active ? 'active' : 'inactive' }}">
-                                    {{ $account->is_active ? __('app.blast.active') : __('app.blast.inactive') }}
-                                </span>
                                 <span class="email-badge {{ $account->is_enabled ? 'active' : 'inactive' }}">
-                                    {{ $account->is_enabled ? __('app.blast.email_account_enabled_short') : __('app.blast.email_account_disabled_short') }}
+                                    {{ $account->is_enabled ? __('app.blast.email_account_status_enabled') : __('app.blast.email_account_status_disabled') }}
                                 </span>
+                                @if($account->is_active)
+                                    <span class="email-badge sender">
+                                        {{ __('app.blast.email_account_current_sender') }}
+                                    </span>
+                                @endif
                                 @if($account->last_test_status)
                                     <span class="email-badge {{ $account->last_test_status === 'success' ? 'active' : 'failed' }}">
                                         {{ $account->last_test_status === 'success' ? __('app.blast.test_success') : __('app.blast.test_failed') }}
@@ -366,6 +390,20 @@
                         </div>
 
                         <div class="email-account-actions">
+                            <form
+                                method="POST"
+                                action="{{ route('admin.blast.email.accounts.enabled', $account) }}"
+                                data-confirm-message="{{ $account->is_enabled ? __('app.blast.email_account_disable_confirm', ['account' => $account->senderLabel()]) : __('app.blast.email_account_enable_confirm', ['account' => $account->senderLabel()]) }}"
+                                onsubmit="return confirm(this.dataset.confirmMessage)"
+                            >
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="is_enabled" value="{{ $account->is_enabled ? 0 : 1 }}">
+                                <button type="submit" class="email-control-btn {{ $account->is_enabled ? 'light' : 'success' }}">
+                                    <i class="fas {{ $account->is_enabled ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                    {{ $account->is_enabled ? __('app.blast.disable_account') : __('app.blast.enable_account') }}
+                                </button>
+                            </form>
                             @if(!$account->is_active && $account->is_enabled)
                                 <form method="POST" action="{{ route('admin.blast.email.accounts.activate', $account) }}">
                                     @csrf
@@ -454,4 +492,36 @@
     </div>
 </div>
 
+@endsection
+
+@section('js')
+<script>
+    (function () {
+        if (typeof Notification === 'undefined' || typeof Swal === 'undefined') {
+            return;
+        }
+
+        Notification.success = function (message = '', html = '', title = @json(__('app.blast.success_title'))) {
+            const options = {
+                title: title || @json(__('app.blast.success_title')),
+                text: message,
+                icon: 'success',
+                width: '30em',
+                confirmButtonText: @json(__('app.common.close')),
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'email-success-popup',
+                    confirmButton: 'email-success-confirm',
+                },
+            };
+
+            if (html) {
+                delete options.text;
+                options.html = html;
+            }
+
+            return Swal.fire(options);
+        };
+    })();
+</script>
 @endsection

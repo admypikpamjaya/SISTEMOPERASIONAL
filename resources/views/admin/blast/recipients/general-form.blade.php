@@ -255,6 +255,17 @@ body.dark-mode .general-manual-btn.light {
                     </div>
 
                     <div class="general-manual-field">
+                        <label class="general-manual-label">{{ __('app.blast.general_event_name') }}</label>
+                        <input
+                            type="text"
+                            name="event_name"
+                            class="general-manual-input"
+                            value="{{ old('event_name', $recipient?->event_name) }}"
+                            placeholder="{{ __('app.blast.general_event_placeholder') }}"
+                        >
+                    </div>
+
+                    <div class="general-manual-field">
                         <label class="general-manual-label">{{ __('app.blast.whatsapp') }}</label>
                         <input
                             type="text"

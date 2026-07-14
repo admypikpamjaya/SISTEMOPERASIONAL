@@ -22,6 +22,7 @@ class BlastGeneralRecipient extends Model
         'instansi',
         'email',
         'sertifikat',
+        'event_name',
         'catatan',
         'source',
         'is_valid',

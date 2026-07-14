@@ -790,7 +790,7 @@ body,
                         <div class="recipient-db-filters">
                             <input type="text" id="recipientDbSearchInput" class="recipient-db-search-input" placeholder="{{ __('app.blast.search_db_recipients') }}">
                             <select id="recipientDbClassFilter" class="recipient-db-class-filter">
-                                <option value="">{{ __('app.blast.all_classes') }}</option>
+                                <option value="">{{ __('app.blast.all_classes_or_events') }}</option>
                                 @foreach(($recipientClasses ?? collect()) as $kelas)
                                     <option value="{{ strtolower(trim((string) $kelas)) }}">{{ $kelas }}</option>
                                 @endforeach

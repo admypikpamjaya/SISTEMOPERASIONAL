@@ -238,7 +238,7 @@
 
 .general-filter {
     display: grid;
-    grid-template-columns: minmax(220px, 1.3fr) minmax(140px, .6fr) minmax(112px, .45fr) auto auto;
+    grid-template-columns: minmax(220px, 1.15fr) minmax(190px, .9fr) minmax(140px, .6fr) minmax(112px, .45fr) auto auto;
     align-items: flex-end;
     gap: 8px;
 }
@@ -288,6 +288,17 @@
     cursor: pointer;
 }
 
+.general-import-form {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.general-event-input {
+    width: 250px;
+}
+
 .general-import-wrap {
     align-items: flex-end;
     justify-content: flex-end;
@@ -303,7 +314,7 @@
 .general-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1120px;
+    min-width: 1280px;
 }
 
 .general-table th {
@@ -477,6 +488,10 @@ body.dark-mode .general-table td {
     .general-import-wrap {
         justify-content: flex-start;
     }
+
+    .general-event-input {
+        width: 100%;
+    }
 }
 
 @media (max-width: 640px) {
@@ -562,6 +577,15 @@ body.dark-mode .general-table td {
                         <input type="text" name="q" value="{{ $search ?? '' }}" class="general-input" placeholder="{{ __('app.blast.search_general_placeholder') }}">
                     </div>
                     <div class="general-field">
+                        <label class="general-label">{{ __('app.blast.general_event_name') }}</label>
+                        <select name="event_name" class="general-select">
+                            <option value="" @selected(($selectedEventName ?? '') === '')>{{ __('app.blast.all_general_events') }}</option>
+                            @foreach(($eventOptions ?? collect()) as $eventName)
+                                <option value="{{ $eventName }}" @selected(($selectedEventName ?? '') === $eventName)>{{ $eventName }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="general-field">
                         <label class="general-label">{{ __('app.blast.table_status') }}</label>
                         <select name="status" class="general-select">
                             <option value="all" @selected(($selectedStatus ?? 'all') === 'all')>{{ __('app.blast.all_statuses') }}</option>
@@ -597,8 +621,16 @@ body.dark-mode .general-table td {
                     <a href="{{ route('admin.blast.recipients.templates.download', 'umum') }}" class="general-btn light">
                         <i class="fas fa-file-download"></i> {{ __('app.blast.download_general_recipient_template') }}
                     </a>
-                    <form action="{{ route('admin.blast.recipients.general.import') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('admin.blast.recipients.general.import') }}" method="POST" enctype="multipart/form-data" class="general-import-form">
                         @csrf
+                        <input
+                            type="text"
+                            name="event_name"
+                            class="general-input general-event-input"
+                            value="{{ old('event_name') }}"
+                            placeholder="{{ __('app.blast.general_event_placeholder') }}"
+                            title="{{ __('app.blast.general_import_event_label') }}"
+                        >
                         <label class="general-btn light general-file-btn">
                             <i class="fas fa-file-import"></i> {{ __('app.blast.import_general_excel') }}
                             <input
@@ -633,6 +665,7 @@ body.dark-mode .general-table td {
                             </th>
                             <th style="width:56px;">{{ __('app.blast.no') }}</th>
                             <th>{{ __('app.blast.general_name') }}</th>
+                            <th>{{ __('app.blast.general_event_name') }}</th>
                             <th>{{ __('app.blast.whatsapp') }}</th>
                             <th>{{ __('app.blast.institution') }}</th>
                             <th>{{ __('app.blast.email') }}</th>
@@ -656,6 +689,7 @@ body.dark-mode .general-table td {
                                 </td>
                                 <td>{{ ($recipients->currentPage() - 1) * $recipients->perPage() + $loop->iteration }}</td>
                                 <td><div class="general-name">{{ $recipient->nama }}</div></td>
+                                <td>{{ trim((string) ($recipient->event_name ?? '')) !== '' ? $recipient->event_name : '-' }}</td>
                                 <td>{{ $recipient->whatsapp ?? '-' }}</td>
                                 <td>{{ $recipient->instansi ?? '-' }}</td>
                                 <td>{{ $recipient->email ?? '-' }}</td>
@@ -701,7 +735,7 @@ body.dark-mode .general-table td {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="general-empty">
+                                <td colspan="11" class="general-empty">
                                     {{ __('app.blast.no_general_recipient_data') }}
                                 </td>
                             </tr>

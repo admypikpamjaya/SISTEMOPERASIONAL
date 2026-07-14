@@ -965,6 +965,44 @@ class BlastController extends Controller
         );
     }
 
+    public function toggleEmailAccountEnabled(Request $request, BlastEmailAccount $emailAccount)
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        $data = $request->validate([
+            'is_enabled' => 'required|boolean',
+        ]);
+
+        $isEnabled = (bool) $data['is_enabled'];
+        $wasActive = (bool) $emailAccount->is_active;
+
+        $emailAccount->update([
+            'is_enabled' => $isEnabled,
+            'is_active' => $isEnabled ? $emailAccount->is_active : false,
+        ]);
+
+        if (!$isEnabled && $wasActive) {
+            BlastEmailAccount::query()
+                ->enabled()
+                ->orderBy('label')
+                ->first()
+                ?->update(['is_active' => true]);
+        }
+
+        if ($isEnabled && !BlastEmailAccount::query()->enabled()->active()->exists()) {
+            $emailAccount->update(['is_active' => true]);
+        }
+
+        $messageKey = $isEnabled
+            ? 'email_account_enabled_success'
+            : 'email_account_disabled_success';
+
+        return back()->with(
+            'success',
+            __('app.blast.' . $messageKey, ['account' => $emailAccount->fresh()?->senderLabel() ?? $emailAccount->senderLabel()])
+        );
+    }
+
     public function testEmailAccount(
         Request $request,
         BlastEmailAccount $emailAccount,
@@ -3475,12 +3513,13 @@ class BlastController extends Controller
     private function toPseudoRecipientFromGeneral(
         BlastGeneralRecipient $recipient
     ): BlastRecipient {
+        $eventName = trim((string) ($recipient->event_name ?? ''));
+        $institution = trim((string) ($recipient->instansi ?? ''));
+
         $pseudoRecipient = new BlastRecipient([
             'id' => $recipient->id,
             'nama_siswa' => (string) $recipient->nama,
-            'kelas' => trim((string) ($recipient->instansi ?? '')) !== ''
-                ? (string) $recipient->instansi
-                : 'Umum',
+            'kelas' => $eventName !== '' ? $eventName : ($institution !== '' ? $institution : 'Umum'),
             'nama_wali' => (string) $recipient->nama,
             'wa_wali' => $recipient->whatsapp,
             'wa_wali_2' => null,
@@ -3491,6 +3530,7 @@ class BlastController extends Controller
         ]);
 
         $pseudoRecipient->setAttribute('sertifikat', $recipient->sertifikat);
+        $pseudoRecipient->setAttribute('event_name', $eventName !== '' ? $eventName : null);
 
         return $pseudoRecipient;
     }

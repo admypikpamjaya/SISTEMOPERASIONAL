@@ -22,6 +22,17 @@ class GeneralRecipientBulkSaver
             if (!empty($dto->phone)) {
                 $exists = BlastGeneralRecipient::query()
                     ->where('whatsapp', $dto->phone)
+                    ->where(function ($query) use ($dto): void {
+                        $eventName = trim((string) ($dto->eventName ?? ''));
+
+                        if ($eventName !== '') {
+                            $query->where('event_name', $eventName);
+                            return;
+                        }
+
+                        $query->whereNull('event_name')
+                            ->orWhere('event_name', '');
+                    })
                     ->exists();
             }
 
@@ -36,6 +47,7 @@ class GeneralRecipientBulkSaver
                 'instansi' => $dto->instansi,
                 'email' => $dto->email,
                 'sertifikat' => $dto->sertifikat,
+                'event_name' => $dto->eventName,
                 'catatan' => $dto->catatan,
                 'source' => 'excel:penerima_umum',
                 'is_valid' => $isValid,

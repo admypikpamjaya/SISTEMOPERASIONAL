@@ -746,6 +746,9 @@ Route::prefix('admin')
                 Route::post('/email/accounts/{emailAccount}/activate', [BlastController::class, 'activateEmailAccount'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('email.accounts.activate');
+                Route::patch('/email/accounts/{emailAccount}/enabled', [BlastController::class, 'toggleEmailAccountEnabled'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('email.accounts.enabled');
                 Route::post('/email/accounts/{emailAccount}/test', [BlastController::class, 'testEmailAccount'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('email.accounts.test');

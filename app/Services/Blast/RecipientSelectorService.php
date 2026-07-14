@@ -200,15 +200,19 @@ class RecipientSelectorService
 
     private function mapGeneralRecipient(BlastGeneralRecipient $recipient): array
     {
+        $eventName = trim((string) ($recipient->event_name ?? ''));
+        $institution = trim((string) ($recipient->instansi ?? ''));
+
         return [
             'id' => $recipient->id,
             'nama_siswa' => $recipient->nama,
-            'kelas' => $recipient->instansi ?: 'Umum',
+            'kelas' => $eventName !== '' ? $eventName : ($institution !== '' ? $institution : 'Umum'),
             'nama_wali' => $recipient->nama,
             'email_wali' => $recipient->email,
             'wa_wali' => $recipient->whatsapp,
             'wa_wali_2' => null,
             'sertifikat' => $recipient->sertifikat,
+            'event_name' => $eventName !== '' ? $eventName : null,
             'source' => 'umum',
         ];
     }

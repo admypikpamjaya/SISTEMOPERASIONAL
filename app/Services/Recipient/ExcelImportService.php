@@ -54,7 +54,7 @@ class ExcelImportService
         return $result;
     }
 
-    public function importGeneral(string $path): RecipientImportResultDTO
+    public function importGeneral(string $path, ?string $eventName = null): RecipientImportResultDTO
     {
         if (!file_exists($path)) {
             throw new RuntimeException("File tidak ditemukan: {$path}");
@@ -68,7 +68,7 @@ class ExcelImportService
                 continue;
             }
 
-            $this->appendGeneralRowsToResult($rows, $result);
+            $this->appendGeneralRowsToResult($rows, $result, $eventName);
         }
 
         return $result;
@@ -165,7 +165,11 @@ class ExcelImportService
     /**
      * @param array<int, array<int, mixed>> $rows
      */
-    private function appendGeneralRowsToResult(array $rows, RecipientImportResultDTO $result): void
+    private function appendGeneralRowsToResult(
+        array $rows,
+        RecipientImportResultDTO $result,
+        ?string $eventName
+    ): void
     {
         [$headerMap, $headerIndex] = $this->resolveHeaderMap(
             $rows,
@@ -190,6 +194,7 @@ class ExcelImportService
                 'instansi' => $this->resolveCell($row, $headerMap, 'instansi', null, false),
                 'email' => $this->resolveCell($row, $headerMap, 'email', null, false),
                 'sertifikat' => $this->resolveCell($row, $headerMap, 'sertifikat', null, false),
+                'event_name' => $this->resolveCell($row, $headerMap, 'event_name', null, false) ?? $eventName,
                 'catatan' => $this->resolveCell($row, $headerMap, 'catatan', 2, $usePositionalFallback),
             ];
 
@@ -383,6 +388,14 @@ class ExcelImportService
 
         if ($normalized === '') {
             return null;
+        }
+
+        if (
+            in_array($normalized, ['event', 'namaevent', 'namakegiatan', 'kegiatan', 'import', 'namaimport'], true) ||
+            str_contains($normalized, 'event') ||
+            str_contains($normalized, 'kegiatan')
+        ) {
+            return 'event_name';
         }
 
         if (
