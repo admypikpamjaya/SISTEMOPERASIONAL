@@ -103,7 +103,7 @@ class AssetService
             $row = array_combine($headers, $row);
 
             if(empty($row['account_code'])) 
-                throw new \Exception("Kode akun kosong di baris ke-{$rowNumber}");
+                throw new \Exception("Kode aset kosong di baris ke-{$rowNumber}");
 
             if(empty($row['location'])) 
                 throw new \Exception("Lokasi kosong di baris ke-{$rowNumber}");
@@ -1349,7 +1349,7 @@ class AssetService
     private function assertAcSpreadsheetRowRequirements(array $payload, string $sheetTitle, int $rowNumber): void
     {
         $requiredFields = [
-            'account_code' => 'Kode akun',
+            'account_code' => 'Kode aset',
             'location' => 'Lokasi',
             'dimension' => 'Ukuran dimensi',
             'power_rating' => 'Unit / watt',

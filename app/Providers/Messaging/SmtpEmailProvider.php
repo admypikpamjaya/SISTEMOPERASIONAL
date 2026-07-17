@@ -61,7 +61,7 @@ class SmtpEmailProvider implements EmailProviderInterface
                 'error' => $e->getMessage(),
             ]);
 
-            return false;
+            throw new RuntimeException($e->getMessage(), 0, $e);
         }
     }
 
@@ -269,7 +269,7 @@ class SmtpEmailProvider implements EmailProviderInterface
                 'encryption' => $context['encryption'],
                 'username' => $context['username'] !== '' ? $context['username'] : null,
                 'password' => $context['password'] !== '' ? $context['password'] : null,
-                'timeout' => null,
+                'timeout' => $this->mailTimeout(),
                 'local_domain' => $context['local_domain'],
             ],
         ]);
@@ -277,6 +277,13 @@ class SmtpEmailProvider implements EmailProviderInterface
         app('mail.manager')->purge($mailerName);
 
         return $mailerName;
+    }
+
+    private function mailTimeout(): int
+    {
+        $timeout = (int) config('mail.mailers.smtp.timeout', 30);
+
+        return $timeout > 0 ? $timeout : 30;
     }
 
     private function reloadMailConfigurationFromDotEnv(): ?array

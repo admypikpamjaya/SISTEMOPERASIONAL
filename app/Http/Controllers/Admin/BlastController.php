@@ -847,11 +847,14 @@ class BlastController extends Controller
         $activityData = $this->buildChannelActivityData('EMAIL', $recipients);
         $activityLogs = $activityData['logs'];
         $activityStats = $activityData['stats'];
-        $emailAccounts = BlastEmailAccount::query()
-            ->enabled()
-            ->orderByDesc('is_active')
-            ->orderBy('label')
-            ->get();
+        $emailAccountControlEnabled = $this->emailAccountControlEnabled();
+        $emailAccounts = $emailAccountControlEnabled
+            ? BlastEmailAccount::query()
+                ->enabled()
+                ->orderByDesc('is_active')
+                ->orderBy('label')
+                ->get()
+            : collect();
         $activeEmailAccount = $emailAccounts->firstWhere('is_active', true);
         $mailConfigSummary = $this->mailConfigSummary();
 
@@ -866,6 +869,7 @@ class BlastController extends Controller
                 'activityStats',
                 'emailAccounts',
                 'activeEmailAccount',
+                'emailAccountControlEnabled',
                 'mailConfigSummary'
             )
         );
@@ -1440,6 +1444,10 @@ class BlastController extends Controller
                     messageOverrides: $messageOverrides,
                     tunggakanContextService: $tunggakanContextService
                 );
+                $message = $this->appendCertificateToWhatsAppMessage(
+                    $message,
+                    (string) ($generalRecipient->sertifikat ?? '')
+                );
 
                 if ($blastMessage === null) {
                     $blastMessage = $this->createBlastMessageRecord(
@@ -1666,6 +1674,7 @@ class BlastController extends Controller
                     $payload->setMeta('sent_by', Auth::id());
                     $payload->setMeta('recipient_id', $generalRecipient->id);
                     $payload->setMeta('recipient_source', 'umum');
+                    $payload->setMeta('certificate_link', trim((string) ($generalRecipient->sertifikat ?? '')) ?: null);
                     $payload->setMeta('blast_log_id', $blastLog->id);
                     $payload->setMeta('blast_message_id', $blastMessage->id);
                     $payload->setMeta('queue_name', $campaignOptions['queue_name']);
@@ -2751,10 +2760,19 @@ class BlastController extends Controller
 
     private function ensureEmailAccountControlAccess(): void
     {
+        if (!$this->emailAccountControlEnabled()) {
+            abort(404);
+        }
+
         $user = Auth::user();
         if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
             abort(403);
         }
+    }
+
+    private function emailAccountControlEnabled(): bool
+    {
+        return (bool) config('blast.email_accounts.enabled', false);
     }
 
     private function validatedEmailAccountData(
@@ -2806,13 +2824,14 @@ class BlastController extends Controller
 
     private function resolveSelectedEmailAccount(?string $emailAccountId): ?BlastEmailAccount
     {
+        if (!$this->emailAccountControlEnabled()) {
+            return null;
+        }
+
         $emailAccountId = trim((string) $emailAccountId);
 
         if ($emailAccountId === '') {
-            return BlastEmailAccount::query()
-                ->enabled()
-                ->active()
-                ->first();
+            return null;
         }
 
         $emailAccount = BlastEmailAccount::query()
@@ -2991,6 +3010,24 @@ class BlastController extends Controller
         );
 
         $normalizedChannel = strtoupper($channel);
+        if ($normalizedChannel === 'EMAIL' && $this->shouldQueueEmailBlast()) {
+            $this->dispatchBlastDeliveryJob(
+                $job,
+                $campaignOptions,
+                $dispatchIndex
+            );
+            return;
+        }
+
+        if ($normalizedChannel === 'WHATSAPP' && $this->shouldQueueWhatsAppBlast()) {
+            $this->dispatchBlastDeliveryJob(
+                $job,
+                $campaignOptions,
+                $dispatchIndex
+            );
+            return;
+        }
+
         if (!in_array($normalizedChannel, ['WHATSAPP', 'EMAIL'], true) && !empty($campaignOptions['queue_name'])) {
             $job->onQueue((string) $campaignOptions['queue_name']);
         }
@@ -3011,6 +3048,39 @@ class BlastController extends Controller
 
         dispatch($job);
         $dispatchIndex++;
+    }
+
+    private function dispatchBlastDeliveryJob(
+        QueueBlastDeliveryJob $job,
+        array $campaignOptions,
+        int &$dispatchIndex
+    ): void {
+        if (!empty($campaignOptions['queue_name'])) {
+            $job->onQueue((string) $campaignOptions['queue_name']);
+        }
+
+        $delaySeconds = $this->calculateDispatchDelaySeconds(
+            $campaignOptions,
+            $dispatchIndex
+        );
+        if ($delaySeconds > 0) {
+            $job->delay(now(self::WIB_TIMEZONE)->addSeconds($delaySeconds));
+        }
+
+        dispatch($job);
+        $dispatchIndex++;
+    }
+
+    private function shouldQueueEmailBlast(): bool
+    {
+        return strtolower((string) config('blast.dispatch.email_mode', 'queue')) !== 'sync'
+            && strtolower((string) config('queue.default', 'sync')) !== 'sync';
+    }
+
+    private function shouldQueueWhatsAppBlast(): bool
+    {
+        return strtolower((string) config('blast.dispatch.whatsapp_mode', 'sync')) !== 'sync'
+            && strtolower((string) config('queue.default', 'sync')) !== 'sync';
     }
 
     private function calculateDispatchDelaySeconds(
@@ -3140,6 +3210,22 @@ class BlastController extends Controller
     }
 
     private function appendCertificateToEmailMessage(
+        string $message,
+        string $certificate
+    ): string {
+        $certificate = trim($certificate);
+        if ($certificate === '' || str_contains($message, $certificate)) {
+            return $message;
+        }
+
+        if (trim($message) === '') {
+            return __('app.blast.certificate_email_label') . ":\n" . $certificate;
+        }
+
+        return rtrim($message) . "\n\n" . __('app.blast.certificate_email_label') . ":\n" . $certificate;
+    }
+
+    private function appendCertificateToWhatsAppMessage(
         string $message,
         string $certificate
     ): string {

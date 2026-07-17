@@ -21,21 +21,21 @@ class AirConditionerDetail extends Model
     protected function brand(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => $value ? strtoupper(trim($value)) : null
+            set: fn($value) => $value ? trim((string) $value) : null
         );
     }
 
     protected function dimension(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => $value ? strtoupper(trim($value)) : null
+            set: fn($value) => $value ? trim((string) $value) : null
         );
     }
 
     protected function powerRating(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => $value ? strtoupper(trim($value)) : null
+            set: fn($value) => $value ? trim((string) $value) : null
         );
     }
 

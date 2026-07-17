@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @php
+    use App\Enums\Asset\AssetCategory;
     use Illuminate\Support\Str;
 
     $basicFields = [
@@ -34,6 +35,97 @@
     };
 
     $detail = $asset->detail ?? [];
+    $detailLabelMap = match ($asset->category) {
+        AssetCategory::AC, AssetCategory::OTHER => [
+            'brand' => __('app.asset.ac_fields.brand'),
+            'dimension' => __('app.asset.ac_fields.dimension'),
+            'power_rating' => __('app.asset.ac_fields.power_rating'),
+        ],
+        AssetCategory::VEHICLE => collect([
+            'vehicle_type',
+            'vehicle_name',
+            'brand',
+            'model_type',
+            'vehicle_year',
+            'color',
+            'license_plate',
+            'chassis_number',
+            'engine_number',
+            'bpkb_name',
+            'stnk_valid_until',
+            'tax_valid_until',
+            'kilometer',
+            'acquisition_date',
+            'asset_account_code',
+            'useful_life_years',
+            'accumulated_depreciation',
+            'book_value',
+            'pic',
+            'condition',
+            'status',
+            'notes',
+            'source_data',
+        ])->mapWithKeys(fn (string $field): array => [$field => __('app.asset.vehicle_fields.' . $field)])->all(),
+        AssetCategory::ELECTRONIC => collect([
+            'asset_code',
+            'electronic_type',
+            'asset_name',
+            'brand',
+            'model_type',
+            'specification',
+            'serial_number',
+            'acquisition_date',
+            'asset_account_code',
+            'useful_life_years',
+            'accumulated_depreciation',
+            'book_value',
+            'condition',
+            'status',
+            'pic',
+            'notes',
+            'source_data',
+        ])->mapWithKeys(fn (string $field): array => [$field => __('app.asset.electronic_fields.' . $field)])->all(),
+        AssetCategory::ROOM_INVENTORY => collect([
+            'asset_code',
+            'item_type',
+            'item_name',
+            'material',
+            'size',
+            'quantity',
+            'acquisition_date',
+            'unit_price',
+            'asset_account_code',
+            'useful_life_years',
+            'accumulated_depreciation',
+            'book_value',
+            'condition',
+            'status',
+            'notes',
+            'source_data',
+        ])->mapWithKeys(fn (string $field): array => [$field => __('app.asset.room_inventory_fields.' . $field)])->all(),
+        AssetCategory::BUILDING_INFRASTRUCTURE => collect([
+            'asset_code',
+            'asset_name',
+            'asset_type',
+            'land_area',
+            'building_area',
+            'volume_size',
+            'document_number',
+            'acquisition_date',
+            'asset_account_code',
+            'useful_life_years',
+            'initial_accumulated_depreciation',
+            'current_year_depreciation',
+            'accumulated_depreciation',
+            'book_value',
+            'condition',
+            'status',
+            'responsible_person',
+            'notes',
+            'source_data',
+        ])->mapWithKeys(fn (string $field): array => [$field => __('app.asset.building_infrastructure_fields.' . $field)])->all(),
+        default => [],
+    };
     $isListDetail = is_array($detail)
         && $detail !== []
         && array_keys($detail) === range(0, count($detail) - 1);
@@ -42,7 +134,7 @@
     if ($isListDetail) {
         foreach ($detail as $index => $item) {
             $detailBlocks[] = [
-                'title' => __('app.asset.detail_item', ['number' => $index + 1]),
+                'title' => data_get($item, 'component_type') ?: __('app.asset.detail_item', ['number' => $index + 1]),
                 'items' => is_array($item) ? $item : ['value' => $item],
             ];
         }
@@ -145,8 +237,8 @@
         color: #64748b;
         font-size: .72rem;
         font-weight: 800;
-        letter-spacing: .03em;
-        text-transform: uppercase;
+        letter-spacing: 0;
+        text-transform: none;
     }
     .asset-qr-value {
         display: block;
@@ -247,9 +339,9 @@
                     </h2>
                     <div class="asset-qr-grid">
                         @foreach($block['items'] as $key => $value)
-                            @continue(in_array($key, ['id', 'asset_id', 'created_at', 'updated_at'], true))
+                            @continue(in_array($key, ['id', 'asset_id', 'created_at', 'updated_at', 'component_type'], true))
                             <div class="asset-qr-field">
-                                <span class="asset-qr-label">{{ Str::headline((string) $key) }}</span>
+                                <span class="asset-qr-label">{{ $detailLabelMap[$key] ?? Str::headline((string) $key) }}</span>
                                 <span class="asset-qr-value">{{ $normalizeDetailValue($value) }}</span>
                             </div>
                         @endforeach

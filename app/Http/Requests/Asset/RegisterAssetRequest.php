@@ -45,8 +45,8 @@ class RegisterAssetRequest extends FormRequest
             'category.required' => 'Kategori tidak boleh kosong',
             'category.*' => 'Kategori tidak valid',
 
-            'account_code.required' => 'Kode akun tidak boleh kosong',
-            'account_code.unique' => 'Kode akun sudah terdaftar',
+            'account_code.required' => 'Kode aset tidak boleh kosong',
+            'account_code.unique' => 'Kode aset sudah terdaftar',
 
             'asset_serial_number.unique' => 'Nomor serial sudah terdaftar',
 

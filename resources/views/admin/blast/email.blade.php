@@ -872,43 +872,47 @@ body.dark-mode .template-action-link:hover {
                 {{-- ── RIGHT: PESAN ── --}}
                 <div class="eb-card eb-message-card">
                     <div class="eb-section-title"><i class="fas fa-envelope-open-text"></i> {{ __('app.blast.email_message_box') }}</div>
-                    @php($selectedEmailAccountId = old('email_account_id', $activeEmailAccount?->id))
+                    @php($selectedEmailAccountId = old('email_account_id', ''))
 
-                    <div class="email-sender-panel">
-                        <div class="email-sender-head">
-                            <div>
-                                <div class="email-sender-title">
-                                    <i class="fas fa-at"></i> {{ __('app.blast.email_sender_account') }}
+                    @if($emailAccountControlEnabled ?? false)
+                        <div class="email-sender-panel">
+                            <div class="email-sender-head">
+                                <div>
+                                    <div class="email-sender-title">
+                                        <i class="fas fa-at"></i> {{ __('app.blast.email_sender_account') }}
+                                    </div>
+                                    <div class="email-sender-note">{{ __('app.blast.email_sender_account_note') }}</div>
                                 </div>
-                                <div class="email-sender-note">{{ __('app.blast.email_sender_account_note') }}</div>
+                                @if(auth()->user()?->role === \App\Enums\User\UserRole::IT_SUPPORT->value)
+                                    <a href="{{ route('admin.blast.email.accounts') }}" class="template-action-link">
+                                        {{ __('app.blast.manage_email_accounts') }}
+                                    </a>
+                                @endif
                             </div>
-                            @if(auth()->user()?->role === \App\Enums\User\UserRole::IT_SUPPORT->value)
-                                <a href="{{ route('admin.blast.email.accounts') }}" class="template-action-link">
-                                    {{ __('app.blast.manage_email_accounts') }}
-                                </a>
-                            @endif
-                        </div>
-                        <select name="email_account_id" id="emailAccountSelect" class="eb-select">
-                            <option value="" @selected($selectedEmailAccountId === null || $selectedEmailAccountId === '')>
-                                {{ __('app.blast.email_sender_default_config') }}
-                            </option>
-                            @foreach(($emailAccounts ?? collect()) as $emailAccount)
-                                <option
-                                    value="{{ $emailAccount->id }}"
-                                    @selected((string) $selectedEmailAccountId === (string) $emailAccount->id)
-                                >
-                                    {{ $emailAccount->senderLabel() }}{{ $emailAccount->is_active ? ' - ' . __('app.blast.active') : '' }}
+                            <select name="email_account_id" id="emailAccountSelect" class="eb-select">
+                                <option value="" @selected($selectedEmailAccountId === null || $selectedEmailAccountId === '')>
+                                    {{ __('app.blast.email_sender_default_config') }}
                                 </option>
-                            @endforeach
-                        </select>
-                        <div class="email-sender-meta">
-                            {{ __('app.blast.email_sender_default_meta', [
-                                'from' => $mailConfigSummary['from_address'] ?? '-',
-                                'host' => $mailConfigSummary['host'] ?? '-',
-                                'port' => $mailConfigSummary['port'] ?? '-',
-                            ]) }}
+                                @foreach(($emailAccounts ?? collect()) as $emailAccount)
+                                    <option
+                                        value="{{ $emailAccount->id }}"
+                                        @selected((string) $selectedEmailAccountId === (string) $emailAccount->id)
+                                    >
+                                        {{ $emailAccount->senderLabel() }}{{ $emailAccount->is_active ? ' - ' . __('app.blast.active') : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="email-sender-meta">
+                                {{ __('app.blast.email_sender_default_meta', [
+                                    'from' => $mailConfigSummary['from_address'] ?? '-',
+                                    'host' => $mailConfigSummary['host'] ?? '-',
+                                    'port' => $mailConfigSummary['port'] ?? '-',
+                                ]) }}
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <input type="hidden" name="email_account_id" value="">
+                    @endif
 
                     <div class="eb-form-group">
                         <label class="eb-label">{{ __('app.blast.student_name') }}</label>

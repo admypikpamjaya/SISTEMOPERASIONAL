@@ -48,8 +48,8 @@ class EditAssetRequest extends FormRequest
             'category.required' => 'Field kategori wajib diisi',
             'category.*' => 'Kategori tidak valid',
 
-            'account_code.required' => 'Field kode akun wajib diisi',
-            'account_code.unique' => 'Kode akun sudah digunakan',
+            'account_code.required' => 'Field kode aset wajib diisi',
+            'account_code.unique' => 'Kode aset sudah digunakan',
 
             'asset_serial_number.unique' => 'Nomor serial sudah digunakan',
 

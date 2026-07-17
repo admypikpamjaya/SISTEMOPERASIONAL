@@ -357,6 +357,21 @@ body,
 .recipient-db-checkbox { margin-top: 3px; accent-color: var(--blue-primary); }
 .recipient-db-name  { font-size: 12px; font-weight: 700; color: var(--text-dark); }
 .recipient-db-phone { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.recipient-db-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.recipient-db-certificate {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    border: 1px solid var(--green-border);
+    border-radius: 999px;
+    background: var(--green-bg);
+    color: var(--green);
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+}
 .recipient-db-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
 .recipient-db-info  { display: flex; flex-direction: column; gap: 2px; }
 
@@ -798,11 +813,19 @@ body,
                         </div>
                         <div class="recipient-db-list">
                             @forelse($recipients as $recipient)
+                                @php($recipientCertificate = trim((string) ($recipient->getAttribute('sertifikat') ?? '')))
                                 <label class="recipient-db-item" for="recipient_{{ $recipient->id }}" data-kelas="{{ strtolower(trim((string) $recipient->kelas)) }}">
-                                    <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-phone="{{ $recipient->wa_wali }}" data-phone-2="{{ $recipient->wa_wali_2 }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}">
+                                    <input type="checkbox" class="recipient-db-checkbox" id="recipient_{{ $recipient->id }}" name="recipient_ids[]" value="{{ $recipient->id }}" data-phone="{{ $recipient->wa_wali }}" data-phone-2="{{ $recipient->wa_wali_2 }}" data-student-name="{{ $recipient->nama_siswa }}" data-student-class="{{ $recipient->kelas }}" data-parent-name="{{ $recipient->nama_wali }}" data-certificate="{{ $recipientCertificate }}">
                                     <div class="recipient-db-info">
                                         <div class="recipient-db-name">{{ $recipient->nama_siswa }} ({{ $recipient->kelas }})</div>
-                                        <div class="recipient-db-phone">{{ $recipient->nama_wali }} - {{ trim(implode(' / ', array_filter([$recipient->wa_wali, $recipient->wa_wali_2]))) }}</div>
+                                        <div class="recipient-db-meta">
+                                            <span class="recipient-db-phone">{{ $recipient->nama_wali }} - {{ trim(implode(' / ', array_filter([$recipient->wa_wali, $recipient->wa_wali_2]))) }}</span>
+                                            @if($recipientCertificate !== '')
+                                                <span class="recipient-db-certificate">
+                                                    <i class="fas fa-certificate"></i> {{ __('app.blast.certificate_auto_badge') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </label>
                             @empty
@@ -1127,12 +1150,20 @@ body,
             recipientRequired: @json(__('app.blast.recipient_required')),
             messageRequired: @json(__('app.blast.message_required')),
             sendConfirm: @json(__('app.blast.send_confirm')),
+            certificateManualMessage: @json(__('app.blast.certificate_manual_message')),
             sending: @json(__('app.blast.sending')),
         };
 
         function translateBlastTemplate(template, replacements = {}) {
             return String(template || '').replace(/:([A-Za-z0-9_]+)/g, (match, key) => {
                 return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match;
+            });
+        }
+
+        function buildCertificateManualMessage(name, certificate) {
+            return translateBlastTemplate(blastText.certificateManualMessage, {
+                name: name || '-',
+                certificate,
             });
         }
 
@@ -1628,10 +1659,12 @@ body,
                 if (!cb.checked) return;
                 const key = 'db:' + cb.value;
                 const label = cb.closest('.recipient-db-item')?.querySelector('.recipient-db-name')?.textContent?.trim() || cb.value;
-                recipients.push({ key, label: blastText.dbLabel + ' - ' + label, kind: 'db', ref: cb.value });
+                const name = (cb.getAttribute('data-student-name') || label).trim();
+                const certificate = (cb.getAttribute('data-certificate') || '').trim();
+                recipients.push({ key, label: blastText.dbLabel + ' - ' + label, kind: 'db', ref: cb.value, name, certificate });
             });
             recipientNumbers.forEach(phone => {
-                recipients.push({ key: 'manual:' + phone, label: blastText.manualLabel + ' - ' + phone, kind: 'manual', ref: phone });
+                recipients.push({ key: 'manual:' + phone, label: blastText.manualLabel + ' - ' + phone, kind: 'manual', ref: phone, name: phone, certificate: '' });
             });
             return recipients;
         }
@@ -1664,8 +1697,17 @@ body,
                 syncMessageOverridesField();
                 return;
             }
-            recipientMessageMatrix.innerHTML = recipients.map(({ key, label, kind, ref }) => {
+            recipientMessageMatrix.innerHTML = recipients.map(({ key, label, kind, ref, name, certificate }) => {
                 const state = overrideState[key] || {};
+                overrideState[key] = state;
+                const certificateLink = String(certificate || '').trim();
+                if (kind === 'db' && certificateLink !== '' && !state.certificatePrefilled) {
+                    if (!state.message || state.message.trim() === '') {
+                        state.message = buildCertificateManualMessage(name || label, certificateLink);
+                    }
+                    state.mode = state.mode || 'manual';
+                    state.certificatePrefilled = true;
+                }
                 const mode = (state.mode || 'manual').toLowerCase();
                 const manualChecked = mode === 'manual';
                 const templateChecked = mode === 'template';

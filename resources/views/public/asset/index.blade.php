@@ -5,7 +5,7 @@
 
     $basicAssetInfoFields = [
         [
-            'label' => __('app.maintenance.account_code'),
+            'label' => __('app.asset.account_code'),
             'value' => $asset->accountCode,
         ],
         [
@@ -35,29 +35,29 @@
     $assetDetailFields = [
         AssetCategory::AC->value => [
             [
-                'label' => __('app.asset.brand'),
+                'label' => __('app.asset.ac_fields.brand'),
                 'value' => data_get($asset->detail, 'brand') ?: '-',
             ],
             [
-                'label' => __('app.maintenance.dimension'),
+                'label' => __('app.asset.ac_fields.dimension'),
                 'value' => data_get($asset->detail, 'dimension') ?: '-',
             ],
             [
-                'label' => __('app.asset.power_rating'),
+                'label' => __('app.asset.ac_fields.power_rating'),
                 'value' => data_get($asset->detail, 'power_rating') ?: '-',
             ],
         ],
         AssetCategory::OTHER->value => [
             [
-                'label' => __('app.asset.brand'),
+                'label' => __('app.asset.ac_fields.brand'),
                 'value' => data_get($asset->detail, 'brand') ?: '-',
             ],
             [
-                'label' => __('app.maintenance.dimension'),
+                'label' => __('app.asset.ac_fields.dimension'),
                 'value' => data_get($asset->detail, 'dimension') ?: '-',
             ],
             [
-                'label' => __('app.asset.power_rating'),
+                'label' => __('app.asset.ac_fields.power_rating'),
                 'value' => data_get($asset->detail, 'power_rating') ?: '-',
             ],
         ],

@@ -19,10 +19,18 @@ $isAssetCategoryPage = $assetPageMode === 'category';
 $selectedCategory = $assetPageCategory instanceof AssetCategory
     ? $assetPageCategory
     : (request('category') ? AssetCategory::tryFrom((string) request('category')) : null);
+$isAcCategoryPage = $isAssetCategoryPage && $selectedCategory === AssetCategory::AC;
+$isComputerCategoryPage = $isAssetCategoryPage && $selectedCategory === AssetCategory::COMPUTER;
 $isVehicleCategoryPage = $isAssetCategoryPage && $selectedCategory === AssetCategory::VEHICLE;
 $isElectronicCategoryPage = $isAssetCategoryPage && $selectedCategory === AssetCategory::ELECTRONIC;
 $isRoomInventoryCategoryPage = $isAssetCategoryPage && $selectedCategory === AssetCategory::ROOM_INVENTORY;
 $isBuildingInfrastructureCategoryPage = $isAssetCategoryPage && $selectedCategory === AssetCategory::BUILDING_INFRASTRUCTURE;
+$usesTemplateSheetTable = $isAcCategoryPage
+    || $isComputerCategoryPage
+    || $isVehicleCategoryPage
+    || $isElectronicCategoryPage
+    || $isRoomInventoryCategoryPage
+    || $isBuildingInfrastructureCategoryPage;
 $selectedUnit = request('unit') ? AssetUnit::tryFrom((string) request('unit')) : null;
 $assetFilterRoute = route($assetPageRouteName);
 $assetPageCategoryLabel = $selectedCategory?->label() ?? __('app.asset.all');
@@ -137,6 +145,92 @@ $templateConfigPayload = array_map(static function (array $config): array {
         'icon' => $config['icon'],
     ];
 }, $templateConfigs);
+
+$formatSheetValue = static function ($value, ?string $format = null): string {
+    if ($value === null || $value === '') {
+        return '-';
+    }
+
+    if ($format === 'date') {
+        try {
+            return \Illuminate\Support\Carbon::parse($value)->format('d M Y');
+        } catch (\Throwable) {
+            return (string) $value;
+        }
+    }
+
+    return match ($format) {
+        'currency' => 'Rp ' . number_format((float) $value, 2, ',', '.'),
+        'number' => number_format((float) $value, 0, ',', '.'),
+        default => (string) $value,
+    };
+};
+
+$acTableColumns = [
+    ['label' => __('app.asset.ac_fields.no'), 'type' => 'row_number'],
+    ['label' => __('app.asset.ac_fields.account_code'), 'type' => 'asset', 'field' => 'account_code'],
+    ['label' => __('app.asset.ac_fields.location'), 'type' => 'asset', 'field' => 'location'],
+    ['label' => __('app.asset.ac_fields.dimension'), 'field' => 'dimension'],
+    ['label' => __('app.asset.ac_fields.power_rating'), 'field' => 'power_rating'],
+    ['label' => __('app.asset.ac_fields.brand'), 'field' => 'brand'],
+    ['label' => __('app.asset.ac_fields.serial_number'), 'type' => 'asset', 'field' => 'serial_number'],
+    ['label' => __('app.asset.ac_fields.purchase_year'), 'type' => 'asset', 'field' => 'purchase_year'],
+    ['label' => __('app.asset.ac_fields.purchase_price'), 'type' => 'asset', 'field' => 'purchase_price', 'format' => 'currency'],
+];
+$formatAcCell = static function ($asset, array $column, int $rowNumber) use ($formatSheetValue) {
+    if (($column['type'] ?? null) === 'row_number') {
+        return $rowNumber;
+    }
+
+    $value = ($column['type'] ?? null) === 'asset'
+        ? data_get($asset, $column['field'])
+        : data_get($asset->airConditionerDetail, $column['field']);
+
+    return $formatSheetValue($value, $column['format'] ?? null);
+};
+
+$computerTableColumns = [
+    ['label' => __('app.asset.computer_fields.no'), 'type' => 'row_number'],
+    ['label' => __('app.asset.computer_fields.account_code'), 'type' => 'asset', 'field' => 'account_code'],
+    ['label' => __('app.asset.computer_fields.location'), 'type' => 'asset', 'field' => 'location'],
+    ['label' => __('app.asset.computer_fields.unit'), 'type' => 'component', 'field' => 'component_type'],
+    ['label' => __('app.asset.computer_fields.brand'), 'type' => 'component', 'field' => 'brand'],
+    ['label' => __('app.asset.computer_fields.power_rating'), 'type' => 'component', 'field' => 'specification'],
+    ['label' => __('app.asset.computer_fields.serial_number'), 'type' => 'component', 'field' => 'serial_number'],
+    ['label' => __('app.asset.computer_fields.purchase_year'), 'type' => 'asset', 'field' => 'purchase_year'],
+    ['label' => __('app.asset.computer_fields.purchase_price'), 'type' => 'asset', 'field' => 'purchase_price', 'format' => 'currency'],
+];
+$formatComputerCell = static function ($asset, array $column, int $rowNumber) use ($formatSheetValue) {
+    if (($column['type'] ?? null) === 'row_number') {
+        return $rowNumber;
+    }
+
+    if (($column['type'] ?? null) === 'asset') {
+        return $formatSheetValue(data_get($asset, $column['field']), $column['format'] ?? null);
+    }
+
+    $field = $column['field'] ?? null;
+    $components = collect($asset->computerComponents ?? [])
+        ->map(function ($component) use ($field) {
+            $componentType = trim((string) data_get($component, 'component_type'));
+            $value = trim((string) data_get($component, $field));
+
+            if ($field === 'component_type') {
+                return $componentType !== '' ? $componentType : null;
+            }
+
+            if ($value === '') {
+                return null;
+            }
+
+            return $componentType !== '' ? "{$componentType}: {$value}" : $value;
+        })
+        ->filter()
+        ->values();
+
+    return $components->isNotEmpty() ? $components->implode('; ') : '-';
+};
+
 $vehicleTableColumns = [
     ['label' => __('app.asset.vehicle_fields.no'), 'type' => 'row_number'],
     ['label' => __('app.asset.vehicle_fields.asset_code'), 'type' => 'asset', 'field' => 'account_code'],
@@ -377,12 +471,16 @@ $formatBuildingInfrastructureCell = static function ($asset, array $column, int 
     };
 };
 $sheetTableColumns = match (true) {
+    $isAcCategoryPage => $acTableColumns,
+    $isComputerCategoryPage => $computerTableColumns,
     $isBuildingInfrastructureCategoryPage => $buildingInfrastructureTableColumns,
     $isElectronicCategoryPage => $electronicTableColumns,
     $isRoomInventoryCategoryPage => $roomInventoryTableColumns,
     default => $vehicleTableColumns,
 };
 $formatSheetCell = match (true) {
+    $isAcCategoryPage => $formatAcCell,
+    $isComputerCategoryPage => $formatComputerCell,
     $isBuildingInfrastructureCategoryPage => $formatBuildingInfrastructureCell,
     $isElectronicCategoryPage => $formatElectronicCell,
     $isRoomInventoryCategoryPage => $formatRoomInventoryCell,
@@ -811,6 +909,11 @@ $formatSheetCell = match (true) {
         font-size: 0.78rem;
     }
 
+    .asset-table-card .app-table-compact thead th {
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
     .asset-sheet-table th,
     .asset-sheet-table td {
         white-space: nowrap;
@@ -1200,7 +1303,7 @@ $formatSheetCell = match (true) {
 
         <div class="card-body pt-0">
             <div class="table-responsive">
-                @if($isVehicleCategoryPage || $isElectronicCategoryPage || $isRoomInventoryCategoryPage || $isBuildingInfrastructureCategoryPage)
+                @if($usesTemplateSheetTable)
                     <table class="table table-hover app-table-compact asset-sheet-table mb-0">
                         <thead>
                             <tr>
@@ -1210,7 +1313,7 @@ $formatSheetCell = match (true) {
                                 @foreach($sheetTableColumns as $column)
                                     <th scope="col">{{ $column['label'] }}</th>
                                 @endforeach
-                                <th scope="col" class="text-center">{{ strtoupper(__('app.asset.actions')) }}</th>
+                                <th scope="col" class="text-center">{{ __('app.asset.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1267,9 +1370,9 @@ $formatSheetCell = match (true) {
                                 <th scope="col">{{ __('app.asset.account_code_upper') }}</th>
                                 <th scope="col">{{ __('app.asset.location_upper') }}</th>
                                 <th scope="col">{{ __('app.asset.price_upper') }}</th>
-                                <th scope="col">{{ strtoupper(__('app.asset.latest_data_at')) }}</th>
-                                <th scope="col">{{ strtoupper(__('app.asset.latest_import_file')) }}</th>
-                                <th scope="col" class="text-center">{{ strtoupper(__('app.asset.actions')) }}</th>
+                                <th scope="col">{{ __('app.asset.latest_data_at') }}</th>
+                                <th scope="col">{{ __('app.asset.latest_import_file') }}</th>
+                                <th scope="col" class="text-center">{{ __('app.asset.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -47,14 +47,14 @@ class Asset extends Model
     protected function serialNumber(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => $value ? strtoupper(trim($value)) : null
+            set: fn($value) => $value ? trim((string) $value) : null
         );
     }
 
     protected function location(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => $value ? strtoupper(trim($value)) : null
+            set: fn($value) => $value ? trim((string) $value) : null
         );
     }
 
@@ -82,9 +82,9 @@ class Asset extends Model
                 'category.required' => 'Kategori aset wajib diisi.',
                 'category.*' => 'Kategori aset tidak valid.',
 
-                'account_code.required' => 'Kode akun wajib diisi.',
-                'account_code.string' => 'Kode akun tidak valid.',
-                'account_code.unique' => 'Kode akun sudah terdaftar.',
+                'account_code.required' => 'Kode aset wajib diisi.',
+                'account_code.string' => 'Kode aset tidak valid.',
+                'account_code.unique' => 'Kode aset sudah terdaftar.',
 
                 'unit.required' => 'Unit wajib diisi.',
                 'unit.*' => 'Unit tidak valid.',
