@@ -1,4 +1,5 @@
 const { sendText, sendFile } = require('../whatsapp/client');
+const fs = require('fs/promises');
 const { getTemplate, renderTemplate } = require('./templateService');
 
 async function processJob(jobData) {
@@ -9,13 +10,17 @@ async function processJob(jobData) {
   }
 
   if (type === 'file') {
-    return sendFile(
-      payload.phone,
-      payload.filePath,
-      payload.caption,
-      payload.originalName,
-      payload.deviceId
-    );
+    try {
+      return await sendFile(
+        payload.phone,
+        payload.filePath,
+        payload.caption,
+        payload.originalName,
+        payload.deviceId
+      );
+    } finally {
+      await fs.unlink(payload.filePath).catch(() => {});
+    }
   }
 
   if (type === 'template') {

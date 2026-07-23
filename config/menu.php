@@ -28,6 +28,82 @@ return array_map($withFallbackLabel, [
     ],
 
     [
+        'label' => 'Sistem Management',
+        'icon' => 'fas fa-shield-alt',
+        'route' => 'system-management.index',
+        'active_routes' => ['system-management.*'],
+        'open_for_roles' => [UserRole::SYSTEM_MANAGEMENT->value],
+        'roles' => [UserRole::SYSTEM_MANAGEMENT->value],
+        'children' => [
+            [
+                'label' => 'Dashboard Sistem',
+                'icon' => 'fas fa-th-large',
+                'route' => 'system-management.index',
+            ],
+            [
+                'label' => 'Status Sistem',
+                'icon' => 'fas fa-server',
+                'route' => 'system-management.status',
+            ],
+            [
+                'label' => 'Maintenance Web',
+                'icon' => 'fas fa-power-off',
+                'route' => 'system-management.maintenance',
+            ],
+            [
+                'label' => 'Alur Blast',
+                'icon' => 'fas fa-project-diagram',
+                'route' => 'system-management.blast-flow',
+            ],
+            [
+                'label' => 'Audit Akses',
+                'icon' => 'fas fa-user-clock',
+                'route' => 'system-management.audit',
+            ],
+            [
+                'label' => 'Reset Password',
+                'icon' => 'fas fa-key',
+                'route' => 'system-management.users',
+            ],
+            [
+                'label' => 'Restrict Role',
+                'icon' => 'fas fa-user-lock',
+                'route' => 'system-management.permissions',
+            ],
+            [
+                'label' => 'Developer AI',
+                'icon' => 'fas fa-robot',
+                'route' => 'system-management.ai',
+            ],
+            [
+                'label' => 'Tembak API',
+                'icon' => 'fas fa-bolt',
+                'route' => 'system-management.api-tester',
+            ],
+            [
+                'label' => 'CMS Web',
+                'icon' => 'fas fa-paint-brush',
+                'route' => 'system-management.cms',
+            ],
+            [
+                'label' => 'Feature Toggle',
+                'icon' => 'fas fa-toggle-on',
+                'route' => 'system-management.features',
+            ],
+            [
+                'label' => 'Akses Fitur',
+                'icon' => 'fas fa-sliders-h',
+                'route' => 'system-management.feature-access',
+            ],
+            [
+                'label' => 'Arsip Log',
+                'icon' => 'fas fa-archive',
+                'route' => 'system-management.archives',
+            ],
+        ],
+    ],
+
+    [
         'module_name' => 'asset_management',
         'label_key'   => 'app.menu.asset_master_data',
         'icon'        => 'fas fa-list',
@@ -35,6 +111,7 @@ return array_map($withFallbackLabel, [
         'active_routes' => ['asset-management.index', 'asset-management.ac.*', 'asset-management.building-infrastructure.*', 'asset-management.electronic.*', 'asset-management.room-inventory.*', 'asset-management.vehicle.*', 'asset-management.computer.*'],
         'roles'       => [
             UserRole::IT_SUPPORT->value,
+            UserRole::SYSTEM_MANAGEMENT->value,
             UserRole::ASSET_MANAGER->value,
             UserRole::PEMBINA->value,
             UserRole::QC->value,
@@ -92,6 +169,7 @@ return array_map($withFallbackLabel, [
         'route'       => 'maintenance-report.index',
         'roles'       => [
             UserRole::IT_SUPPORT->value,
+            UserRole::SYSTEM_MANAGEMENT->value,
             UserRole::ASSET_MANAGER->value,
             UserRole::PEMBINA->value,
             UserRole::QC->value,
@@ -114,7 +192,7 @@ return array_map($withFallbackLabel, [
                 'label_key'   => 'app.menu.login_history',
                 'icon'        => 'fas fa-history',
                 'route'       => 'user-database.login-history',
-                'roles'       => [UserRole::ADMIN->value, UserRole::IT_SUPPORT->value],
+                'roles'       => [UserRole::ADMIN->value, UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
             ],
         ],
     ],
@@ -125,7 +203,7 @@ return array_map($withFallbackLabel, [
         'icon'  => 'fas fa-paper-plane',
         'route' => 'admin.blast.index',
         'active_routes' => ['admin.blast.*', 'admin.announcements.*'],
-        'open_for_roles' => [UserRole::IT_SUPPORT->value],
+        'open_for_roles' => [UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
         'children' => [
             [
                 'label_key' => 'app.menu.whatsapp_blast',
@@ -144,7 +222,7 @@ return array_map($withFallbackLabel, [
                 'icon'  => 'fas fa-mobile-alt',
                 'route' => 'admin.blast.whatsapp.manage',
                 'module_name' => 'admin_blast',
-                'roles' => [UserRole::IT_SUPPORT->value],
+                'roles' => [UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
                 'active_routes' => ['admin.blast.whatsapp.manage', 'admin.blast.whatsapp.gateway-*'],
             ],
             [
@@ -157,7 +235,7 @@ return array_map($withFallbackLabel, [
                 'icon'  => 'fas fa-at',
                 'route' => 'admin.blast.email.accounts',
                 'module_name' => 'admin_blast',
-                'roles' => [UserRole::IT_SUPPORT->value],
+                'roles' => [UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
                 'active_routes' => ['admin.blast.email.accounts*'],
             ],
             [
@@ -227,7 +305,7 @@ return array_map($withFallbackLabel, [
         'icon'  => 'fas fa-palette',
         'route' => 'admin.theme.index',
         'active_routes' => ['admin.theme.*'],
-        'roles' => [UserRole::IT_SUPPORT->value],
+        'roles' => [UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
     ],
    
 
@@ -246,7 +324,7 @@ return array_map($withFallbackLabel, [
                 'label_key' => 'app.menu.finance_categories',
                 'icon'  => 'fas fa-tags',
                 'route' => 'finance.categories.index',
-                'roles' => [UserRole::IT_SUPPORT->value],
+                'roles' => [UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
             ],
             [
                 'label_key' => 'app.menu.asset_depreciation',

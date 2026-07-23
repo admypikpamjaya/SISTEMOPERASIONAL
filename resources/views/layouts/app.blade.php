@@ -32,12 +32,71 @@
     <!-- SweetAlert -->
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
     <!-- Extras -->
-    @php($appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time())
+    @php
+        $appCssVersion = file_exists(public_path('css/app.css')) ? filemtime(public_path('css/app.css')) : time();
+    @endphp
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $appCssVersion }}">
     @include('layouts.partials.theme-vars', ['websiteThemeStyleId' => 'website-theme-vars-head'])
+    @php
+        $systemCmsSettings = [
+            'brand_short' => '',
+            'sidebar_label' => '',
+            'notice_enabled' => false,
+            'notice_text' => '',
+            'content_width' => 'default',
+            'custom_css' => '',
+        ];
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
+                $systemCmsRow = \App\Models\AppSetting::query()->where('key', 'system.cms')->first();
+                $systemCmsValue = is_array($systemCmsRow?->value) ? $systemCmsRow->value : [];
+                $systemCmsSettings = array_merge($systemCmsSettings, $systemCmsValue);
+            }
+        } catch (\Throwable $exception) {
+            $systemCmsSettings = [
+                'brand_short' => '',
+                'sidebar_label' => '',
+                'notice_enabled' => false,
+                'notice_text' => '',
+                'content_width' => 'default',
+                'custom_css' => '',
+            ];
+        }
+
+        $systemCmsBrand = trim((string) ($systemCmsSettings['sidebar_label'] ?? ''));
+        if ($systemCmsBrand === '') {
+            $systemCmsBrand = trim((string) ($systemCmsSettings['brand_short'] ?? ''));
+        }
+        if ($systemCmsBrand === '') {
+            $systemCmsBrand = __('app.brand_short');
+        }
+
+        $systemCmsWidth = in_array(($systemCmsSettings['content_width'] ?? 'default'), ['default', 'wide', 'compact'], true)
+            ? (string) $systemCmsSettings['content_width']
+            : 'default';
+        $systemCmsNotice = trim((string) ($systemCmsSettings['notice_text'] ?? ''));
+        $systemCmsCss = trim(str_ireplace(
+            ['</style', '<script', '</script'],
+            ['/* style-close-blocked */', '/* script-blocked */', '/* script-close-blocked */'],
+            (string) ($systemCmsSettings['custom_css'] ?? '')
+        ));
+    @endphp
+    <style>
+        body.system-cms-compact .content-wrapper > .content .container-fluid { max-width:1180px; }
+        body.system-cms-wide .content-wrapper > .content .container-fluid { max-width:none; }
+        .system-cms-notice { margin:0 15px 12px; padding:10px 14px; border-radius:8px; border:1px solid #bfdbfe; background:#eff6ff; color:#1e3a8a; font-weight:700; }
+        [data-theme="dark"] .system-cms-notice { border-color:#1d4ed8; background:#172554; color:#bfdbfe; }
+    </style>
+    @if($systemCmsCss !== '')
+        <style id="system-cms-custom-css">{!! $systemCmsCss !!}</style>
+    @endif
+    @if(request()->routeIs('admin.blast.*'))
+        @include('admin.blast.partials.simplified-ui')
+    @endif
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed">
+<body class="hold-transition sidebar-mini layout-fixed system-cms-{{ $systemCmsWidth }}">
 <script>
     (function () {
         const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
@@ -128,7 +187,7 @@
             <img src="{{ asset('images/logo_ypik.webp') }}"
                  class="brand-image img-circle elevation-3"
                  style="opacity:.8">
-            <span class="brand-text font-weight-light">{{ __('app.brand_short') }}</span>
+            <span class="brand-text font-weight-light">{{ $systemCmsBrand }}</span>
         </a>
 
         <!-- SIDEBAR MENU -->
@@ -148,6 +207,7 @@
                         $blastingOnly = $currentUser !== null
                             && $currentUser->role === \App\Enums\User\UserRole::BLASTING->value;
                         $activeRole = $currentUser?->role;
+                        $featureAvailabilityService = app(\App\Services\SystemManagement\FeatureAvailabilityService::class);
 
                         $isBlastAllowedRoute = static function (?string $route) use ($blastAllowedRoutePrefixes, $blastAllowedRoutes): bool {
                             if (empty($route)) {
@@ -215,6 +275,7 @@
 
                             $menuChildren = $menuChildren
                                 ->filter(fn($child) => $hasRoleAccess($child))
+                                ->filter(fn($child) => $featureAvailabilityService->isMenuItemVisible($child, $currentUser))
                                 ->values();
 
                             $hasChildren = $menuChildren->isNotEmpty();
@@ -256,6 +317,9 @@
                                         $currentUser,
                                         \App\Enums\Portal\PortalPermission::from($menu['module_name'] . '.read')->value
                                     ));
+
+                            $canAccessMenu = $canAccessMenu
+                                && $featureAvailabilityService->isMenuItemVisible($menu, $currentUser);
                         ?>
 
                         <?php if ($isAllowedForBlasting && !$isHiddenOnCurrentRoute && $hasRoleAccess($menu) && $canAccessMenu): ?>
@@ -331,6 +395,10 @@
                 <h1 class="m-0">@yield('section_name')</h1>
             </div>
         </div>
+
+        @if(!empty($systemCmsSettings['notice_enabled']) && $systemCmsNotice !== '')
+            <div class="system-cms-notice">{{ $systemCmsNotice }}</div>
+        @endif
 
         <section class="content">
             <div class="container-fluid">

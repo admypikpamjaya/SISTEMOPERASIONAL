@@ -98,6 +98,23 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
+        RateLimiter::for('system-management-login', function (Request $request) {
+            $key = sprintf(
+                'system-management-login:%s:%s',
+                strtolower((string) $request->input('email', 'unknown')),
+                (string) $request->ip()
+            );
+
+            return Limit::perMinute(3)
+                ->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return back()
+                        ->with('auth_failed', 'Percobaan login terlalu banyak. Tunggu sebentar lalu coba lagi.')
+                        ->withInput($request->only('email'))
+                        ->withHeaders($headers);
+                });
+        });
+
         Blade::if('permission', function (string $permission) {
             return auth()->check()
                 && app(PermissionService::class)

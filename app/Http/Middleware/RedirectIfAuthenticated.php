@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\User\UserRole;
 use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
@@ -21,6 +22,13 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
+                if (
+                    ($request->is('system-management/login') || $request->is('system-management/login/*'))
+                    && Auth::guard($guard)->user()?->role === UserRole::SYSTEM_MANAGEMENT->value
+                ) {
+                    return redirect()->route('system-management.index');
+                }
+
                 return redirect(RouteServiceProvider::HOME);
             }
         }

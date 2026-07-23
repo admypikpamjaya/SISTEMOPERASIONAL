@@ -31,8 +31,8 @@ return [
     'pause_poll_seconds' => max(5, (int) env('BLAST_PAUSE_POLL_SECONDS', 30)),
 
     'dispatch' => [
-        'email_mode' => strtolower((string) env('BLAST_EMAIL_MODE', 'sync')),
-        'whatsapp_mode' => strtolower((string) env('BLAST_WHATSAPP_MODE', 'sync')),
+        'email_mode' => strtolower((string) env('BLAST_EMAIL_MODE', 'queue')),
+        'whatsapp_mode' => strtolower((string) env('BLAST_WHATSAPP_MODE', 'queue')),
     ],
 
     'email_accounts' => [

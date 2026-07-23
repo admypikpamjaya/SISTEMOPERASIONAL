@@ -28,6 +28,8 @@ class SendWhatsappBlastJob implements ShouldQueue
         return [];
     }
 
+    public int $timeout = 120;
+
     public function tries(): int
     {
         // WhatsApp blast is executed synchronously in current flow,

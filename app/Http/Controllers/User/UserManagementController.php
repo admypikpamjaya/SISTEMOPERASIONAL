@@ -21,13 +21,17 @@ class UserManagementController extends Controller
     {
         $users = $this->service->getUsers($request->keyword, $request->page);
         $isSuperAdmin = auth()->check()
-            && auth()->user()->role === UserRole::IT_SUPPORT->value;
+            && in_array(auth()->user()->role, [
+                UserRole::IT_SUPPORT->value,
+                UserRole::SYSTEM_MANAGEMENT->value,
+            ], true);
 
         return view('user-management.index', [
             'users' => $users,
             'roleOptions' => $this->getRoleOptions(),
             'userManagementI18n' => $this->getUserManagementI18n(),
             'isSuperAdmin' => $isSuperAdmin,
+            'isSystemManagement' => auth()->user()?->role === UserRole::SYSTEM_MANAGEMENT->value,
             'superAdminRole' => UserRole::IT_SUPPORT->value,
         ]);
     }
@@ -130,7 +134,10 @@ class UserManagementController extends Controller
     public function updatePassword(Request $request, string $id)
     {
         abort_unless(
-            auth()->check() && auth()->user()->role === UserRole::IT_SUPPORT->value,
+            auth()->check() && in_array(auth()->user()->role, [
+                UserRole::IT_SUPPORT->value,
+                UserRole::SYSTEM_MANAGEMENT->value,
+            ], true),
             403
         );
 
@@ -147,8 +154,12 @@ class UserManagementController extends Controller
             if(empty($targetUser))
                 throw new \Exception(__('app.user_management.user_not_found'), 404);
 
-            if($targetUser->role === UserRole::IT_SUPPORT->value)
+            if(
+                auth()->user()->role !== UserRole::SYSTEM_MANAGEMENT->value
+                && $targetUser->role === UserRole::IT_SUPPORT->value
+            ) {
                 throw new \Exception(__('app.user_management.super_admin_password_locked'), 403);
+            }
 
             $this->service->updatePassword($id, $validated['password']);
 
@@ -187,7 +198,11 @@ class UserManagementController extends Controller
     {
         abort_unless(
             auth()->check()
-            && in_array(auth()->user()->role, [UserRole::IT_SUPPORT->value, UserRole::ADMIN->value], true),
+            && in_array(auth()->user()->role, [
+                UserRole::IT_SUPPORT->value,
+                UserRole::ADMIN->value,
+                UserRole::SYSTEM_MANAGEMENT->value,
+            ], true),
             403
         );
     }
@@ -205,6 +220,7 @@ class UserManagementController extends Controller
                     UserRole::PEMBINA => __('app.user_management.roles.pembina'),
                     UserRole::BLASTING => __('app.user_management.roles.blasting'),
                     UserRole::QC => __('app.user_management.roles.qc'),
+                    UserRole::SYSTEM_MANAGEMENT => 'Sistem Management',
                 };
 
                 return [

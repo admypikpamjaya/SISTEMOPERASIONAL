@@ -69,7 +69,7 @@ return [
         'base_url' => env('WHATSAPP_GATEWAY_BASE_URL', 'http://localhost:3000'),
         'api_key' => env('WHATSAPP_GATEWAY_API_KEY'),
         'api_key_header' => env('WHATSAPP_GATEWAY_API_KEY_HEADER', 'X-API-KEY'),
-        'timeout' => (int) env('WHATSAPP_GATEWAY_TIMEOUT', 20),
+        'timeout' => (int) env('WHATSAPP_GATEWAY_TIMEOUT', 60),
     ],
 
 

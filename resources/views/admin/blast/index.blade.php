@@ -1,144 +1,49 @@
 @extends('layouts.app')
 
+@section('title', __('app.blast.menu_title'))
+@section('section_name', __('app.blast.menu_title'))
+
 @section('content')
 <div class="blast-menu-page">
-
-    <div class="blast-menu-card">
-        <h2 class="blast-menu-title">{{ __('app.blast.menu_title') }}</h2>
-        <p class="blast-menu-subtitle">
-            {{ __('app.blast.menu_subtitle') }}
-        </p>
+    <section class="blast-menu-card">
+        <div class="blast-menu-head">
+            <div>
+                <h2 class="blast-menu-title">{{ __('app.blast.menu_title') }}</h2>
+                <p class="blast-menu-subtitle">{{ __('app.blast.menu_subtitle') }}</p>
+            </div>
+            <span class="blast-menu-badge">Blast Center</span>
+        </div>
 
         <div class="blast-menu-actions">
-            <a href="{{ route('admin.blast.whatsapp') }}" class="blast-btn whatsapp">
-                <span class="icon">💬</span>
-                <div class="text">
+            <a href="{{ route('admin.blast.whatsapp') }}" class="blast-btn">
+                <span class="icon"><i class="fab fa-whatsapp"></i></span>
+                <span class="text">
                     <strong>{{ __('app.blast.whatsapp_mass_send') }}</strong>
                     <small>{{ __('app.blast.whatsapp_mass_desc') }}</small>
-                </div>
+                </span>
             </a>
 
-            <a href="{{ route('admin.blast.email') }}" class="blast-btn email">
-                <span class="icon">📧</span>
-                <div class="text">
+            <a href="{{ route('admin.blast.email') }}" class="blast-btn">
+                <span class="icon"><i class="fas fa-envelope"></i></span>
+                <span class="text">
                     <strong>{{ __('app.blast.email_mass_send') }}</strong>
                     <small>{{ __('app.blast.email_mass_desc') }}</small>
-                </div>
+                </span>
             </a>
         </div>
-    </div>
-
+    </section>
 </div>
 
 <style>
-/* RESET */
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    font-family:'Inter','Segoe UI',sans-serif;
-}
-
-/* PAGE */
-.blast-menu-page{
-    min-height:70vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-}
-
-/* CARD */
-.blast-menu-card{
-    background:linear-gradient(
-        180deg,
-        #FFFFFF 0%,
-        #F9FAFB 100%
-    );
-    border-radius:22px;
-    padding:40px 36px;
-    width:100%;
-    max-width:520px;
-    text-align:center;
-    box-shadow:
-        0 20px 40px rgba(0,0,0,.08),
-        0 4px 10px rgba(0,0,0,.05);
-}
-
-/* TITLE */
-.blast-menu-title{
-    font-size:28px;
-    font-weight:700;
-    margin-bottom:6px;
-    background:linear-gradient(90deg,#4F46E5,#9333EA);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-
-.blast-menu-subtitle{
-    font-size:14px;
-    color:#6B7280;
-    margin-bottom:34px;
-}
-
-/* ACTIONS */
-.blast-menu-actions{
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-}
-
-/* BUTTON CARD */
-.blast-btn{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    padding:18px 22px;
-    border-radius:16px;
-    text-decoration:none;
-    color:#111827;
-    background:#FFFFFF;
-    border:1px solid #E5E7EB;
-    transition:transform .15s, box-shadow .2s, border .2s;
-}
-
-.blast-btn:hover{
-    transform:translateY(-2px);
-    box-shadow:0 12px 28px rgba(0,0,0,.12);
-}
-
-/* ICON */
-.blast-btn .icon{
-    font-size:28px;
-}
-
-/* TEXT */
-.blast-btn .text{
-    text-align:left;
-}
-.blast-btn strong{
-    display:block;
-    font-size:16px;
-}
-.blast-btn small{
-    font-size:13px;
-    color:#6B7280;
-}
-
-/* VARIANT */
-.blast-btn.whatsapp:hover{
-    border-color:#25D366;
-}
-
-.blast-btn.email:hover{
-    border-color:#6366F1;
-}
-
-/* RESPONSIVE */
-@media (max-width:480px){
-    .blast-menu-card{
-        padding:32px 24px;
-    }
-}
+    .blast-menu-page { min-height:60vh; padding:18px; display:grid; place-items:center; }
+    .blast-menu-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:20px; }
+    .blast-menu-title { margin:0; font-size:24px; font-weight:800; letter-spacing:0; }
+    .blast-menu-subtitle { margin:6px 0 0; color:var(--app-text-muted); line-height:1.45; }
+    .blast-menu-badge { display:inline-flex; padding:7px 10px; border-radius:999px; background:var(--app-surface-soft); color:var(--app-accent-strong); font-size:12px; font-weight:800; white-space:nowrap; }
+    .blast-btn .icon { width:42px; height:42px; display:grid; place-items:center; border-radius:8px; background:var(--app-surface-soft); color:var(--app-accent-strong); font-size:18px; flex:none; }
+    .blast-btn .text { min-width:0; }
+    .blast-btn strong { display:block; font-size:15px; color:var(--app-text); }
+    .blast-btn small { display:block; margin-top:3px; color:var(--app-text-muted); line-height:1.35; }
+    @media (max-width:640px){ .blast-menu-head{flex-direction:column;} }
 </style>
 @endsection

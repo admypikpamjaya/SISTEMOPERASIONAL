@@ -24,6 +24,7 @@ use App\Services\Blast\WhatsAppGatewayDeviceService;
 use App\Services\Blast\WhatsAppGatewayJobStatusService;
 use App\Services\Blast\WhatsAppProviderSelector;
 use App\Services\Blast\WhatsAppDeviceLabelStore;
+use App\Services\SystemManagement\BlastLogArchiveService;
 use App\Enums\User\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -135,7 +136,7 @@ class BlastController extends Controller
     public function whatsappManagePhone(WhatsAppProviderSelector $providerSelector)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             abort(403);
         }
 
@@ -158,7 +159,7 @@ class BlastController extends Controller
     public function whatsappProviderStatus(WhatsAppProviderSelector $providerSelector)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -180,7 +181,7 @@ class BlastController extends Controller
         WhatsAppProviderSelector $providerSelector
     ) {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -222,7 +223,7 @@ class BlastController extends Controller
             ], 403);
         }
 
-        $isSuperAdmin = $user->role === UserRole::IT_SUPPORT->value;
+        $isSuperAdmin = $this->hasSystemOperatorAccess($user);
         $deviceId = $this->sanitizeDeviceId(
             $request->query('device_id') ?? $request->query('deviceId')
         );
@@ -272,7 +273,7 @@ class BlastController extends Controller
     public function whatsappGatewayReconnect()
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -314,7 +315,7 @@ class BlastController extends Controller
     public function whatsappGatewayQueueStatus()
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -328,7 +329,7 @@ class BlastController extends Controller
     public function whatsappGatewayQueueClear()
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -400,7 +401,7 @@ class BlastController extends Controller
             ], 403);
         }
 
-        $isSuperAdmin = $user->role === UserRole::IT_SUPPORT->value;
+        $isSuperAdmin = $this->hasSystemOperatorAccess($user);
 
         try {
             $payload = $deviceService->listDevices($isSuperAdmin);
@@ -422,7 +423,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceCreate(Request $request)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -475,7 +476,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceConnect(string $deviceId)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -526,7 +527,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceActivate(string $deviceId)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -577,7 +578,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceReconnect(string $deviceId)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -628,7 +629,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceDisconnect(string $deviceId)
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -682,7 +683,7 @@ class BlastController extends Controller
     )
     {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -738,7 +739,7 @@ class BlastController extends Controller
         WhatsAppDeviceLabelStore $labelStore
     ) {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -780,7 +781,7 @@ class BlastController extends Controller
         WhatsAppDeviceLabelStore $labelStore
     ) {
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -1117,10 +1118,20 @@ class BlastController extends Controller
         ]);
 
         $channel = strtoupper((string) $validated['channel']);
-        $deletedLogCount = BlastLog::query()
+        $logs = BlastLog::query()
+            ->with(['message:id,channel', 'target:id,target'])
             ->whereHas('message', function ($query) use ($channel) {
                 $query->where('channel', $channel);
             })
+            ->get();
+
+        $archiveService = app(BlastLogArchiveService::class);
+        foreach ($logs as $log) {
+            $archiveService->archive($log, 'bulk_clear_' . strtolower($channel));
+        }
+
+        $deletedLogCount = BlastLog::query()
+            ->whereKey($logs->pluck('id')->all())
             ->delete();
 
         $channelLabel = $channel === 'WHATSAPP' ? 'WhatsApp' : 'Email';
@@ -1159,6 +1170,7 @@ class BlastController extends Controller
         }
 
         $blastTarget = $blastLog->target;
+        app(BlastLogArchiveService::class)->archive($blastLog, 'single_delete_' . strtolower($channel));
         $blastLog->delete();
 
         if (
@@ -1203,15 +1215,13 @@ class BlastController extends Controller
         }
 
         $currentStatus = strtoupper((string) $blastLog->status);
-        $isStaleWhatsappPending = $requestedChannel === 'WHATSAPP'
+        $isRetryableWhatsappPending = $requestedChannel === 'WHATSAPP'
             && $currentStatus === 'PENDING'
-            && $this->pendingLogAgeSeconds($blastLog) >= self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS;
+            && $this->isRetryableWhatsappGatewayPendingLog($blastLog);
 
-        if ($currentStatus !== 'FAILED' && !$isStaleWhatsappPending) {
+        if ($currentStatus !== 'FAILED' && !$isRetryableWhatsappPending) {
             $message = $requestedChannel === 'WHATSAPP' && $currentStatus === 'PENDING'
-                ? 'Log masih diproses gateway. Tombol retry aktif setelah '
-                    . self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS
-                    . ' detik jika status belum berubah.'
+                ? 'Log pending ini belum terdeteksi sebagai antrean gateway yang bisa di-retry.'
                 : 'Hanya activity log dengan status gagal yang bisa di-retry.';
 
             return $this->activityActionError(
@@ -1314,7 +1324,10 @@ class BlastController extends Controller
             $subject,
             $payload
         );
-        app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
+        if ($queueName !== '') {
+            $job->onQueue($queueName);
+        }
+        dispatch($job)->afterResponse();
 
         return $this->activityActionSuccess(
             $request,
@@ -1443,10 +1456,6 @@ class BlastController extends Controller
                     useGlobalDefault: $useGlobalDefault,
                     messageOverrides: $messageOverrides,
                     tunggakanContextService: $tunggakanContextService
-                );
-                $message = $this->appendCertificateToWhatsAppMessage(
-                    $message,
-                    (string) ($generalRecipient->sertifikat ?? '')
                 );
 
                 if ($blastMessage === null) {
@@ -2488,7 +2497,7 @@ class BlastController extends Controller
                 || (
                     $normalizedChannel === 'WHATSAPP'
                     && $statusKey === 'pending'
-                    && $pendingAgeSeconds >= self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS
+                    && $this->isRetryableWhatsappGatewayPendingLog($log)
                 );
 
             $row = [
@@ -2570,6 +2579,23 @@ class BlastController extends Controller
         }
 
         return max(0, (int) $timestamp->diffInSeconds(now()));
+    }
+
+    private function isRetryableWhatsappGatewayPendingLog(BlastLog $log): bool
+    {
+        $providerStatus = strtolower(trim((string) ($log->provider_status ?? '')));
+        $responseMessage = strtolower(trim((string) ($log->response ?? '')));
+
+        if ($providerStatus === '' && str_contains($responseMessage, 'queued')) {
+            $providerStatus = 'legacy_queued';
+        }
+
+        if ($providerStatus === '') {
+            return true;
+        }
+
+        return in_array($providerStatus, self::WHATSAPP_GATEWAY_PENDING_STATES, true)
+            || $providerStatus === 'legacy_queued';
     }
 
     private function getRecipientsByChannel(string $channel)
@@ -2765,7 +2791,7 @@ class BlastController extends Controller
         }
 
         $user = Auth::user();
-        if (!$user || $user->role !== UserRole::IT_SUPPORT->value) {
+        if (!$this->hasSystemOperatorAccess($user)) {
             abort(403);
         }
     }
@@ -3033,7 +3059,7 @@ class BlastController extends Controller
         }
 
         if (in_array($normalizedChannel, ['WHATSAPP', 'EMAIL'], true)) {
-            app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
+            dispatch($job)->afterResponse();
             $dispatchIndex++;
             return;
         }
@@ -3745,6 +3771,15 @@ class BlastController extends Controller
             'message' => (string) ($payload['message'] ?? 'OK'),
             'data' => $payload['data'] ?? $payload,
         ]);
+    }
+
+    private function hasSystemOperatorAccess(?object $user): bool
+    {
+        return $user !== null
+            && in_array((string) $user->role, [
+                UserRole::IT_SUPPORT->value,
+                UserRole::SYSTEM_MANAGEMENT->value,
+            ], true);
     }
 
     private function sanitizeDeviceId(?string $raw): ?string

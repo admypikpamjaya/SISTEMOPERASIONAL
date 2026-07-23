@@ -14,6 +14,15 @@ class LoginHistory extends Model
         'user_id',
         'ip_address',
         'user_agent',
+        'browser',
+        'platform',
+        'device',
+        'location_summary',
+        'country',
+        'region',
+        'city',
+        'latitude',
+        'longitude',
         'session_id',
         'locale',
         'logged_in_at',
@@ -21,6 +30,8 @@ class LoginHistory extends Model
 
     protected $casts = [
         'logged_in_at' => 'datetime',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function user(): BelongsTo
@@ -33,6 +44,10 @@ class LoginHistory extends Model
     }
     public function getUserAgentInfoAttribute(): string
     {
+        if (!empty($this->browser)) {
+            return (string) $this->browser;
+        }
+
         $agent = $this->user_agent;
         if (str_contains($agent, 'Firefox')) {
             return 'Firefox';
@@ -48,7 +63,6 @@ class LoginHistory extends Model
     }
     public function getIpLocationAttribute(): string
     {
-        // Placeholder for IP geolocation logic
-        return 'Unknown Location';
+        return $this->location_summary ?: 'Unknown Location';
     }
 }

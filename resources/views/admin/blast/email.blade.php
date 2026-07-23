@@ -1002,7 +1002,7 @@ body.dark-mode .template-action-link:hover {
                         </label>
                     </div>
 
-                    <div class="eb-form-group">
+                    <div class="eb-form-group blast-advanced-hidden">
                         <label class="eb-label">{{ __('app.blast.advanced_delivery_settings') }}</label>
                         <div class="recipient-message-note" style="margin-bottom:0;">{{ __('app.blast.email_delivery_settings_disabled') }}</div>
                         <input type="hidden" name="scheduled_at" id="scheduledAtInput" value="">
@@ -1040,6 +1040,7 @@ body.dark-mode .template-action-link:hover {
         <div class="eb-card eb-activity-card">
             <div class="activity-header">
                 <div class="eb-section-title" style="margin-bottom:0;"><i class="fas fa-list-alt"></i> {{ __('app.blast.activity_log') }}</div>
+                <div class="activity-retry-note">Retry aktif untuk log gagal.</div>
                 <div class="activity-header-actions">
                     <form method="POST" action="{{ route('admin.blast.activity.clear') }}" class="activity-clear-form" onsubmit="return confirm(@json(__('app.blast.clear_email_log_confirm')))">
                         @csrf

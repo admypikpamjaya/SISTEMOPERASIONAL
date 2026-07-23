@@ -27,7 +27,7 @@ async function startWorker() {
     },
     {
       connection,
-      concurrency: 1
+      concurrency: env.QUEUE_CONCURRENCY
     }
   );
 

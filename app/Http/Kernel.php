@@ -37,12 +37,16 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SystemMaintenanceMode::class,
+            \App\Http\Middleware\EnsureFeatureEnabled::class,
+            \App\Http\Middleware\SystemAccessAudit::class,
         ],
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SystemAccessAudit::class,
         ],
     ];
 
@@ -68,6 +72,7 @@ class Kernel extends HttpKernel
         'ensure_finance_access' => \App\Http\Middleware\EnsureFinanceAccess::class,
         'set_locale' => \App\Http\Middleware\SetLocale::class,
         'redirect_legacy_asset_host' => \App\Http\Middleware\RedirectLegacyAssetHost::class,
+        'system_management' => \App\Http\Middleware\EnsureSystemManagement::class,
     ];
     protected $routeMiddleware = [
     // ...

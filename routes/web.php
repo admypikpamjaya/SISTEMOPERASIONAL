@@ -9,6 +9,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
+use App\Http\Controllers\SystemManagementController;
 
 use App\Http\Controllers\Asset\AssetManagementController;
 use App\Http\Controllers\Asset\PublicAssetController;
@@ -48,6 +49,10 @@ Route::get('/', function () {
         return redirect()->route('admin.blast.index');
     }
 
+    if (Auth::user()->role === UserRole::SYSTEM_MANAGEMENT->value) {
+        return redirect()->route('system-management.index');
+    }
+
     return redirect()->route('dashboard.index');
 });
 
@@ -62,6 +67,42 @@ Route::prefix('login')
     ->group(function () {
         Route::get('/', 'index')->name('login');
         Route::post('/', 'authenticate');
+    });
+
+Route::prefix('system-management')
+    ->name('system-management.')
+    ->controller(SystemManagementController::class)
+    ->group(function () {
+        Route::middleware('guest')->group(function () {
+            Route::get('/login', 'login')->name('login');
+            Route::post('/login', 'authenticate')->middleware('throttle:system-management-login')->name('login.submit');
+        });
+
+        Route::middleware(['auth', 'system_management'])->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/status', 'status')->name('status');
+            Route::get('/maintenance', 'maintenance')->name('maintenance');
+            Route::get('/blast-flow', 'blastFlow')->name('blast-flow');
+            Route::get('/audit', 'audit')->name('audit');
+            Route::get('/users', 'users')->name('users');
+            Route::get('/permissions', 'permissions')->name('permissions');
+            Route::get('/ai', 'ai')->name('ai');
+            Route::get('/api-tester', 'apiTester')->name('api-tester');
+            Route::get('/cms', 'cms')->name('cms');
+            Route::get('/features', 'features')->name('features');
+            Route::get('/feature-access', 'featureAccess')->name('feature-access');
+            Route::get('/archives', 'archives')->name('archives');
+            Route::post('/users/{user}/password', 'resetUserPassword')->name('users.password');
+            Route::post('/permissions', 'updatePermission')->name('permissions.update');
+            Route::post('/features', 'storeFeature')->name('features.store');
+            Route::patch('/features/{featureFlag}', 'toggleFeature')->name('features.toggle');
+            Route::post('/feature-access', 'updateFeatureAccess')->name('feature-access.update');
+            Route::post('/maintenance', 'updateMaintenance')->name('maintenance.update');
+            Route::post('/api-tester/send', 'sendApiRequest')->name('api-tester.send');
+            Route::post('/cms', 'updateCms')->name('cms.update');
+            Route::post('/ai/feature-draft', 'draftFeatureWithAi')->name('ai.feature-draft');
+            Route::post('/ai/execute', 'executeAiAction')->name('ai.execute');
+        });
     });
 
 Route::post('/locale/{locale}', [LocaleController::class, 'update'])
@@ -90,7 +131,7 @@ Route::prefix('dashboard')
 
 Route::prefix('dashboard/maintenance-notification-recipients')
     ->name('dashboard.maintenance-notification-recipients.')
-    ->middleware(['auth', 'role:' . UserRole::IT_SUPPORT->value])
+    ->middleware(['auth', 'role:' . UserRole::IT_SUPPORT->value . ',' . UserRole::SYSTEM_MANAGEMENT->value])
     ->controller(MaintenanceNotificationRecipientController::class)
     ->group(function () {
         Route::get('/', 'index')->name('index');
@@ -218,7 +259,7 @@ Route::prefix('user-database')
             ->middleware('check_access:user_management.update')
             ->name('send-reset-password-link');
         Route::post('/{id}/password', 'updatePassword')
-            ->middleware(['role:' . UserRole::IT_SUPPORT->value, 'check_access:user_management.update'])
+            ->middleware(['role:' . UserRole::IT_SUPPORT->value . ',' . UserRole::SYSTEM_MANAGEMENT->value, 'check_access:user_management.update'])
             ->name('password.update');
         Route::put('/', 'update')
             ->middleware('check_access:user_management.update')
@@ -246,12 +287,12 @@ Route::prefix('finance')
             ->name('dashboard');
 
         Route::patch('/categories/{category}/visibility', [FinanceCategoryController::class, 'visibility'])
-            ->middleware('role:' . UserRole::IT_SUPPORT->value)
+            ->middleware('role:' . UserRole::IT_SUPPORT->value . ',' . UserRole::SYSTEM_MANAGEMENT->value)
             ->name('categories.visibility');
 
         Route::resource('categories', FinanceCategoryController::class)
             ->only(['index', 'store', 'update', 'destroy'])
-            ->middleware('role:' . UserRole::IT_SUPPORT->value);
+            ->middleware('role:' . UserRole::IT_SUPPORT->value . ',' . UserRole::SYSTEM_MANAGEMENT->value);
 
         Route::get('/depreciation', [AssetDepreciationController::class, 'index'])
             ->middleware('check_access:finance_depreciation.read')
@@ -583,7 +624,7 @@ Route::prefix('admin')
 
         Route::prefix('theme')
             ->name('theme.')
-            ->middleware('role:' . UserRole::IT_SUPPORT->value)
+            ->middleware('role:' . UserRole::IT_SUPPORT->value . ',' . UserRole::SYSTEM_MANAGEMENT->value)
             ->controller(ThemeController::class)
             ->group(function () {
                 Route::get('/', 'index')->name('index');

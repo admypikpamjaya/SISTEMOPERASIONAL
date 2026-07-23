@@ -13,4 +13,5 @@ enum UserRole: string
     case PEMBINA = 'Pembina';
     case BLASTING = 'Blasting';
     case QC = 'QC';
+    case SYSTEM_MANAGEMENT = 'Sistem Management';
 }

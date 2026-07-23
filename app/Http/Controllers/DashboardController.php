@@ -57,7 +57,10 @@ class DashboardController extends Controller
             );
 
         $isSuperAdmin = $currentUser !== null
-            && $currentUser->role === UserRole::IT_SUPPORT->value;
+            && in_array($currentUser->role, [
+                UserRole::IT_SUPPORT->value,
+                UserRole::SYSTEM_MANAGEMENT->value,
+            ], true);
 
         $blastSeries = null;
         $financeSeries = null;

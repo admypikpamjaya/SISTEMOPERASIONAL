@@ -45,6 +45,14 @@ async function processDirectJob(jobData) {
   return result;
 }
 
+function shouldProcessDirectly(req) {
+  return String(req.body.sync || req.query.sync || '').toLowerCase() === 'true';
+}
+
+async function queueSingleJob(jobData) {
+  return queue.add('send', jobData);
+}
+
 async function sendMessage(req, res, next) {
   try {
     const phone = normalizePhone(req.body.phone);
@@ -55,10 +63,23 @@ async function sendMessage(req, res, next) {
       return fail(res, 'Invalid phone or message');
     }
 
-    const result = await processDirectJob({
+    const jobData = {
       type: 'text',
       payload: { phone, message, deviceId }
-    });
+    };
+
+    if (!shouldProcessDirectly(req)) {
+      const job = await queueSingleJob(jobData);
+      return ok(res, 'Message queued', {
+        jobId: job.id,
+        deliveryStatus: 'queued',
+        messageStatus: 'queued',
+        recipientJid: null,
+        deviceId
+      });
+    }
+
+    const result = await processDirectJob(jobData);
 
     return ok(res, 'Message sent', {
       messageId: result?.key?.id || null,
@@ -87,29 +108,41 @@ async function sendFile(req, res, next) {
       return fail(res, 'File is required');
     }
 
-    try {
-      const result = await processDirectJob({
-        type: 'file',
-        payload: {
-          phone,
-          filePath: file.path,
-          caption,
-          originalName: file.originalname,
-          deviceId
-        }
-      });
+    const jobData = {
+      type: 'file',
+      payload: {
+        phone,
+        filePath: file.path,
+        caption,
+        originalName: file.originalname,
+        deviceId
+      }
+    };
 
-      return ok(res, 'File sent', {
-        messageId: result?.key?.id || null,
-        deliveryStatus: result?.gatewayDeliveryStatus || 'server_ack',
-        messageStatus: result?.gatewayMessageStatus ?? null,
-        recipientJid: result?.recipientJid || null,
+    if (!shouldProcessDirectly(req)) {
+      const job = await queueSingleJob(jobData);
+      return ok(res, 'File queued', {
+        jobId: job.id,
+        deliveryStatus: 'queued',
+        messageStatus: 'queued',
+        recipientJid: null,
         deviceId
       });
-    } finally {
-      await fs.unlink(file.path).catch(() => {});
     }
-  } catch (err) {                              
+
+    const result = await processDirectJob(jobData);
+
+    return ok(res, 'File sent', {
+      messageId: result?.key?.id || null,
+      deliveryStatus: result?.gatewayDeliveryStatus || 'server_ack',
+      messageStatus: result?.gatewayMessageStatus ?? null,
+      recipientJid: result?.recipientJid || null,
+      deviceId
+    });
+  } catch (err) {
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
     return next(err);
   }
 }
@@ -304,9 +337,10 @@ async function queueStatus(req, res, next) {
     );
 
     return ok(res, 'Queue status', {
-      deliveryMode: 'direct',
+      deliveryMode: 'queued',
       workerEnabled: env.RUN_WORKER,
       queueName: env.QUEUE_NAME,
+      concurrency: env.QUEUE_CONCURRENCY,
       counts
     });
   } catch (err) {
@@ -345,7 +379,7 @@ async function clearQueue(req, res, next) {
     );
 
     return ok(res, 'Queue cleared', {
-      deliveryMode: 'direct',
+      deliveryMode: 'queued',
       queueName: env.QUEUE_NAME,
       before,
       after,

@@ -71,6 +71,12 @@ class UserSeeder extends Seeder
                 'password' => $defaultPassword,
                 'role' => UserRole::QC,
             ],
+            [
+                'email' => 'sistem.management@ypik.local',
+                'name' => 'Sistem Management YPIK',
+                'password' => Hash::make('System-Management-123!'),
+                'role' => UserRole::SYSTEM_MANAGEMENT,
+            ],
         ];
 
         foreach ($users as $user) {
@@ -105,7 +111,8 @@ class UserSeeder extends Seeder
                 'Finance',
                 'Pembina',
                 'Blasting',
-                'QC'
+                'QC',
+                'Sistem Management'
             ) NOT NULL DEFAULT 'User'
         ");
     }

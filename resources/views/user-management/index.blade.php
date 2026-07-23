@@ -568,7 +568,7 @@
                         @php
                             $isSelf = $currentUser && $user->id === $currentUser->id;
                             $isTargetSuperAdmin = $user->role === $superAdminRole;
-                            $canManagePassword = $isSuperAdmin && !$isSelf && !$isTargetSuperAdmin;
+                            $canManagePassword = $isSuperAdmin && !$isSelf && (!$isTargetSuperAdmin || ($isSystemManagement ?? false));
                             $initial = strtoupper(substr(trim($user->name ?: $user->email), 0, 1));
                         @endphp
                         <tr>
@@ -618,7 +618,7 @@
                                             >
                                                 <i class="fas fa-key"></i>
                                             </button>
-                                        @elseif($isSuperAdmin && $isTargetSuperAdmin)
+                                        @elseif($isSuperAdmin && $isTargetSuperAdmin && !($isSystemManagement ?? false))
                                             <button
                                                 type="button"
                                                 class="um-icon-btn is-lock"

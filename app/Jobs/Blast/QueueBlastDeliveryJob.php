@@ -25,6 +25,7 @@ class QueueBlastDeliveryJob implements ShouldQueue
     ) {}
 
     public int $tries = 100000;
+    public int $timeout = 180;
 
     public function retryUntil(): \DateTimeInterface
     {

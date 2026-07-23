@@ -10,9 +10,10 @@ router.get('/health', (req, res) => {
     message: 'OK',
     data: {
       version: packageInfo.version,
-      deliveryMode: 'direct',
+      deliveryMode: 'queued',
       workerEnabled: env.RUN_WORKER,
       queueName: env.QUEUE_NAME,
+      concurrency: env.QUEUE_CONCURRENCY,
       gitCommit: process.env.GIT_COMMIT || null
     }
   });

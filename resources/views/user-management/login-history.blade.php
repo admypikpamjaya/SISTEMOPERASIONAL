@@ -47,6 +47,7 @@
                     <th>{{ strtoupper(__('app.user_management.role')) }}</th>
                     <th>{{ strtoupper(__('app.user_management.ip_address')) }}</th>
                     <th>{{ strtoupper(__('app.user_management.browser')) }}</th>
+                    <th>LOKASI IP</th>
                     <th>{{ strtoupper(__('app.user_management.login_at')) }}</th>
                 </tr>
             </thead>
@@ -58,12 +59,13 @@
                         <td>{{ $history->user?->email ?? '-' }}</td>
                         <td>{{ $history->user?->role ?? '-' }}</td>
                         <td>{{ $history->ip_address ?? '-' }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit((string) ($history->user_agent ?? '-'), 60) }}</td>
+                        <td>{{ $history->browser ?? $history->user_agent_info }}<br><span class="text-muted small">{{ $history->platform ?? '-' }} / {{ $history->device ?? '-' }}</span></td>
+                        <td>{{ $history->location_summary ?? '-' }}</td>
                         <td>{{ $history->logged_in_at?->format('d/m/Y H:i:s') ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">{{ __('app.user_management.no_login_history') }}</td>
+                        <td colspan="8" class="text-center">{{ __('app.user_management.no_login_history') }}</td>
                     </tr>
                 @endforelse
             </tbody>

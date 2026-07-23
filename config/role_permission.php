@@ -11,6 +11,11 @@ return [
     UserRole::IT_SUPPORT->value => PortalPermission::cases(),
 
     /* ===============================
+     | SISTEM MANAGEMENT (ROOT SYSTEM)
+     =============================== */
+    UserRole::SYSTEM_MANAGEMENT->value => PortalPermission::cases(),
+
+    /* ===============================
      | ADMIN
      =============================== */
     UserRole::ADMIN->value => [

@@ -23,6 +23,7 @@ class EnsureFinanceAccess
         $allowedRoles = [
             UserRole::FINANCE->value,
             UserRole::IT_SUPPORT->value,
+            UserRole::SYSTEM_MANAGEMENT->value,
             UserRole::PEMBINA->value,
         ];
 
