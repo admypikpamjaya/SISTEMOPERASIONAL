@@ -20,5 +20,9 @@ class DatabaseSeeder extends Seeder
         if (Schema::hasTable('users')) {
             $this->call(UserSeeder::class);
         }
+
+        if (Schema::hasTable('blast_message_templates')) {
+            $this->call(BlastMessageTemplateSeeder::class);
+        }
     }
 }

@@ -77,4 +77,28 @@ class TemplateRendererTest extends TestCase
             $rendered
         );
     }
+
+    public function test_render_supports_maybank_va_template_placeholders(): void
+    {
+        $renderer = new TemplateRenderer();
+
+        $recipient = new BlastRecipient([
+            'nama_siswa' => 'Ahmad Nurdiansyah P',
+            'kelas' => null,
+            'nama_wali' => 'Bapak/Ibu Wali',
+            'wa_wali' => '6281315300203',
+        ]);
+
+        $template = 'Nama {Nama_Siswa}, VA {Nomor_VA}, nominal Rp {Nominal}.';
+
+        $rendered = $renderer->render($template, $recipient, [
+            'Nomor_VA' => '782252627001',
+            'Nominal' => '1.650.000',
+        ]);
+
+        $this->assertSame(
+            'Nama Ahmad Nurdiansyah P, VA 782252627001, nominal Rp 1.650.000.',
+            $rendered
+        );
+    }
 }

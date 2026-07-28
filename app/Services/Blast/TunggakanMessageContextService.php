@@ -58,7 +58,13 @@ class TunggakanMessageContextService
             ->values()
             ->implode(', ');
 
+        $nomorVa = $this->collectRawPayloadValues($records, 'nomor_va')->implode(', ');
+        if ($nomorVa === '') {
+            $nomorVa = $this->collectRawPayloadValues($records, 'nomor_va_maybank')->implode(', ');
+        }
+
         $context = [
+            'Nama_Siswa' => (string) $recipient->nama_siswa,
             'bulan_tunggakan' => $bulanTunggakan !== '' ? $bulanTunggakan : '-',
             'nilai_tunggakan' => $totalNilai,
             'nilai_tunggakan_rupiah' => $this->formatRupiah($totalNilai),
@@ -72,6 +78,16 @@ class TunggakanMessageContextService
             'tagihan_rupiah' => $this->formatRupiah($totalNilai),
             'tunggakan' => $totalNilai,
             'tunggakan_rupiah' => $this->formatRupiah($totalNilai),
+            'nomor_va' => $nomorVa !== '' ? $nomorVa : '-',
+            'nomor_va_maybank' => $nomorVa !== '' ? $nomorVa : '-',
+            'va_maybank' => $nomorVa !== '' ? $nomorVa : '-',
+            'Nomor_VA' => $nomorVa !== '' ? $nomorVa : '-',
+            'Nomor_VA_Maybank' => $nomorVa !== '' ? $nomorVa : '-',
+            'Nominal' => $this->formatRupiahNumber($totalNilai),
+            'Nominal_Rupiah' => $this->formatRupiah($totalNilai),
+            'Nominal_SPP' => $this->formatRupiahNumber($totalNilai),
+            'nominal_spp' => $totalNilai,
+            'nominal_spp_rupiah' => $this->formatRupiah($totalNilai),
         ];
 
         $this->cache[$cacheKey] = $context;
@@ -124,8 +140,29 @@ class TunggakanMessageContextService
             ->get();
     }
 
+    /**
+     * @param Collection<int, TunggakanRecord> $records
+     * @return Collection<int, string>
+     */
+    private function collectRawPayloadValues(Collection $records, string $key): Collection
+    {
+        return $records
+            ->map(function (TunggakanRecord $record) use ($key): string {
+                $payload = is_array($record->raw_payload) ? $record->raw_payload : [];
+                return trim((string) ($payload[$key] ?? ''));
+            })
+            ->filter(fn (string $value): bool => $value !== '')
+            ->unique()
+            ->values();
+    }
+
     private function formatRupiah(float $amount): string
     {
         return 'Rp ' . number_format(round($amount), 0, ',', '.');
+    }
+
+    private function formatRupiahNumber(float $amount): string
+    {
+        return number_format(round($amount), 0, ',', '.');
     }
 }

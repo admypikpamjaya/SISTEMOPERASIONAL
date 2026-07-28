@@ -22,6 +22,8 @@ use RuntimeException;
 
 class TunggakanService
 {
+    private const MAYBANK_VA_DEFAULT_PERIOD = 'SPP Bulanan';
+
     public function __construct(
         private readonly TemplateRenderer $templateRenderer,
         private readonly TunggakanMessageContextService $tunggakanContextService
@@ -298,6 +300,8 @@ class TunggakanService
      *   sent_targets:int,
      *   failed_targets:int,
      *   queued_targets:int,
+     *   blast_limit:int|null,
+     *   limited_recipients:int,
      *   blast_message_id:string|null
      * }
      */
@@ -305,7 +309,8 @@ class TunggakanService
         ?string $templateId,
         ?string $actorId,
         ?array $recordIds = null,
-        ?string $deviceId = null
+        ?string $deviceId = null,
+        ?int $blastLimit = null
     ): array {
         $actorId = trim((string) $actorId);
         if ($actorId === '') {
@@ -314,6 +319,7 @@ class TunggakanService
 
         $deviceId = trim((string) $deviceId);
         $deviceId = $deviceId !== '' ? $deviceId : null;
+        $blastLimit = $blastLimit !== null && $blastLimit > 0 ? $blastLimit : null;
 
         $templateContent = $this->resolveWhatsappTemplateContent($templateId);
 
@@ -349,6 +355,8 @@ class TunggakanService
                 'sent_targets' => 0,
                 'failed_targets' => 0,
                 'queued_targets' => 0,
+                'blast_limit' => $blastLimit,
+                'limited_recipients' => 0,
                 'blast_message_id' => null,
             ];
         }
@@ -391,7 +399,12 @@ class TunggakanService
             }
         }
 
-        $recipientIds = collect($groups)
+        $totalCandidateGroups = count($groups);
+        $groupsToProcess = $blastLimit !== null
+            ? array_slice($groups, 0, $blastLimit, true)
+            : $groups;
+
+        $recipientIds = collect($groupsToProcess)
             ->filter(fn (array $group): bool => $group['mode'] === 'recipient')
             ->map(fn (array $group): string => (string) $group['recipient_id'])
             ->filter(fn (string $value): bool => trim($value) !== '')
@@ -408,7 +421,7 @@ class TunggakanService
         $summary = [
             'candidate_records' => (int) $candidateRecords->count(),
             'requested_records' => $recordIds !== null ? count($recordIds) : null,
-            'candidate_recipients' => count($groups),
+            'candidate_recipients' => $totalCandidateGroups,
             'processed_recipients' => 0,
             'sent_recipients' => 0,
             'failed_recipients' => 0,
@@ -417,13 +430,15 @@ class TunggakanService
             'sent_targets' => 0,
             'failed_targets' => 0,
             'queued_targets' => 0,
+            'blast_limit' => $blastLimit,
+            'limited_recipients' => count($groupsToProcess),
             'blast_message_id' => null,
         ];
 
         $blastMessage = null;
         $groupLogDetails = [];
 
-        foreach ($groups as $groupKey => $group) {
+        foreach ($groupsToProcess as $groupKey => $group) {
             /** @var Collection<int, TunggakanRecord> $recipientRecords */
             $recipientRecords = $group['records'];
             $recipientRecordIds = $recipientRecords
@@ -635,6 +650,9 @@ class TunggakanService
             'details' => [
                 'source' => 'admin.blast.tunggakan',
                 'device_id' => $deviceId,
+                'blast_limit' => $blastLimit,
+                'total_available_groups' => $totalCandidateGroups,
+                'total_limited_groups' => count($groupsToProcess),
                 'group_logs' => $groupLogDetails,
             ],
         ]);
@@ -711,15 +729,23 @@ class TunggakanService
                         $purgedKeys
                     );
 
+                    $rawPayload = [
+                        'source' => 'excel',
+                        'original_file' => $originalName,
+                        'sheet_row' => $rowIndex + 1,
+                    ];
+
+                    if (!empty($parsed['nomor_va'])) {
+                        $rawPayload['import_format'] = 'maybank_va';
+                        $rawPayload['nomor_va'] = (string) $parsed['nomor_va'];
+                        $rawPayload['nomor_va_maybank'] = (string) $parsed['nomor_va'];
+                    }
+
                     $record = $this->createRecord(
                         batchId: (string) $batch->id,
                         row: $parsed,
                         actorId: $actorId,
-                        rawPayload: [
-                            'source' => 'excel',
-                            'original_file' => $originalName,
-                            'sheet_row' => $rowIndex + 1,
-                        ]
+                        rawPayload: $rawPayload
                     );
 
                     $inserted++;
@@ -1186,6 +1212,10 @@ class TunggakanService
                 continue;
             }
 
+            if ($this->isHeaderlessMaybankVaRow($row, [])) {
+                continue;
+            }
+
             $map = [];
             foreach ($row as $colIndex => $value) {
                 $canonical = $this->canonicalHeader((string) $value);
@@ -1237,14 +1267,42 @@ class TunggakanService
     /**
      * @param array<int, mixed> $row
      * @param array<string, int> $headerMap
-     * @return array{no_urut:int|null,kelas:string|null,nama_murid:string,no_telepon:string|null,bulan:string,nilai:float}|null
+     * @return array{no_urut:int|null,kelas:string|null,nama_murid:string,no_telepon:string|null,bulan:string,nilai:float,nomor_va?:string|null}|null
      */
     private function parseExcelRow(array $row, array $headerMap): ?array
     {
-        $noUrutRaw = $this->resolveCell($row, $headerMap, 'no', 0);
-        $kelas = $this->resolveCell($row, $headerMap, 'kelas', 1);
+        if ($this->isHeaderlessMaybankVaRow($row, $headerMap)) {
+            $nomorVa = $this->normalizeVirtualAccount($this->resolveCellByIndex($row, 0));
+            $namaMurid = trim((string) $this->resolveCellByIndex($row, 1));
+            $nilai = $this->parseNominal($this->resolveCellByIndex($row, 2));
+            $noTelepon = $this->resolveCellByIndex($row, 3);
+
+            return [
+                'no_urut' => null,
+                'kelas' => null,
+                'nama_murid' => $namaMurid,
+                'no_telepon' => $noTelepon !== null ? trim((string) $noTelepon) : null,
+                'bulan' => self::MAYBANK_VA_DEFAULT_PERIOD,
+                'nilai' => $nilai,
+                'nomor_va' => $nomorVa,
+            ];
+        }
+
+        $nomorVa = array_key_exists('nomor_va', $headerMap)
+            ? $this->normalizeVirtualAccount($this->resolveCell($row, $headerMap, 'nomor_va', 0))
+            : null;
+        $isMaybankVaFormat = $nomorVa !== null && !array_key_exists('bulan', $headerMap);
+
+        $noUrutRaw = $isMaybankVaFormat && !array_key_exists('no', $headerMap)
+            ? null
+            : $this->resolveCell($row, $headerMap, 'no', 0);
+        $kelas = $isMaybankVaFormat && !array_key_exists('kelas', $headerMap)
+            ? null
+            : $this->resolveCell($row, $headerMap, 'kelas', 1);
         $namaMurid = $this->resolveCell($row, $headerMap, 'nama_murid', 2);
-        $bulan = $this->resolveCell($row, $headerMap, 'bulan', 3);
+        $bulan = $isMaybankVaFormat
+            ? self::MAYBANK_VA_DEFAULT_PERIOD
+            : $this->resolveCell($row, $headerMap, 'bulan', 3);
         $nilaiColumnIndex = $headerMap['nilai'] ?? 4;
         $nilaiRaw = $this->resolveExcelNominalRaw($row, $nilaiColumnIndex);
         $phoneColumnIndex = $headerMap['no_telepon'] ?? 5;
@@ -1278,7 +1336,7 @@ class TunggakanService
             return null;
         }
 
-        return [
+        $parsed = [
             'no_urut' => $noUrutRaw !== null && trim((string) $noUrutRaw) !== ''
                 ? (int) preg_replace('/\D+/', '', (string) $noUrutRaw)
                 : null,
@@ -1288,6 +1346,44 @@ class TunggakanService
             'bulan' => $bulan,
             'nilai' => $nilai,
         ];
+
+        if ($nomorVa !== null) {
+            $parsed['nomor_va'] = $nomorVa;
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * @param array<int, mixed> $row
+     * @param array<string, int> $headerMap
+     */
+    private function isHeaderlessMaybankVaRow(array $row, array $headerMap): bool
+    {
+        if (!empty($headerMap)) {
+            return false;
+        }
+
+        $nomorVa = $this->normalizeVirtualAccount($this->resolveCellByIndex($row, 0));
+        $namaMurid = trim((string) $this->resolveCellByIndex($row, 1));
+        $nilaiRaw = $this->resolveCellByIndex($row, 2);
+
+        return $nomorVa !== null
+            && $namaMurid !== ''
+            && $nilaiRaw !== null
+            && $this->parseNominal($nilaiRaw) > 0;
+    }
+
+    private function normalizeVirtualAccount(?string $value): ?string
+    {
+        $digits = preg_replace('/\D+/', '', trim((string) $value)) ?? '';
+        $length = strlen($digits);
+
+        if ($length < 8 || $length > 20) {
+            return null;
+        }
+
+        return $digits;
     }
 
     /**
@@ -1414,6 +1510,14 @@ class TunggakanService
             return 'no';
         }
 
+        if (
+            in_array($normalized, ['va', 'nova', 'nomorva', 'novirtualaccount', 'nomorvirtualaccount'], true) ||
+            str_contains($normalized, 'virtualaccount') ||
+            str_contains($normalized, 'vamaybank')
+        ) {
+            return 'nomor_va';
+        }
+
         if (str_starts_with($normalized, 'kelas') || $normalized === 'class') {
             return 'kelas';
         }
@@ -1460,6 +1564,10 @@ class TunggakanService
      */
     private function isLikelyHeaderRow(array $row): bool
     {
+        if ($this->isHeaderlessMaybankVaRow($row, [])) {
+            return false;
+        }
+
         $joined = strtolower(implode(' ', array_map(
             fn ($value) => trim((string) $value),
             $row
@@ -1474,8 +1582,11 @@ class TunggakanService
         return str_contains($joined, 'nama murid')
             || str_contains($joined, 'nama siswa')
             || str_contains($joined, 'tunggakan')
+            || str_contains($joined, 'nomor va')
+            || str_contains($joined, 'virtual account')
             || str_contains($joined, 'bulan')
             || str_contains($joined, 'nilai')
+            || str_contains($joined, 'nominal')
             || str_contains($joined, 'telepon')
             || str_contains($joined, 'whatsapp');
     }
@@ -1619,7 +1730,7 @@ class TunggakanService
         $defaultTemplate = BlastMessageTemplate::query()
             ->where('channel', 'whatsapp')
             ->where('is_active', true)
-            ->orderByRaw("CASE WHEN name = 'Tunggakan WA Otomatis' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN name = 'VA Maybank SPP Otomatis' THEN 0 WHEN name = 'Tunggakan WA Otomatis' THEN 1 ELSE 2 END")
             ->orderBy('name')
             ->first();
 
@@ -1655,6 +1766,18 @@ class TunggakanService
             ->values()
             ->implode(', ');
 
+        $namaSiswa = $records->pluck('nama_murid')
+            ->map(fn ($value): string => trim((string) $value))
+            ->filter(fn (string $value): bool => $value !== '')
+            ->unique()
+            ->values()
+            ->implode(', ');
+
+        $nomorVa = $this->collectRawPayloadValues($records, 'nomor_va')->implode(', ');
+        if ($nomorVa === '') {
+            $nomorVa = $this->collectRawPayloadValues($records, 'nomor_va_maybank')->implode(', ');
+        }
+
         $context = $this->tunggakanContextService->resolveForRecipient($recipient);
 
         $totalTunggakan = (float) ($context['total_tunggakan'] ?? 0);
@@ -1663,6 +1786,8 @@ class TunggakanService
         }
 
         return array_merge($context, [
+            'nama_siswa' => $namaSiswa !== '' ? $namaSiswa : (string) $recipient->nama_siswa,
+            'Nama_Siswa' => $namaSiswa !== '' ? $namaSiswa : (string) $recipient->nama_siswa,
             'bulan_tunggakan' => $bulanTunggakan !== '' ? $bulanTunggakan : '-',
             'nilai_tunggakan' => $tagihan,
             'nilai_tunggakan_rupiah' => $this->formatRupiah($tagihan),
@@ -1670,7 +1795,33 @@ class TunggakanService
             'total_tunggakan_rupiah' => $this->formatRupiah($totalTunggakan),
             'tagihan' => $tagihan,
             'tagihan_rupiah' => $this->formatRupiah($tagihan),
+            'nomor_va' => $nomorVa !== '' ? $nomorVa : '-',
+            'nomor_va_maybank' => $nomorVa !== '' ? $nomorVa : '-',
+            'va_maybank' => $nomorVa !== '' ? $nomorVa : '-',
+            'Nomor_VA' => $nomorVa !== '' ? $nomorVa : '-',
+            'Nomor_VA_Maybank' => $nomorVa !== '' ? $nomorVa : '-',
+            'Nominal' => $this->formatRupiahNumber($tagihan),
+            'Nominal_Rupiah' => $this->formatRupiah($tagihan),
+            'Nominal_SPP' => $this->formatRupiahNumber($tagihan),
+            'nominal_spp' => $tagihan,
+            'nominal_spp_rupiah' => $this->formatRupiah($tagihan),
         ]);
+    }
+
+    /**
+     * @param Collection<int, TunggakanRecord> $records
+     * @return Collection<int, string>
+     */
+    private function collectRawPayloadValues(Collection $records, string $key): Collection
+    {
+        return $records
+            ->map(function (TunggakanRecord $record) use ($key): string {
+                $payload = is_array($record->raw_payload) ? $record->raw_payload : [];
+                return trim((string) ($payload[$key] ?? ''));
+            })
+            ->filter(fn (string $value): bool => $value !== '')
+            ->unique()
+            ->values();
     }
 
     /**
@@ -1724,6 +1875,11 @@ class TunggakanService
     private function formatRupiah(float $amount): string
     {
         return 'Rp ' . number_format(round($amount), 0, ',', '.');
+    }
+
+    private function formatRupiahNumber(float $amount): string
+    {
+        return number_format(round($amount), 0, ',', '.');
     }
 
     /**

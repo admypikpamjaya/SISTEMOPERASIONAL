@@ -667,6 +667,20 @@ body.dark-mode .tg-btn.ghost {
                                 @endforeach
                             </select>
                         </div>
+                        <div class="tg-field" style="margin-bottom:10px;">
+                            <label class="tg-label" for="blastLimitInput">{{ __('app.finance.blast_limit') }}</label>
+                            <input
+                                class="tg-input"
+                                id="blastLimitInput"
+                                type="number"
+                                name="blast_limit"
+                                min="1"
+                                max="10000"
+                                step="1"
+                                value="{{ old('blast_limit') }}"
+                                placeholder="{{ __('app.finance.blast_limit_placeholder') }}"
+                            >
+                        </div>
                         <div class="tg-actions">
                             <button type="submit" class="tg-btn primary" name="blast_mode" value="all">{{ __('app.finance.blast_all_draft_failed') }}</button>
                             <button type="submit" class="tg-btn ghost" name="blast_mode" value="selected" id="blastSelectedBtn" disabled>{{ __('app.finance.blast_selected') }}</button>
@@ -693,7 +707,7 @@ body.dark-mode .tg-btn.ghost {
                     </form>
                     <div class="tg-hint">
                         {!! __('app.finance.placeholder_list', [
-                            'placeholders' => '<strong>{bulan_tunggakan}</strong>, <strong>{nilai_tunggakan_rupiah}</strong>, <strong>{nominal_tunggakan_rupiah}</strong>, <strong>{total_tunggakan_rupiah}</strong>, <strong>{tagihan_rupiah}</strong>',
+                            'placeholders' => '<strong>{Nama_Siswa}</strong>, <strong>{Nomor_VA}</strong>, <strong>{Nominal}</strong>, <strong>{bulan_tunggakan}</strong>, <strong>{nilai_tunggakan_rupiah}</strong>, <strong>{nominal_tunggakan_rupiah}</strong>, <strong>{total_tunggakan_rupiah}</strong>, <strong>{tagihan_rupiah}</strong>',
                         ]) !!}
                     </div>
                 </div>
@@ -838,6 +852,7 @@ body.dark-mode .tg-btn.ghost {
                             </th>
                             <th style="width:52px;">{{ __('app.finance.no') }}</th>
                             <th>{{ __('app.finance.student_name') }}</th>
+                            <th>{{ __('app.finance.maybank_va') }}</th>
                             <th>{{ __('app.finance.class') }}</th>
                             <th>{{ __('app.finance.month_short') }}</th>
                             <th>{{ __('app.finance.value') }}</th>
@@ -886,6 +901,7 @@ body.dark-mode .tg-btn.ghost {
                                         <div class="tg-meta">{{ __('app.finance.recipient_label') }}: {{ $record->recipient_source }} / {{ $record->recipient_id }}</div>
                                     @endif
                                 </td>
+                                <td>{{ $record->raw_payload['nomor_va'] ?? '-' }}</td>
                                 <td>{{ $record->kelas ?? '-' }}</td>
                                 <td>{{ $record->bulan }}</td>
                                 <td>{{ $formatRupiah($record->nilai) }}</td>
@@ -914,7 +930,7 @@ body.dark-mode .tg-btn.ghost {
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="tg-empty">{{ __('app.finance.no_arrears_data') }}</td>
+                                <td colspan="13" class="tg-empty">{{ __('app.finance.no_arrears_data') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -988,6 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const blastForm = document.getElementById('tunggakan-blast-form');
     const blastSelectedBtn = document.getElementById('blastSelectedBtn');
+    const blastLimitInput = document.getElementById('blastLimitInput');
     const selectAll = document.getElementById('selectAllTunggakan');
     const checkboxes = Array.from(document.querySelectorAll('.tunggakan-checkbox'));
     const eligibleCheckboxes = checkboxes.filter(cb => !cb.disabled);
@@ -996,6 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         blastSelectedWithCount: @json(__('app.finance.blast_selected_with_count', ['count' => '__COUNT__'])),
         blastSelectedConfirm: @json(__('app.finance.blast_selected_confirm', ['count' => '__COUNT__'])),
         blastAllConfirm: @json(__('app.finance.blast_all_confirm')),
+        blastLimitConfirmSuffix: @json(__('app.finance.blast_limit_confirm_suffix', ['count' => '__COUNT__'])),
     };
 
     if (!blastForm || !blastSelectedBtn) {
@@ -1003,6 +1021,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const getSelectedCount = () => eligibleCheckboxes.filter(cb => cb.checked).length;
+    const getBlastLimit = () => {
+        if (!blastLimitInput) {
+            return 0;
+        }
+
+        const value = Number.parseInt(String(blastLimitInput.value || ''), 10);
+        return Number.isFinite(value) && value > 0 ? value : 0;
+    };
+    const withBlastLimitMessage = (message) => {
+        const limit = getBlastLimit();
+        if (limit <= 0) {
+            return message;
+        }
+
+        return `${message}\n${financeText.blastLimitConfirmSuffix.replace('__COUNT__', limit)}`;
+    };
 
     const updateSelectionState = () => {
         const selectedCount = getSelectedCount();
@@ -1046,13 +1080,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (!confirm(financeText.blastSelectedConfirm.replace('__COUNT__', selectedCount))) {
+            const confirmMessage = withBlastLimitMessage(
+                financeText.blastSelectedConfirm.replace('__COUNT__', selectedCount)
+            );
+
+            if (!confirm(confirmMessage)) {
                 event.preventDefault();
             }
             return;
         }
 
-        if (!confirm(financeText.blastAllConfirm)) {
+        if (!confirm(withBlastLimitMessage(financeText.blastAllConfirm))) {
             event.preventDefault();
         }
     });

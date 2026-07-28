@@ -103,7 +103,7 @@ class FinanceTunggakanController extends Controller
         $whatsappTemplates = BlastMessageTemplate::query()
             ->where('channel', 'whatsapp')
             ->where('is_active', true)
-            ->orderByRaw("CASE WHEN name = 'Tunggakan WA Otomatis' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN name = 'VA Maybank SPP Otomatis' THEN 0 WHEN name = 'Tunggakan WA Otomatis' THEN 1 ELSE 2 END")
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -204,6 +204,7 @@ class FinanceTunggakanController extends Controller
             'template_id' => 'nullable|string|max:50',
             'device_id' => 'nullable|string|max:100',
             'blast_mode' => 'nullable|in:all,selected',
+            'blast_limit' => 'nullable|integer|min:1|max:10000',
             'selected_ids' => 'nullable|array',
             'selected_ids.*' => 'uuid',
         ]);
@@ -219,6 +220,9 @@ class FinanceTunggakanController extends Controller
             }
 
             $blastMode = (string) ($validated['blast_mode'] ?? 'all');
+            $blastLimit = isset($validated['blast_limit']) && (int) $validated['blast_limit'] > 0
+                ? (int) $validated['blast_limit']
+                : null;
             $selectedIds = $blastMode === 'selected'
                 ? array_values(array_filter($validated['selected_ids'] ?? []))
                 : [];
@@ -233,7 +237,8 @@ class FinanceTunggakanController extends Controller
                 templateId: $validated['template_id'] ?? null,
                 actorId: auth()->id() ? (string) auth()->id() : null,
                 recordIds: $selectedIds !== [] ? $selectedIds : null,
-                deviceId: $deviceId
+                deviceId: $deviceId,
+                blastLimit: $blastLimit
             );
 
             if ((int) ($summary['candidate_records'] ?? 0) === 0) {
@@ -253,6 +258,12 @@ class FinanceTunggakanController extends Controller
             $deviceMessage = $deviceId !== null
                 ? ' Device: ' . $deviceId . '.'
                 : '';
+            $limitMessage = $blastLimit !== null
+                ? ' Limit blasting: ' . $blastLimit
+                    . '. Grup tersedia: ' . $summary['candidate_recipients']
+                    . ', grup diproses: ' . $summary['limited_recipients']
+                    . '.'
+                : '';
 
             return redirect()
                 ->route('admin.blast.tunggakan.index')
@@ -267,6 +278,7 @@ class FinanceTunggakanController extends Controller
                     . ', Target terkirim: ' . $summary['sent_targets']
                     . ', Target gagal: ' . $summary['failed_targets']
                     . '.'
+                    . $limitMessage
                     . $deviceMessage
                 );
         } catch (Throwable $exception) {
@@ -490,6 +502,18 @@ class FinanceTunggakanController extends Controller
                 ]
             );
 
+            $maybankTemplate = BlastMessageTemplate::query()->updateOrCreate(
+                [
+                    'channel' => 'whatsapp',
+                    'name' => 'VA Maybank SPP Otomatis',
+                ],
+                [
+                    'content' => $this->maybankWhatsappTemplateContent(),
+                    'is_active' => true,
+                    'created_by' => $actorId,
+                ]
+            );
+
             $emailTemplate = BlastMessageTemplate::query()->updateOrCreate(
                 [
                     'channel' => 'email',
@@ -507,6 +531,7 @@ class FinanceTunggakanController extends Controller
                 ->with(
                     'success',
                     'Template blasting tunggakan berhasil disiapkan: '
+                    . $maybankTemplate->name . ', '
                     . $waTemplate->name . ' dan ' . $emailTemplate->name . '.'
                 );
         } catch (Throwable $exception) {
@@ -527,5 +552,38 @@ class FinanceTunggakanController extends Controller
 
         $timestamp = strtotime((string) $maxUpdatedAt);
         return $timestamp !== false ? (string) $timestamp : md5((string) $maxUpdatedAt);
+    }
+
+    private function maybankWhatsappTemplateContent(): string
+    {
+        return <<<'TEMPLATE'
+🌿 Assalamu'alaikum Wr. Wb.
+Yth. Bapak/Ibu Orang Tua/Wali Murid: 
+1. KB-TKIA Al Azhar 24 Jatikramat
+2. SD Islam Al Azhar 23 Jatikramat
+
+Dengan hormat,
+
+💳 Berikut kami sampaikan informasi Nomor Virtual Account (VA) Bank Maybank Indonesia untuk pembayaran SPP bulanan putra/putri Bapak/Ibu.
+
+👤 Nama Siswa : {Nama_Siswa}
+🏦 Nomor VA Maybank : {Nomor_VA}
+💰 Nominal SPP : Rp {Nominal}
+
+📲 Cara Pembayaran (m-Banking/Internet Banking Bank Lain):
+1. Buka aplikasi m-Banking atau Internet Banking yang Anda gunakan.
+2. Pilih menu Transfer Antarbank.
+3. Pilih Bank Maybank Indonesia (Kode Bank: 016).
+4. Masukkan Nomor Virtual Account di atas.
+5. Masukkan nominal pembayaran sesuai tagihan.
+6. Pastikan nama penerima dan nominal tagihan sudah sesuai, lalu masukkan PIN transaksi untuk menyelesaikan pembayaran.
+
+Demikian informasi ini kami sampaikan. Atas perhatian dan kerja sama Bapak/Ibu, kami ucapkan terima kasih.
+
+🌿 Wassalamu'alaikum Wr. Wb.
+
+Hormat kami,
+YPIK PAM JAYA
+TEMPLATE;
     }
 }
