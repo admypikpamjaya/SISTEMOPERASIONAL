@@ -19,15 +19,19 @@ class SmtpEmailProvider implements EmailProviderInterface
     ): bool {
         $context = $this->preparedMailContext($payload);
 
-        $this->assertConfigurationIsReady($context);
-
         try {
+            $this->assertConfigurationIsReady($context);
+            $this->assertAccountQuotaAllowsSend($context);
+
             $mail = new BlastMail($subject, $payload);
             if ($context['from_address'] !== '') {
                 $mail->from(
                     $context['from_address'],
                     $context['from_name'] !== '' ? $context['from_name'] : null
                 );
+            }
+            if ($context['reply_to_address'] !== '') {
+                $mail->replyTo($context['reply_to_address']);
             }
 
             if (!empty($context['mailer_name'])) {
@@ -48,6 +52,8 @@ class SmtpEmailProvider implements EmailProviderInterface
                 'username' => $context['username'],
             ]);
 
+            $this->recordAccountSendResult($context, true, 'Email sent successfully.');
+
             return true;
         } catch (\Throwable $e) {
             Log::error('[SMTP EMAIL FAILED]', [
@@ -60,6 +66,8 @@ class SmtpEmailProvider implements EmailProviderInterface
                 'from_address' => $context['from_address'],
                 'error' => $e->getMessage(),
             ]);
+
+            $this->recordAccountSendResult($context, false, $e->getMessage());
 
             throw new RuntimeException($e->getMessage(), 0, $e);
         }
@@ -190,11 +198,13 @@ class SmtpEmailProvider implements EmailProviderInterface
      *     password:string,
      *     from_address:string,
      *     from_name:string,
+     *     reply_to_address:string,
      *     local_domain:?string,
      *     source:string,
      *     account_id:?string,
      *     account_label:?string,
-     *     mailer_name:?string
+     *     mailer_name:?string,
+     *     timeout:int
      * }
      */
     private function mailContext(): array
@@ -207,16 +217,20 @@ class SmtpEmailProvider implements EmailProviderInterface
             'password' => $this->normalizeConfigValue((string) config('mail.mailers.smtp.password', '')),
             'from_address' => $this->normalizeConfigValue((string) config('mail.from.address', '')),
             'from_name' => $this->normalizeConfigValue((string) config('mail.from.name', '')),
+            'reply_to_address' => '',
             'local_domain' => $this->normalizeNullableConfigValue((string) config('mail.mailers.smtp.local_domain', '')),
             'source' => 'config',
             'account_id' => null,
             'account_label' => null,
             'mailer_name' => null,
+            'timeout' => $this->mailTimeout(),
         ];
     }
 
     private function mailContextFromAccount(BlastEmailAccount $account): array
     {
+        $account->resetDailyCountersIfNeeded();
+
         $context = [
             'host' => $this->normalizeConfigValue((string) $account->host),
             'port' => (int) $account->port,
@@ -225,11 +239,13 @@ class SmtpEmailProvider implements EmailProviderInterface
             'password' => $this->normalizeConfigValue((string) $account->password),
             'from_address' => $this->normalizeConfigValue((string) $account->email_address),
             'from_name' => $this->normalizeConfigValue((string) ($account->from_name ?: $account->label)),
+            'reply_to_address' => $this->normalizeConfigValue((string) $account->reply_to_address),
             'local_domain' => $this->normalizeNullableConfigValue((string) config('mail.mailers.smtp.local_domain', '')),
             'source' => 'account',
             'account_id' => (string) $account->id,
             'account_label' => $account->senderLabel(),
             'mailer_name' => null,
+            'timeout' => max(5, (int) ($account->smtp_timeout ?: $this->mailTimeout())),
         ];
 
         $context['mailer_name'] = $this->configureAccountMailer($context);
@@ -269,7 +285,7 @@ class SmtpEmailProvider implements EmailProviderInterface
                 'encryption' => $context['encryption'],
                 'username' => $context['username'] !== '' ? $context['username'] : null,
                 'password' => $context['password'] !== '' ? $context['password'] : null,
-                'timeout' => $this->mailTimeout(),
+                'timeout' => $context['timeout'],
                 'local_domain' => $context['local_domain'],
             ],
         ]);
@@ -306,11 +322,13 @@ class SmtpEmailProvider implements EmailProviderInterface
             'password' => $this->normalizeConfigValue((string) ($entries['MAIL_PASSWORD'] ?? '')),
             'from_address' => $this->normalizeConfigValue((string) ($entries['MAIL_FROM_ADDRESS'] ?? '')),
             'from_name' => $this->normalizeConfigValue((string) ($entries['MAIL_FROM_NAME'] ?? config('mail.from.name', ''))),
+            'reply_to_address' => '',
             'local_domain' => $this->normalizeNullableConfigValue((string) ($entries['MAIL_EHLO_DOMAIN'] ?? config('mail.mailers.smtp.local_domain'))),
             'source' => 'config',
             'account_id' => null,
             'account_label' => null,
             'mailer_name' => null,
+            'timeout' => $this->mailTimeout(),
         ];
 
         if ($this->usesLocalMailCatcher($candidateContext['host'])) {
@@ -415,6 +433,44 @@ class SmtpEmailProvider implements EmailProviderInterface
     private function usesLocalMailCatcher(string $host): bool
     {
         return in_array(strtolower($host), ['mailpit', 'mailhog', 'localhost', '127.0.0.1'], true);
+    }
+
+    private function assertAccountQuotaAllowsSend(array $context): void
+    {
+        if ($context['source'] !== 'account' || empty($context['account_id'])) {
+            return;
+        }
+
+        $account = BlastEmailAccount::query()->find($context['account_id']);
+        if ($account === null) {
+            return;
+        }
+
+        $account->resetDailyCountersIfNeeded();
+        if (!$account->canSendToday()) {
+            throw new RuntimeException(
+                'Limit harian akun email sudah tercapai. Pilih akun lain atau naikkan limit harian di Kontrol Email.'
+            );
+        }
+    }
+
+    private function recordAccountSendResult(array $context, bool $success, string $message): void
+    {
+        if ($context['source'] !== 'account' || empty($context['account_id'])) {
+            return;
+        }
+
+        $account = BlastEmailAccount::query()->find($context['account_id']);
+        if ($account === null) {
+            return;
+        }
+
+        if ($success) {
+            $account->recordSendSuccess($message);
+            return;
+        }
+
+        $account->recordSendFailure($message);
     }
 
     private function isPlaceholderValue(string $value): bool

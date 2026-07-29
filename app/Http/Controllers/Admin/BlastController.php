@@ -33,11 +33,13 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class BlastController extends Controller
 {
     private const WIB_TIMEZONE = 'Asia/Jakarta';
+    public const EMAIL_DEFAULT_ACCOUNT_SENTINEL = '__default__';
     private const WHATSAPP_PENDING_RETRY_AFTER_SECONDS = 15;
     private const WHATSAPP_GATEWAY_DONE_STATES = [
         'completed',
@@ -856,6 +858,7 @@ class BlastController extends Controller
                 ->orderBy('label')
                 ->get()
             : collect();
+        $this->resetEmailAccountDailyCounters($emailAccounts);
         $activeEmailAccount = $emailAccounts->firstWhere('is_active', true);
         $mailConfigSummary = $this->mailConfigSummary();
 
@@ -885,13 +888,49 @@ class BlastController extends Controller
             ->orderByDesc('is_enabled')
             ->orderBy('label')
             ->get();
+        $this->resetEmailAccountDailyCounters($emailAccounts);
         $activeEmailAccount = $emailAccounts->firstWhere('is_active', true);
         $mailConfigSummary = $this->mailConfigSummary();
+        $emailAccountStats = $this->emailAccountStats($emailAccounts);
+        $gmailDefaults = $this->gmailEmailAccountDefaults();
 
         return view(
             'admin.blast.email-accounts',
-            compact('emailAccounts', 'activeEmailAccount', 'mailConfigSummary')
+            compact('emailAccounts', 'activeEmailAccount', 'mailConfigSummary', 'emailAccountStats', 'gmailDefaults')
         );
+    }
+
+    public function emailAccountsStatus()
+    {
+        $this->ensureEmailAccountControlAccess();
+
+        $emailAccounts = BlastEmailAccount::query()
+            ->orderByDesc('is_active')
+            ->orderByDesc('is_enabled')
+            ->orderBy('label')
+            ->get();
+        $this->resetEmailAccountDailyCounters($emailAccounts);
+
+        return response()->json([
+            'success' => true,
+            'stats' => $this->emailAccountStats($emailAccounts),
+            'accounts' => $emailAccounts->map(fn (BlastEmailAccount $account) => [
+                'id' => $account->id,
+                'label' => $account->label,
+                'sender' => $account->senderLabel(),
+                'provider' => $account->providerLabel(),
+                'isActive' => (bool) $account->is_active,
+                'isEnabled' => (bool) $account->is_enabled,
+                'healthTone' => $account->healthTone(),
+                'healthLabel' => $account->healthLabel(),
+                'usageLabel' => $account->usageLabel(),
+                'usagePercent' => $account->usagePercent(),
+                'dailySent' => (int) $account->daily_sent_count,
+                'dailyFailed' => (int) $account->daily_failed_count,
+                'lastUsedAt' => $account->last_used_at?->timezone(self::WIB_TIMEZONE)->format('d/m/Y H:i'),
+                'lastTestedAt' => $account->last_tested_at?->timezone(self::WIB_TIMEZONE)->format('d/m/Y H:i'),
+            ])->values(),
+        ]);
     }
 
     public function storeEmailAccount(Request $request)
@@ -1018,6 +1057,12 @@ class BlastController extends Controller
         $validated = $request->validate([
             'test_email' => 'required|email|max:191',
         ]);
+
+        if (!$emailAccount->is_enabled) {
+            return back()->withErrors([
+                'test_email' => __('app.blast.email_account_test_disabled'),
+            ]);
+        }
 
         $payload = new BlastPayload(__('app.blast.email_account_test_body', [
             'account' => $emailAccount->senderLabel(),
@@ -2744,6 +2789,7 @@ class BlastController extends Controller
             $meta['email_account'] = [
                 'id' => $emailAccount->id,
                 'label' => $emailAccount->label,
+                'provider' => $emailAccount->providerKey(),
                 'email_address' => $emailAccount->email_address,
             ];
         }
@@ -2801,26 +2847,47 @@ class BlastController extends Controller
         return (bool) config('blast.email_accounts.enabled', false);
     }
 
+    private function gmailEmailAccountDefaults(): array
+    {
+        return [
+            'provider' => 'gmail',
+            'host' => (string) config('blast.email_accounts.gmail.host', 'smtp.gmail.com'),
+            'port' => (int) config('blast.email_accounts.gmail.port', 587),
+            'encryption' => (string) config('blast.email_accounts.gmail.encryption', 'tls'),
+            'smtp_timeout' => (int) config('blast.email_accounts.gmail.timeout', 30),
+        ];
+    }
+
     private function validatedEmailAccountData(
         Request $request,
         ?BlastEmailAccount $emailAccount = null
     ): array {
+        $emailAccountId = $emailAccount?->id;
         $rules = [
             'label' => 'required|string|max:100',
-            'email_address' => 'required|email|max:191',
+            'provider' => ['nullable', Rule::in(['gmail', 'custom'])],
+            'email_address' => [
+                'required',
+                'email',
+                'max:191',
+                Rule::unique('blast_email_accounts', 'email_address')->ignore($emailAccountId),
+            ],
             'from_name' => 'nullable|string|max:191',
-            'host' => 'required|string|max:191',
-            'port' => 'required|integer|min:1|max:65535',
+            'reply_to_address' => 'nullable|email|max:191',
+            'host' => 'nullable|string|max:191',
+            'port' => 'nullable|integer|min:1|max:65535',
             'encryption' => 'nullable|in:tls,ssl,none',
+            'smtp_timeout' => 'nullable|integer|min:5|max:120',
             'username' => 'nullable|string|max:191',
             'password' => ($emailAccount === null ? 'required' : 'nullable') . '|string|max:2048',
+            'daily_limit' => 'nullable|integer|min:1|max:100000',
             'is_enabled' => 'nullable|boolean',
             'make_active' => 'nullable|boolean',
         ];
 
         $data = $request->validate($rules);
 
-        foreach (['from_name', 'username'] as $key) {
+        foreach (['from_name', 'reply_to_address', 'username'] as $key) {
             $data[$key] = trim((string) ($data[$key] ?? ''));
             if ($data[$key] === '') {
                 $data[$key] = null;
@@ -2828,16 +2895,45 @@ class BlastController extends Controller
         }
 
         $data['label'] = trim((string) $data['label']);
+        $data['provider'] = strtolower(trim((string) ($data['provider'] ?? config('blast.email_accounts.default_provider', 'gmail'))));
+        if (!in_array($data['provider'], ['gmail', 'custom'], true)) {
+            $data['provider'] = 'gmail';
+        }
+
         $data['email_address'] = strtolower(trim((string) $data['email_address']));
-        $data['host'] = trim((string) $data['host']);
-        $data['port'] = (int) $data['port'];
+        $gmailDefaults = $this->gmailEmailAccountDefaults();
+
+        if ($data['provider'] === 'gmail') {
+            $data['host'] = trim((string) ($data['host'] ?? '')) ?: $gmailDefaults['host'];
+            $data['port'] = (int) ($data['port'] ?? $gmailDefaults['port']);
+            $data['encryption'] = strtolower(trim((string) ($data['encryption'] ?? $gmailDefaults['encryption'])));
+            $data['smtp_timeout'] = (int) ($data['smtp_timeout'] ?? $gmailDefaults['smtp_timeout']);
+            $data['username'] = $data['username'] ?: $data['email_address'];
+        } else {
+            $data['host'] = trim((string) ($data['host'] ?? ''));
+            if ($data['host'] === '') {
+                throw ValidationException::withMessages([
+                    'host' => __('app.blast.smtp_host_required'),
+                ]);
+            }
+            $data['port'] = (int) ($data['port'] ?? 587);
+            $data['smtp_timeout'] = (int) ($data['smtp_timeout'] ?? 30);
+        }
+
         $data['encryption'] = strtolower(trim((string) ($data['encryption'] ?? '')));
         if ($data['encryption'] === '' || $data['encryption'] === 'none') {
             $data['encryption'] = null;
         }
 
+        $data['daily_limit'] = isset($data['daily_limit']) && $data['daily_limit'] !== null
+            ? (int) $data['daily_limit']
+            : null;
+
         if (array_key_exists('password', $data)) {
             $data['password'] = trim((string) $data['password']);
+            if ($data['provider'] === 'gmail') {
+                $data['password'] = preg_replace('/\s+/', '', $data['password']) ?? $data['password'];
+            }
             if ($data['password'] === '' && $emailAccount !== null) {
                 unset($data['password']);
             }
@@ -2856,8 +2952,15 @@ class BlastController extends Controller
 
         $emailAccountId = trim((string) $emailAccountId);
 
-        if ($emailAccountId === '') {
+        if ($emailAccountId === self::EMAIL_DEFAULT_ACCOUNT_SENTINEL) {
             return null;
+        }
+
+        if ($emailAccountId === '') {
+            return BlastEmailAccount::query()
+                ->enabled()
+                ->active()
+                ->first();
         }
 
         $emailAccount = BlastEmailAccount::query()
@@ -2885,6 +2988,7 @@ class BlastController extends Controller
         $payload->setMeta('email_account_id', $emailAccount->id);
         $payload->setMeta('email_account_label', $emailAccount->senderLabel());
         $payload->setMeta('email_account_address', $emailAccount->email_address);
+        $payload->setMeta('email_account_provider', $emailAccount->providerKey());
     }
 
     private function mailConfigSummary(): array
@@ -2895,6 +2999,28 @@ class BlastController extends Controller
             'port' => (string) config('mail.mailers.smtp.port', '-'),
             'from_address' => (string) config('mail.from.address', '-'),
             'from_name' => (string) config('mail.from.name', '-'),
+        ];
+    }
+
+    private function resetEmailAccountDailyCounters($emailAccounts): void
+    {
+        foreach ($emailAccounts as $emailAccount) {
+            if ($emailAccount instanceof BlastEmailAccount) {
+                $emailAccount->resetDailyCountersIfNeeded();
+            }
+        }
+    }
+
+    private function emailAccountStats($emailAccounts): array
+    {
+        return [
+            'total' => $emailAccounts->count(),
+            'enabled' => $emailAccounts->where('is_enabled', true)->count(),
+            'active' => $emailAccounts->where('is_active', true)->count(),
+            'gmail' => $emailAccounts->filter(fn (BlastEmailAccount $account) => $account->isGmail())->count(),
+            'ready' => $emailAccounts->filter(fn (BlastEmailAccount $account) => $account->healthTone() === 'success')->count(),
+            'sent_today' => $emailAccounts->sum(fn (BlastEmailAccount $account) => (int) $account->daily_sent_count),
+            'failed_today' => $emailAccounts->sum(fn (BlastEmailAccount $account) => (int) $account->daily_failed_count),
         ];
     }
 

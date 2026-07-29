@@ -6,390 +6,673 @@
 
 <style>
 .email-control-page {
+    --email-primary: var(--app-accent, #2563eb);
+    --email-primary-strong: var(--app-accent-strong, #1d4ed8);
+    --email-bg: var(--app-bg, #f4f7fb);
+    --email-surface: var(--app-surface, #ffffff);
+    --email-soft: var(--app-surface-soft, #f8fbff);
+    --email-border: var(--app-border, #dbe4f0);
+    --email-text: var(--app-text, #0f172a);
+    --email-muted: var(--app-text-muted, #64748b);
+    --email-success: #16a34a;
+    --email-warning: #d97706;
+    --email-danger: #dc2626;
     min-height: 100vh;
     padding: 18px;
-    background: var(--app-bg, #eef3fb);
-    color: var(--app-text, #0f172a);
+    background: var(--email-bg);
+    color: var(--email-text);
 }
-.email-control-header {
+.ec-header,
+.ec-panel,
+.ec-account {
+    background: var(--email-surface);
+    border: 1px solid var(--email-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+}
+.ec-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 18px 22px;
-    margin-bottom: 16px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--app-sidebar-bg, #1f2937), var(--app-accent, #2563eb));
-    box-shadow: var(--app-shadow, 0 18px 38px rgba(15, 23, 42, .08));
+    padding: 18px 20px;
+    margin-bottom: 14px;
 }
-.email-control-title-wrap { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.email-control-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+.ec-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.ec-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    background: rgba(255, 255, 255, .14);
-    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(37, 99, 235, .1);
+    color: var(--email-primary);
+    flex: 0 0 auto;
 }
-.email-control-title { color: #fff; font-size: 21px; font-weight: 800; line-height: 1.15; }
-.email-control-subtitle { color: rgba(255,255,255,.72); font-size: 12.5px; margin-top: 3px; }
-.email-control-back,
-.email-control-btn {
+.ec-title {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0;
+}
+.ec-subtitle {
+    margin-top: 3px;
+    color: var(--email-muted);
+    font-size: 12.5px;
+}
+.ec-actions,
+.ec-row-actions,
+.ec-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.ec-btn {
     border: 1px solid transparent;
-    border-radius: 9px;
+    border-radius: 8px;
     padding: 8px 12px;
     font-size: 12px;
     font-weight: 800;
+    line-height: 1.2;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
-    cursor: pointer;
     text-decoration: none;
-    transition: .16s ease;
+    cursor: pointer;
+    transition: .15s ease;
+    white-space: nowrap;
 }
-.email-control-back { background: #fff; color: var(--app-sidebar-bg, #1f2937); }
-.email-control-btn.primary { background: var(--app-accent, #2563eb); color: #fff; }
-.email-control-btn.light { background: var(--app-surface-soft, #f7faff); color: var(--app-text, #0f172a); border-color: var(--app-border, #d7e0ee); }
-.email-control-btn.success { background: #16a34a; color: #fff; }
-.email-control-btn.danger { background: #dc2626; color: #fff; }
-.email-control-alert {
-    border-radius: 10px;
+.ec-btn.primary { background: var(--email-primary); color: #fff; }
+.ec-btn.light { background: var(--email-soft); color: var(--email-text); border-color: var(--email-border); }
+.ec-btn.success { background: var(--email-success); color: #fff; }
+.ec-btn.danger { background: var(--email-danger); color: #fff; }
+.ec-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15, 23, 42, .08); }
+.ec-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 14px;
     font-size: 13px;
     font-weight: 700;
+}
+.ec-alert.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.ec-alert.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.ec-alert i { margin-top: 2px; }
+.ec-guide {
+    border: 1px solid rgba(37, 99, 235, .18);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
     display: flex;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 14px;
+}
+.ec-guide-title {
+    font-weight: 800;
+    color: var(--email-primary-strong);
+    display: flex;
     align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
 }
-.email-control-alert.success { color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; }
-.email-control-alert.error { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
-.email-control-alert.page-error { align-items: flex-start; }
-.email-control-alert.page-error i { margin-top: 2px; }
-.email-control-stats {
+.ec-guide-note {
+    color: var(--email-muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+.ec-guide-preset {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(110px, 1fr));
+    gap: 8px;
+    min-width: 380px;
+}
+.ec-preset-item {
+    border: 1px solid var(--email-border);
+    border-radius: 8px;
+    background: var(--email-soft);
+    padding: 8px 10px;
+}
+.ec-preset-label {
+    color: var(--email-muted);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.ec-preset-value {
+    margin-top: 2px;
+    color: var(--email-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+.ec-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
     margin-bottom: 14px;
 }
-.email-control-stat,
-.email-control-panel,
-.email-account-card {
-    border: 1px solid var(--app-border, #d7e0ee);
-    background: var(--app-surface, #fff);
-    box-shadow: var(--app-shadow, 0 18px 38px rgba(15, 23, 42, .08));
-    border-radius: 12px;
+.ec-stat {
+    border: 1px solid var(--email-border);
+    border-radius: 8px;
+    background: var(--email-surface);
+    padding: 13px 14px;
 }
-.email-control-stat { padding: 14px 16px; }
-.email-control-stat-label { color: var(--app-text-muted, #64748b); font-size: 11px; font-weight: 800; text-transform: uppercase; }
-.email-control-stat-value { color: var(--app-text, #0f172a); font-size: 18px; font-weight: 800; margin-top: 4px; overflow-wrap: anywhere; }
-.email-control-grid { display: grid; grid-template-columns: minmax(280px, .86fr) minmax(0, 1.14fr); gap: 14px; align-items: start; }
-.email-control-panel { padding: 18px; }
-.email-control-panel-title { font-size: 15px; font-weight: 800; color: var(--app-text, #0f172a); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.email-guide-panel {
-    border: 1px solid var(--app-border, #d7e0ee);
-    background: var(--app-surface, #fff);
-    box-shadow: var(--app-shadow, 0 18px 38px rgba(15, 23, 42, .08));
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 14px;
+.ec-stat-label {
+    color: var(--email-muted);
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
 }
-.email-guide-head {
+.ec-stat-value {
+    margin-top: 5px;
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--email-text);
+    overflow-wrap: anywhere;
+}
+.ec-main {
+    display: grid;
+    grid-template-columns: minmax(310px, 420px) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+.ec-panel {
+    padding: 16px;
+}
+.ec-panel-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 14px;
 }
-.email-guide-title { font-size: 15px; font-weight: 800; color: var(--app-text, #0f172a); display: flex; align-items: center; gap: 8px; }
-.email-guide-note { font-size: 12px; color: var(--app-text-muted, #64748b); margin-top: 4px; }
-.email-guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.email-guide-item {
-    border: 1px solid var(--app-border, #d7e0ee);
-    background: var(--app-surface-soft, #f7faff);
-    border-radius: 10px;
-    padding: 10px 12px;
+.ec-panel-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.email-guide-label { color: var(--app-text-muted, #64748b); font-size: 10.5px; font-weight: 800; text-transform: uppercase; }
-.email-guide-value { color: var(--app-text, #0f172a); font-size: 12.5px; font-weight: 800; margin-top: 3px; overflow-wrap: anywhere; }
-.email-guide-desc { color: var(--app-text-soft, #334155); font-size: 11.5px; line-height: 1.45; margin-top: 5px; }
-.email-form-help { display: block; color: var(--app-text-muted, #64748b); font-size: 11px; line-height: 1.4; margin-top: 5px; }
-.email-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.email-form-group.full { grid-column: 1 / -1; }
-.email-form-label { display: block; font-size: 11.5px; font-weight: 800; color: var(--app-text-soft, #334155); margin-bottom: 6px; }
-.email-form-input,
-.email-form-select {
+.ec-panel-note {
+    margin-top: 3px;
+    color: var(--email-muted);
+    font-size: 12px;
+}
+.ec-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+}
+.ec-form-group.full { grid-column: 1 / -1; }
+.ec-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #334155;
+    font-size: 11.5px;
+    font-weight: 800;
+}
+.ec-input,
+.ec-select {
     width: 100%;
-    border: 1px solid var(--app-border, #d7e0ee);
+    border: 1px solid var(--email-border);
     border-radius: 8px;
-    background: var(--app-surface-soft, #f7faff);
-    color: var(--app-text, #0f172a);
+    background: var(--email-soft);
+    color: var(--email-text);
     padding: 9px 10px;
     font-size: 13px;
     outline: none;
 }
-.email-form-input:focus,
-.email-form-select:focus { border-color: var(--app-accent, #2563eb); box-shadow: 0 0 0 3px var(--app-row-selected, rgba(37, 99, 235, .1)); }
-.email-checkbox-row { display: flex; align-items: center; gap: 8px; color: var(--app-text-soft, #334155); font-size: 12.5px; font-weight: 700; }
-.email-account-list { display: flex; flex-direction: column; gap: 10px; }
-.email-account-card { padding: 14px; }
-.email-account-card.is-active { border-color: var(--app-accent, #2563eb); }
-.email-account-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.email-account-name { font-size: 14px; font-weight: 800; color: var(--app-text, #0f172a); overflow-wrap: anywhere; }
-.email-account-address { color: var(--app-text-muted, #64748b); font-size: 12px; margin-top: 2px; overflow-wrap: anywhere; }
-.email-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.email-badge { border-radius: 999px; padding: 4px 8px; font-size: 10.5px; font-weight: 800; }
-.email-badge.active { background: rgba(34, 197, 94, .12); color: #16a34a; }
-.email-badge.sender { background: var(--app-row-selected, rgba(37, 99, 235, .12)); color: var(--app-accent-strong, #1d4ed8); }
-.email-badge.inactive { background: rgba(100, 116, 139, .12); color: var(--app-text-muted, #64748b); }
-.email-badge.failed { background: rgba(239, 68, 68, .12); color: #dc2626; }
-.email-account-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.email-account-meta-item { border: 1px solid var(--app-border, #d7e0ee); background: var(--app-surface-soft, #f7faff); border-radius: 8px; padding: 8px 10px; }
-.email-account-meta-label { color: var(--app-text-muted, #64748b); font-size: 10.5px; font-weight: 800; text-transform: uppercase; }
-.email-account-meta-value { color: var(--app-text, #0f172a); font-size: 12.5px; font-weight: 700; margin-top: 2px; overflow-wrap: anywhere; }
-.email-account-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
-.email-test-form { display: flex; gap: 8px; margin-bottom: 10px; }
-.email-test-form .email-form-input { flex: 1; }
-.email-account-details { border-top: 1px solid var(--app-border, #d7e0ee); padding-top: 10px; }
-.email-account-details summary { cursor: pointer; color: var(--app-accent-strong, #1d4ed8); font-size: 12px; font-weight: 800; margin-bottom: 10px; }
-.email-empty { border: 1px dashed var(--app-border, #d7e0ee); border-radius: 10px; padding: 24px; text-align: center; color: var(--app-text-muted, #64748b); font-size: 13px; }
-.email-success-popup {
-    border-radius: 16px !important;
-    padding: 18px 20px 20px !important;
-    color: var(--app-text, #0f172a) !important;
+.ec-input:focus,
+.ec-select:focus {
+    border-color: var(--email-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    background: #fff;
 }
-.email-success-popup .swal2-title {
-    font-size: 20px !important;
-    font-weight: 800 !important;
+.ec-help {
+    display: block;
+    margin-top: 5px;
+    color: var(--email-muted);
+    font-size: 11px;
+    line-height: 1.4;
 }
-.email-success-popup .swal2-html-container,
-.email-success-popup .swal2-content {
-    color: var(--app-text-soft, #334155) !important;
-    font-size: 13px !important;
-    line-height: 1.55 !important;
+.ec-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 700;
 }
-.email-success-confirm {
-    border: none;
-    border-radius: 9px;
-    background: var(--app-accent, #2563eb);
-    color: #fff;
+.ec-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ec-account {
+    padding: 14px;
+}
+.ec-account.active {
+    border-color: rgba(37, 99, 235, .55);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, .1);
+}
+.ec-account-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.ec-account-main {
+    display: flex;
+    gap: 11px;
+    min-width: 0;
+}
+.ec-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(37, 99, 235, .1);
+    color: var(--email-primary);
+    font-weight: 900;
+    flex: 0 0 auto;
+}
+.ec-account-name {
+    font-size: 14px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.ec-account-email {
+    margin-top: 2px;
+    color: var(--email-muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+.ec-badges {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.ec-badge {
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 10.5px;
+    font-weight: 800;
+}
+.ec-badge.primary { background: rgba(37, 99, 235, .1); color: var(--email-primary-strong); }
+.ec-badge.success { background: #dcfce7; color: #15803d; }
+.ec-badge.warning { background: #fef3c7; color: #b45309; }
+.ec-badge.danger { background: #fee2e2; color: #b91c1c; }
+.ec-badge.muted { background: #f1f5f9; color: #64748b; }
+.ec-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.ec-meta-item {
+    border: 1px solid var(--email-border);
+    border-radius: 8px;
+    background: var(--email-soft);
+    padding: 8px 9px;
+    min-width: 0;
+}
+.ec-meta-label {
+    color: var(--email-muted);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.ec-meta-value {
+    margin-top: 3px;
+    color: var(--email-text);
     font-size: 12px;
     font-weight: 800;
-    padding: 9px 16px;
+    overflow-wrap: anywhere;
 }
-@media (max-width: 1100px) {
-    .email-control-grid,
-    .email-guide-grid,
-    .email-control-stats { grid-template-columns: 1fr; }
+.ec-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    margin-top: 7px;
+}
+.ec-progress-bar {
+    height: 100%;
+    width: var(--usage, 0%);
+    background: var(--email-primary);
+}
+.ec-test-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.ec-details {
+    border-top: 1px solid var(--email-border);
+    padding-top: 10px;
+}
+.ec-details summary {
+    cursor: pointer;
+    color: var(--email-primary-strong);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+.ec-empty {
+    border: 1px dashed var(--email-border);
+    border-radius: 8px;
+    background: var(--email-soft);
+    padding: 28px;
+    text-align: center;
+}
+.ec-empty-title {
+    color: var(--email-text);
+    font-size: 15px;
+    font-weight: 800;
+}
+.ec-empty-body {
+    margin-top: 6px;
+    color: var(--email-muted);
+    font-size: 12.5px;
+}
+@media (max-width: 1180px) {
+    .ec-main,
+    .ec-guide {
+        grid-template-columns: 1fr;
+    }
+    .ec-guide {
+        display: block;
+    }
+    .ec-guide-preset {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        min-width: 0;
+        margin-top: 12px;
+    }
+    .ec-meta,
+    .ec-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 @media (max-width: 720px) {
     .email-control-page { padding: 12px; }
-    .email-control-header { align-items: flex-start; flex-direction: column; }
-    .email-form-grid,
-    .email-account-meta { grid-template-columns: 1fr; }
-    .email-test-form { flex-direction: column; }
+    .ec-header,
+    .ec-account-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ec-actions,
+    .ec-badges {
+        justify-content: flex-start;
+    }
+    .ec-guide-preset,
+    .ec-form-grid,
+    .ec-meta,
+    .ec-stats,
+    .ec-test-form {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 
+@php
+    $stats = $emailAccountStats ?? [];
+    $gmailDefaults = $gmailDefaults ?? [
+        'host' => 'smtp.gmail.com',
+        'port' => 587,
+        'encryption' => 'tls',
+        'smtp_timeout' => 30,
+    ];
+    $oldProvider = old('provider', config('blast.email_accounts.default_provider', 'gmail'));
+@endphp
+
 <div class="email-control-page">
-    <div class="email-control-header">
-        <div class="email-control-title-wrap">
-            <div class="email-control-icon"><i class="fas fa-at"></i></div>
+    <header class="ec-header">
+        <div class="ec-title-wrap">
+            <div class="ec-icon"><i class="fas fa-at"></i></div>
             <div>
-                <div class="email-control-title">{{ __('app.blast.manage_email_accounts_title') }}</div>
-                <div class="email-control-subtitle">{{ __('app.blast.manage_email_accounts_subtitle') }}</div>
+                <h1 class="ec-title">{{ __('app.blast.manage_email_accounts_title') }}</h1>
+                <div class="ec-subtitle">{{ __('app.blast.manage_email_accounts_subtitle') }}</div>
             </div>
         </div>
-        <a href="{{ route('admin.blast.email') }}" class="email-control-back">
-            <i class="fas fa-arrow-left"></i> {{ __('app.blast.back_to_email') }}
-        </a>
-    </div>
+        <div class="ec-actions">
+            <a href="{{ route('admin.blast.email') }}" class="ec-btn light">
+                <i class="fas fa-arrow-left"></i> {{ __('app.blast.back_to_email') }}
+            </a>
+        </div>
+    </header>
 
-    @if($errors->any())
-        <div class="email-control-alert error page-error">
-            <i class="fas fa-exclamation-triangle"></i> {{ $errors->first() }}
+    @if(session('success'))
+        <div class="ec-alert success">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
-    <div class="email-control-stats">
-        <div class="email-control-stat">
-            <div class="email-control-stat-label">{{ __('app.blast.active_sender') }}</div>
-            <div class="email-control-stat-value">{{ $activeEmailAccount?->senderLabel() ?? __('app.blast.email_sender_default_config') }}</div>
+    @if($errors->any())
+        <div class="ec-alert error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>{{ $errors->first() }}</span>
         </div>
-        <div class="email-control-stat">
-            <div class="email-control-stat-label">{{ __('app.blast.saved_email_accounts') }}</div>
-            <div class="email-control-stat-value">{{ $emailAccounts->count() }}</div>
-        </div>
-        <div class="email-control-stat">
-            <div class="email-control-stat-label">{{ __('app.blast.fallback_mail_config') }}</div>
-            <div class="email-control-stat-value">{{ ($mailConfigSummary['from_address'] ?? '-') . ' / ' . ($mailConfigSummary['host'] ?? '-') }}</div>
-        </div>
-    </div>
+    @endif
 
-    <section class="email-guide-panel">
-        <div class="email-guide-head">
-            <div>
-                <div class="email-guide-title">
-                    <i class="fas fa-circle-info"></i> {{ __('app.blast.email_account_fill_guide_title') }}
-                </div>
-                <div class="email-guide-note">{{ __('app.blast.email_account_fill_guide_note') }}</div>
+    <section class="ec-guide">
+        <div>
+            <div class="ec-guide-title">
+                <i class="fab fa-google"></i> {{ __('app.blast.gmail_control_title') }}
             </div>
+            <div class="ec-guide-note">{{ __('app.blast.gmail_control_note') }}</div>
         </div>
-        <div class="email-guide-grid">
-            <div class="email-guide-item">
-                <div class="email-guide-label">{{ __('app.blast.smtp_host') }}</div>
-                <div class="email-guide-value">smtp.gmail.com</div>
-                <div class="email-guide-desc">{{ __('app.blast.email_account_fill_host_help') }}</div>
+        <div class="ec-guide-preset">
+            <div class="ec-preset-item">
+                <div class="ec-preset-label">{{ __('app.blast.smtp_host') }}</div>
+                <div class="ec-preset-value">{{ $gmailDefaults['host'] }}</div>
             </div>
-            <div class="email-guide-item">
-                <div class="email-guide-label">{{ __('app.blast.smtp_port') }} / {{ __('app.blast.smtp_encryption') }}</div>
-                <div class="email-guide-value">587 / TLS</div>
-                <div class="email-guide-desc">{{ __('app.blast.email_account_fill_port_help') }}</div>
+            <div class="ec-preset-item">
+                <div class="ec-preset-label">{{ __('app.blast.smtp_port') }}</div>
+                <div class="ec-preset-value">{{ $gmailDefaults['port'] }}</div>
             </div>
-            <div class="email-guide-item">
-                <div class="email-guide-label">{{ __('app.blast.smtp_username') }}</div>
-                <div class="email-guide-value">nama@gmail.com</div>
-                <div class="email-guide-desc">{{ __('app.blast.email_account_fill_username_help') }}</div>
-            </div>
-            <div class="email-guide-item">
-                <div class="email-guide-label">{{ __('app.blast.smtp_password') }}</div>
-                <div class="email-guide-value">{{ __('app.blast.google_app_password') }}</div>
-                <div class="email-guide-desc">{{ __('app.blast.email_account_fill_password_help') }}</div>
-            </div>
-            <div class="email-guide-item">
-                <div class="email-guide-label">{{ __('app.blast.sender_email') }}</div>
-                <div class="email-guide-value">nama@gmail.com</div>
-                <div class="email-guide-desc">{{ __('app.blast.email_account_fill_sender_help') }}</div>
-            </div>
-            <div class="email-guide-item">
-                <div class="email-guide-label">{{ __('app.blast.email_account_label') }}</div>
-                <div class="email-guide-value">{{ __('app.blast.email_account_label_example') }}</div>
-                <div class="email-guide-desc">{{ __('app.blast.email_account_fill_label_help') }}</div>
+            <div class="ec-preset-item">
+                <div class="ec-preset-label">{{ __('app.blast.smtp_encryption') }}</div>
+                <div class="ec-preset-value">{{ strtoupper((string) $gmailDefaults['encryption']) }}</div>
             </div>
         </div>
     </section>
 
-    <div class="email-control-grid">
-        <section class="email-control-panel">
-            <div class="email-control-panel-title">
-                <i class="fas fa-plus-circle"></i> {{ __('app.blast.add_email_account') }}
+    <section class="ec-stats">
+        <div class="ec-stat">
+            <div class="ec-stat-label">{{ __('app.blast.active_sender') }}</div>
+            <div class="ec-stat-value">{{ $activeEmailAccount?->senderLabel() ?? __('app.blast.email_sender_default_config') }}</div>
+        </div>
+        <div class="ec-stat">
+            <div class="ec-stat-label">{{ __('app.blast.healthy_accounts') }}</div>
+            <div class="ec-stat-value"><span data-email-stat="ready">{{ $stats['ready'] ?? 0 }}</span> / <span data-email-stat="enabled">{{ $stats['enabled'] ?? 0 }}</span></div>
+        </div>
+        <div class="ec-stat">
+            <div class="ec-stat-label">{{ __('app.blast.sent_today') }}</div>
+            <div class="ec-stat-value" data-email-stat="sent_today">{{ number_format((int) ($stats['sent_today'] ?? 0), 0, ',', '.') }}</div>
+        </div>
+        <div class="ec-stat">
+            <div class="ec-stat-label">{{ __('app.blast.failed_today') }}</div>
+            <div class="ec-stat-value" data-email-stat="failed_today">{{ number_format((int) ($stats['failed_today'] ?? 0), 0, ',', '.') }}</div>
+        </div>
+    </section>
+
+    <div class="ec-main">
+        <section class="ec-panel">
+            <div class="ec-panel-head">
+                <div>
+                    <h2 class="ec-panel-title"><i class="fas fa-plus-circle"></i> {{ __('app.blast.add_email_account') }}</h2>
+                    <div class="ec-panel-note">{{ __('app.blast.email_provider_help') }}</div>
+                </div>
+                <button type="button" class="ec-btn light" id="gmailPresetBtn">
+                    <i class="fab fa-google"></i> {{ __('app.blast.use_gmail_preset') }}
+                </button>
             </div>
-            <form method="POST" action="{{ route('admin.blast.email.accounts.store') }}">
+
+            <form method="POST" action="{{ route('admin.blast.email.accounts.store') }}" id="emailAccountCreateForm">
                 @csrf
-                <div class="email-form-grid">
-                    <div class="email-form-group">
-                        <label class="email-form-label">{{ __('app.blast.email_account_label') }}</label>
-                        <input type="text" name="label" class="email-form-input" value="{{ old('label') }}" placeholder="{{ __('app.blast.email_account_label_placeholder') }}" required>
-                        <small class="email-form-help">{{ __('app.blast.email_account_label_help') }}</small>
+                <div class="ec-form-grid">
+                    <div class="ec-form-group full">
+                        <label class="ec-label">{{ __('app.blast.email_provider') }}</label>
+                        <select name="provider" class="ec-select" data-provider-select>
+                            <option value="gmail" @selected($oldProvider === 'gmail')>{{ __('app.blast.email_provider_gmail') }}</option>
+                            <option value="custom" @selected($oldProvider === 'custom')>{{ __('app.blast.email_provider_custom') }}</option>
+                        </select>
                     </div>
-                    <div class="email-form-group">
-                        <label class="email-form-label">{{ __('app.blast.sender_email') }}</label>
-                        <input type="email" name="email_address" class="email-form-input" value="{{ old('email_address') }}" placeholder="noreply@example.com" required>
-                        <small class="email-form-help">{{ __('app.blast.sender_email_help') }}</small>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.email_account_label') }}</label>
+                        <input type="text" name="label" class="ec-input" value="{{ old('label') }}" placeholder="{{ __('app.blast.email_account_label_placeholder') }}" required>
+                        <small class="ec-help">{{ __('app.blast.email_account_label_help') }}</small>
                     </div>
-                    <div class="email-form-group full">
-                        <label class="email-form-label">{{ __('app.blast.from_name') }}</label>
-                        <input type="text" name="from_name" class="email-form-input" value="{{ old('from_name') }}" placeholder="{{ config('app.name') }}">
-                        <small class="email-form-help">{{ __('app.blast.from_name_help') }}</small>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.sender_email') }}</label>
+                        <input type="email" name="email_address" class="ec-input" value="{{ old('email_address') }}" placeholder="nama@gmail.com" required data-email-address-input>
+                        <small class="ec-help">{{ __('app.blast.sender_email_help') }}</small>
                     </div>
-                    <div class="email-form-group">
-                        <label class="email-form-label">{{ __('app.blast.smtp_host') }}</label>
-                        <input type="text" name="host" class="email-form-input" value="{{ old('host') }}" placeholder="smtp.example.com" required>
-                        <small class="email-form-help">{{ __('app.blast.smtp_host_help') }}</small>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.from_name') }}</label>
+                        <input type="text" name="from_name" class="ec-input" value="{{ old('from_name') }}" placeholder="{{ config('app.name') }}">
+                        <small class="ec-help">{{ __('app.blast.from_name_help') }}</small>
                     </div>
-                    <div class="email-form-group">
-                        <label class="email-form-label">{{ __('app.blast.smtp_port') }}</label>
-                        <input type="number" name="port" class="email-form-input" value="{{ old('port', 587) }}" min="1" max="65535" required>
-                        <small class="email-form-help">{{ __('app.blast.smtp_port_help') }}</small>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.reply_to_address') }}</label>
+                        <input type="email" name="reply_to_address" class="ec-input" value="{{ old('reply_to_address') }}" placeholder="balasan@gmail.com">
+                        <small class="ec-help">{{ __('app.blast.reply_to_help') }}</small>
                     </div>
-                    <div class="email-form-group">
-                        <label class="email-form-label">{{ __('app.blast.smtp_encryption') }}</label>
-                        <select name="encryption" class="email-form-select">
-                            <option value="tls" @selected(old('encryption', 'tls') === 'tls')>TLS</option>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.smtp_host') }}</label>
+                        <input type="text" name="host" class="ec-input" value="{{ old('host', $gmailDefaults['host']) }}" required data-host-input>
+                        <small class="ec-help">{{ __('app.blast.smtp_host_help') }}</small>
+                    </div>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.smtp_port') }}</label>
+                        <input type="number" name="port" class="ec-input" value="{{ old('port', $gmailDefaults['port']) }}" min="1" max="65535" required data-port-input>
+                        <small class="ec-help">{{ __('app.blast.smtp_port_help') }}</small>
+                    </div>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.smtp_encryption') }}</label>
+                        <select name="encryption" class="ec-select" data-encryption-select>
+                            <option value="tls" @selected(old('encryption', $gmailDefaults['encryption']) === 'tls')>TLS</option>
                             <option value="ssl" @selected(old('encryption') === 'ssl')>SSL</option>
                             <option value="none" @selected(old('encryption') === 'none')>{{ __('app.blast.none') }}</option>
                         </select>
-                        <small class="email-form-help">{{ __('app.blast.smtp_encryption_help') }}</small>
+                        <small class="ec-help">{{ __('app.blast.smtp_encryption_help') }}</small>
                     </div>
-                    <div class="email-form-group">
-                        <label class="email-form-label">{{ __('app.blast.smtp_username') }}</label>
-                        <input type="text" name="username" class="email-form-input" value="{{ old('username') }}" placeholder="user@example.com">
-                        <small class="email-form-help">{{ __('app.blast.smtp_username_help') }}</small>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.smtp_timeout') }}</label>
+                        <input type="number" name="smtp_timeout" class="ec-input" value="{{ old('smtp_timeout', $gmailDefaults['smtp_timeout']) }}" min="5" max="120">
+                        <small class="ec-help">{{ __('app.blast.smtp_timeout_help') }}</small>
                     </div>
-                    <div class="email-form-group full">
-                        <label class="email-form-label">{{ __('app.blast.smtp_password') }}</label>
-                        <input type="password" name="password" class="email-form-input" autocomplete="new-password" required>
-                        <small class="email-form-help">{{ __('app.blast.smtp_password_help') }}</small>
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.smtp_username') }}</label>
+                        <input type="text" name="username" class="ec-input" value="{{ old('username') }}" placeholder="nama@gmail.com" data-username-input>
+                        <small class="ec-help">{{ __('app.blast.smtp_username_help') }}</small>
                     </div>
-                    <label class="email-checkbox-row">
+                    <div class="ec-form-group">
+                        <label class="ec-label">{{ __('app.blast.daily_limit') }}</label>
+                        <input type="number" name="daily_limit" class="ec-input" value="{{ old('daily_limit') }}" min="1" max="100000" placeholder="Opsional">
+                        <small class="ec-help">{{ __('app.blast.daily_limit_help') }}</small>
+                    </div>
+                    <div class="ec-form-group full">
+                        <label class="ec-label">{{ __('app.blast.smtp_password') }}</label>
+                        <input type="password" name="password" class="ec-input" autocomplete="new-password" required>
+                        <small class="ec-help">{{ __('app.blast.smtp_password_help') }}</small>
+                    </div>
+                    <label class="ec-checkbox">
                         <input type="checkbox" name="is_enabled" value="1" checked>
                         {{ __('app.blast.email_account_enabled') }}
                     </label>
-                    <label class="email-checkbox-row">
+                    <label class="ec-checkbox">
                         <input type="checkbox" name="make_active" value="1" @checked(!$activeEmailAccount)>
                         {{ __('app.blast.make_active_sender') }}
                     </label>
                 </div>
                 <div style="margin-top:14px;">
-                    <button type="submit" class="email-control-btn primary">
+                    <button type="submit" class="ec-btn primary">
                         <i class="fas fa-save"></i> {{ __('app.blast.save_account') }}
                     </button>
                 </div>
             </form>
         </section>
 
-        <section class="email-control-panel">
-            <div class="email-control-panel-title">
-                <i class="fas fa-envelope"></i> {{ __('app.blast.email_account_list') }}
+        <section class="ec-panel">
+            <div class="ec-panel-head">
+                <div>
+                    <h2 class="ec-panel-title"><i class="fas fa-envelope"></i> {{ __('app.blast.email_account_list') }}</h2>
+                    <div class="ec-panel-note">{{ __('app.blast.saved_email_accounts') }}: {{ $emailAccounts->count() }}</div>
+                </div>
             </div>
-            <div class="email-account-list">
+
+            <div class="ec-list">
                 @forelse($emailAccounts as $account)
-                    <article class="email-account-card {{ $account->is_active ? 'is-active' : '' }}">
-                        <div class="email-account-top">
-                            <div>
-                                <div class="email-account-name">{{ $account->label }}</div>
-                                <div class="email-account-address">{{ $account->email_address }}</div>
+                    @php
+                        $healthTone = $account->healthTone();
+                        $providerInitial = $account->isGmail() ? 'G' : 'S';
+                    @endphp
+                    <article class="ec-account {{ $account->is_active ? 'active' : '' }}" data-email-account-id="{{ $account->id }}">
+                        <div class="ec-account-top">
+                            <div class="ec-account-main">
+                                <div class="ec-avatar">{{ $providerInitial }}</div>
+                                <div>
+                                    <div class="ec-account-name">{{ $account->label }}</div>
+                                    <div class="ec-account-email">{{ $account->email_address }}</div>
+                                </div>
                             </div>
-                            <div class="email-badges">
-                                <span class="email-badge {{ $account->is_enabled ? 'active' : 'inactive' }}">
+                            <div class="ec-badges">
+                                <span class="ec-badge primary">{{ $account->providerLabel() }}</span>
+                                <span class="ec-badge {{ $account->is_enabled ? 'success' : 'muted' }}">
                                     {{ $account->is_enabled ? __('app.blast.email_account_status_enabled') : __('app.blast.email_account_status_disabled') }}
                                 </span>
                                 @if($account->is_active)
-                                    <span class="email-badge sender">
-                                        {{ __('app.blast.email_account_current_sender') }}
-                                    </span>
+                                    <span class="ec-badge primary">{{ __('app.blast.email_account_current_sender') }}</span>
                                 @endif
-                                @if($account->last_test_status)
-                                    <span class="email-badge {{ $account->last_test_status === 'success' ? 'active' : 'failed' }}">
-                                        {{ $account->last_test_status === 'success' ? __('app.blast.test_success') : __('app.blast.test_failed') }}
-                                    </span>
-                                @endif
+                                <span class="ec-badge {{ $healthTone }}" data-email-account-health>{{ $account->healthLabel() }}</span>
                             </div>
                         </div>
 
-                        <div class="email-account-meta">
-                            <div class="email-account-meta-item">
-                                <div class="email-account-meta-label">{{ __('app.blast.smtp_host') }}</div>
-                                <div class="email-account-meta-value">{{ $account->host }}:{{ $account->port }}</div>
+                        <div class="ec-meta">
+                            <div class="ec-meta-item">
+                                <div class="ec-meta-label">{{ __('app.blast.smtp_host') }}</div>
+                                <div class="ec-meta-value">{{ $account->host }}:{{ $account->port }}</div>
                             </div>
-                            <div class="email-account-meta-item">
-                                <div class="email-account-meta-label">{{ __('app.blast.smtp_encryption') }}</div>
-                                <div class="email-account-meta-value">{{ strtoupper($account->encryption ?: __('app.blast.none')) }}</div>
+                            <div class="ec-meta-item">
+                                <div class="ec-meta-label">{{ __('app.blast.daily_usage') }}</div>
+                                <div class="ec-meta-value" data-email-account-usage>{{ $account->usageLabel() }}</div>
+                                <div class="ec-progress"><div class="ec-progress-bar" style="--usage: {{ $account->usagePercent() }}%;"></div></div>
                             </div>
-                            <div class="email-account-meta-item">
-                                <div class="email-account-meta-label">{{ __('app.blast.smtp_username') }}</div>
-                                <div class="email-account-meta-value">{{ $account->username ?: $account->email_address }}</div>
+                            <div class="ec-meta-item">
+                                <div class="ec-meta-label">{{ __('app.blast.last_test') }}</div>
+                                <div class="ec-meta-value" data-email-account-tested>{{ $account->last_tested_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? __('app.blast.never_tested') }}</div>
                             </div>
-                            <div class="email-account-meta-item">
-                                <div class="email-account-meta-label">{{ __('app.blast.last_test') }}</div>
-                                <div class="email-account-meta-value">{{ $account->last_tested_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? __('app.blast.never_tested') }}</div>
+                            <div class="ec-meta-item">
+                                <div class="ec-meta-label">{{ __('app.blast.last_delivery') }}</div>
+                                <div class="ec-meta-value" data-email-account-used>{{ $account->last_used_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') ?? '-' }}</div>
                             </div>
                         </div>
 
-                        <div class="email-account-actions">
+                        @if($account->last_send_status === 'failed' && $account->last_send_message)
+                            <div class="ec-alert error" style="margin-bottom:10px;">
+                                <i class="fas fa-circle-exclamation"></i>
+                                <span>{{ \Illuminate\Support\Str::limit($account->last_send_message, 180) }}</span>
+                            </div>
+                        @endif
+
+                        <div class="ec-row-actions">
                             <form
                                 method="POST"
                                 action="{{ route('admin.blast.email.accounts.enabled', $account) }}"
@@ -399,7 +682,7 @@
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="is_enabled" value="{{ $account->is_enabled ? 0 : 1 }}">
-                                <button type="submit" class="email-control-btn {{ $account->is_enabled ? 'light' : 'success' }}">
+                                <button type="submit" class="ec-btn {{ $account->is_enabled ? 'light' : 'success' }}">
                                     <i class="fas {{ $account->is_enabled ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
                                     {{ $account->is_enabled ? __('app.blast.disable_account') : __('app.blast.enable_account') }}
                                 </button>
@@ -407,7 +690,7 @@
                             @if(!$account->is_active && $account->is_enabled)
                                 <form method="POST" action="{{ route('admin.blast.email.accounts.activate', $account) }}">
                                     @csrf
-                                    <button type="submit" class="email-control-btn success">
+                                    <button type="submit" class="ec-btn success">
                                         <i class="fas fa-check"></i> {{ __('app.blast.activate') }}
                                     </button>
                                 </form>
@@ -415,69 +698,88 @@
                             <form method="POST" action="{{ route('admin.blast.email.accounts.destroy', $account) }}" data-confirm-message="{{ __('app.blast.email_account_delete_confirm', ['account' => $account->senderLabel()]) }}" onsubmit="return confirm(this.dataset.confirmMessage)">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="email-control-btn danger">
+                                <button type="submit" class="ec-btn danger">
                                     <i class="fas fa-trash"></i> {{ __('app.blast.delete') }}
                                 </button>
                             </form>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.blast.email.accounts.test', $account) }}" class="email-test-form">
+                        <form method="POST" action="{{ route('admin.blast.email.accounts.test', $account) }}" class="ec-test-form">
                             @csrf
-                            <input type="email" name="test_email" class="email-form-input" placeholder="{{ __('app.blast.test_email_placeholder') }}" required>
-                            <button type="submit" class="email-control-btn light">
+                            <input type="email" name="test_email" class="ec-input" placeholder="{{ __('app.blast.test_email_placeholder') }}" required @disabled(!$account->is_enabled)>
+                            <button type="submit" class="ec-btn light" @disabled(!$account->is_enabled)>
                                 <i class="fas fa-paper-plane"></i> {{ __('app.blast.test_send') }}
                             </button>
                         </form>
 
-                        <details class="email-account-details">
+                        <details class="ec-details">
                             <summary>{{ __('app.blast.edit_email_account') }}</summary>
                             <form method="POST" action="{{ route('admin.blast.email.accounts.update', $account) }}">
                                 @csrf
                                 @method('PUT')
-                                <div class="email-form-grid">
-                                    <div class="email-form-group">
-                                        <label class="email-form-label">{{ __('app.blast.email_account_label') }}</label>
-                                        <input type="text" name="label" class="email-form-input" value="{{ old('label', $account->label) }}" required>
+                                <div class="ec-form-grid">
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.email_provider') }}</label>
+                                        <select name="provider" class="ec-select">
+                                            <option value="gmail" @selected(old('provider', $account->providerKey()) === 'gmail')>{{ __('app.blast.email_provider_gmail') }}</option>
+                                            <option value="custom" @selected(old('provider', $account->providerKey()) === 'custom')>{{ __('app.blast.email_provider_custom') }}</option>
+                                        </select>
                                     </div>
-                                    <div class="email-form-group">
-                                        <label class="email-form-label">{{ __('app.blast.sender_email') }}</label>
-                                        <input type="email" name="email_address" class="email-form-input" value="{{ old('email_address', $account->email_address) }}" required>
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.email_account_label') }}</label>
+                                        <input type="text" name="label" class="ec-input" value="{{ old('label', $account->label) }}" required>
                                     </div>
-                                    <div class="email-form-group full">
-                                        <label class="email-form-label">{{ __('app.blast.from_name') }}</label>
-                                        <input type="text" name="from_name" class="email-form-input" value="{{ old('from_name', $account->from_name) }}">
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.sender_email') }}</label>
+                                        <input type="email" name="email_address" class="ec-input" value="{{ old('email_address', $account->email_address) }}" required>
                                     </div>
-                                    <div class="email-form-group">
-                                        <label class="email-form-label">{{ __('app.blast.smtp_host') }}</label>
-                                        <input type="text" name="host" class="email-form-input" value="{{ old('host', $account->host) }}" required>
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.from_name') }}</label>
+                                        <input type="text" name="from_name" class="ec-input" value="{{ old('from_name', $account->from_name) }}">
                                     </div>
-                                    <div class="email-form-group">
-                                        <label class="email-form-label">{{ __('app.blast.smtp_port') }}</label>
-                                        <input type="number" name="port" class="email-form-input" value="{{ old('port', $account->port) }}" min="1" max="65535" required>
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.reply_to_address') }}</label>
+                                        <input type="email" name="reply_to_address" class="ec-input" value="{{ old('reply_to_address', $account->reply_to_address) }}">
                                     </div>
-                                    <div class="email-form-group">
-                                        <label class="email-form-label">{{ __('app.blast.smtp_encryption') }}</label>
-                                        <select name="encryption" class="email-form-select">
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.smtp_host') }}</label>
+                                        <input type="text" name="host" class="ec-input" value="{{ old('host', $account->host) }}" required>
+                                    </div>
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.smtp_port') }}</label>
+                                        <input type="number" name="port" class="ec-input" value="{{ old('port', $account->port) }}" min="1" max="65535" required>
+                                    </div>
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.smtp_encryption') }}</label>
+                                        <select name="encryption" class="ec-select">
                                             <option value="tls" @selected(old('encryption', $account->encryption ?: 'tls') === 'tls')>TLS</option>
                                             <option value="ssl" @selected(old('encryption', $account->encryption) === 'ssl')>SSL</option>
                                             <option value="none" @selected(old('encryption', $account->encryption ?: 'none') === 'none')>{{ __('app.blast.none') }}</option>
                                         </select>
                                     </div>
-                                    <div class="email-form-group">
-                                        <label class="email-form-label">{{ __('app.blast.smtp_username') }}</label>
-                                        <input type="text" name="username" class="email-form-input" value="{{ old('username', $account->username) }}">
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.smtp_timeout') }}</label>
+                                        <input type="number" name="smtp_timeout" class="ec-input" value="{{ old('smtp_timeout', $account->smtp_timeout ?: 30) }}" min="5" max="120">
                                     </div>
-                                    <div class="email-form-group full">
-                                        <label class="email-form-label">{{ __('app.blast.smtp_password') }}</label>
-                                        <input type="password" name="password" class="email-form-input" autocomplete="new-password" placeholder="{{ __('app.blast.smtp_password_keep') }}">
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.smtp_username') }}</label>
+                                        <input type="text" name="username" class="ec-input" value="{{ old('username', $account->username) }}">
                                     </div>
-                                    <label class="email-checkbox-row">
+                                    <div class="ec-form-group">
+                                        <label class="ec-label">{{ __('app.blast.daily_limit') }}</label>
+                                        <input type="number" name="daily_limit" class="ec-input" value="{{ old('daily_limit', $account->daily_limit) }}" min="1" max="100000">
+                                    </div>
+                                    <div class="ec-form-group full">
+                                        <label class="ec-label">{{ __('app.blast.smtp_password') }}</label>
+                                        <input type="password" name="password" class="ec-input" autocomplete="new-password" placeholder="{{ __('app.blast.smtp_password_keep') }}">
+                                    </div>
+                                    <label class="ec-checkbox">
                                         <input type="checkbox" name="is_enabled" value="1" @checked(old('is_enabled', $account->is_enabled))>
                                         {{ __('app.blast.email_account_enabled') }}
                                     </label>
                                 </div>
                                 <div style="margin-top:14px;">
-                                    <button type="submit" class="email-control-btn primary">
+                                    <button type="submit" class="ec-btn primary">
                                         <i class="fas fa-save"></i> {{ __('app.blast.update_account') }}
                                     </button>
                                 </div>
@@ -485,7 +787,10 @@
                         </details>
                     </article>
                 @empty
-                    <div class="email-empty">{{ __('app.blast.no_email_accounts') }}</div>
+                    <div class="ec-empty">
+                        <div class="ec-empty-title">{{ __('app.blast.email_account_empty_title') }}</div>
+                        <div class="ec-empty-body">{{ __('app.blast.email_account_empty_body') }}</div>
+                    </div>
                 @endforelse
             </div>
         </section>
@@ -496,32 +801,99 @@
 
 @section('js')
 <script>
-    (function () {
-        if (typeof Notification === 'undefined' || typeof Swal === 'undefined') {
-            return;
+document.addEventListener('DOMContentLoaded', function () {
+    const gmailDefaults = @json($gmailDefaults);
+    const statusUrl = @json(route('admin.blast.email.accounts.status'));
+    const createForm = document.getElementById('emailAccountCreateForm');
+    const gmailPresetBtn = document.getElementById('gmailPresetBtn');
+
+    function applyGmailPreset(form) {
+        if (!form) return;
+        const provider = form.querySelector('[name="provider"]');
+        const host = form.querySelector('[name="host"]');
+        const port = form.querySelector('[name="port"]');
+        const encryption = form.querySelector('[name="encryption"]');
+        const timeout = form.querySelector('[name="smtp_timeout"]');
+        const email = form.querySelector('[name="email_address"]');
+        const username = form.querySelector('[name="username"]');
+
+        if (provider) provider.value = 'gmail';
+        if (host) host.value = gmailDefaults.host || 'smtp.gmail.com';
+        if (port) port.value = gmailDefaults.port || 587;
+        if (encryption) encryption.value = gmailDefaults.encryption || 'tls';
+        if (timeout) timeout.value = gmailDefaults.smtp_timeout || 30;
+        if (username && email && !username.value.trim()) username.value = email.value.trim();
+    }
+
+    if (gmailPresetBtn) {
+        gmailPresetBtn.addEventListener('click', function () {
+            applyGmailPreset(createForm);
+        });
+    }
+
+    if (createForm) {
+        const emailInput = createForm.querySelector('[name="email_address"]');
+        const usernameInput = createForm.querySelector('[name="username"]');
+        const providerSelect = createForm.querySelector('[name="provider"]');
+
+        if (providerSelect) {
+            providerSelect.addEventListener('change', function () {
+                if (this.value === 'gmail') applyGmailPreset(createForm);
+            });
         }
 
-        Notification.success = function (message = '', html = '', title = @json(__('app.blast.success_title'))) {
-            const options = {
-                title: title || @json(__('app.blast.success_title')),
-                text: message,
-                icon: 'success',
-                width: '30em',
-                confirmButtonText: @json(__('app.common.close')),
-                buttonsStyling: false,
-                customClass: {
-                    popup: 'email-success-popup',
-                    confirmButton: 'email-success-confirm',
-                },
-            };
+        if (emailInput && usernameInput) {
+            emailInput.addEventListener('blur', function () {
+                if (!usernameInput.value.trim() && providerSelect?.value === 'gmail') {
+                    usernameInput.value = emailInput.value.trim();
+                }
+            });
+        }
+    }
 
-            if (html) {
-                delete options.text;
-                options.html = html;
-            }
+    async function refreshAccountStatus() {
+        if (!statusUrl) return;
+        try {
+            const response = await fetch(statusUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) return;
+            const payload = await response.json();
+            if (!payload?.success) return;
 
-            return Swal.fire(options);
-        };
-    })();
+            Object.entries(payload.stats || {}).forEach(([key, value]) => {
+                document.querySelectorAll(`[data-email-stat="${key}"]`).forEach((el) => {
+                    el.textContent = Number(value || 0).toLocaleString('id-ID');
+                });
+            });
+
+            (payload.accounts || []).forEach((account) => {
+                const card = document.querySelector(`[data-email-account-id="${account.id}"]`);
+                if (!card) return;
+                const health = card.querySelector('[data-email-account-health]');
+                const usage = card.querySelector('[data-email-account-usage]');
+                const tested = card.querySelector('[data-email-account-tested]');
+                const used = card.querySelector('[data-email-account-used]');
+                const progress = card.querySelector('.ec-progress-bar');
+
+                if (health) {
+                    health.className = `ec-badge ${account.healthTone || 'muted'}`;
+                    health.textContent = account.healthLabel || '-';
+                }
+                if (usage) usage.textContent = account.usageLabel || '-';
+                if (tested) tested.textContent = account.lastTestedAt || @json(__('app.blast.never_tested'));
+                if (used) used.textContent = account.lastUsedAt || '-';
+                if (progress) progress.style.setProperty('--usage', `${Number(account.usagePercent || 0)}%`);
+            });
+        } catch (error) {
+            // Status refresh is only informational.
+        }
+    }
+
+    refreshAccountStatus();
+    setInterval(function () {
+        if (document.visibilityState !== 'hidden') refreshAccountStatus();
+    }, 15000);
+});
 </script>
 @endsection

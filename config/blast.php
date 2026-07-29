@@ -36,7 +36,14 @@ return [
     ],
 
     'email_accounts' => [
-        'enabled' => filter_var(env('BLAST_EMAIL_ACCOUNTS_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'enabled' => filter_var(env('BLAST_EMAIL_ACCOUNTS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'default_provider' => strtolower((string) env('BLAST_EMAIL_ACCOUNT_DEFAULT_PROVIDER', 'gmail')),
+        'gmail' => [
+            'host' => env('BLAST_EMAIL_GMAIL_HOST', 'smtp.gmail.com'),
+            'port' => max(1, (int) env('BLAST_EMAIL_GMAIL_PORT', 587)),
+            'encryption' => strtolower((string) env('BLAST_EMAIL_GMAIL_ENCRYPTION', 'tls')),
+            'timeout' => max(5, (int) env('BLAST_EMAIL_GMAIL_TIMEOUT', 30)),
+        ],
     ],
 
     'import' => [

@@ -872,7 +872,7 @@ body.dark-mode .template-action-link:hover {
                 {{-- ── RIGHT: PESAN ── --}}
                 <div class="eb-card eb-message-card">
                     <div class="eb-section-title"><i class="fas fa-envelope-open-text"></i> {{ __('app.blast.email_message_box') }}</div>
-                    @php($selectedEmailAccountId = old('email_account_id', ''))
+                    @php($selectedEmailAccountId = old('email_account_id', $activeEmailAccount?->id ?? \App\Http\Controllers\Admin\BlastController::EMAIL_DEFAULT_ACCOUNT_SENTINEL))
 
                     @if($emailAccountControlEnabled ?? false)
                         <div class="email-sender-panel">
@@ -883,15 +883,15 @@ body.dark-mode .template-action-link:hover {
                                     </div>
                                     <div class="email-sender-note">{{ __('app.blast.email_sender_account_note') }}</div>
                                 </div>
-                                @if(auth()->user()?->role === \App\Enums\User\UserRole::IT_SUPPORT->value)
+                                @if(in_array((string) auth()->user()?->role, [\App\Enums\User\UserRole::IT_SUPPORT->value, \App\Enums\User\UserRole::SYSTEM_MANAGEMENT->value], true))
                                     <a href="{{ route('admin.blast.email.accounts') }}" class="template-action-link">
                                         {{ __('app.blast.manage_email_accounts') }}
                                     </a>
                                 @endif
                             </div>
                             <select name="email_account_id" id="emailAccountSelect" class="eb-select">
-                                <option value="" @selected($selectedEmailAccountId === null || $selectedEmailAccountId === '')>
-                                    {{ __('app.blast.email_sender_default_config') }}
+                                <option value="{{ \App\Http\Controllers\Admin\BlastController::EMAIL_DEFAULT_ACCOUNT_SENTINEL }}" @selected((string) $selectedEmailAccountId === \App\Http\Controllers\Admin\BlastController::EMAIL_DEFAULT_ACCOUNT_SENTINEL)>
+                                    {{ __('app.blast.email_sender_fallback_option') }}
                                 </option>
                                 @foreach(($emailAccounts ?? collect()) as $emailAccount)
                                     <option
@@ -903,11 +903,15 @@ body.dark-mode .template-action-link:hover {
                                 @endforeach
                             </select>
                             <div class="email-sender-meta">
-                                {{ __('app.blast.email_sender_default_meta', [
-                                    'from' => $mailConfigSummary['from_address'] ?? '-',
-                                    'host' => $mailConfigSummary['host'] ?? '-',
-                                    'port' => $mailConfigSummary['port'] ?? '-',
-                                ]) }}
+                                @if($activeEmailAccount)
+                                    {{ __('app.blast.email_sender_active_meta', ['account' => $activeEmailAccount->senderLabel()]) }}
+                                @else
+                                    {{ __('app.blast.email_sender_default_meta', [
+                                        'from' => $mailConfigSummary['from_address'] ?? '-',
+                                        'host' => $mailConfigSummary['host'] ?? '-',
+                                        'port' => $mailConfigSummary['port'] ?? '-',
+                                    ]) }}
+                                @endif
                             </div>
                         </div>
                     @else

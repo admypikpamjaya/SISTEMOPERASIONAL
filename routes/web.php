@@ -778,6 +778,8 @@ Route::prefix('admin')
                 Route::get('/email', [BlastController::class, 'email'])->name('email');
                 Route::get('/email/accounts', [BlastController::class, 'emailAccounts'])
                     ->name('email.accounts');
+                Route::get('/email/accounts/status', [BlastController::class, 'emailAccountsStatus'])
+                    ->name('email.accounts.status');
                 Route::post('/email/accounts', [BlastController::class, 'storeEmailAccount'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('email.accounts.store');
