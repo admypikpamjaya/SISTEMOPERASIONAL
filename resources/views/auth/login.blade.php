@@ -360,7 +360,7 @@
                             {{ __('app.auth.remember') }}
                         </label>
                     </div>
-                    <small class="text-muted">{{ __('app.auth.need_help') }}</small>
+                    <a href="{{ route('password.request') }}" class="small text-muted">{{ __('app.auth.need_help') }}</a>
                 </div>
                 <button id="submit-form-button" type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt mr-1"></i>

@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>Dokumentasi Keseluruhan Proyek SOY YPIK</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 14mm;
+        }
+
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --soft: #f8fafc;
+            --line: #dbe4f0;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--ink);
+            background: #ffffff;
+            font-size: 11.5px;
+            line-height: 1.55;
+        }
+
+        .cover {
+            min-height: 250mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid var(--line);
+            padding: 28mm 22mm;
+            page-break-after: always;
+            background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+        }
+
+        .cover-badge {
+            display: inline-block;
+            width: fit-content;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            padding: 6px 12px;
+            color: var(--primary-dark);
+            background: #eff6ff;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        h1 {
+            margin: 20px 0 10px;
+            font-size: 31px;
+            line-height: 1.15;
+            letter-spacing: 0;
+        }
+
+        .cover-subtitle {
+            max-width: 150mm;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .cover-meta {
+            margin-top: 26px;
+            display: grid;
+            grid-template-columns: 38mm 1fr;
+            gap: 6px 12px;
+            max-width: 150mm;
+            font-size: 11.5px;
+        }
+
+        .cover-meta strong {
+            color: #334155;
+        }
+
+        .security-note {
+            margin-top: 24px;
+            border-left: 4px solid var(--warning);
+            background: #fffbeb;
+            padding: 10px 12px;
+            color: #78350f;
+            font-weight: 700;
+        }
+
+        h2 {
+            margin: 18px 0 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--line);
+            color: var(--primary-dark);
+            font-size: 17px;
+            line-height: 1.25;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            margin: 12px 0 6px;
+            color: #1e293b;
+            font-size: 13px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin: 0 0 7px;
+        }
+
+        ul, ol {
+            margin: 0 0 9px 17px;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 3px;
+        }
+
+        code {
+            font-family: Consolas, "Courier New", monospace;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 1px 4px;
+            color: #0f172a;
+        }
+
+        pre {
+            margin: 7px 0 10px;
+            padding: 10px 12px;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+            font-size: 10.5px;
+            line-height: 1.45;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0 12px;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid var(--line);
+            padding: 6px 7px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eff6ff;
+            color: #1e3a8a;
+            text-align: left;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc ol {
+            columns: 2;
+            column-gap: 18mm;
+            margin-left: 18px;
+        }
+
+        .section {
+            page-break-inside: auto;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 8px 0 12px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: var(--soft);
+            page-break-inside: avoid;
+        }
+
+        .card-title {
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .tag {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 2px 7px;
+            font-size: 10px;
+            font-weight: 800;
+            background: #eff6ff;
+            color: var(--primary-dark);
+            border: 1px solid #bfdbfe;
+        }
+
+        .tag.green {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+
+        .tag.red {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .note {
+            border-left: 4px solid var(--primary);
+            background: #eff6ff;
+            padding: 9px 11px;
+            margin: 8px 0 11px;
+        }
+
+        .warning {
+            border-left: 4px solid var(--warning);
+            background: #fffbeb;
+            padding: 9px 11px;
+            margin: 8px 0 11px;
+        }
+
+        .danger {
+            border-left: 4px solid var(--danger);
+            background: #fef2f2;
+            padding: 9px 11px;
+            margin: 8px 0 11px;
+        }
+
+        .small {
+            color: var(--muted);
+            font-size: 10.5px;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <section class="cover">
+        <div class="cover-badge">Dokumentasi Internal</div>
+        <h1>Dokumentasi Keseluruhan Proyek SOY YPIK</h1>
+        <p class="cover-subtitle">
+            Dokumen ini merangkum struktur, modul, file management, alur kerja, role, database,
+            deployment, maintenance, blasting WhatsApp/email, System Management, dan checklist operasional
+            untuk Sistem Operasional Yayasan YPIK.
+        </p>
+        <div class="cover-meta">
+            <strong>Nama Aplikasi</strong><span>Sistem Operasional Yayasan YPIK</span>
+            <strong>Domain Production</strong><span>https://soy.ypikpamjaya.com</span>
+            <strong>Login Umum</strong><span>https://soy.ypikpamjaya.com/login</span>
+            <strong>Login Sistem Management</strong><span>https://soy.ypikpamjaya.com/system-management/login</span>
+            <strong>Stack Utama</strong><span>Laravel 10, PHP 8.1+, MySQL, Blade, Vite, Node.js WhatsApp Gateway</span>
+            <strong>Tanggal Dokumen</strong><span>29 Juli 2026</span>
+        </div>
+        <div class="security-note">
+            Dokumen ini tidak mencantumkan password Gmail, token API, APP_KEY, atau isi rahasia dari file .env.
+            Semua secret wajib disimpan hanya di environment server.
+        </div>
+    </section>
+
+    <section class="toc">
+        <h2>Daftar Isi</h2>
+        <ol>
+            <li>Ringkasan Proyek</li>
+            <li>Teknologi dan Dependency</li>
+            <li>Arsitektur Aplikasi</li>
+            <li>File Management dan Struktur Folder</li>
+            <li>Role dan Permission</li>
+            <li>System Management</li>
+            <li>Maintenance Mode</li>
+            <li>Kontrol Fitur Global</li>
+            <li>User Management dan Audit Login</li>
+            <li>Blasting WhatsApp</li>
+            <li>Kontrol Email dan Gmail SMTP</li>
+            <li>Blasting Email</li>
+            <li>Data Penerima dan Template Blast</li>
+            <li>Finance</li>
+            <li>Asset Management dan Maintenance Report</li>
+            <li>Discussion, Announcement, dan Reminder</li>
+            <li>Database dan Migration</li>
+            <li>Environment dan Konfigurasi</li>
+            <li>Deployment dan Worker</li>
+            <li>Testing dan Validasi</li>
+            <li>Troubleshooting</li>
+            <li>Prioritas Keamanan</li>
+        </ol>
+    </section>
+
+    <section class="section">
+        <h2>1. Ringkasan Proyek</h2>
+        <p>
+            SOY YPIK adalah aplikasi operasional internal yayasan yang menggabungkan pengelolaan aset,
+            laporan maintenance, finance, komunikasi internal, user management, announcement, reminder,
+            serta blasting WhatsApp dan email dalam satu codebase Laravel.
+        </p>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">Tujuan Sistem</div>
+                <ul>
+                    <li>Mengurangi proses manual administrasi internal.</li>
+                    <li>Menggabungkan data aset, finance, user, dan komunikasi.</li>
+                    <li>Menyediakan blast WhatsApp/email dengan log dan retry.</li>
+                    <li>Menyediakan kontrol sistem tingkat tinggi melalui Sistem Management.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title">Karakter Aplikasi</div>
+                <ul>
+                    <li>Server-rendered menggunakan Blade.</li>
+                    <li>Queue dipakai untuk pekerjaan blast dan proses berat.</li>
+                    <li>Role-based access control melalui config dan middleware.</li>
+                    <li>Gateway WhatsApp berjalan sebagai aplikasi Node.js terpisah.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>2. Teknologi dan Dependency</h2>
+        <table>
+            <thead>
+                <tr><th>Area</th><th>Teknologi</th><th>Catatan</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Backend Web</td><td>Laravel 10, PHP 8.1+</td><td>Controller, service, model, middleware, Blade.</td></tr>
+                <tr><td>Database</td><td>MySQL</td><td>Struktur dikelola melalui migration Laravel.</td></tr>
+                <tr><td>Frontend Asset</td><td>Vite</td><td>Build asset dengan <code>npm run build</code>.</td></tr>
+                <tr><td>Email</td><td>Laravel Mail SMTP</td><td>Mendukung MAIL server default dan akun SMTP tambahan.</td></tr>
+                <tr><td>WhatsApp</td><td>Node.js Gateway, Baileys, BullMQ, Redis</td><td>Dipakai untuk perangkat, queue, dan pengiriman WhatsApp.</td></tr>
+                <tr><td>Excel</td><td>PhpSpreadsheet</td><td>Import data aset, penerima, dan finance.</td></tr>
+                <tr><td>QR Code</td><td>simple-qrcode</td><td>Generate QR aset.</td></tr>
+                <tr><td>Test</td><td>PHPUnit</td><td>Test unit dan feature berada di folder <code>tests</code>.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>3. Arsitektur Aplikasi</h2>
+        <p>Alur request Laravel yang paling umum:</p>
+        <ol>
+            <li>Route didefinisikan di <code>routes/web.php</code>.</li>
+            <li>Middleware memeriksa login, maintenance, fitur aktif, permission, dan audit akses.</li>
+            <li>Controller menerima request, melakukan validasi, lalu memanggil service.</li>
+            <li>Service menjalankan business rule dan operasi data.</li>
+            <li>Model Eloquent membaca/menulis database.</li>
+            <li>Blade di <code>resources/views</code> merender tampilan.</li>
+            <li>Job queue menjalankan proses berat seperti blast email/WhatsApp.</li>
+        </ol>
+        <div class="note">
+            Prinsip pengembangan proyek ini adalah menjaga business logic di service, bukan menumpuk semua logika di Blade.
+            Untuk fitur besar, awali dari route, controller, service, model, migration, lalu view.
+        </div>
+    </section>
+
+    <section class="section page-break">
+        <h2>4. File Management dan Struktur Folder</h2>
+        <table>
+            <thead>
+                <tr><th>Folder/File</th><th>Fungsi</th><th>Catatan Management</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>app/Http/Controllers</code></td><td>Entry point request web.</td><td>Setiap modul utama memiliki controller sendiri.</td></tr>
+                <tr><td><code>app/Http/Middleware</code></td><td>Layer proteksi request.</td><td>Berisi auth, maintenance, audit, feature enabled, dan access control.</td></tr>
+                <tr><td><code>app/Services</code></td><td>Business logic utama.</td><td>Gunakan service untuk logic kompleks agar controller tetap bersih.</td></tr>
+                <tr><td><code>app/Models</code></td><td>Model Eloquent dan cast data.</td><td>Relasi, cast JSON/encrypted, scope query.</td></tr>
+                <tr><td><code>resources/views</code></td><td>Blade UI.</td><td>UI modul dipisah per folder agar mudah dirawat.</td></tr>
+                <tr><td><code>routes/web.php</code></td><td>Daftar route web.</td><td>Perubahan endpoint web dimulai dari sini.</td></tr>
+                <tr><td><code>config/menu.php</code></td><td>Sidebar dan menu role.</td><td>Pastikan route menu sesuai permission.</td></tr>
+                <tr><td><code>config/role_permission.php</code></td><td>Permission default per role.</td><td>Menjadi baseline sebelum override dari Sistem Management.</td></tr>
+                <tr><td><code>config/feature_availability.php</code></td><td>Daftar fitur global yang bisa dimatikan.</td><td>Jangan kunci akses Sistem Management.</td></tr>
+                <tr><td><code>config/system_management.php</code></td><td>Konfigurasi audit, geolocation, AI, API tester.</td><td>Endpoint dan token diambil dari .env.</td></tr>
+                <tr><td><code>config/blast.php</code></td><td>Rate limit, queue, retry, kontrol email.</td><td>Kontrol email aktif dan preset Gmail berada di sini.</td></tr>
+                <tr><td><code>database/migrations</code></td><td>Struktur database.</td><td>Tambahkan migration baru untuk perubahan tabel.</td></tr>
+                <tr><td><code>database/seeders</code></td><td>Data awal.</td><td>UserSeeder membuat akun role awal termasuk Sistem Management.</td></tr>
+                <tr><td><code>whatsapp-gateway</code></td><td>Gateway WhatsApp Node.js.</td><td>Dijalankan terpisah dari Laravel.</td></tr>
+                <tr><td><code>docs</code></td><td>Dokumentasi proyek.</td><td>Tempat dokumen PDF dan source dokumentasi.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>5. Role dan Permission</h2>
+        <p>Role yang terdaftar di enum <code>App\Enums\User\UserRole</code>:</p>
+        <table>
+            <thead>
+                <tr><th>Role</th><th>Fokus Akses</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>User</td><td>Akses dasar sesuai permission.</td></tr>
+                <tr><td>Admin</td><td>Operasional umum.</td></tr>
+                <tr><td>IT Support</td><td>Akses teknis, blasting, perangkat WhatsApp, dan kontrol email.</td></tr>
+                <tr><td>Asset Manager</td><td>Asset management dan maintenance report.</td></tr>
+                <tr><td>Finance</td><td>Dashboard finance, laporan, kategori, invoice, general ledger.</td></tr>
+                <tr><td>Pembina</td><td>Akses monitoring sesuai konfigurasi.</td></tr>
+                <tr><td>Blasting</td><td>Blast WhatsApp/email dan data penerima.</td></tr>
+                <tr><td>QC</td><td>Monitoring/read-only sesuai konfigurasi.</td></tr>
+                <tr><td>Sistem Management</td><td>Akses tertinggi untuk audit, maintenance, role, fitur, CMS, API tester, dan pemulihan sistem.</td></tr>
+            </tbody>
+        </table>
+        <p>
+            Permission default berada di <code>config/role_permission.php</code>. Override per role bisa diatur
+            dari Sistem Management melalui halaman Role.
+        </p>
+    </section>
+
+    <section class="section page-break">
+        <h2>6. System Management</h2>
+        <p>
+            System Management adalah console root untuk mengendalikan kondisi sistem. Login dipisahkan dari login umum:
+            <code>https://soy.ypikpamjaya.com/system-management/login</code>.
+        </p>
+        <div class="warning">
+            Akun awal dibuat melalui seeder. Demi keamanan, dokumen PDF ini tidak menuliskan password.
+            Setelah production siap, password awal wajib diganti dan akses dibatasi ke orang berwenang saja.
+        </div>
+        <table>
+            <thead>
+                <tr><th>Menu</th><th>Fungsi</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ringkasan</td><td>Overview kesehatan sistem dan akses cepat.</td></tr>
+                <tr><td>Status Sistem</td><td>Cek Laravel, database, cache, queue, storage, WhatsApp gateway, email, maintenance.</td></tr>
+                <tr><td>Maintenance</td><td>Mematikan akses web semua role, kecuali Sistem Management.</td></tr>
+                <tr><td>Alur Blast</td><td>Melihat campaign WhatsApp/email, pending, failed, sent, dan posisi error.</td></tr>
+                <tr><td>Audit Akses</td><td>Merekam user, IP, browser, user agent, endpoint, waktu, dan lokasi berbasis IP.</td></tr>
+                <tr><td>Password</td><td>Reset password seluruh role.</td></tr>
+                <tr><td>Role</td><td>Mengubah restrict halaman per role.</td></tr>
+                <tr><td>AI</td><td>Konektor untuk AI builder/executor jika endpoint eksternal diaktifkan.</td></tr>
+                <tr><td>API Tester</td><td>Menembak API dari web seperti Postman sederhana.</td></tr>
+                <tr><td>CMS</td><td>Mengubah label, notice, content width, dan custom CSS ringan.</td></tr>
+                <tr><td>Fitur</td><td>Mengelola draft feature flag.</td></tr>
+                <tr><td>Akses Fitur</td><td>Mengaktifkan atau menonaktifkan modul utama secara global.</td></tr>
+                <tr><td>Arsip</td><td>Melihat arsip log blast yang tetap disimpan untuk Sistem Management.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>7. Maintenance Mode</h2>
+        <p>Status maintenance disimpan di <code>app_settings</code> dengan key <code>system.maintenance</code>.</p>
+        <ul>
+            <li>Jika aktif, user umum, admin, dan role lain tidak bisa memakai web.</li>
+            <li>Sistem Management tetap bisa login dan membuka console.</li>
+            <li>Pesan maintenance dapat diubah dari halaman Sistem Management.</li>
+            <li>Tujuannya adalah maintenance berkala tanpa kehilangan akses pemulihan.</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>8. Kontrol Fitur Global</h2>
+        <p>
+            Daftar fitur global berada di <code>config/feature_availability.php</code>. Status aktif/nonaktif tersimpan
+            di <code>app_settings</code> dengan key <code>system.feature_availability</code>.
+        </p>
+        <table>
+            <thead>
+                <tr><th>Feature Key</th><th>Modul</th><th>Route Pattern</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>dashboard</code></td><td>Dashboard</td><td><code>dashboard.*</code></td></tr>
+                <tr><td><code>discussion</code></td><td>Diskusi</td><td><code>discussion.*</code></td></tr>
+                <tr><td><code>asset_management</code></td><td>Asset Management</td><td><code>asset-management.*</code>, <code>maintenance-report.*</code></td></tr>
+                <tr><td><code>user_management</code></td><td>User Management</td><td><code>user-database.*</code></td></tr>
+                <tr><td><code>admin_blast</code></td><td>Blasting WhatsApp & Email</td><td><code>admin.blast.*</code>, <code>admin.announcements.*</code></td></tr>
+                <tr><td><code>admin_reminder</code></td><td>Reminder</td><td><code>admin.reminders.*</code></td></tr>
+                <tr><td><code>website_theme</code></td><td>Tema Website</td><td><code>admin.theme.*</code></td></tr>
+                <tr><td><code>finance</code></td><td>Finance</td><td><code>finance.*</code></td></tr>
+                <tr><td><code>system_management</code></td><td>Sistem Management</td><td><code>system-management.*</code>, terkunci aktif.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>9. User Management dan Audit Login</h2>
+        <p>
+            Modul User Management mengelola user, role, reset password, dan login history. Audit tambahan untuk
+            Sistem Management disimpan di <code>system_access_logs</code>.
+        </p>
+        <ul>
+            <li><code>users</code> menyimpan user aplikasi.</li>
+            <li><code>login_histories</code> menyimpan riwayat login dan metadata perangkat.</li>
+            <li><code>system_access_logs</code> menyimpan audit akses web/API untuk System Management.</li>
+            <li>Lokasi menggunakan IP geolocation, bukan GPS device, sehingga akurasi tergantung provider IP.</li>
+        </ul>
+    </section>
+
+    <section class="section page-break">
+        <h2>10. Blasting WhatsApp</h2>
+        <p>
+            Modul WhatsApp blast mengirim pesan ke penerima manual maupun penerima database. Pengiriman diarahkan
+            ke queue agar request web tidak terlalu lama dan mengurangi risiko timeout.
+        </p>
+        <h3>Komponen Penting</h3>
+        <table>
+            <thead>
+                <tr><th>File</th><th>Fungsi</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>app/Http/Controllers/Admin/BlastController.php</code></td><td>Form, validasi, activity log, retry, gateway device.</td></tr>
+                <tr><td><code>app/Services/Blast/WhatsAppBlastService.php</code></td><td>Service pengiriman WhatsApp.</td></tr>
+                <tr><td><code>app/Providers/Messaging/GatewayWhatsappProvider.php</code></td><td>Provider gateway internal.</td></tr>
+                <tr><td><code>app/Jobs/Blast/SendWhatsappBlastJob.php</code></td><td>Job queue kirim WhatsApp.</td></tr>
+                <tr><td><code>whatsapp-gateway/src</code></td><td>Aplikasi Node.js untuk koneksi WhatsApp dan queue gateway.</td></tr>
+            </tbody>
+        </table>
+        <h3>Fitur Operasional</h3>
+        <ul>
+            <li>Kelola perangkat WhatsApp mirip device control.</li>
+            <li>Scan QR, reconnect, disconnect, activate device, rename, dan reset device.</li>
+            <li>Monitoring queue gateway: waiting, active, delayed, failed, completed.</li>
+            <li>Retry tersedia untuk status failed dan pending gateway/antrian gateway.</li>
+            <li>Timeout gateway diperpanjang melalui <code>WHATSAPP_GATEWAY_TIMEOUT</code>.</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>11. Kontrol Email dan Gmail SMTP</h2>
+        <p>
+            Kontrol Email adalah versi email dari kontrol perangkat. Fitur ini mengelola akun SMTP yang bisa dipilih
+            sebagai pengirim blast email. Gmail menjadi preset utama.
+        </p>
+        <h3>Fitur Kontrol Email</h3>
+        <ul>
+            <li>Tambah akun Gmail atau SMTP custom.</li>
+            <li>Preset Gmail: <code>smtp.gmail.com</code>, port <code>587</code>, enkripsi <code>TLS</code>.</li>
+            <li>Test kirim ke alamat tujuan sebelum akun dipakai.</li>
+            <li>Aktifkan/nonaktifkan akun.</li>
+            <li>Pilih akun sebagai pengirim utama.</li>
+            <li>Melihat status kesehatan, pemakaian harian, tes terakhir, kirim terakhir, dan error terakhir.</li>
+            <li>Limit harian opsional agar akun tidak dipakai melewati batas operasional.</li>
+        </ul>
+        <h3>Catatan Gmail</h3>
+        <div class="warning">
+            Gmail SMTP harus menggunakan Google App Password, bukan password login Gmail biasa.
+            Aktifkan 2-Step Verification di akun Google, buat App Password, lalu isi password tersebut di Kontrol Email.
+        </div>
+        <h3>File Penting Kontrol Email</h3>
+        <table>
+            <thead>
+                <tr><th>File</th><th>Fungsi</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>database/migrations/2026_07_13_000001_create_blast_email_accounts_table.php</code></td><td>Tabel awal akun email.</td></tr>
+                <tr><td><code>database/migrations/2026_07_28_000001_enhance_blast_email_accounts_table.php</code></td><td>Metadata provider, limit, status, dan penggunaan.</td></tr>
+                <tr><td><code>app/Models/BlastEmailAccount.php</code></td><td>Model, cast password encrypted, health label, usage, quota.</td></tr>
+                <tr><td><code>app/Providers/Messaging/SmtpEmailProvider.php</code></td><td>Provider SMTP, runtime mailer, quota check, status kirim.</td></tr>
+                <tr><td><code>resources/views/admin/blast/email-accounts.blade.php</code></td><td>UI modern minimalis Kontrol Email.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section page-break">
+        <h2>12. Blasting Email</h2>
+        <p>
+            Blasting email memakai route <code>admin/blast/email</code>. User bisa memilih penerima manual,
+            penerima database, template pesan, attachment global, attachment per penerima, dan akun email pengirim.
+        </p>
+        <ul>
+            <li>Jika Kontrol Email aktif dan ada akun active, akun tersebut otomatis dipakai.</li>
+            <li>Fallback MAIL server tetap tersedia dengan opsi <code>Pakai fallback MAIL server</code>.</li>
+            <li>Pengiriman menggunakan <code>SendEmailBlastJob</code> jika mode queue aktif.</li>
+            <li>Log pengiriman tersimpan di <code>blast_logs</code>.</li>
+            <li>Status failed dapat di-retry dari activity log.</li>
+        </ul>
+        <pre>QUEUE_CONNECTION=database
+BLAST_EMAIL_MODE=queue
+BLAST_EMAIL_ACCOUNTS_ENABLED=true
+BLAST_EMAIL_GMAIL_HOST=smtp.gmail.com
+BLAST_EMAIL_GMAIL_PORT=587
+BLAST_EMAIL_GMAIL_ENCRYPTION=tls
+BLAST_EMAIL_GMAIL_TIMEOUT=30</pre>
+    </section>
+
+    <section class="section">
+        <h2>13. Data Penerima dan Template Blast</h2>
+        <p>
+            Data penerima dipakai bersama oleh WhatsApp dan email. Sumber penerima meliputi siswa/wali, karyawan,
+            karyawan YPIK, YPIK Pam Jaya, dan penerima umum.
+        </p>
+        <table>
+            <thead>
+                <tr><th>Area</th><th>Model/Tabel</th><th>Catatan</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Siswa/Wali</td><td><code>blast_recipients</code></td><td>Nama siswa, kelas, wali, email, WhatsApp.</td></tr>
+                <tr><td>Karyawan</td><td><code>blast_employee_recipients</code></td><td>Data koperasi/karyawan.</td></tr>
+                <tr><td>Karyawan YPIK</td><td><code>blast_employee_ypik_recipients</code></td><td>Dataset karyawan YPIK.</td></tr>
+                <tr><td>Penerima Umum</td><td><code>blast_general_recipients</code></td><td>Kontak umum dengan event, instansi, sertifikat.</td></tr>
+                <tr><td>Template</td><td><code>blast_message_templates</code></td><td>Template WhatsApp/email dengan placeholder.</td></tr>
+                <tr><td>Campaign</td><td><code>blast_messages</code></td><td>Meta campaign, queue, akun email/device.</td></tr>
+                <tr><td>Log</td><td><code>blast_logs</code></td><td>Status PENDING, SENT, FAILED, provider tracking.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>14. Finance</h2>
+        <p>
+            Modul finance menangani dashboard keuangan, kategori, laporan, invoice, rekonsiliasi, penyusutan aset,
+            general ledger, dan statement.
+        </p>
+        <ul>
+            <li>Controller finance berada di <code>app/Http/Controllers/Finance</code>.</li>
+            <li>Service finance berada di <code>app/Services/Finance</code>.</li>
+            <li>View finance berada di <code>resources/views/finance</code>.</li>
+            <li>Migration finance banyak berada pada prefiks tanggal Februari, April, Juni 2026.</li>
+        </ul>
+        <div class="note">
+            Untuk perubahan finance, cek dulu <code>docs/finance-asset-depreciation.md</code> dan migration terkait
+            agar tidak salah mengubah relasi laporan atau kategori.
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>15. Asset Management dan Maintenance Report</h2>
+        <p>
+            Asset Management mengelola master aset, kategori detail aset, import, edit, QR code, dan halaman publik aset.
+            Maintenance Report mengelola pelaporan kerusakan/perbaikan dan notifikasi maintenance.
+        </p>
+        <table>
+            <thead>
+                <tr><th>Area</th><th>File Utama</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Asset Controller</td><td><code>app/Http/Controllers/Asset/AssetManagementController.php</code></td></tr>
+                <tr><td>Public Asset</td><td><code>app/Http/Controllers/Asset/PublicAssetController.php</code></td></tr>
+                <tr><td>Asset Service</td><td><code>app/Services/Asset/AssetService.php</code>, <code>AssetFactory.php</code></td></tr>
+                <tr><td>Asset Views</td><td><code>resources/views/asset-management</code></td></tr>
+                <tr><td>Maintenance Report</td><td><code>app/Http/Controllers/Report/MaintenanceReportController.php</code></td></tr>
+                <tr><td>Notification</td><td><code>app/Services/Report/MaintenanceNotificationService.php</code></td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>16. Discussion, Announcement, dan Reminder</h2>
+        <ul>
+            <li><strong>Discussion</strong>: pesan internal, attachment, voice note, reply, pinned messages.</li>
+            <li><strong>Announcement</strong>: pengumuman internal dan tracking log.</li>
+            <li><strong>Reminder</strong>: pengingat dan notifikasi operasional.</li>
+        </ul>
+        <p>
+            Modul-modul ini dikendalikan melalui permission dan dapat dimatikan dari Akses Fitur Global
+            jika diperlukan saat maintenance parsial.
+        </p>
+    </section>
+
+    <section class="section page-break">
+        <h2>17. Database dan Migration</h2>
+        <p>
+            Semua perubahan struktur tabel harus dibuat melalui migration baru. Hindari mengedit migration lama
+            jika database production sudah pernah menjalankannya.
+        </p>
+        <h3>Tabel Penting</h3>
+        <table>
+            <thead>
+                <tr><th>Kelompok</th><th>Tabel</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Auth/User</td><td><code>users</code>, <code>password_reset_tokens</code>, <code>login_histories</code></td></tr>
+                <tr><td>System Management</td><td><code>app_settings</code>, <code>system_access_logs</code>, <code>system_blast_log_archives</code>, <code>role_permission_overrides</code>, <code>feature_flags</code></td></tr>
+                <tr><td>Blast</td><td><code>blast_messages</code>, <code>blast_targets</code>, <code>blast_logs</code>, <code>blast_message_templates</code>, <code>blast_email_accounts</code></td></tr>
+                <tr><td>Recipients</td><td><code>blast_recipients</code>, <code>blast_employee_recipients</code>, <code>blast_employee_ypik_recipients</code>, <code>blast_general_recipients</code></td></tr>
+                <tr><td>Finance</td><td><code>finance_categories</code>, <code>finance_accounts</code>, <code>finance_reports</code>, <code>finance_invoices</code>, <code>finance_general_ledger_batches</code>, <code>finance_statement_batches</code></td></tr>
+                <tr><td>Asset</td><td><code>assets</code>, detail asset category tables, <code>asset_import_batches</code></td></tr>
+                <tr><td>Maintenance</td><td><code>maintenance_logs</code>, <code>maintenance_documentations</code>, <code>maintenance_notification_recipients</code></td></tr>
+                <tr><td>Communication</td><td><code>discussion_channels</code>, <code>discussion_messages</code>, <code>announcements</code>, <code>announcement_logs</code>, <code>reminders</code></td></tr>
+                <tr><td>Queue</td><td><code>jobs</code>, <code>failed_jobs</code></td></tr>
+            </tbody>
+        </table>
+        <h3>Command Database</h3>
+        <pre>php artisan migrate
+php artisan migrate --force
+php artisan db:seed --class=UserSeeder
+php artisan optimize:clear</pre>
+    </section>
+
+    <section class="section">
+        <h2>18. Environment dan Konfigurasi</h2>
+        <p>File <code>.env</code> tidak boleh dipush. Gunakan <code>.env.example</code> sebagai template aman.</p>
+        <table>
+            <thead>
+                <tr><th>Key</th><th>Fungsi</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>APP_URL</code></td><td>Base URL aplikasi.</td></tr>
+                <tr><td><code>DB_CONNECTION</code>, <code>DB_HOST</code>, <code>DB_DATABASE</code></td><td>Koneksi database.</td></tr>
+                <tr><td><code>QUEUE_CONNECTION</code></td><td>Gunakan <code>database</code> atau Redis untuk production.</td></tr>
+                <tr><td><code>MAIL_*</code></td><td>Fallback SMTP Laravel.</td></tr>
+                <tr><td><code>BLAST_EMAIL_ACCOUNTS_ENABLED</code></td><td>Mengaktifkan Kontrol Email.</td></tr>
+                <tr><td><code>WHATSAPP_GATEWAY_BASE_URL</code></td><td>Alamat gateway WhatsApp Node.js.</td></tr>
+                <tr><td><code>WHATSAPP_GATEWAY_API_KEY</code></td><td>Token gateway, simpan hanya di environment.</td></tr>
+                <tr><td><code>SYSTEM_ACCESS_AUDIT_ENABLED</code></td><td>Mengaktifkan audit akses Sistem Management.</td></tr>
+                <tr><td><code>AI_FEATURE_BUILDER_ENDPOINT</code></td><td>Endpoint AI untuk draft fitur.</td></tr>
+                <tr><td><code>AI_FEATURE_EXECUTOR_ENDPOINT</code></td><td>Endpoint AI executor jika ingin apply perubahan otomatis.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section page-break">
+        <h2>19. Deployment dan Worker</h2>
+        <h3>Deploy Laravel</h3>
+        <pre>git pull --ff-only origin main
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache</pre>
+        <h3>Queue Worker Laravel</h3>
+        <pre>php artisan queue:work --queue=blast-whatsapp-high,blast-whatsapp-normal,blast-whatsapp-low,blast-email-high,blast-email-normal,blast-email-low,default --tries=3 --timeout=120</pre>
+        <h3>WhatsApp Gateway</h3>
+        <pre>cd whatsapp-gateway
+npm install
+npm run start</pre>
+        <p>Jika memakai PM2 di server:</p>
+        <pre>cd whatsapp-gateway
+pm2 restart ecosystem.config.cjs --update-env
+pm2 save
+pm2 logs wa-gateway --lines 200</pre>
+    </section>
+
+    <section class="section">
+        <h2>20. Testing dan Validasi</h2>
+        <p>Command validasi yang biasa dipakai sebelum push/deploy:</p>
+        <pre>php -l app/Http/Controllers/Admin/BlastController.php
+php artisan view:cache
+php artisan route:list --name=admin.blast.email.accounts
+php artisan test --filter SmtpEmailProviderTest
+php artisan test --filter GatewayWhatsappProviderTest
+php artisan test --filter WhatsAppGatewayJobStatusServiceTest</pre>
+        <p class="small">
+            Warning PHPUnit tentang deprecated schema berasal dari konfigurasi XML lama, bukan kegagalan test.
+        </p>
+    </section>
+
+    <section class="section">
+        <h2>21. Troubleshooting</h2>
+        <table>
+            <thead>
+                <tr><th>Masalah</th><th>Cek Cepat</th><th>Aksi</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Web 504 saat blasting</td><td>Queue, timeout Nginx/PHP, worker.</td><td>Pastikan blast berjalan via queue dan worker aktif.</td></tr>
+                <tr><td>WhatsApp antrian gateway lama</td><td>Gateway health, Redis, PM2, device status.</td><td>Retry log, reconnect device, restart worker gateway bila perlu.</td></tr>
+                <tr><td>Email gagal terkirim</td><td>Kontrol Email health, App Password Gmail, MAIL config.</td><td>Tes kirim akun email, cek error terakhir, pilih akun lain.</td></tr>
+                <tr><td>User tidak bisa akses modul</td><td>Role permission, Akses Fitur, maintenance mode.</td><td>Cek Sistem Management > Role dan Akses Fitur.</td></tr>
+                <tr><td>System Management tidak bisa login</td><td>Route login, seeder, role enum, password user.</td><td>Jalankan migrate, UserSeeder, reset password via DB bila perlu.</td></tr>
+                <tr><td>Migration gagal</td><td>DB host, port, user, password, service MySQL.</td><td>Pastikan database hidup dan kredensial benar.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>22. Prioritas Keamanan</h2>
+        <ul>
+            <li>Jangan push file <code>.env</code>.</li>
+            <li>Jangan simpan password Gmail, token AI, token gateway, dan APP_KEY di dokumen publik.</li>
+            <li>Ganti password awal semua akun setelah deploy.</li>
+            <li>Batasi akses Sistem Management ke personel tepercaya.</li>
+            <li>Aktifkan HTTPS pada domain production.</li>
+            <li>Backup database secara berkala.</li>
+            <li>Cek audit akses jika ada aktivitas mencurigakan.</li>
+            <li>Jangan matikan fitur Sistem Management karena itu jalur pemulihan utama.</li>
+        </ul>
+        <div class="danger">
+            API Tester dan AI Executor adalah fitur sensitif. Keduanya hanya boleh digunakan oleh role tepercaya
+            dan harus diawasi dengan audit akses.
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Penutup</h2>
+        <p>
+            Dokumen ini menjadi pegangan utama untuk maintenance dan onboarding developer. Jika ada perubahan besar
+            pada role, route, database, gateway, atau deployment, update dokumen ini bersamaan dengan perubahan kode.
+        </p>
+        <p class="small">
+            Source dokumen: <code>docs/dokumentasi-keseluruhan-proyek-soy-ypik.html</code>.
+            Output PDF: <code>docs/dokumentasi-keseluruhan-proyek-soy-ypik.pdf</code>.
+        </p>
+    </section>
+</body>
+</html>

@@ -375,7 +375,7 @@
         color: var(--text-secondary);
         background: var(--light-bg);
         font-size: 11px;
-        text-transform: uppercase;
+        text-transform: none;
     }
 
     .history-summary {

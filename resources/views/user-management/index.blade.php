@@ -568,7 +568,8 @@
                         @php
                             $isSelf = $currentUser && $user->id === $currentUser->id;
                             $isTargetSuperAdmin = $user->role === $superAdminRole;
-                            $canManagePassword = $isSuperAdmin && !$isSelf && (!$isTargetSuperAdmin || ($isSystemManagement ?? false));
+                            $isTargetSystemManagement = $user->role === \App\Enums\User\UserRole::SYSTEM_MANAGEMENT->value;
+                            $canManagePassword = $isSuperAdmin && !$isSelf && !$isTargetSystemManagement && (!$isTargetSuperAdmin || ($isSystemManagement ?? false));
                             $initial = strtoupper(substr(trim($user->name ?: $user->email), 0, 1));
                         @endphp
                         <tr>

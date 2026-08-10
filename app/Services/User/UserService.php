@@ -56,7 +56,12 @@ class UserService
         $user = User::find($id);
         if(empty($user))
             throw new \Exception('User tidak ditemukan', 404);
-        
+
+        $this->sendResetPasswordLinkForUser($user);
+    }
+
+    public function sendResetPasswordLinkForUser(User $user): void
+    {
         $status = Password::sendResetLink([
             'email' => $user->email
         ]);

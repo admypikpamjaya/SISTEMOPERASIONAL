@@ -98,6 +98,23 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
+        RateLimiter::for('password-reset', function (Request $request) {
+            $key = sprintf(
+                'password-reset:%s:%s',
+                strtolower((string) $request->input('email', 'unknown')),
+                (string) $request->ip()
+            );
+
+            return Limit::perMinute(3)
+                ->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return back()
+                        ->withErrors(['email' => 'Permintaan reset password terlalu banyak. Tunggu sebentar lalu coba lagi.'])
+                        ->withInput($request->only('email'))
+                        ->withHeaders($headers);
+                });
+        });
+
         RateLimiter::for('system-management-login', function (Request $request) {
             $key = sprintf(
                 'system-management-login:%s:%s',

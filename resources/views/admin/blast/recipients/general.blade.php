@@ -4,8 +4,6 @@
 
 @section('content')
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 .general-page {
     --gen-primary: var(--app-accent);
     --gen-primary-strong: var(--app-accent-strong);
@@ -21,7 +19,7 @@
     --gen-shadow: var(--app-shadow);
     --gen-success: var(--success-color, #10b981);
     --gen-danger: var(--danger-color, #ef4444);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Source Sans Pro', Arial, sans-serif;
     color: var(--gen-text);
     padding: 6px 4px 18px;
 }
@@ -211,8 +209,8 @@
 .general-stat-label {
     font-size: 11px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .03em;
+    text-transform: none;
+    letter-spacing: 0;
     color: var(--gen-text-muted);
     margin-bottom: 4px;
 }
@@ -320,8 +318,8 @@
 .general-table th {
     background: var(--gen-surface-soft);
     color: var(--gen-text-muted);
-    text-transform: uppercase;
-    letter-spacing: .03em;
+    text-transform: none;
+    letter-spacing: 0;
     font-size: 10.5px;
     font-weight: 800;
     padding: 10px 12px;
@@ -378,7 +376,7 @@
     padding: 3px 8px;
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: .02em;
+    letter-spacing: 0;
 }
 
 .general-badge.valid {

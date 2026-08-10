@@ -27,7 +27,13 @@
         .btn-system { min-height:46px; border-radius:8px; background:#1d4ed8; border:0; font-weight:800; }
         .alert { border-radius:8px; }
         .sm-link { margin-top:16px; display:inline-flex; color:#475569; font-size:13px; }
+        .sm-reset-box { margin-top:18px; padding-top:18px; border-top:1px solid #e2e8f0; }
+        .sm-reset-title { margin:0 0 8px; font-size:13px; font-weight:800; color:#111827; }
+        .sm-reset-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; }
+        .sm-reset-row .form-control { min-height:40px; font-size:13px; }
+        .sm-reset-row .btn { min-height:40px; border-radius:8px; font-weight:800; white-space:nowrap; }
         @media (max-width: 900px) { .sm-card { grid-template-columns:1fr; } .sm-panel { min-height:auto; } }
+        @media (max-width: 520px) { .sm-reset-row { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
@@ -60,6 +66,9 @@
             @if(session('auth_failed'))
                 <div class="alert alert-danger">{{ session('auth_failed') }}</div>
             @endif
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
 
             <div class="form-group">
                 <label>Email</label>
@@ -74,6 +83,26 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-system">Masuk Sistem Management</button>
+
+            <div class="sm-reset-box">
+                <p class="sm-reset-title">Lupa atau ubah password via email link</p>
+                <form method="POST" action="{{ route('system-management.password.email') }}" class="sm-reset-row">
+                    @csrf
+                    <input
+                        type="email"
+                        name="email"
+                        value="{{ old('email', 'ridodwikurniawan@gmail.com') }}"
+                        class="form-control @error('email') is-invalid @enderror"
+                        autocomplete="email"
+                        required
+                    >
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope"></i> Kirim Link
+                    </button>
+                </form>
+                @error('email')<span class="text-danger small d-block mt-2">{{ $message }}</span>@enderror
+            </div>
+
             <a class="sm-link" href="{{ route('login') }}">Kembali ke login umum</a>
         </form>
     </section>

@@ -161,6 +161,16 @@ class UserManagementController extends Controller
                 throw new \Exception(__('app.user_management.super_admin_password_locked'), 403);
             }
 
+            if ($targetUser->role === UserRole::SYSTEM_MANAGEMENT->value) {
+                $this->service->sendResetPasswordLinkForUser($targetUser);
+
+                session()->flash('success', 'Link reset password Sistem Management berhasil dikirim ke email.');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Link reset password Sistem Management berhasil dikirim ke email.',
+                ]);
+            }
+
             $this->service->updatePassword($id, $validated['password']);
 
             session()->flash('success', __('app.user_management.password_updated'));

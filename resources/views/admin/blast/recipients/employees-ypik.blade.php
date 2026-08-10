@@ -4,8 +4,6 @@
 
 @section('content')
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 :root {
     --ypk-blue-900: #0f2d57;
     --ypk-blue-800: #0d9488;
@@ -20,7 +18,7 @@
 }
 
 .ypk-page {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Source Sans Pro', Arial, sans-serif;
     color: var(--ypk-text-900);
     padding: 4px 2px 16px;
 }
@@ -129,8 +127,8 @@
 .ypk-stat-label {
     font-size: 11px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .04em;
+    text-transform: none;
+    letter-spacing: 0;
     color: var(--ypk-text-500);
     margin-bottom: 4px;
 }
@@ -219,9 +217,9 @@
 .ypk-table th {
     background: #f8fbff;
     color: var(--ypk-text-500);
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    font-size: 10.5px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11.5px;
     font-weight: 800;
     padding: 10px 12px;
     border-bottom: 1px solid var(--ypk-border);
@@ -291,7 +289,7 @@
     padding: 3px 8px;
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: .02em;
+    letter-spacing: 0;
 }
 
 .ypk-badge.valid {

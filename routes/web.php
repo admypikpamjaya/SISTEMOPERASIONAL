@@ -69,6 +69,17 @@ Route::prefix('login')
         Route::post('/', 'authenticate');
     });
 
+Route::middleware('guest')
+    ->controller(ResetPasswordController::class)
+    ->group(function () {
+        Route::get('forgot-password', 'request')->name('password.request');
+        Route::post('forgot-password', 'sendResetLink')->middleware('throttle:password-reset')->name('password.email');
+    });
+
+Route::post('system-management/forgot-password', [ResetPasswordController::class, 'sendSystemManagementResetLink'])
+    ->middleware(['guest', 'throttle:system-management-login'])
+    ->name('system-management.password.email');
+
 Route::prefix('system-management')
     ->name('system-management.')
     ->controller(SystemManagementController::class)
@@ -95,6 +106,8 @@ Route::prefix('system-management')
             Route::post('/users/{user}/password', 'resetUserPassword')->name('users.password');
             Route::post('/permissions', 'updatePermission')->name('permissions.update');
             Route::post('/features', 'storeFeature')->name('features.store');
+            Route::post('/features/toggle-available', 'toggleAvailableFeature')->name('features.toggle-available');
+            Route::post('/features/expired-resolution', 'resolveExpiredFeature')->name('features.expired-resolution');
             Route::patch('/features/{featureFlag}', 'toggleFeature')->name('features.toggle');
             Route::post('/feature-access', 'updateFeatureAccess')->name('feature-access.update');
             Route::post('/maintenance', 'updateMaintenance')->name('maintenance.update');

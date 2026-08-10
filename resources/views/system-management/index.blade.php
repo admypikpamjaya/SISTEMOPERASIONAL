@@ -37,6 +37,7 @@
         'custom_css' => '',
     ], is_array($cms ?? null) ? $cms : []);
     $aiExecutorReady = filled(config('system_management.ai_executor.endpoint'));
+    $featureDisableMin = now('Asia/Jakarta')->addMinutes(5)->format('Y-m-d\TH:i');
     $quickLinks = [
         ['label' => 'Status', 'icon' => 'fas fa-server', 'route' => 'system-management.status'],
         ['label' => 'Maintenance', 'icon' => 'fas fa-power-off', 'route' => 'system-management.maintenance'],
@@ -137,17 +138,17 @@
         'features' => [
             'title' => 'Tutorial Feature Toggle',
             'steps' => [
-                'Cari fitur berdasarkan nama dan key agar tidak salah mengaktifkan modul.',
-                'Klik Aktifkan untuk menyalakan fitur atau Nonaktifkan untuk mematikannya.',
-                'Setelah toggle, buka halaman terkait fitur itu untuk memastikan perilakunya sesuai.',
+                'Cari fitur berdasarkan nama dan key agar tidak salah menonaktifkan modul untuk seluruh role.',
+                'Saat menonaktifkan, isi alasan maintenance dan waktu sampai kapan fitur ditutup.',
+                'Jika waktu nonaktif sudah lewat, fitur otomatis tayang kembali dan Sistem Management akan mendapat konfirmasi untuk lanjut maintenance atau tetap tayangkan fitur.',
             ],
         ],
         'feature-access' => [
             'title' => 'Tutorial Akses Fitur',
             'steps' => [
                 'Cari modul utama yang ingin dibatasi, misalnya Blasting WhatsApp & Email, Finance, atau Asset Management.',
-                'Klik Nonaktifkan untuk menyembunyikan menu dan memblokir route fitur itu dari semua role selain Sistem Management.',
-                'Klik Aktifkan untuk membuka kembali fitur. Fitur Sistem Management dikunci agar akses pemulihan tetap tersedia.',
+                'Untuk menonaktifkan modul, klik Atur Maintenance agar alasan dan batas waktu wajib tercatat di Feature Toggle.',
+                'Jika fitur sudah nonaktif, klik Tayangkan untuk membuka kembali fitur. Fitur Sistem Management dikunci agar akses pemulihan tetap tersedia.',
             ],
         ],
         'archives' => [
@@ -224,8 +225,27 @@
     .smx-feature-badge.on { background:#dcfce7; color:#15803d; }
     .smx-feature-badge.off { background:#fee2e2; color:#b91c1c; }
     .smx-feature-badge.locked { background:#e0f2fe; color:#0369a1; }
+    .smx-feature-toggle-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .smx-feature-toggle-item { border:1px solid var(--app-border); border-radius:8px; background:var(--app-surface); padding:14px; display:flex; flex-direction:column; gap:12px; }
+    .smx-feature-toggle-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .smx-feature-toggle-title { margin:0; font-size:15px; font-weight:800; }
+    .smx-feature-toggle-desc { margin:6px 0 0; color:var(--app-text-muted); font-size:12px; line-height:1.45; }
+    .smx-feature-toggle-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .smx-mini-box { border:1px solid var(--app-border); border-radius:8px; background:var(--app-surface-soft); padding:9px 10px; min-width:0; }
+    .smx-mini-box span { display:block; color:var(--app-text-muted); font-size:10px; font-weight:800; text-transform:uppercase; }
+    .smx-mini-box strong { display:block; margin-top:3px; color:var(--app-text); font-size:12px; overflow-wrap:anywhere; }
+    .smx-toggle-form { border-top:1px solid var(--app-border); padding-top:12px; }
+    .smx-toggle-form-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(190px,.5fr) auto; gap:10px; align-items:end; }
+    .smx-expired-list { display:grid; gap:10px; }
+    .smx-expired-item { border:1px solid #fcd34d; border-radius:8px; background:#fffbeb; padding:12px; color:#78350f; }
+    .smx-expired-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:10px; }
+    .smx-expired-title { margin:0; font-size:14px; font-weight:800; color:#78350f; }
+    .smx-expired-desc { margin:4px 0 0; font-size:12px; line-height:1.45; }
+    .smx-expired-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
+    .smx-expired-ack { display:flex; align-items:end; justify-content:flex-end; }
     @media (max-width:1200px){ .smx-grid,.smx-actions{grid-template-columns:repeat(2,1fr);} .smx-two,.smx-feature-list{grid-template-columns:1fr;} }
-    @media (max-width:720px){ .smx-hero,.smx-grid,.smx-actions,.smx-form-grid,.smx-form-grid.three,.smx-flow,.smx-feature-item{grid-template-columns:1fr;} .smx-api-url{grid-column:auto;} .smx-hero{align-items:flex-start;} .smx-pill{white-space:normal;} }
+    @media (max-width:1200px){ .smx-feature-toggle-list{grid-template-columns:1fr;} .smx-toggle-form-grid,.smx-expired-actions{grid-template-columns:1fr;} .smx-expired-ack{justify-content:flex-start;} }
+    @media (max-width:720px){ .smx-hero,.smx-grid,.smx-actions,.smx-form-grid,.smx-form-grid.three,.smx-flow,.smx-feature-item,.smx-feature-toggle-meta{grid-template-columns:1fr;} .smx-api-url{grid-column:auto;} .smx-hero{align-items:flex-start;} .smx-pill{white-space:normal;} }
 </style>
 
 <div class="smx">
@@ -454,6 +474,7 @@
                     <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Password Baru</th><th>Aksi</th></tr></thead>
                     <tbody>
                         @foreach($users ?? [] as $user)
+                            @php($isSystemManagementUser = $user->role === \App\Enums\User\UserRole::SYSTEM_MANAGEMENT->value)
                             <tr>
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
@@ -461,10 +482,19 @@
                                 <td>
                                     <form id="password-{{ $user->id }}" method="POST" action="{{ route('system-management.users.password', $user) }}">
                                         @csrf
-                                        <input type="password" name="password" class="form-control form-control-sm" placeholder="Minimal 12 karakter" required minlength="12">
+                                        @if($isSystemManagementUser)
+                                            <span class="smx-muted">Wajib via email link ke akun Sistem Management.</span>
+                                        @else
+                                            <input type="password" name="password" class="form-control form-control-sm" placeholder="Minimal 12 karakter" required minlength="12">
+                                        @endif
                                     </form>
                                 </td>
-                                <td><button class="smx-btn primary" type="submit" form="password-{{ $user->id }}"><i class="fas fa-key"></i> Reset</button></td>
+                                <td>
+                                    <button class="smx-btn primary" type="submit" form="password-{{ $user->id }}">
+                                        <i class="fas {{ $isSystemManagementUser ? 'fa-envelope' : 'fa-key' }}"></i>
+                                        {{ $isSystemManagementUser ? 'Kirim Link' : 'Reset' }}
+                                    </button>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -666,32 +696,177 @@
     @endif
 
     @if($page === 'features')
-        <section class="smx-panel">
-            <div class="smx-panel-header"><h2 class="smx-panel-title">Feature Toggle</h2></div>
-            <div class="smx-table-wrap">
-                <table class="table smx-table">
-                    <thead><tr><th>Fitur</th><th>Status</th><th>Aksi</th></tr></thead>
-                    <tbody>
-                        @forelse($featureFlags ?? [] as $feature)
-                            <tr>
-                                <td><strong>{{ $feature->name }}</strong><br><code>{{ $feature->key }}</code></td>
-                                <td>{{ $feature->is_enabled ? 'Aktif' : 'Nonaktif' }}<br><span class="smx-muted">{{ $feature->status }}</span></td>
-                                <td>
-                                    <form method="POST" action="{{ route('system-management.features.toggle', $feature) }}">
+        @if(!empty($expiredFeatureNotices))
+            <section class="smx-panel">
+                <div class="smx-panel-header">
+                    <h2 class="smx-panel-title"><i class="fas fa-clock"></i> Konfirmasi Maintenance Fitur Selesai</h2>
+                    <span class="smx-muted">Fitur sudah otomatis tayang kembali</span>
+                </div>
+                <div class="smx-panel-body">
+                    <div class="smx-expired-list">
+                        @foreach($expiredFeatureNotices as $notice)
+                            <div class="smx-expired-item">
+                                <div class="smx-expired-head">
+                                    <div>
+                                        <h3 class="smx-expired-title">{{ $notice['name'] ?? $notice['key'] }}</h3>
+                                        <p class="smx-expired-desc">
+                                            Masa nonaktif selesai pada {{ $notice['disabled_until_label'] ?? '-' }} dan fitur sudah otomatis ditayangkan kembali.
+                                            @if(!empty($notice['reason']))
+                                                Alasan sebelumnya: {{ $notice['reason'] }}.
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <span class="smx-feature-badge on">Sudah Tayang</span>
+                                </div>
+                                <div class="smx-expired-actions">
+                                    <form method="POST" action="{{ route('system-management.features.expired-resolution') }}">
                                         @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="is_enabled" value="{{ $feature->is_enabled ? 0 : 1 }}">
-                                        <button class="smx-btn soft" type="submit">{{ $feature->is_enabled ? 'Nonaktifkan' : 'Aktifkan' }}</button>
+                                        <input type="hidden" name="feature_key" value="{{ $notice['key'] }}">
+                                        <input type="hidden" name="action" value="continue">
+                                        <div class="smx-toggle-form-grid">
+                                            <div>
+                                                <label class="smx-label">Alasan lanjut maintenance</label>
+                                                <input name="disable_reason" class="form-control" value="{{ old('disable_reason', 'Maintenance fitur dilanjutkan.') }}" maxlength="500">
+                                            </div>
+                                            <div>
+                                                <label class="smx-label">Nonaktif sampai</label>
+                                                <input type="datetime-local" name="disabled_until" class="form-control" min="{{ $featureDisableMin }}" required>
+                                            </div>
+                                            <button class="smx-btn danger" type="submit">Lanjut Maintenance</button>
+                                        </div>
                                     </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="3" class="text-center smx-muted">Belum ada feature flag.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    <form method="POST" action="{{ route('system-management.features.expired-resolution') }}" class="smx-expired-ack">
+                                        @csrf
+                                        <input type="hidden" name="feature_key" value="{{ $notice['key'] }}">
+                                        <input type="hidden" name="action" value="show">
+                                        <button class="smx-btn success" type="submit">Tetap Tayangkan</button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        <section class="smx-panel">
+            <div class="smx-panel-header">
+                <h2 class="smx-panel-title">Feature Toggle Semua Role</h2>
+                <span class="smx-muted">Berlaku untuk seluruh role selain Sistem Management</span>
+            </div>
+            <div class="smx-panel-body">
+                <div class="smx-feature-toggle-list">
+                    @forelse($availableFeatures ?? [] as $feature)
+                        @php
+                            $isEnabled = (bool) ($feature['is_enabled'] ?? true);
+                            $isLocked = (bool) ($feature['locked'] ?? false);
+                            $routePatterns = implode(', ', (array) ($feature['route_patterns'] ?? []));
+                        @endphp
+                        <div class="smx-feature-toggle-item">
+                            <div class="smx-feature-toggle-head">
+                                <div>
+                                    <h3 class="smx-feature-toggle-title">{{ $feature['name'] ?? $feature['key'] }}</h3>
+                                    <p class="smx-feature-toggle-desc">{{ $feature['description'] ?? '-' }}</p>
+                                </div>
+                                @if($isLocked)
+                                    <span class="smx-feature-badge locked">Dikunci</span>
+                                @else
+                                    <span class="smx-feature-badge {{ $isEnabled ? 'on' : 'off' }}">{{ $isEnabled ? 'Aktif' : 'Nonaktif' }}</span>
+                                @endif
+                            </div>
+
+                            <div class="smx-feature-toggle-meta">
+                                <div class="smx-mini-box">
+                                    <span>Feature Key</span>
+                                    <strong>{{ $feature['key'] }}</strong>
+                                </div>
+                                <div class="smx-mini-box">
+                                    <span>Route</span>
+                                    <strong>{{ $routePatterns !== '' ? $routePatterns : '-' }}</strong>
+                                </div>
+                                <div class="smx-mini-box">
+                                    <span>Nonaktif Sampai</span>
+                                    <strong>{{ $feature['disabled_until_label'] ?? '-' }}</strong>
+                                </div>
+                                <div class="smx-mini-box">
+                                    <span>Dinonaktifkan Oleh</span>
+                                    <strong>{{ $feature['disabled_by_name'] ?: '-' }}</strong>
+                                </div>
+                            </div>
+
+                            @if(!$isEnabled && !empty($feature['disable_reason']))
+                                <div class="smx-mini-box">
+                                    <span>Alasan Maintenance</span>
+                                    <strong>{{ $feature['disable_reason'] }}</strong>
+                                </div>
+                            @endif
+
+                            <div class="smx-toggle-form">
+                                @if($isLocked)
+                                    <button class="smx-btn soft block" type="button" disabled>Sistem Management selalu aktif</button>
+                                @elseif($isEnabled)
+                                    <form method="POST" action="{{ route('system-management.features.toggle-available') }}">
+                                        @csrf
+                                        <input type="hidden" name="feature_key" value="{{ $feature['key'] }}">
+                                        <input type="hidden" name="is_enabled" value="0">
+                                        <div class="smx-toggle-form-grid">
+                                            <div>
+                                                <label class="smx-label">Alasan maintenance</label>
+                                                <input name="disable_reason" class="form-control" maxlength="500" placeholder="Contoh: Perbaikan data atau audit modul">
+                                            </div>
+                                            <div>
+                                                <label class="smx-label">Nonaktif sampai</label>
+                                                <input type="datetime-local" name="disabled_until" class="form-control" min="{{ $featureDisableMin }}" required>
+                                            </div>
+                                            <button class="smx-btn danger" type="submit">Nonaktifkan</button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('system-management.features.toggle-available') }}">
+                                        @csrf
+                                        <input type="hidden" name="feature_key" value="{{ $feature['key'] }}">
+                                        <input type="hidden" name="is_enabled" value="1">
+                                        <button class="smx-btn success block" type="submit">Tayangkan Fitur Sekarang</button>
+                                    </form>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="smx-muted">Belum ada daftar fitur di config.</div>
+                    @endforelse
+                </div>
             </div>
         </section>
+
+        @if(!empty($featureFlags) && count($featureFlags) > 0)
+            <section class="smx-panel">
+                <div class="smx-panel-header">
+                    <h2 class="smx-panel-title">Draft Feature Flag Developer AI</h2>
+                    <span class="smx-muted">Draft fitur baru sebelum masuk daftar modul global</span>
+                </div>
+                <div class="smx-table-wrap">
+                    <table class="table smx-table">
+                        <thead><tr><th>Fitur</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <tbody>
+                            @foreach($featureFlags as $feature)
+                                <tr>
+                                    <td><strong>{{ $feature->name }}</strong><br><code>{{ $feature->key }}</code></td>
+                                    <td>{{ $feature->is_enabled ? 'Aktif' : 'Nonaktif' }}<br><span class="smx-muted">{{ $feature->status }}</span></td>
+                                    <td>
+                                        <form method="POST" action="{{ route('system-management.features.toggle', $feature) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="is_enabled" value="{{ $feature->is_enabled ? 0 : 1 }}">
+                                            <button class="smx-btn soft" type="submit">{{ $feature->is_enabled ? 'Nonaktifkan' : 'Aktifkan' }}</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
     @endif
 
     @if($page === 'feature-access')
@@ -718,14 +893,14 @@
                             <div>
                                 @if($feature['locked'] ?? false)
                                     <button class="smx-btn soft" type="button" disabled>Tetap Aktif</button>
+                                @elseif($feature['is_enabled'] ?? true)
+                                    <a class="smx-btn danger" href="{{ route('system-management.features') }}">Atur Maintenance</a>
                                 @else
                                     <form method="POST" action="{{ route('system-management.feature-access.update') }}">
                                         @csrf
                                         <input type="hidden" name="feature_key" value="{{ $feature['key'] }}">
-                                        <input type="hidden" name="is_enabled" value="{{ ($feature['is_enabled'] ?? true) ? 0 : 1 }}">
-                                        <button class="smx-btn {{ ($feature['is_enabled'] ?? true) ? 'danger' : 'success' }}" type="submit">
-                                            {{ ($feature['is_enabled'] ?? true) ? 'Nonaktifkan' : 'Aktifkan' }}
-                                        </button>
+                                        <input type="hidden" name="is_enabled" value="1">
+                                        <button class="smx-btn success" type="submit">Tayangkan</button>
                                     </form>
                                 @endif
                             </div>

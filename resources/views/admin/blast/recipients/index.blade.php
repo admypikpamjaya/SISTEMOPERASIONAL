@@ -3,8 +3,6 @@
 @section('content')
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-
     :root {
         --blue-primary: #1a56db;
         --blue-secondary: #1e40af;
@@ -33,18 +31,18 @@
         --radius-sm: 8px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-        background: var(--bg-main);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        color: var(--text-dark);
+    .page-wrapper,
+    .page-wrapper * {
+        box-sizing: border-box;
     }
 
     .page-wrapper {
-        padding: 28px 32px;
-        max-width: 1440px;
+        padding: 20px 24px 28px;
+        width: 100%;
+        max-width: none;
         margin: 0 auto;
+        font-family: 'Plus Jakarta Sans', 'Source Sans Pro', Arial, sans-serif;
+        color: var(--text-dark);
     }
 
     /* ── PAGE HEADER ── */
@@ -77,7 +75,7 @@
         font-size: 22px;
         font-weight: 800;
         color: var(--text-dark);
-        letter-spacing: -0.3px;
+        letter-spacing: 0;
         line-height: 1.2;
     }
 
@@ -142,8 +140,8 @@
     .stat-icon.valid   { background: #ecfeff; color: #0891b2; }
 
     .stat-info { flex: 1; }
-    .stat-label { font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .stat-number { font-size: 30px; font-weight: 800; color: var(--text-dark); line-height: 1; letter-spacing: -1px; }
+    .stat-label { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: none; letter-spacing: 0; margin-bottom: 5px; }
+    .stat-number { font-size: 30px; font-weight: 800; color: var(--text-dark); line-height: 1; letter-spacing: 0; }
 
     /* ── MAIN LAYOUT ── */
     .main-layout {
@@ -240,7 +238,7 @@
         color: var(--text-dark);
         font-size: 12px;
         font-weight: 800;
-        text-transform: uppercase;
+        text-transform: none;
     }
 
     .toolbar-section-head i {
@@ -273,9 +271,9 @@
         min-height: 16px;
         margin: 0 0 6px;
         color: var(--text-light);
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 800;
-        text-transform: uppercase;
+        text-transform: none;
     }
 
     .filter-form-actions {
@@ -505,10 +503,10 @@
         display: block;
         margin-bottom: 5px;
         color: var(--text-mid);
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .4px;
+        text-transform: none;
+        letter-spacing: 0;
     }
 
     .bulk-group-field input,
@@ -633,33 +631,40 @@
     }
 
     /* ── TABLE ── */
-    .table-scroll { overflow-x: auto; }
+    .table-scroll {
+        overflow-x: auto;
+        scrollbar-gutter: stable;
+    }
 
     table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 900px;
+        min-width: 1280px;
+        table-layout: fixed;
     }
 
     thead th {
-        padding: 11px 14px;
-        font-size: 10.5px;
-        font-weight: 700;
+        padding: 10px 12px;
+        font-size: 11.5px;
+        font-weight: 800;
         color: var(--text-light);
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
+        text-transform: none;
+        letter-spacing: 0;
         background: #f8fafc;
         border-bottom: 1.5px solid var(--border);
         white-space: nowrap;
         text-align: left;
+        line-height: 1.35;
     }
 
     tbody td {
-        padding: 13px 14px;
+        padding: 12px;
         font-size: 13px;
         color: var(--text-dark);
         border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
+        line-height: 1.45;
+        min-width: 0;
     }
 
     tbody tr:last-child td { border-bottom: none; }
@@ -674,38 +679,47 @@
         font-weight: 700;
         color: var(--text-dark);
         font-size: 13px;
-        max-width: 130px;
+        max-width: 100%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 1.35;
     }
 
     .class-badge {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         background: var(--blue-light);
         color: var(--blue-primary);
         font-size: 11px;
         font-weight: 700;
-        padding: 3px 9px;
+        line-height: 1.15;
+        min-height: 24px;
+        max-width: 100%;
+        min-width: 34px;
+        padding: 4px 9px;
         border-radius: 20px;
-        letter-spacing: 0.3px;
+        letter-spacing: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .cell-text {
         font-size: 12px;
         color: var(--text-mid);
-        max-width: 120px;
+        max-width: 100%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     .cell-mono {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Plus Jakarta Sans', 'Source Sans Pro', Arial, sans-serif;
         font-size: 11.5px;
         color: var(--text-mid);
-        max-width: 115px;
+        max-width: 100%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -715,7 +729,7 @@
         font-size: 11.5px;
         color: var(--text-light);
         font-style: italic;
-        max-width: 110px;
+        max-width: 100%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -732,9 +746,12 @@
         border-radius: 20px;
         font-size: 10px;
         font-weight: 700;
-        letter-spacing: 0.4px;
+        letter-spacing: 0;
         border: 1px solid;
         width: fit-content;
+        max-width: 100%;
+        line-height: 1.15;
+        white-space: nowrap;
     }
 
     .badge svg { width: 9px; height: 9px; }
@@ -744,7 +761,7 @@
     .badge-invalid { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
 
     /* ── ACTION BUTTONS ── */
-    .actions { display: flex; gap: 5px; }
+    .actions { display: flex; gap: 5px; justify-content: flex-start; }
 
     .btn-action {
         padding: 5px 10px;
@@ -977,6 +994,7 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 1280px) {
+        .page-wrapper { padding: 18px; }
         .main-layout { grid-template-columns: 1fr; }
         .stats-grid  { grid-template-columns: repeat(2, 1fr); }
         .sidebar-panel { display: grid; grid-template-columns: 1fr 1fr; }
@@ -984,6 +1002,7 @@
         .recipient-filter-form { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
         .filter-field:first-child { grid-column: span 2; }
         .filter-form-actions { grid-column: 1 / -1; }
+        table { min-width: 1180px; }
     }
 
     @media (max-width: 640px) {
@@ -1332,20 +1351,20 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width:48px;">
+                            <th style="width:44px;">
                                 <input type="checkbox" class="bulk-checkbox" id="selectAllStudents">
                             </th>
-                            <th style="width:90px;">{{ __('app.blast.table_status') }}</th>
-                            <th style="width:130px;">{{ __('app.blast.student_name') }}</th>
-                            <th style="width:75px;">{{ __('app.blast.education_level') }}</th>
-                            <th style="width:75px;">{{ __('app.blast.class') }}</th>
-                            <th style="width:105px;">{{ __('app.blast.academic_year') }}</th>
-                            <th style="width:105px;">{{ __('app.blast.student_status') }}</th>
-                            <th style="width:120px;">{{ __('app.blast.guardian') }}</th>
-                            <th style="width:170px;">{{ __('app.blast.guardian_whatsapp') }}</th>
-                            <th style="width:145px;">{{ __('app.blast.guardian_email') }}</th>
-                            <th style="width:110px;">{{ __('app.blast.notes') }}</th>
-                            <th style="width:120px;">{{ __('app.blast.action') }}</th>
+                            <th style="width:104px;">{{ __('app.blast.table_status') }}</th>
+                            <th style="width:180px;">{{ __('app.blast.student_name') }}</th>
+                            <th style="width:82px;">{{ __('app.blast.education_level') }}</th>
+                            <th style="width:92px;">{{ __('app.blast.class') }}</th>
+                            <th style="width:96px;">{{ __('app.blast.academic_year') }}</th>
+                            <th style="width:108px;">{{ __('app.blast.student_status') }}</th>
+                            <th style="width:152px;">{{ __('app.blast.guardian') }}</th>
+                            <th style="width:152px;">{{ __('app.blast.guardian_whatsapp') }}</th>
+                            <th style="width:172px;">{{ __('app.blast.guardian_email') }}</th>
+                            <th style="width:112px;">{{ __('app.blast.notes') }}</th>
+                            <th style="width:88px;">{{ __('app.blast.action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1392,10 +1411,10 @@
                                     <div class="student-name" title="{{ $r->nama_siswa }}">{{ $r->nama_siswa }}</div>
                                 </td>
                                 <td>
-                                    <span class="class-badge">{{ $r->education_level ?: __('app.blast.not_assigned') }}</span>
+                                    <span class="class-badge" title="{{ $r->education_level ?: __('app.blast.not_assigned') }}">{{ $r->education_level ?: __('app.blast.not_assigned') }}</span>
                                 </td>
                                 <td>
-                                    <span class="class-badge">{{ $r->kelas }}</span>
+                                    <span class="class-badge" title="{{ $r->kelas ?: __('app.blast.not_assigned') }}">{{ $r->kelas ?: __('app.blast.not_assigned') }}</span>
                                 </td>
                                 <td>
                                     <div class="cell-text">{{ $r->academic_year ?: __('app.blast.not_assigned') }}</div>

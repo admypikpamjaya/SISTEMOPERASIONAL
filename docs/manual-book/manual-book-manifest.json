@@ -1,0 +1,103 @@
+{
+  "manual_version": "1.0",
+  "app_version": "1.1",
+  "generated_at": "2026-08-10T10:20:43.031Z",
+  "generated_date_wib": "10 Agustus 2026",
+  "git_branch": "main",
+  "git_revision": "ad1f5bc",
+  "working_tree_dirty": true,
+  "code_reference": "main · ad1f5bc + snapshot working tree",
+  "browser": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "manuals": [
+    {
+      "title": "Manual Book Role User",
+      "role": "User",
+      "html": "source/manual-book-role-user-soy-ypik.html",
+      "pdf": "manual-book-role-user-soy-ypik.pdf",
+      "bytes": 811767,
+      "pages": 9,
+      "sha256": "d84d2bfcd9045f07cc036e7c9d4c104d0be72a1283f96f4f13b3fab2fb761c93"
+    },
+    {
+      "title": "Manual Book Role Admin",
+      "role": "Admin",
+      "html": "source/manual-book-role-admin-soy-ypik.html",
+      "pdf": "manual-book-role-admin-soy-ypik.pdf",
+      "bytes": 884494,
+      "pages": 11,
+      "sha256": "2124dacb2556cfbadc9638b1dedd4ce617cecb1e5adccd338e0039ad5235ba67"
+    },
+    {
+      "title": "Manual Book Role IT Support",
+      "role": "IT Support",
+      "html": "source/manual-book-role-it-support-soy-ypik.html",
+      "pdf": "manual-book-role-it-support-soy-ypik.pdf",
+      "bytes": 1110996,
+      "pages": 20,
+      "sha256": "cf28cf1d90673b23dbca200444d5fdebed68481d83375a2b8defd3bf5736a0eb"
+    },
+    {
+      "title": "Manual Book Role Asset Manager",
+      "role": "Asset Manager",
+      "html": "source/manual-book-role-asset-manager-soy-ypik.html",
+      "pdf": "manual-book-role-asset-manager-soy-ypik.pdf",
+      "bytes": 884142,
+      "pages": 12,
+      "sha256": "93bb3e9ec0674376ed7055450669cb488aeef55a4b31c221065b12fad2124576"
+    },
+    {
+      "title": "Manual Book Role Finance",
+      "role": "Finance",
+      "html": "source/manual-book-role-finance-soy-ypik.html",
+      "pdf": "manual-book-role-finance-soy-ypik.pdf",
+      "bytes": 897790,
+      "pages": 12,
+      "sha256": "56011dfdab8397446e3acc2cff1b3eb3d0603ec7457f2332624c3fbfb92d3674"
+    },
+    {
+      "title": "Manual Book Role Pembina",
+      "role": "Pembina",
+      "html": "source/manual-book-role-pembina-soy-ypik.html",
+      "pdf": "manual-book-role-pembina-soy-ypik.pdf",
+      "bytes": 936053,
+      "pages": 15,
+      "sha256": "eae9e255c3c1070be02090f5cb9f1e0798f6e10da47f78053fca3e8cb11ca073"
+    },
+    {
+      "title": "Manual Book Role Blasting",
+      "role": "Blasting",
+      "html": "source/manual-book-role-blasting-soy-ypik.html",
+      "pdf": "manual-book-role-blasting-soy-ypik.pdf",
+      "bytes": 858433,
+      "pages": 10,
+      "sha256": "53f45735e6c2bd0fb537d83cd3b72b6b4ed59c83745e14011c12d61dd14b1082"
+    },
+    {
+      "title": "Manual Book Role QC",
+      "role": "QC",
+      "html": "source/manual-book-role-qc-soy-ypik.html",
+      "pdf": "manual-book-role-qc-soy-ypik.pdf",
+      "bytes": 866371,
+      "pages": 11,
+      "sha256": "20c6931171efc8f1f16957eed6d6085d325232c40255ff1e3569e3513aecdce5"
+    },
+    {
+      "title": "Manual Book Role Sistem Management",
+      "role": "Sistem Management",
+      "html": "source/manual-book-role-sistem-management-soy-ypik.html",
+      "pdf": "manual-book-role-sistem-management-soy-ypik.pdf",
+      "bytes": 1199716,
+      "pages": 23,
+      "sha256": "dcbb7b1e451e81c57b279ea6f0ec4d3e12d9fb4331e2078bebf3a389a8493b45"
+    },
+    {
+      "title": "Manual Book Seluruh Role SOY YPIK",
+      "role": "Seluruh Role",
+      "html": "source/manual-book-seluruh-role-soy-ypik.html",
+      "pdf": "manual-book-seluruh-role-soy-ypik.pdf",
+      "bytes": 1412942,
+      "pages": 32,
+      "sha256": "13a8aacb979217ae5d07e4fe5557864aff9dc489661a7ff4a9a9d55232419743"
+    }
+  ]
+}

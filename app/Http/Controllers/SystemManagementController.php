@@ -17,6 +17,8 @@ use App\Models\User;
 use App\Services\AccessControl\PermissionService;
 use App\Services\SystemManagement\ClientContextService;
 use App\Services\SystemManagement\FeatureAvailabilityService;
+use App\Services\User\UserService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -151,9 +153,11 @@ class SystemManagementController extends Controller
         ]);
     }
 
-    public function features()
+    public function features(FeatureAvailabilityService $featureAvailability)
     {
         return $this->renderPage('features', [
+            'availableFeatures' => $featureAvailability->featuresWithState(),
+            'expiredFeatureNotices' => $featureAvailability->expiredNotifications(),
             'featureFlags' => $this->featureFlags(),
         ]);
     }
@@ -183,6 +187,14 @@ class SystemManagementController extends Controller
             ]);
         }
 
+        if (!$request->boolean('is_enabled')) {
+            return redirect()
+                ->route('system-management.features')
+                ->withErrors([
+                    'feature_key' => 'Nonaktifkan fitur dari halaman Feature Toggle agar alasan dan waktu maintenance tercatat.',
+                ]);
+        }
+
         $featureAvailability->setEnabled(
             (string) $validated['feature_key'],
             (bool) $validated['is_enabled'],
@@ -199,8 +211,14 @@ class SystemManagementController extends Controller
         ]);
     }
 
-    public function resetUserPassword(Request $request, User $user)
+    public function resetUserPassword(Request $request, User $user, UserService $userService)
     {
+        if ($user->role === UserRole::SYSTEM_MANAGEMENT->value) {
+            $userService->sendResetPasswordLinkForUser($user);
+
+            return back()->with('success', 'Link reset password Sistem Management berhasil dikirim ke ' . $user->email . '.');
+        }
+
         $validated = $request->validate([
             'password' => ['required', 'string', 'min:12'],
         ], [
@@ -287,6 +305,107 @@ class SystemManagementController extends Controller
         ]);
 
         return back()->with('success', 'Status fitur berhasil diperbarui.');
+    }
+
+    public function toggleAvailableFeature(Request $request, FeatureAvailabilityService $featureAvailability)
+    {
+        $featureKeys = collect($featureAvailability->features())
+            ->keys()
+            ->implode(',');
+
+        $validated = $request->validate([
+            'feature_key' => ['required', 'string', 'in:' . $featureKeys],
+            'is_enabled' => ['required', 'boolean'],
+            'disabled_until' => ['nullable', 'date'],
+            'disable_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $featureKey = (string) $validated['feature_key'];
+        $feature = $featureAvailability->features()[$featureKey] ?? null;
+        if (is_array($feature) && (bool) ($feature['locked'] ?? false)) {
+            return back()->withErrors([
+                'feature_key' => 'Fitur Sistem Management tidak dapat dinonaktifkan.',
+            ]);
+        }
+
+        $enabled = (bool) $validated['is_enabled'];
+        $disabledUntil = null;
+        if (!$enabled) {
+            if (empty($validated['disabled_until'])) {
+                return back()->withErrors([
+                    'disabled_until' => 'Isi waktu sampai kapan fitur dinonaktifkan.',
+                ])->withInput();
+            }
+
+            $disabledUntil = Carbon::parse((string) $validated['disabled_until'], self::WIB_TIMEZONE);
+            if ($disabledUntil->lte(now(self::WIB_TIMEZONE))) {
+                return back()->withErrors([
+                    'disabled_until' => 'Waktu selesai maintenance fitur harus lebih besar dari waktu sekarang.',
+                ])->withInput();
+            }
+        }
+
+        $featureAvailability->setEnabled(
+            $featureKey,
+            $enabled,
+            Auth::user(),
+            $validated['disable_reason'] ?? null,
+            $disabledUntil
+        );
+
+        $featureName = is_array($feature) ? (string) ($feature['name'] ?? $featureKey) : $featureKey;
+        $message = $enabled
+            ? 'Fitur ' . $featureName . ' berhasil ditayangkan kembali.'
+            : 'Fitur ' . $featureName . ' dinonaktifkan sampai ' . $disabledUntil?->format('d/m/Y H:i') . '.';
+
+        return back()->with('success', $message);
+    }
+
+    public function resolveExpiredFeature(Request $request, FeatureAvailabilityService $featureAvailability)
+    {
+        $featureKeys = collect($featureAvailability->features())
+            ->keys()
+            ->implode(',');
+
+        $validated = $request->validate([
+            'feature_key' => ['required', 'string', 'in:' . $featureKeys],
+            'action' => ['required', 'string', 'in:continue,show'],
+            'disabled_until' => ['nullable', 'date'],
+            'disable_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $featureKey = (string) $validated['feature_key'];
+        $feature = $featureAvailability->features()[$featureKey] ?? null;
+        $featureName = is_array($feature) ? (string) ($feature['name'] ?? $featureKey) : $featureKey;
+
+        if ((string) $validated['action'] === 'continue') {
+            if (empty($validated['disabled_until'])) {
+                return back()->withErrors([
+                    'disabled_until' => 'Isi waktu maintenance lanjutan.',
+                ])->withInput();
+            }
+
+            $disabledUntil = Carbon::parse((string) $validated['disabled_until'], self::WIB_TIMEZONE);
+            if ($disabledUntil->lte(now(self::WIB_TIMEZONE))) {
+                return back()->withErrors([
+                    'disabled_until' => 'Waktu maintenance lanjutan harus lebih besar dari waktu sekarang.',
+                ])->withInput();
+            }
+
+            $featureAvailability->setEnabled(
+                $featureKey,
+                false,
+                Auth::user(),
+                $validated['disable_reason'] ?? 'Maintenance fitur dilanjutkan oleh Sistem Management.',
+                $disabledUntil
+            );
+
+            return back()->with('success', 'Maintenance fitur ' . $featureName . ' dilanjutkan sampai ' . $disabledUntil->format('d/m/Y H:i') . '.');
+        }
+
+        $featureAvailability->acknowledgeExpiredNotification($featureKey, Auth::user());
+
+        return back()->with('success', 'Fitur ' . $featureName . ' tetap ditayangkan kembali.');
     }
 
     public function updateMaintenance(Request $request)

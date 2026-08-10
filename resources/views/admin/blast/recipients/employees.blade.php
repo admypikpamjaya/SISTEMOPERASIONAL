@@ -4,8 +4,6 @@
 
 @section('content')
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 :root {
     --emp-blue-900: #112a62;
     --emp-blue-800: #1a56db;
@@ -20,7 +18,7 @@
 }
 
 .emp-page {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Source Sans Pro', Arial, sans-serif;
     color: var(--emp-text-900);
     padding: 4px 2px 16px;
 }
@@ -129,8 +127,8 @@
 .emp-stat-label {
     font-size: 11px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .04em;
+    text-transform: none;
+    letter-spacing: 0;
     color: var(--emp-text-500);
     margin-bottom: 4px;
 }
@@ -219,9 +217,9 @@
 .emp-table th {
     background: #f8fbff;
     color: var(--emp-text-500);
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    font-size: 10.5px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11.5px;
     font-weight: 800;
     padding: 10px 12px;
     border-bottom: 1px solid var(--emp-border);
@@ -291,7 +289,7 @@
     padding: 3px 8px;
     font-size: 10px;
     font-weight: 800;
-    letter-spacing: .02em;
+    letter-spacing: 0;
 }
 
 .emp-badge.valid {
