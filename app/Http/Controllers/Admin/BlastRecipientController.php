@@ -1772,7 +1772,8 @@ class BlastRecipientController extends Controller
             for ($row = 2; $row <= $highestRow; ++$row) {
                 $rowData = [];
                 for ($col = 1; $col <= $highestColumnIndex; ++$col) {
-                    $rowData[] = $worksheet->getCell([\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col), $row])->getValue();
+                    $columnString = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                    $rowData[] = $worksheet->getCell($columnString . $row)->getValue();
                 }
 
                 if (empty(trim((string)($rowData[1] ?? '')))) {
