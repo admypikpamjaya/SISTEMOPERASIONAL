@@ -239,7 +239,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -289,7 +289,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -410,7 +410,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -450,7 +450,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -501,7 +501,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -552,7 +552,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -603,7 +603,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -654,7 +654,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -708,7 +708,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }
@@ -3852,9 +3852,18 @@ class BlastController extends Controller
             $headers[$apiKeyHeader] = $apiKey;
         }
 
-        $client = Http::timeout($timeout)->withHeaders($headers);
+        $client = Http::timeout($timeout)->connectTimeout($timeout)->withHeaders($headers);
 
         return [$baseUrl, $client];
+    }
+
+    private function formatGatewayExceptionMessage(\Throwable $exception): string
+    {
+        $msg = $exception->getMessage();
+        if ($exception instanceof \Illuminate\Http\Client\ConnectionException || str_contains($msg, 'cURL error 28') || str_contains($msg, 'cURL error 7')) {
+            return 'Koneksi ke gateway terputus (Timeout/Unreachable). Pastikan server gateway aktif.';
+        }
+        return $msg ?: 'Gateway tidak dapat dihubungi.';
     }
 
     private function proxyGatewayQueueRequest(string $method, string $path)
@@ -3867,7 +3876,7 @@ class BlastController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage() ?: 'Gateway tidak dapat dihubungi.',
+                'message' => $this->formatGatewayExceptionMessage($exception),
                 'data' => [],
             ], 502);
         }

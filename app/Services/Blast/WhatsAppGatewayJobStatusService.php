@@ -267,9 +267,10 @@ class WhatsAppGatewayJobStatusService
             $headers[$header] = $apiKey;
         }
 
-        $client = Http::timeout(
-            (int) config('services.whatsapp_gateway.timeout', 20)
-        )->withHeaders($headers);
+        $timeout = (int) config('services.whatsapp_gateway.timeout', 20);
+        $client = Http::timeout($timeout)
+            ->connectTimeout($timeout)
+            ->withHeaders($headers);
 
         return [$baseUrl, $client];
     }

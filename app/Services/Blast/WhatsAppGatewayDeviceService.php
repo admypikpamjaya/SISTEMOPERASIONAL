@@ -116,7 +116,7 @@ class WhatsAppGatewayDeviceService
             $headers[$apiKeyHeader] = $apiKey;
         }
 
-        $client = Http::timeout($timeout)->withHeaders($headers);
+        $client = Http::timeout($timeout)->connectTimeout($timeout)->withHeaders($headers);
 
         return [$baseUrl, $client];
     }
