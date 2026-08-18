@@ -19,11 +19,11 @@ Paket dokumentasi operasional ini dibuat dari audit route, menu, permission, con
 
 Setiap manual berformat A4, berbahasa Indonesia, memiliki daftar isi, batas akses, prosedur kerja, peringatan, troubleshooting, dan checklist role. Sumber HTML yang dapat diedit tersedia di folder `source/`.
 
-## Workbook akses role
+## PDF akses role dan kredensial
 
-[akses-link-dan-kredensial-role-soy-ypik.xlsx](akses-link-dan-kredensial-role-soy-ypik.xlsx) memuat sembilan role beserta URL website, URL login, halaman awal, email akun seeder, password awal, status verifikasi, tautan manual PDF, dan repository GitHub.
+[akses-link-dan-kredensial-role-soy-ypik.pdf](akses-link-dan-kredensial-role-soy-ypik.pdf) memuat sembilan role dan seluruh sepuluh akun yang saat ini didefinisikan `UserSeeder`, beserta URL website, URL login, halaman awal, email, password awal, status verifikasi, tautan manual PDF, dan repository GitHub.
 
-> **Internal terbatas:** workbook menyimpan password awal dalam plaintext. Jangan commit/push file tersebut ke repository publik atau membagikannya melalui grup umum. Password pada deployment live dapat sudah berubah; status pada workbook menjelaskan sumber dan batas verifikasinya.
+> **Internal terbatas:** PDF ini menyimpan password awal dalam plaintext. Jangan commit/push file tersebut ke repository publik atau membagikannya melalui grup umum. Password pada deployment live dapat sudah berubah; status di dalam PDF menjelaskan sumber dan batas verifikasinya.
 
 ## Regenerasi dan validasi
 
@@ -31,7 +31,7 @@ Jalankan dari root proyek:
 
 ```powershell
 node docs/manual-book/generate-manual-books.js
-php docs/manual-book/generate-role-access-workbook.php
+php docs/manual-book/generate-role-access-pdf.php
 ```
 
-Generator PDF tidak membutuhkan dependency npm tambahan dan menggunakan Chrome atau Edge headless. Generator Excel memakai PhpSpreadsheet yang sudah menjadi dependency proyek. Proses build memeriksa jumlah dokumen/role, struktur output, hyperlink, signature file, ukuran, jumlah halaman PDF, dan SHA-256. Hasil validasi PDF terakhir tersimpan di [manual-book-manifest.json](manual-book-manifest.json).
+Generator PDF tidak membutuhkan dependency npm tambahan dan menggunakan Chrome atau Edge headless. Proses build memeriksa jumlah dokumen/role/akun, struktur output, hyperlink, signature file, ukuran A4, jumlah halaman, dan SHA-256. Hasil validasi manual book terakhir tersimpan di [manual-book-manifest.json](manual-book-manifest.json).
