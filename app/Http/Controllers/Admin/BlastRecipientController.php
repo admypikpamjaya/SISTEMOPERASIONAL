@@ -1656,4 +1656,181 @@ class BlastRecipientController extends Controller
 
         return $query;
     }
+
+    public function pdamIndex(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:255',
+            'per_page' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        $search = trim((string) ($validated['q'] ?? ''));
+        $allowedPerPage = [20, 50, 100, 200];
+        $perPage = (int) ($validated['per_page'] ?? 50);
+        if (!in_array($perPage, $allowedPerPage, true)) {
+            $perPage = 50;
+        }
+
+        $query = \App\Models\BlastPdamRecipient::query();
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder->where('nama_lengkap', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_telpon', 'like', '%' . $search . '%')
+                    ->orWhere('instansi_pekerjaan', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('sertifikat', 'like', '%' . $search . '%');
+            });
+        }
+
+        $recipients = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $totalRecipients = \App\Models\BlastPdamRecipient::count();
+
+        return view('admin.blast.recipients.pdam', compact(
+            'recipients',
+            'search',
+            'allowedPerPage',
+            'perPage',
+            'totalRecipients'
+        ));
+    }
+
+    public function pdamCreate()
+    {
+        return view('admin.blast.recipients.pdam-form', [
+            'isEdit' => false,
+            'recipient' => null,
+        ]);
+    }
+
+    public function pdamStore(Request $request)
+    {
+        $validated = $request->validate([
+            'timestamp_excel' => 'nullable|string|max:255',
+            'nama_lengkap' => 'required|string|max:255',
+            'instansi_pekerjaan' => 'nullable|string|max:255',
+            'nomor_telpon' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'sertifikat' => 'nullable|string|max:255',
+        ]);
+
+        \App\Models\BlastPdamRecipient::create($validated);
+
+        return redirect()->route('admin.blast.recipients.pdam.index')
+            ->with('success', __('app.data_added_successfully'));
+    }
+
+    public function pdamEdit(string $id)
+    {
+        $recipient = \App\Models\BlastPdamRecipient::findOrFail($id);
+
+        return view('admin.blast.recipients.pdam-form', [
+            'isEdit' => true,
+            'recipient' => $recipient,
+        ]);
+    }
+
+    public function pdamUpdate(Request $request, string $id)
+    {
+        $recipient = \App\Models\BlastPdamRecipient::findOrFail($id);
+
+        $validated = $request->validate([
+            'timestamp_excel' => 'nullable|string|max:255',
+            'nama_lengkap' => 'required|string|max:255',
+            'instansi_pekerjaan' => 'nullable|string|max:255',
+            'nomor_telpon' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'sertifikat' => 'nullable|string|max:255',
+        ]);
+
+        $recipient->update($validated);
+
+        return redirect()->route('admin.blast.recipients.pdam.index')
+            ->with('success', __('app.data_updated_successfully'));
+    }
+
+    public function importPdam(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+            $worksheet = $spreadsheet->getActiveSheet();
+            
+            $highestRow = $worksheet->getHighestDataRow();
+            $highestColumn = $worksheet->getHighestDataColumn();
+            $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+
+            $rows = [];
+            for ($row = 2; $row <= $highestRow; ++$row) {
+                $rowData = [];
+                for ($col = 1; $col <= $highestColumnIndex; ++$col) {
+                    $rowData[] = $worksheet->getCell([\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col), $row])->getValue();
+                }
+
+                if (empty(trim((string)($rowData[1] ?? '')))) {
+                    continue;
+                }
+
+                $rows[] = [
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'timestamp_excel' => trim((string)($rowData[0] ?? '')),
+                    'nama_lengkap' => trim((string)($rowData[1] ?? '')),
+                    'instansi_pekerjaan' => trim((string)($rowData[2] ?? '')),
+                    'nomor_telpon' => trim((string)($rowData[3] ?? '')),
+                    'email' => trim((string)($rowData[4] ?? '')),
+                    'sertifikat' => trim((string)($rowData[5] ?? '')),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (!empty($rows)) {
+                $chunks = array_chunk($rows, 500);
+                foreach ($chunks as $chunk) {
+                    \App\Models\BlastPdamRecipient::insert($chunk);
+                }
+            }
+
+            return redirect()->back()->with('success', 'Data Penerima PDAM berhasil diimpor.');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('PDAM Import Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengimpor file: ' . $e->getMessage());
+        }
+    }
+
+    public function destroyAllPdam()
+    {
+        \App\Models\BlastPdamRecipient::truncate();
+
+        return redirect()->back()->with('success', 'Semua Data Penerima PDAM berhasil dihapus.');
+    }
+
+    public function destroySelectedPdam(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|string',
+        ]);
+
+        \App\Models\BlastPdamRecipient::whereIn('id', $validated['ids'])->delete();
+
+        return redirect()->back()->with('success', 'Data terpilih berhasil dihapus.');
+    }
+
+    public function destroyPdam(string $id)
+    {
+        $recipient = \App\Models\BlastPdamRecipient::findOrFail($id);
+        $recipient->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus.');
+    }
 }
