@@ -277,13 +277,7 @@ return array_map($withFallbackLabel, [
                 'module_name' => 'admin_blast',
                 'active_routes' => ['admin.blast.recipients.general.*'],
             ],
-            [
-                'label_key' => 'app.menu.recipient_pdam',
-                'icon'  => 'fas fa-water',
-                'route' => 'admin.blast.recipients.pdam.index',
-                'module_name' => 'admin_blast',
-                'active_routes' => ['admin.blast.recipients.pdam.*'],
-            ],
+
             [
                 'label_key' => 'app.menu.template_blast',
                 'icon'  => 'fas fa-layer-group',

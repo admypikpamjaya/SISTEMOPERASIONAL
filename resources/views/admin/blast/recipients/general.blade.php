@@ -584,6 +584,15 @@ body.dark-mode .general-table td {
                         </select>
                     </div>
                     <div class="general-field">
+                        <label class="general-label">Filter Instansi</label>
+                        <select name="instansi" class="general-select">
+                            <option value="" @selected(($selectedInstansi ?? '') === '')>Semua Instansi</option>
+                            @foreach(($instansiOptions ?? collect()) as $instansi)
+                                <option value="{{ $instansi }}" @selected(($selectedInstansi ?? '') === $instansi)>{{ $instansi }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="general-field">
                         <label class="general-label">{{ __('app.blast.table_status') }}</label>
                         <select name="status" class="general-select">
                             <option value="all" @selected(($selectedStatus ?? 'all') === 'all')>{{ __('app.blast.all_statuses') }}</option>
@@ -652,6 +661,16 @@ body.dark-mode .general-table td {
                         </button>
                     </form>
                 </div>
+                <p class="general-import-hint"><strong>Format Excel yang disarankan:</strong> (Urutan kolom bebas, header harus ada)</p>
+                <ul class="general-import-list">
+                    <li><code>Nama*</code> : Nama Penerima <strong>(Wajib)</strong></li>
+                    <li><code>No WhatsApp*</code> : Nomor WA, diawali 0 atau 62 <strong>(Wajib)</strong></li>
+                    <li><code>Instansi</code> : Nama Instansi / Perusahaan</li>
+                    <li><code>Email</code> : Alamat Email</li>
+                    <li><code>Sertifikat</code> : Link Sertifikat</li>
+                    <li><code>Event</code> : Nama Event (diambil dari Excel jika kosong di form)</li>
+                    <li><code>Catatan</code> : Catatan tambahan</li>
+                </ul>
             </div>
 
             <div class="general-table-wrap">

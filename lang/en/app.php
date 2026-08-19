@@ -98,7 +98,7 @@ return [
         'recipient_ypik' => 'YPIK Employee Recipients',
         'recipient_pamjaya' => 'YPIK Pam Jaya Recipients',
         'recipient_general' => 'General Recipients',
-        'recipient_pdam' => 'PDAM Recipients',
+
         'template_blast' => 'Blast Templates',
         'announcement' => 'Announcements',
         'reminders' => 'Reminders',

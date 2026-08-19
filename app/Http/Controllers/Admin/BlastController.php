@@ -2704,25 +2704,10 @@ class BlastController extends Controller
                 )
                 ->values();
 
-            $pdamRecipients = \App\Models\BlastPdamRecipient::query()
-                ->whereNotNull('email')
-                ->orderBy('nama_lengkap')
-                ->get()
-                ->filter(
-                    fn (\App\Models\BlastPdamRecipient $recipient) =>
-                        filter_var($recipient->email, FILTER_VALIDATE_EMAIL)
-                )
-                ->map(
-                    fn (\App\Models\BlastPdamRecipient $recipient) =>
-                        $this->toPseudoRecipientFromPdam($recipient)
-                )
-                ->values();
-
             return $studentRecipients
                 ->merge($employeeRecipients)
                 ->merge($employeeYpikRecipients)
                 ->merge($generalRecipients)
-                ->merge($pdamRecipients)
                 ->values();
         }
 
@@ -2765,20 +2750,10 @@ class BlastController extends Controller
                     $this->toPseudoRecipientFromGeneral($recipient)
             );
 
-        $pdamRecipients = \App\Models\BlastPdamRecipient::query()
-            ->whereNotNull('nomor_telpon')
-            ->orderBy('nama_lengkap')
-            ->get()
-            ->map(
-                fn (\App\Models\BlastPdamRecipient $recipient) =>
-                    $this->toPseudoRecipientFromPdam($recipient)
-            );
-
         return $studentRecipients
             ->merge($employeeRecipients)
             ->merge($employeeYpikRecipients)
             ->merge($generalRecipients)
-            ->merge($pdamRecipients)
             ->values();
     }
 
@@ -3798,29 +3773,7 @@ class BlastController extends Controller
         return $pseudoRecipient;
     }
 
-    private function toPseudoRecipientFromPdam(
-        \App\Models\BlastPdamRecipient $recipient
-    ): BlastRecipient {
-        $institution = trim((string) ($recipient->instansi_pekerjaan ?? ''));
 
-        $pseudoRecipient = new BlastRecipient([
-            'id' => $recipient->id,
-            'nama_siswa' => (string) $recipient->nama_lengkap,
-            'kelas' => $institution !== '' ? $institution : 'PDAM',
-            'nama_wali' => (string) $recipient->nama_lengkap,
-            'wa_wali' => $recipient->nomor_telpon,
-            'wa_wali_2' => null,
-            'email_wali' => $recipient->email,
-            'catatan' => null,
-            'is_valid' => true,
-            'source' => 'pdam',
-        ]);
-
-        $pseudoRecipient->setAttribute('sertifikat', $recipient->sertifikat);
-        $pseudoRecipient->setAttribute('timestamp_excel', $recipient->timestamp_excel);
-
-        return $pseudoRecipient;
-    }
 
     private function renderManualWhatsappTemplate(
         string $content,

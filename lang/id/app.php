@@ -98,7 +98,7 @@ return [
         'recipient_ypik' => 'Penerima Karyawan YPIK',
         'recipient_pamjaya' => 'Penerima YPIK Pam Jaya',
         'recipient_general' => 'Penerima Umum',
-        'recipient_pdam' => 'Penerima PDAM',
+
         'template_blast' => 'Templat Pesan',
         'announcement' => 'Pengumuman',
         'reminders' => 'Pengingat',
