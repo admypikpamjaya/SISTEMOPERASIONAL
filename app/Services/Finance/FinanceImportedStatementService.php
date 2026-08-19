@@ -258,14 +258,23 @@ class FinanceImportedStatementService
         ?string $actorId
     ): array {
         $spreadsheet = IOFactory::load($path);
-        $sheet = $spreadsheet->getSheet(0);
         $statementType = strtoupper($statementType);
 
-        $parsed = match ($statementType) {
-            FinanceStatementBatch::TYPE_BALANCE_SHEET => $this->parseBalanceSheetWorkbook($sheet),
-            FinanceStatementBatch::TYPE_PROFIT_LOSS => $this->parseProfitLossWorkbook($sheet),
-            default => throw new RuntimeException('Jenis laporan import tidak dikenali.'),
-        };
+        if ($statementType === FinanceStatementBatch::TYPE_BALANCE_SHEET) {
+            $sheet = $spreadsheet->getSheetByName('LAPORAN POSISI KEUANGAN');
+            if (!$sheet) {
+                throw new RuntimeException('Worksheet "LAPORAN POSISI KEUANGAN" tidak ditemukan. Pastikan Anda menggunakan file LEMBAR SALDO 2025 FIX.xlsx.');
+            }
+            $parsed = $this->parseBalanceSheetWorkbook($sheet);
+        } elseif ($statementType === FinanceStatementBatch::TYPE_PROFIT_LOSS) {
+            $sheet = $spreadsheet->getSheetByName('Laba dan Rugi');
+            if (!$sheet) {
+                throw new RuntimeException('Worksheet "Laba dan Rugi" tidak ditemukan. Pastikan Anda menggunakan file LABA RUGI 2025 FIX.xlsx.');
+            }
+            $parsed = $this->parseProfitLossWorkbook($sheet);
+        } else {
+            throw new RuntimeException('Jenis laporan import tidak dikenali.');
+        }
 
         if (empty($parsed['rows'])) {
             throw new RuntimeException('Tidak ada baris laporan yang bisa dibaca dari file Excel.');
@@ -669,8 +678,8 @@ class FinanceImportedStatementService
         $sortOrder = 0;
 
         for ($row = 1; $row <= $highestRow; $row++) {
-            $label = trim((string) $sheet->getCell('A' . $row)->getFormattedValue());
-            $amountRaw = trim((string) $sheet->getCell('B' . $row)->getFormattedValue());
+            $label = trim((string) $sheet->getCell('B' . $row)->getFormattedValue());
+            $amountRaw = trim((string) $sheet->getCell('C' . $row)->getFormattedValue());
 
             if ($label === '' && $amountRaw === '') {
                 continue;
@@ -773,8 +782,8 @@ class FinanceImportedStatementService
         $sortOrder = 0;
 
         for ($row = 1; $row <= $highestRow; $row++) {
-            $label = trim((string) $sheet->getCell('A' . $row)->getFormattedValue());
-            $amountRaw = trim((string) $sheet->getCell('B' . $row)->getFormattedValue());
+            $label = trim((string) $sheet->getCell('B' . $row)->getFormattedValue());
+            $amountRaw = trim((string) $sheet->getCell('C' . $row)->getFormattedValue());
 
             if ($label === '' && $amountRaw === '') {
                 continue;

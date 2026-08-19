@@ -272,7 +272,11 @@ class FinanceGeneralLedgerService
         ?string $actorId
     ): array {
         $spreadsheet = IOFactory::load($path);
-        $sheet = $spreadsheet->getSheet(0);
+        $sheet = $spreadsheet->getSheetByName('Buku Besar');
+        if (!$sheet) {
+            throw new RuntimeException('Worksheet "Buku Besar" tidak ditemukan. Pastikan Anda menggunakan file BUKU BESAR 2025 FIX.xlsx.');
+        }
+
         $parsed = $this->parseWorkbookSheet($sheet);
 
         if (empty($parsed['rows'])) {
@@ -592,7 +596,10 @@ class FinanceGeneralLedgerService
 
         for ($row = 1; $row <= $highestRow; $row++) {
             $cells = $this->readSheetRow($sheet, $row);
-            $accountHeader = $this->parseAccountHeader($cells['A'], $cells['B'], $cells['C']);
+            $accountHeader = null;
+            if (($cells['A'] ?? '') === '' && ($cells['B'] ?? '') !== '' && ($cells['C'] ?? '') === '') {
+                $accountHeader = $this->parseAccountHeader($cells['B']);
+            }
 
             if ($accountHeader !== null) {
                 $currentAccountCode = $accountHeader['account_code'];
@@ -606,10 +613,10 @@ class FinanceGeneralLedgerService
                 continue;
             }
 
-            if ($this->isOpeningRow($cells['A'], $cells['C'])) {
+            if ($this->isOpeningRow($cells['B'])) {
                 $sortOrder++;
 
-                $openingBalance = $this->parseMoneyValue($cells['H']);
+                $openingBalance = $this->parseMoneyValue($cells['I']);
                 $rows[] = [
                     'row_type' => FinanceGeneralLedgerEntry::ROW_TYPE_OPENING,
                     'entry_date' => $importedYear !== null
@@ -620,7 +627,7 @@ class FinanceGeneralLedgerService
                     'transaction_no' => null,
                     'communication' => 'Saldo Awal',
                     'partner_name' => null,
-                    'currency' => $cells['E'] !== '' ? $cells['E'] : 'IDR',
+                    'currency' => $cells['F'] !== '' ? $cells['F'] : 'IDR',
                     'label' => 'Saldo Awal',
                     'reference' => null,
                     'analytic_distribution' => null,
@@ -642,10 +649,10 @@ class FinanceGeneralLedgerService
             }
 
             $sortOrder++;
-            $sourceBalance = $this->parseMoneyValue($cells['H']);
+            $sourceBalance = $this->parseMoneyValue($cells['I']);
             $date = $this->parseSpreadsheetDate(
-                $sheet->getCell('B' . $row)->getValue(),
-                $cells['B'],
+                $sheet->getCell('C' . $row)->getValue(),
+                $cells['C'],
                 $importedYear
             );
 
@@ -654,16 +661,16 @@ class FinanceGeneralLedgerService
                 'entry_date' => $date,
                 'account_code' => $currentAccountCode,
                 'account_name' => $currentAccountName,
-                'transaction_no' => $cells['A'] !== '' ? $cells['A'] : null,
-                'communication' => $cells['C'] !== '' ? $cells['C'] : null,
-                'partner_name' => $cells['D'] !== '' ? $cells['D'] : null,
-                'currency' => $cells['E'] !== '' ? $cells['E'] : 'IDR',
-                'label' => $cells['C'] !== '' ? $cells['C'] : $currentAccountName,
+                'transaction_no' => $cells['B'] !== '' ? $cells['B'] : null,
+                'communication' => $cells['D'] !== '' ? $cells['D'] : null,
+                'partner_name' => $cells['E'] !== '' ? $cells['E'] : null,
+                'currency' => $cells['F'] !== '' ? $cells['F'] : 'IDR',
+                'label' => $cells['D'] !== '' ? $cells['D'] : $currentAccountName,
                 'reference' => null,
                 'analytic_distribution' => null,
                 'opening_balance' => 0.0,
-                'debit' => $this->parseMoneyValue($cells['F']),
-                'credit' => $this->parseMoneyValue($cells['G']),
+                'debit' => $this->parseMoneyValue($cells['G']),
+                'credit' => $this->parseMoneyValue($cells['H']),
                 'balance_amount' => $sourceBalance,
                 'sort_order' => $sortOrder,
                 'sheet_row_number' => $row,
@@ -694,19 +701,20 @@ class FinanceGeneralLedgerService
             'F' => trim((string) $sheet->getCell('F' . $row)->getFormattedValue()),
             'G' => trim((string) $sheet->getCell('G' . $row)->getFormattedValue()),
             'H' => trim((string) $sheet->getCell('H' . $row)->getFormattedValue()),
+            'I' => trim((string) $sheet->getCell('I' . $row)->getFormattedValue()),
         ];
     }
 
     /**
      * @return array{account_code:string,account_name:string}|null
      */
-    private function parseAccountHeader(string $columnA, string $columnB, string $columnC): ?array
+    private function parseAccountHeader(string $columnB): ?array
     {
-        if ($columnA === '' || $columnB !== '' || $columnC !== '') {
+        if ($columnB === '') {
             return null;
         }
 
-        if (!preg_match('/^(?<code>\d{2,3}(?:\.\d{2})+)\s+(?<name>.+)$/', $columnA, $matches)) {
+        if (!preg_match('/^(?<code>\d{2,3}(?:\.\d{2})+)\s+(?<name>.+)$/', $columnB, $matches)) {
             return null;
         }
 
@@ -716,14 +724,9 @@ class FinanceGeneralLedgerService
         ];
     }
 
-    private function isOpeningRow(string $columnA, string $columnC): bool
+    private function isOpeningRow(string $columnB): bool
     {
-        $haystacks = [
-            strtolower(trim($columnA)),
-            strtolower(trim($columnC)),
-        ];
-
-        return in_array('saldo awal', $haystacks, true);
+        return strtolower(trim($columnB)) === 'saldo awal';
     }
 
     /**
@@ -731,18 +734,18 @@ class FinanceGeneralLedgerService
      */
     private function isTransactionRow(array $cells): bool
     {
-        if (($cells['A'] ?? '') === '') {
+        if (($cells['B'] ?? '') === '') {
             return false;
         }
 
-        if ($this->isOpeningRow($cells['A'] ?? '', $cells['C'] ?? '')) {
+        if ($this->isOpeningRow($cells['B'] ?? '')) {
             return false;
         }
 
-        $hasDate = ($cells['B'] ?? '') !== '';
-        $hasAmount = $this->parseMoneyValue($cells['F'] ?? '') !== 0.0
-            || $this->parseMoneyValue($cells['G'] ?? '') !== 0.0
-            || $this->parseMoneyValue($cells['H'] ?? '') !== 0.0;
+        $hasDate = ($cells['C'] ?? '') !== '';
+        $hasAmount = $this->parseMoneyValue($cells['G'] ?? '') !== 0.0
+            || $this->parseMoneyValue($cells['H'] ?? '') !== 0.0
+            || $this->parseMoneyValue($cells['I'] ?? '') !== 0.0;
 
         return $hasDate || $hasAmount;
     }
