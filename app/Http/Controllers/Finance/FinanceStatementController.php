@@ -504,7 +504,7 @@ class FinanceStatementController extends Controller
     public function destroyAllGeneralLedgerEntries()
     {
         try {
-            FinanceGeneralLedgerEntry::truncate();
+            \App\Models\FinanceGeneralLedgerBatch::query()->delete();
             return back()->with('success', 'Semua data Buku Besar berhasil dihapus.');
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Failed to delete all general ledger entries: ' . $e->getMessage());
@@ -535,7 +535,7 @@ class FinanceStatementController extends Controller
     public function destroyAllBalanceSheetRows()
     {
         try {
-            FinanceStatementRow::where('finance_type', FinanceStatementBatch::TYPE_BALANCE_SHEET)->delete();
+            FinanceStatementBatch::where('statement_type', FinanceStatementBatch::TYPE_BALANCE_SHEET)->delete();
             return back()->with('success', 'Semua data Lembar Saldo berhasil dihapus.');
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Failed to delete all balance sheet rows: ' . $e->getMessage());
@@ -566,7 +566,7 @@ class FinanceStatementController extends Controller
     public function destroyAllProfitLossRows()
     {
         try {
-            FinanceStatementRow::where('finance_type', FinanceStatementBatch::TYPE_PROFIT_LOSS)->delete();
+            FinanceStatementBatch::where('statement_type', FinanceStatementBatch::TYPE_PROFIT_LOSS)->delete();
             return back()->with('success', 'Semua data Laba Rugi berhasil dihapus.');
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Failed to delete all profit loss rows: ' . $e->getMessage());
