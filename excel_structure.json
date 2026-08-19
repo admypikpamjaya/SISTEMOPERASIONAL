@@ -1,0 +1,467 @@
+{
+    "lembar_saldo": {
+        "sheet_names": [
+            "LAPORAN POSISI KEUANGAN"
+        ],
+        "active_sheet": "LAPORAN POSISI KEUANGAN",
+        "sheets_info": [
+            {
+                "name": "LAPORAN POSISI KEUANGAN",
+                "rows": 74,
+                "cols": "C",
+                "sample": {
+                    "1": {
+                        "A": null,
+                        "B": null,
+                        "C": null
+                    },
+                    "2": {
+                        "A": null,
+                        "B": "YAYASAN PENDIDIKAN ISLAM KELUARGA PAM JAYA",
+                        "C": null
+                    },
+                    "3": {
+                        "A": null,
+                        "B": "LAPORAN POSISI KEUANGAN",
+                        "C": null
+                    },
+                    "4": {
+                        "A": null,
+                        "B": "TAHUN 2025",
+                        "C": null
+                    },
+                    "5": {
+                        "A": null,
+                        "B": "ASET",
+                        "C": "  9,716,225,074 "
+                    },
+                    "6": {
+                        "A": null,
+                        "B": "Aset Lancar",
+                        "C": "  1,407,406,210 "
+                    },
+                    "7": {
+                        "A": null,
+                        "B": "Rekening Bank dan Kas",
+                        "C": "  994,138,710 "
+                    },
+                    "8": {
+                        "A": null,
+                        "B": "   100.01.01 KAS KECIL",
+                        "C": "  2,129,430 "
+                    },
+                    "9": {
+                        "A": null,
+                        "B": "   100.02.01 BSI - PMB - 7037967305",
+                        "C": "  13,558,337 "
+                    },
+                    "10": {
+                        "A": null,
+                        "B": "   100.02.03 BSI \/BNI UANG PANGKAL - 2020232310",
+                        "C": "  370,871,278 "
+                    },
+                    "11": {
+                        "A": null,
+                        "B": "   100.02.04 BSI AKADEMIK SPP - 2423242388",
+                        "C": "  29,166,047 "
+                    },
+                    "12": {
+                        "A": null,
+                        "B": "   100.02.05 BANK MUAMALAT SPP - 3470010591",
+                        "C": "  39,145,850 "
+                    },
+                    "13": {
+                        "A": null,
+                        "B": "   100.02.06 MUAMALAT - AJP-3470010593",
+                        "C": "  7,552,598 "
+                    },
+                    "14": {
+                        "A": null,
+                        "B": "   100.02.07 BANK BJB",
+                        "C": "  - "
+                    },
+                    "15": {
+                        "A": null,
+                        "B": "   100.02.08 BANK DKI-70122004559",
+                        "C": "  3,910,323 "
+                    },
+                    "16": {
+                        "A": null,
+                        "B": "   100.02.09 BSI - SPP -7027537148",
+                        "C": "  4,201,061 "
+                    },
+                    "17": {
+                        "A": null,
+                        "B": "   100.02.10 TABUNGAN BANK DKI-70121910033",
+                        "C": "  - "
+                    },
+                    "18": {
+                        "A": null,
+                        "B": "   100.02.11 BCA SYARIAH - 0387992423",
+                        "C": "  23,603,786 "
+                    },
+                    "19": {
+                        "A": null,
+                        "B": "   100.03.01 Deposito",
+                        "C": "  500,000,000 "
+                    },
+                    "20": {
+                        "A": null,
+                        "B": "   110.00.00 TRANSAKSI ANTAR BANK",
+                        "C": "  - "
+                    }
+                }
+            }
+        ]
+    },
+    "laba_rugi": {
+        "sheet_names": [
+            "Laba dan Rugi"
+        ],
+        "active_sheet": "Laba dan Rugi",
+        "sheets_info": [
+            {
+                "name": "Laba dan Rugi",
+                "rows": 61,
+                "cols": "C",
+                "sample": {
+                    "1": {
+                        "A": null,
+                        "B": null,
+                        "C": null
+                    },
+                    "2": {
+                        "A": null,
+                        "B": "YAYASAN PENDIDIKAN ISLAM KELUARGA PAM JAYA",
+                        "C": null
+                    },
+                    "3": {
+                        "A": null,
+                        "B": "LABA RUGI",
+                        "C": null
+                    },
+                    "4": {
+                        "A": null,
+                        "B": "TAHUN 2025",
+                        "C": null
+                    },
+                    "5": {
+                        "A": null,
+                        "B": "PENGHASILAN",
+                        "C": "  12,220,651,425 "
+                    },
+                    "6": {
+                        "A": null,
+                        "B": "Penghasilan Operasi",
+                        "C": "  12,196,437,095 "
+                    },
+                    "7": {
+                        "A": null,
+                        "B": "410.01.01 PENDAPATAN PMB TK",
+                        "C": "  858,331,631 "
+                    },
+                    "8": {
+                        "A": null,
+                        "B": "410.01.02 PENDAPATAN PMB SD",
+                        "C": "  2,692,176,152 "
+                    },
+                    "9": {
+                        "A": null,
+                        "B": "410.01.03 PENDAPATAN SPP TK",
+                        "C": "  1,211,226,380 "
+                    },
+                    "10": {
+                        "A": null,
+                        "B": "410.01.04 PENDAPATAN SPP SD",
+                        "C": "  7,434,702,932 "
+                    },
+                    "11": {
+                        "A": null,
+                        "B": "Biaya Langsung",
+                        "C": "  7,777,672,162 "
+                    },
+                    "12": {
+                        "A": null,
+                        "B": "510.01.01 BIAYA GAJI GURU YPIA TK",
+                        "C": "  1,015,157,086 "
+                    },
+                    "13": {
+                        "A": null,
+                        "B": "510.01.02 BIAYA GAJI GURU YPIA SD",
+                        "C": "  2,967,205,518 "
+                    },
+                    "14": {
+                        "A": null,
+                        "B": "510.01.03 BIAYA UKK YPIA TK",
+                        "C": "  293,674,218 "
+                    },
+                    "15": {
+                        "A": null,
+                        "B": "510.01.04 BIAYA UKK YPIA SD",
+                        "C": "  1,493,150,309 "
+                    },
+                    "16": {
+                        "A": null,
+                        "B": "510.01.05 BIAYA RESTITUSI GURU YPIA TK DAN SD",
+                        "C": "  68,210,486 "
+                    },
+                    "17": {
+                        "A": null,
+                        "B": "510.01.06 BIAYA GURU YPIA LAINNYA TK DAN SD",
+                        "C": "  448,249,860 "
+                    },
+                    "18": {
+                        "A": null,
+                        "B": "510.01.07 BIAYA KURIKULER TK DAN SD",
+                        "C": "  1,066,424,035 "
+                    },
+                    "19": {
+                        "A": null,
+                        "B": "510.01.08 BIAYA EKSTRAKULIKULER TK DAN SD",
+                        "C": "  267,463,500 "
+                    },
+                    "20": {
+                        "A": null,
+                        "B": "510.01.09 BIAYA PMB",
+                        "C": "  96,831,150 "
+                    }
+                }
+            }
+        ]
+    },
+    "buku_besar": {
+        "sheet_names": [
+            "Buku Besar"
+        ],
+        "active_sheet": "Buku Besar",
+        "sheets_info": [
+            {
+                "name": "Buku Besar",
+                "rows": 3548,
+                "cols": "I",
+                "sample": {
+                    "1": {
+                        "A": null,
+                        "B": null,
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": null,
+                        "H": null,
+                        "I": null
+                    },
+                    "2": {
+                        "A": null,
+                        "B": "YAYASAN PENDIDIKAN ISLAM KELUARGA PAM JAYA",
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": null,
+                        "H": null,
+                        "I": null
+                    },
+                    "3": {
+                        "A": null,
+                        "B": "BUKU BESAR",
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": null,
+                        "H": null,
+                        "I": null
+                    },
+                    "4": {
+                        "A": null,
+                        "B": "TAHUN 2025",
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": null,
+                        "H": null,
+                        "I": null
+                    },
+                    "5": {
+                        "A": null,
+                        "B": null,
+                        "C": "Tanggal Faktur",
+                        "D": "Komunikasi",
+                        "E": "Rekanan",
+                        "F": "Mata Uang",
+                        "G": "Debit",
+                        "H": "Kredit",
+                        "I": "Saldo"
+                    },
+                    "6": {
+                        "A": null,
+                        "B": "100.01.01 KAS KECIL",
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": "  2,129,430 ",
+                        "H": "  - ",
+                        "I": "  2,129,430 "
+                    },
+                    "7": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/428",
+                        "C": "31\/12\/2025",
+                        "D": "Reklasifikasi Kas Kecil - Reklasifikasi Kas Kecil",
+                        "E": null,
+                        "F": null,
+                        "G": "  2,129,430 ",
+                        "H": "  - ",
+                        "I": "  2,129,430 "
+                    },
+                    "8": {
+                        "A": null,
+                        "B": "100.02.01 BSI - PMB - 7037967305",
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": "  28,610,655,076 ",
+                        "H": "  28,597,096,739 ",
+                        "I": "  13,558,337 "
+                    },
+                    "9": {
+                        "A": null,
+                        "B": "Saldo Awal",
+                        "C": null,
+                        "D": null,
+                        "E": null,
+                        "F": null,
+                        "G": "  14,330,838,783 ",
+                        "H": "  14,114,857,168 ",
+                        "I": "  215,981,615 "
+                    },
+                    "10": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/226",
+                        "C": "07\/01\/2025",
+                        "D": "Pengeluaran Cash CC 503539 NP 1 - Pengeluaran Cash CC 503539 NP 1",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  66,216,307 ",
+                        "I": "  149,765,308 "
+                    },
+                    "11": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/227",
+                        "C": "08\/01\/2025",
+                        "D": "Pengeluaran CMS NP 2 - Pengeluaran CMS NP 2",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  57,117,400 ",
+                        "I": "  92,647,908 "
+                    },
+                    "12": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/229",
+                        "C": "10\/01\/2025",
+                        "D": "Pengeluaran Cash CC 503540 NP 5 - Pengeluaran Cash CC 503540 np 5",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  11,625,975 ",
+                        "I": "  81,021,933 "
+                    },
+                    "13": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/228",
+                        "C": "10\/01\/2025",
+                        "D": "Pengeluaran CMS NP 4 - Pengeluaran CMS NP 4",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  244,639,811 ",
+                        "I": "  (163,617,878)"
+                    },
+                    "14": {
+                        "A": null,
+                        "B": "B.PMB\/M\/2024\/3\/066",
+                        "C": "10\/01\/2025",
+                        "D": "Mutasi Rekening NP 3 - Mutasi Rekening",
+                        "E": null,
+                        "F": null,
+                        "G": "  350,000,000 ",
+                        "H": "  - ",
+                        "I": "  186,382,122 "
+                    },
+                    "15": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/232",
+                        "C": "14\/01\/2025",
+                        "D": "Pengeluaran Cash CC 503581 NP 6 - Pengeluaran Cash CC 503581 NP 6",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  22,828,300 ",
+                        "I": "  163,553,822 "
+                    },
+                    "16": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/231",
+                        "C": "14\/01\/2025",
+                        "D": "Pengeluaran CMS NP 7 - Pengeluaran CMS NP 7",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  83,373,375 ",
+                        "I": "  80,180,447 "
+                    },
+                    "17": {
+                        "A": null,
+                        "B": "B.PMB\/M\/2024\/3\/067",
+                        "C": "14\/01\/2025",
+                        "D": "Sumbangan Laptop Lenovo - Sumbangan Laptop Lenovo",
+                        "E": null,
+                        "F": null,
+                        "G": "  10,000,000 ",
+                        "H": "  - ",
+                        "I": "  90,180,447 "
+                    },
+                    "18": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/233",
+                        "C": "16\/01\/2025",
+                        "D": "Pengeluaran Cash CC 503582 NP 8 - Pengeluaran Cash CC 503582 NP 8",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  30,557,500 ",
+                        "I": "  59,622,947 "
+                    },
+                    "19": {
+                        "A": null,
+                        "B": "B.PMB\/M\/2024\/3\/068",
+                        "C": "16\/01\/2025",
+                        "D": "Mutasi Rekening NP 9 - Mutasi Rekening dari DKI Syariah ke BSI PMB",
+                        "E": null,
+                        "F": null,
+                        "G": "  250,000,000 ",
+                        "H": "  - ",
+                        "I": "  309,622,947 "
+                    },
+                    "20": {
+                        "A": null,
+                        "B": "B.PMB\/K\/2024\/4\/235",
+                        "C": "20\/01\/2025",
+                        "D": "Pengeluaran Cash CC 503583 NP 11 - Pengeluaran Cash CC 503583 NP 11",
+                        "E": null,
+                        "F": null,
+                        "G": "  - ",
+                        "H": "  10,527,000 ",
+                        "I": "  299,095,947 "
+                    }
+                }
+            }
+        ]
+    }
+}
