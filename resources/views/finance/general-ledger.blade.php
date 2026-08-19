@@ -918,6 +918,13 @@
         <a href="{{ route('finance.report.general-ledger.download', $filterQuery) }}" class="gl-nav-link primary">
             <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
         </a>
+        <form method="POST" action="{{ route('report.general-ledger.delete-all') }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus SEMUA data Buku Besar? Tindakan ini tidak dapat dibatalkan.')" style="display: inline;">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="gl-nav-link" style="color: #dc2626; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer;">
+                <i class="fas fa-trash-alt"></i> Delete All Data
+            </button>
+        </form>
         <a href="{{ route('finance.report.balance-sheet', $baseFilterQuery) }}" class="gl-nav-link muted">
             <i class="fas fa-balance-scale"></i> {{ __('app.finance.balance_sheet') }}
         </a>

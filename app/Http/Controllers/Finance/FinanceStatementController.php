@@ -501,6 +501,17 @@ class FinanceStatementController extends Controller
         }
     }
 
+    public function destroyAllGeneralLedgerEntries()
+    {
+        try {
+            FinanceGeneralLedgerEntry::truncate();
+            return back()->with('success', 'Semua data Buku Besar berhasil dihapus.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete all general ledger entries: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus semua data Buku Besar.');
+        }
+    }
+
     public function storeBalanceSheetRow(FinanceStatementRowStoreRequest $request)
     {
         return $this->storeStatementRow($request, FinanceStatementBatch::TYPE_BALANCE_SHEET);
@@ -521,6 +532,17 @@ class FinanceStatementController extends Controller
         return $this->destroyStatementRow($request, $row, FinanceStatementBatch::TYPE_BALANCE_SHEET);
     }
 
+    public function destroyAllBalanceSheetRows()
+    {
+        try {
+            FinanceStatementRow::where('finance_type', FinanceStatementBatch::TYPE_BALANCE_SHEET)->delete();
+            return back()->with('success', 'Semua data Lembar Saldo berhasil dihapus.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete all balance sheet rows: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus semua data Lembar Saldo.');
+        }
+    }
+
     public function storeProfitLossRow(FinanceStatementRowStoreRequest $request)
     {
         return $this->storeStatementRow($request, FinanceStatementBatch::TYPE_PROFIT_LOSS);
@@ -539,6 +561,17 @@ class FinanceStatementController extends Controller
     public function destroyProfitLossRow(FinanceStatementFilterRequest $request, FinanceStatementRow $row)
     {
         return $this->destroyStatementRow($request, $row, FinanceStatementBatch::TYPE_PROFIT_LOSS);
+    }
+
+    public function destroyAllProfitLossRows()
+    {
+        try {
+            FinanceStatementRow::where('finance_type', FinanceStatementBatch::TYPE_PROFIT_LOSS)->delete();
+            return back()->with('success', 'Semua data Laba Rugi berhasil dihapus.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete all profit loss rows: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus semua data Laba Rugi.');
+        }
     }
 
     public function saveAccountMapping(FinanceStatementAccountMappingRequest $request)
