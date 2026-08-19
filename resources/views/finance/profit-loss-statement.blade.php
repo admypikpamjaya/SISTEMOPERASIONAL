@@ -685,7 +685,7 @@
         <a href="{{ route('finance.report.profit-loss.download', $filterQuery) }}" class="pl-nav-link primary">
             <i class="fas fa-file-pdf"></i> {{ __('app.finance.download_pdf') }}
         </a>
-        <form method="POST" action="{{ route('report.profit-loss.delete-all') }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus SEMUA data Laba Rugi? Tindakan ini tidak dapat dibatalkan.')" style="display: inline;">
+        <form method="POST" action="{{ route('finance.report.profit-loss.delete-all') }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus SEMUA data Laba Rugi? Tindakan ini tidak dapat dibatalkan.')" style="display: inline;">
             @csrf
             @method('DELETE')
             <button type="submit" class="pl-nav-link" style="color: #dc2626; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); cursor: pointer;">
