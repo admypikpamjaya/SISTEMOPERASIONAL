@@ -2680,3 +2680,520 @@ body.dark-mode .main-sidebar .sidebar-app-meta {
         max-height: 32px;
     }
 }
+
+/* ============================================================
+   UI IMPROVEMENT PATCH — Typography, Spacing, UX Polish
+   ============================================================ */
+
+/* --- Consistent Button Base --- */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.45rem 1.05rem;
+    transition: all 0.18s ease;
+    letter-spacing: 0 !important;
+}
+
+.btn-sm {
+    border-radius: 6px;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.75rem;
+}
+
+.btn-lg {
+    border-radius: 10px;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.35rem;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-secondary {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.btn-primary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+    transform: translateY(-1px);
+}
+
+/* --- Consistent Form Controls --- */
+.form-control,
+.custom-select {
+    border-radius: 8px;
+    font-size: 0.875rem;
+    border-color: var(--app-border);
+    background: var(--app-surface);
+    color: var(--app-text);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-control:focus,
+.custom-select:focus {
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 0.18rem rgba(37, 99, 235, 0.14);
+}
+
+.input-group-text {
+    border-radius: 8px;
+    border-color: var(--app-border);
+    background: var(--app-surface-soft);
+    color: var(--app-text-muted);
+    font-size: 0.875rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--app-text-soft);
+    margin-bottom: 0.35rem;
+    text-transform: none;
+    letter-spacing: 0 !important;
+}
+
+/* --- Card Improvements --- */
+.card {
+    border-radius: 14px;
+    border-color: var(--app-border);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    transition: box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.10);
+}
+
+.card-header {
+    border-radius: 14px 14px 0 0 !important;
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+    font-size: 0.94rem;
+    border-bottom-color: var(--app-border);
+    background: var(--app-surface-soft);
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.card-footer {
+    border-radius: 0 0 14px 14px !important;
+    padding: 0.85rem 1.25rem;
+    border-top-color: var(--app-border);
+    background: var(--app-surface-soft);
+}
+
+body.dark-mode .card-header,
+body.dark-mode .card-footer {
+    background: var(--app-surface-soft);
+    border-color: var(--app-border);
+}
+
+/* --- Content Header Typography --- */
+.content-header {
+    padding: 1.1rem 0 0.6rem;
+}
+
+.content-header h1 {
+    font-size: 1.38rem;
+    font-weight: 800;
+    color: var(--app-text);
+    line-height: 1.2;
+    letter-spacing: 0 !important;
+}
+
+/* --- Table Improvements --- */
+.table thead th {
+    font-size: 0.775rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em !important;
+    color: var(--app-text-muted);
+    border-bottom-width: 2px;
+    white-space: nowrap;
+    padding: 0.7rem 0.9rem;
+}
+
+.table tbody td {
+    font-size: 0.875rem;
+    padding: 0.7rem 0.9rem;
+    vertical-align: middle;
+    color: var(--app-text-soft);
+}
+
+/* Responsive table scroll with styled scrollbar */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-border) transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 5px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--app-border);
+    border-radius: 99px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--app-text-muted);
+}
+
+/* --- Badge Improvements --- */
+.badge {
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 0.28em 0.6em;
+    letter-spacing: 0 !important;
+}
+
+.badge-secondary {
+    background: var(--app-surface-soft);
+    color: var(--app-text-muted);
+    border: 1px solid var(--app-border);
+}
+
+body.dark-mode .badge-secondary {
+    background: var(--app-surface-muted);
+    color: var(--app-text-muted);
+    border-color: var(--app-border);
+}
+
+/* --- Navbar User Chip Badge --- */
+.user-chip-nav .badge {
+    font-size: 0.66rem;
+    padding: 0.22em 0.55em;
+    border-radius: 5px;
+    vertical-align: middle;
+}
+
+/* --- Navbar Improvements --- */
+.main-header.navbar {
+    padding: 0 0.75rem;
+    min-height: 3.5rem;
+}
+
+.main-header .nav-link {
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.main-header .nav-link:hover {
+    background: rgba(37, 99, 235, 0.07);
+}
+
+body.dark-mode .main-header .nav-link:hover {
+    background: rgba(96, 165, 250, 0.10);
+}
+
+/* Theme & Language Switcher Trigger */
+.theme-switcher-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* --- Modal Improvements --- */
+.modal-content {
+    border-radius: 16px;
+    border: 1px solid var(--app-border);
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.20);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 1.1rem 1.35rem;
+    border-bottom-color: var(--app-border);
+    background: var(--app-surface-soft);
+}
+
+.modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--app-text);
+}
+
+.modal-body {
+    padding: 1.35rem;
+}
+
+.modal-footer {
+    padding: 0.85rem 1.35rem;
+    border-top-color: var(--app-border);
+    background: var(--app-surface-soft);
+    gap: 0.5rem;
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    background: var(--app-surface-soft);
+    border-color: var(--app-border);
+}
+
+/* --- Dropdown Menu Improvements --- */
+.dropdown-menu {
+    border-radius: 12px;
+    border-color: var(--app-border);
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.14);
+    padding: 0.45rem;
+    min-width: 160px;
+}
+
+.dropdown-item {
+    border-radius: 8px;
+    font-size: 0.875rem;
+    padding: 0.55rem 0.85rem;
+    color: var(--app-text-soft);
+    font-weight: 500;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--app-surface-soft);
+    color: var(--app-text);
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--app-accent-strong);
+}
+
+body.dark-mode .dropdown-item.active,
+body.dark-mode .dropdown-item:active {
+    background: rgba(96, 165, 250, 0.14);
+    color: var(--app-accent);
+}
+
+/* --- Pagination Improvements --- */
+.pagination {
+    gap: 0.2rem;
+}
+
+.page-link {
+    border-radius: 8px !important;
+    border-color: var(--app-border);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 0.7rem;
+    color: var(--app-text-soft);
+    transition: all 0.15s ease;
+}
+
+.page-link:hover {
+    background: var(--app-surface-soft);
+    border-color: var(--app-accent);
+    color: var(--app-accent);
+}
+
+.page-item.active .page-link {
+    font-weight: 700;
+}
+
+/* --- SweetAlert Improvements --- */
+.swal2-popup {
+    border-radius: 18px !important;
+    padding: 2rem !important;
+    font-family: inherit !important;
+}
+
+.swal2-title {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+}
+
+.swal2-html-container {
+    font-size: 0.9rem !important;
+    line-height: 1.55 !important;
+}
+
+.swal2-confirm,
+.swal2-cancel,
+.swal2-deny {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    padding: 0.5rem 1.2rem !important;
+    letter-spacing: 0 !important;
+}
+
+body.dark-mode .swal2-popup {
+    background: var(--app-surface) !important;
+}
+
+/* --- Small Box / Info Box (Dashboard Stats) --- */
+.small-box {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--app-border);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    transition: box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.small-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
+}
+
+.small-box .inner h3 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 0 !important;
+}
+
+.small-box .inner p {
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* --- Custom Global Scrollbar (all scrollable areas) --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--app-border);
+    border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--app-text-muted);
+}
+
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-border) transparent;
+}
+
+/* --- Loading Overlay Improvement --- */
+#loading-overlay {
+    backdrop-filter: blur(4px);
+}
+
+/* --- Nav Pills (Tabs) --- */
+.nav-pills .nav-link {
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 1.1rem;
+    color: var(--app-text-soft);
+    transition: all 0.15s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background: var(--app-surface-soft);
+    color: var(--app-text);
+}
+
+.nav-pills .nav-link.active {
+    background: var(--app-accent);
+    color: #fff;
+}
+
+body.dark-mode .nav-pills .nav-link.active {
+    background: var(--app-accent-strong);
+}
+
+/* --- Alert Banners --- */
+.alert {
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-width: 1px;
+}
+
+/* --- Callout --- */
+.callout {
+    border-radius: 10px;
+    font-size: 0.875rem;
+}
+
+/* --- HR / Dividers --- */
+hr {
+    border-color: var(--app-border);
+    opacity: 1;
+}
+
+/* --- Responsive Mobile Improvements --- */
+@media (max-width: 575.98px) {
+    .content-header h1 {
+        font-size: 1.15rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .card-header,
+    .card-footer {
+        padding: 0.75rem 1rem;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-header,
+    .modal-footer {
+        padding: 0.75rem 1rem;
+    }
+
+    .btn {
+        font-size: 0.83rem;
+        padding: 0.4rem 0.9rem;
+    }
+
+    .table thead th,
+    .table tbody td {
+        padding: 0.55rem 0.65rem;
+        font-size: 0.82rem;
+    }
+
+    .main-header.navbar {
+        min-height: 3.25rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .content-header h1 {
+        font-size: 1.22rem;
+    }
+
+    /* Hide role badge on very small screens, show only icon+name */
+    .user-chip-nav .badge {
+        display: none;
+    }
+}
+

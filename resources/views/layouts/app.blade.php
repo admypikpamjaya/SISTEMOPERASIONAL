@@ -151,7 +151,7 @@
                         @csrf
                         <button type="submit" class="dropdown-item theme-option {{ ($activeLocale ?? app()->getLocale()) === 'id' ? 'active' : '' }}">
                             <span class="theme-option-main">
-                                <span class="theme-option-icon"><i class="fas fa-flag"></i></span>
+                                <span class="theme-option-icon" style="font-size:1.1rem;">🇮🇩</span>
                                 <span>{{ __('app.language.id') }}</span>
                             </span>
                             <i class="fas fa-check theme-option-check"></i>
@@ -161,7 +161,7 @@
                         @csrf
                         <button type="submit" class="dropdown-item theme-option {{ ($activeLocale ?? app()->getLocale()) === 'en' ? 'active' : '' }}">
                             <span class="theme-option-main">
-                                <span class="theme-option-icon"><i class="fas fa-globe"></i></span>
+                                <span class="theme-option-icon" style="font-size:1.1rem;">🇬🇧</span>
                                 <span>{{ __('app.language.en') }}</span>
                             </span>
                             <i class="fas fa-check theme-option-check"></i>
@@ -170,9 +170,11 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link user-chip-nav">
+                <a class="nav-link user-chip-nav" href="#" style="pointer-events:none; cursor:default;">
                     @if(Auth::check())
-                        {{ Auth::user()->name }} ({{ Auth::user()->role }})
+                        <i class="fas fa-user-circle mr-1" style="font-size:1.1rem; opacity:0.7;"></i>
+                        <span class="d-none d-sm-inline">{{ Auth::user()->name }}</span>
+                        <span class="badge badge-secondary ml-1" style="font-size:0.68rem; font-weight:600; letter-spacing:0; text-transform:capitalize; vertical-align:middle;">{{ Auth::user()->role }}</span>
                     @endif
                 </a>
             </li>
@@ -423,7 +425,14 @@
 <script>
     window.AppI18n = {
         themeLight: @json(__('app.theme.light')),
-        themeDark: @json(__('app.theme.dark'))
+        themeDark: @json(__('app.theme.dark')),
+        reminderAlertTitleDue: @json(__('app.reminder.alert_title_due')),
+        reminderAlertTitleUpcoming: @json(__('app.reminder.alert_title_upcoming')),
+        reminderManage: @json(__('app.reminder.manage_reminder')),
+        reminderClose: @json(__('app.reminder.close')),
+        reminderOpenAnnouncement: @json(__('app.reminder.open_announcement')),
+        reminderMoreActive: @json(__('app.reminder.more_active')),
+        reminderScheduleLabel: @json(__('app.reminder.schedule_label')),
     };
 </script>
 <script>
@@ -489,12 +498,14 @@
                 const title = escapeHtml(alert.title);
                 const hint = escapeHtml(alert.hint);
                 const schedule = escapeHtml(alert.remind_at_label);
-                return `<li><strong>${title}</strong><br><small>${hint} (Jadwal: ${schedule})</small></li>`;
+                const scheduleLabel = window.AppI18n?.reminderScheduleLabel ?? 'Jadwal';
+                return `<li><strong>${title}</strong><br><small>${hint} (${scheduleLabel}: ${schedule})</small></li>`;
             });
 
             const hiddenCount = Math.max(0, alerts.length - 5);
+            const moreTemplate = window.AppI18n?.reminderMoreActive ?? '+:count reminder lain juga aktif.';
             const hiddenSummary = hiddenCount > 0
-                ? `<p class="mt-2 mb-0 text-muted">+${hiddenCount} reminder lain juga aktif.</p>`
+                ? `<p class="mt-2 mb-0 text-muted">${moreTemplate.replace(':count', hiddenCount)}</p>`
                 : '';
 
             return `<ul class="text-left pl-3 mb-0">${listItems.join('')}</ul>${hiddenSummary}`;
@@ -516,15 +527,17 @@
                 : ((alerts.find((alert) => alert.announcement_url) || {}).announcement_url || announcementPageUrl);
 
             Swal.fire({
-                title: dueAlert ? 'Reminder Hari-H Aktif' : 'Reminder Mendekati Waktu',
+                title: dueAlert
+                    ? (window.AppI18n?.reminderAlertTitleDue ?? 'Reminder Hari-H Aktif')
+                    : (window.AppI18n?.reminderAlertTitleUpcoming ?? 'Reminder Mendekati Waktu'),
                 html: buildAlertHtml(alerts),
                 icon: 'warning',
                 width: '32em',
-                confirmButtonText: 'Kelola Reminder',
+                confirmButtonText: window.AppI18n?.reminderManage ?? 'Kelola Reminder',
                 showCancelButton: true,
-                cancelButtonText: 'Tutup',
+                cancelButtonText: window.AppI18n?.reminderClose ?? 'Tutup',
                 showDenyButton: hasAnnouncementReminder,
-                denyButtonText: 'Buka Announcement'
+                denyButtonText: window.AppI18n?.reminderOpenAnnouncement ?? 'Buka Pengumuman'
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = reminderPageUrl;
