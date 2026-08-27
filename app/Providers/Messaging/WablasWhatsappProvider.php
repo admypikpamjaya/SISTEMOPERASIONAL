@@ -75,7 +75,12 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
 
                 $deliveryStatus = $this->extractDeliveryStatus($response);
                 if ($deliveryStatus !== '') {
+                    if (in_array(strtolower($deliveryStatus), ['pending', 'queued', 'waiting'], true)) {
+                        $deliveryStatus = 'sent';
+                    }
                     $payload->setMeta('provider_delivery_status', $deliveryStatus);
+                } else {
+                    $payload->setMeta('provider_delivery_status', 'sent');
                 }
 
                 return true;
