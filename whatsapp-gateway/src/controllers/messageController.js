@@ -15,6 +15,7 @@ const {
   listDevices,
   forceReconnect,
   initDevice,
+  waitForQrOrConnected,
   setActiveDevice,
   getActiveDeviceId,
   removeDevice,
@@ -395,10 +396,23 @@ function status(req, res) {
   return ok(res, 'Status', getStatus(deviceId || undefined));
 }
 
+function deviceStatusMessage(status, fallback) {
+  if (status?.status === 'connected') {
+    return 'Device connected';
+  }
+
+  if (status?.status === 'qr' && status?.qrDataUrl) {
+    return 'QR ready';
+  }
+
+  return fallback;
+}
+
 async function reconnect(req, res, next) {
   try {
     await forceReconnect();
-    return ok(res, 'Reconnecting', {});
+    const status = await waitForQrOrConnected();
+    return ok(res, deviceStatusMessage(status, 'Reconnecting'), status);
   } catch (err) {
     return next(err);
   }
@@ -422,7 +436,8 @@ async function createDevice(req, res, next) {
       return fail(res, 'Device ID sudah digunakan. Gunakan ID lain.');
     }
     await initDevice(deviceId);
-    return ok(res, 'Device created', getStatus(deviceId));
+    const status = await waitForQrOrConnected(deviceId);
+    return ok(res, deviceStatusMessage(status, 'Device created'), status);
   } catch (err) {
     return next(err);
   }
@@ -435,7 +450,8 @@ async function connectDevice(req, res, next) {
       return fail(res, 'Invalid deviceId');
     }
     await initDevice(deviceId);
-    return ok(res, 'Device connected', getStatus(deviceId));
+    const status = await waitForQrOrConnected(deviceId);
+    return ok(res, deviceStatusMessage(status, 'Device connected'), status);
   } catch (err) {
     return next(err);
   }
@@ -449,7 +465,8 @@ async function activateDevice(req, res, next) {
     }
     setActiveDevice(deviceId);
     await initDevice(deviceId);
-    return ok(res, 'Device activated', getStatus(deviceId));
+    const status = await waitForQrOrConnected(deviceId);
+    return ok(res, deviceStatusMessage(status, 'Device activated'), status);
   } catch (err) {
     return next(err);
   }
@@ -462,7 +479,8 @@ async function reconnectDevice(req, res, next) {
       return fail(res, 'Invalid deviceId');
     }
     await forceReconnect(deviceId);
-    return ok(res, 'Reconnecting', getStatus(deviceId));
+    const status = await waitForQrOrConnected(deviceId);
+    return ok(res, deviceStatusMessage(status, 'Reconnecting'), status);
   } catch (err) {
     return next(err);
   }

@@ -13,6 +13,15 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
 {
     public function send(string $to, BlastPayload $payload): bool
     {
+        if (!$this->hasConfiguredToken()) {
+            $payload->setMeta('provider_error', 'Wablas token belum dikonfigurasi.');
+            Log::error('[WABLAS CONFIG ERROR]', [
+                'to' => $to,
+            ]);
+
+            return false;
+        }
+
         try {
             $client = new WablasMessage();
 
@@ -49,7 +58,13 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
                     );
                 }
             } else {
-                $response = $client->single_text($to, $payload->message);
+                $message = trim($payload->message);
+                if ($message === '') {
+                    $payload->setMeta('provider_error', 'Pesan kosong.');
+                    return false;
+                }
+
+                $response = $client->single_text($to, $message);
             }
 
             if ($this->isSuccessResponse($response)) {
@@ -82,6 +97,11 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
             ]);
             return false;
         }
+    }
+
+    private function hasConfiguredToken(): bool
+    {
+        return trim((string) config('services.wablas.token', '')) !== '';
     }
 
     private function dispatchAttachment(
@@ -186,11 +206,11 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
     {
         if (is_array($decoded)) {
             if (array_key_exists('status', $decoded)) {
-                return (bool) $decoded['status'] === true;
+                return $this->isTruthyStatus($decoded['status']);
             }
 
             if (array_key_exists('success', $decoded)) {
-                return (bool) $decoded['success'] === true;
+                return $this->isTruthyStatus($decoded['success']);
             }
 
             $message = strtolower(trim((string) ($decoded['message'] ?? '')));
@@ -200,6 +220,28 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
         }
 
         return false;
+    }
+
+    private function isTruthyStatus(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value === 1;
+        }
+
+        $normalized = strtolower(trim((string) $value));
+
+        return in_array($normalized, [
+            '1',
+            'ok',
+            'queued',
+            'sent',
+            'success',
+            'true',
+        ], true);
     }
 
     private function extractDeliveryStatus(mixed $decoded): string

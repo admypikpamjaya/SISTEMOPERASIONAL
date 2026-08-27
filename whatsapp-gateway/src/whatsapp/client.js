@@ -63,6 +63,9 @@ function createDeviceState(id) {
     connectedUser: null,
     connectedAt: null,
     lastQrAt: null,
+    qrExpiresAt: null,
+    lastError: null,
+    lastDisconnectAt: null,
     qrRefreshTimer: null,
     reconnectTimer: null,
     initPromise: null,
@@ -108,6 +111,7 @@ function scheduleQrRefresh(state) {
   clearQrRefreshTimer(state);
   if (env.QR_TTL_MS <= 0) return;
   state.lastQrAt = Date.now();
+  state.qrExpiresAt = new Date(state.lastQrAt + env.QR_TTL_MS).toISOString();
   state.qrRefreshTimer = setTimeout(() => {
     if (state.connectionStatus === 'qr') {
       logger.warn(`[${state.id}] QR expired, regenerating...`);
@@ -199,8 +203,34 @@ function buildStatus(state) {
     qrDataUrl: state.latestQrDataUrl,
     user: state.connectedUser,
     connectedAt: state.connectedAt,
+    lastQrAt: state.lastQrAt ? new Date(state.lastQrAt).toISOString() : null,
+    qrExpiresAt: state.qrExpiresAt,
+    lastError: state.lastError,
+    lastDisconnectAt: state.lastDisconnectAt,
+    isInitializing: Boolean(state.initPromise),
     isActive: state.id === activeDeviceId
   };
+}
+
+function isQrReadyStatus(status) {
+  return status.status === 'connected'
+    || (status.status === 'qr' && Boolean(status.qrDataUrl))
+    || Boolean(status.lastError);
+}
+
+async function waitForQrOrConnected(deviceId = activeDeviceId, timeoutMs = env.QR_WAIT_TIMEOUT_MS) {
+  const deadline = Date.now() + Math.max(0, timeoutMs);
+
+  while (Date.now() <= deadline) {
+    const status = getStatus(deviceId);
+    if (isQrReadyStatus(status)) {
+      return status;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  return getStatus(deviceId);
 }
 
 function messageStatusName(status) {
@@ -273,7 +303,7 @@ async function initDevice(deviceId, { io } = {}) {
       logger.warn(`[${deviceId}] Failed to fetch latest WA version, using default: ${err.message}`);
     }
 
-    state.sock = makeWASocket({
+    const sock = makeWASocket({
       version,
       auth: authState,
       printQRInTerminal: env.WA_PRINT_QR,
@@ -284,10 +314,11 @@ async function initDevice(deviceId, { io } = {}) {
       markOnlineOnConnect: true,
       syncFullHistory: false
     });
+    state.sock = sock;
 
-    state.sock.ev.on('creds.update', saveCreds);
+    sock.ev.on('creds.update', saveCreds);
 
-    state.sock.ev.on('messages.update', (updates) => {
+    sock.ev.on('messages.update', (updates) => {
       updates.forEach(({ key, update }) => {
         const status = update?.status;
         if (!key?.fromMe || !key?.id || !Number.isInteger(status)) return;
@@ -299,27 +330,53 @@ async function initDevice(deviceId, { io } = {}) {
       });
     });
 
-    state.sock.ev.on('connection.update', async (update) => {
+    sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
-        state.connectionStatus = 'qr';
-        state.latestQr = qr;
-        state.latestQrDataUrl = await qrcode.toDataURL(qr);
-        scheduleQrRefresh(state);
-        if (env.WA_PRINT_QR) {
-          qrcodeTerminal.generate(qr, { small: true });
+        if (state.sock !== sock) {
+          return;
         }
-        emit('wa:qr', { deviceId: state.id, qr, qrDataUrl: state.latestQrDataUrl });
+
+        try {
+          state.connectionStatus = 'qr';
+          state.latestQr = qr;
+          state.latestQrDataUrl = await qrcode.toDataURL(qr, {
+            errorCorrectionLevel: 'M',
+            margin: 2,
+            scale: 6
+          });
+          state.lastError = null;
+          scheduleQrRefresh(state);
+          if (env.WA_PRINT_QR) {
+            qrcodeTerminal.generate(qr, { small: true });
+          }
+          emit('wa:qr', { deviceId: state.id, qr, qrDataUrl: state.latestQrDataUrl });
+        } catch (err) {
+          state.latestQrDataUrl = null;
+          state.lastError = `QR generation failed: ${err.message}`;
+          logger.error(`[${state.id}] QR generation failed: ${err.message}`);
+          emit('wa:status', {
+            deviceId: state.id,
+            status: state.connectionStatus,
+            error: state.lastError
+          });
+        }
       }
 
       if (connection === 'open') {
+        if (state.sock !== sock) {
+          return;
+        }
+
         state.connectionStatus = 'connected';
         state.latestQr = null;
         state.latestQrDataUrl = null;
+        state.qrExpiresAt = null;
+        state.lastError = null;
         clearQrRefreshTimer(state);
-        state.connectedUser = state.sock?.user
-          ? { id: state.sock.user.id, name: state.sock.user.name || '' }
+        state.connectedUser = sock.user
+          ? { id: sock.user.id, name: sock.user.name || '' }
           : null;
         state.connectedAt = new Date().toISOString();
         emit('wa:status', { deviceId: state.id, status: state.connectionStatus });
@@ -327,12 +384,19 @@ async function initDevice(deviceId, { io } = {}) {
       }
 
       if (connection === 'close') {
+        if (state.sock !== sock) {
+          logger.warn(`[${state.id}] Ignoring stale socket close event.`);
+          return;
+        }
+
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         const reason = lastDisconnect?.error?.message || lastDisconnect?.error?.toString();
         const isLoggedOut = statusCode === DisconnectReason.loggedOut;
         const shouldReconnect = isLoggedOut ? true : statusCode !== DisconnectReason.loggedOut;
 
         state.connectionStatus = 'disconnected';
+        state.lastError = reason || 'WhatsApp disconnected.';
+        state.lastDisconnectAt = new Date().toISOString();
         clearQrRefreshTimer(state);
         rejectPendingMessageAcks(
           state,
@@ -340,6 +404,9 @@ async function initDevice(deviceId, { io } = {}) {
         );
         state.connectedUser = null;
         state.connectedAt = null;
+        state.latestQr = null;
+        state.latestQrDataUrl = null;
+        state.qrExpiresAt = null;
         emit('wa:status', { deviceId: state.id, status: state.connectionStatus });
         logger.warn(
           `[${state.id}] WhatsApp disconnected. status=${statusCode ?? 'unknown'} reason=${reason || 'n/a'} Reconnect: ${shouldReconnect}`
@@ -363,7 +430,7 @@ async function initDevice(deviceId, { io } = {}) {
       }
     });
 
-    return state.sock;
+    return sock;
   })();
 
   try {
@@ -578,31 +645,42 @@ function listDevices() {
 
 async function forceReconnect(deviceId = activeDeviceId) {
   const state = getDeviceState(deviceId);
-  if (state.sock) {
+  const sock = state.sock;
+  if (sock) {
+    state.sock = null;
     try {
-      state.sock.end(new Error('manual-reconnect'));
+      sock.end(new Error('manual-reconnect'));
     } catch (err) {
       logger.error(`[${state.id}] Manual reconnect failed: ${err.message}`);
     }
   }
-  state.sock = null;
+  state.connectionStatus = 'init';
+  state.latestQr = null;
+  state.latestQrDataUrl = null;
+  state.qrExpiresAt = null;
+  state.lastError = null;
+  clearQrRefreshTimer(state);
   await initDevice(state.id, { io: ioInstance });
   return true;
 }
 
 async function disconnectDevice(deviceId) {
   const state = getDeviceState(deviceId);
-  if (state.sock) {
+  const sock = state.sock;
+  if (sock) {
+    state.sock = null;
     try {
-      state.sock.end(new Error('manual-disconnect'));
+      sock.end(new Error('manual-disconnect'));
     } catch (err) {
       logger.error(`[${state.id}] Manual disconnect failed: ${err.message}`);
     }
   }
-  state.sock = null;
   state.connectionStatus = 'disconnected';
   state.latestQr = null;
   state.latestQrDataUrl = null;
+  state.qrExpiresAt = null;
+  state.lastError = null;
+  state.lastDisconnectAt = new Date().toISOString();
   clearQrRefreshTimer(state);
   return true;
 }
@@ -638,6 +716,7 @@ module.exports = {
   sendFile,
   getStatus,
   listDevices,
+  waitForQrOrConnected,
   forceReconnect,
   setActiveDevice,
   getActiveDeviceId,

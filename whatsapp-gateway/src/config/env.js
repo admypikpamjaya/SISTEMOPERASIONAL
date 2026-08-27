@@ -26,6 +26,7 @@ const env = {
   WA_DEFAULT_DEVICE: process.env.WA_DEFAULT_DEVICE || 'default',
   WA_SEND_TIMEOUT_MS: Math.max(5000, parseInteger(process.env.WA_SEND_TIMEOUT_MS, 45000)),
   WA_ACK_TIMEOUT_MS: Math.max(5000, parseInteger(process.env.WA_ACK_TIMEOUT_MS, 45000)),
+  QR_WAIT_TIMEOUT_MS: Math.max(1000, parseInteger(process.env.QR_WAIT_TIMEOUT_MS, 15000)),
   SOCKET_ENABLED: process.env.SOCKET_ENABLED === 'true',
   RUN_WORKER: process.env.RUN_WORKER !== 'false',
   API_KEY: process.env.API_KEY || '',

@@ -222,7 +222,11 @@ return array_map($withFallbackLabel, [
                 'icon'  => 'fas fa-mobile-alt',
                 'route' => 'admin.blast.whatsapp.manage',
                 'module_name' => 'admin_blast',
-                'roles' => [UserRole::IT_SUPPORT->value, UserRole::SYSTEM_MANAGEMENT->value],
+                'roles' => [
+                    UserRole::IT_SUPPORT->value,
+                    UserRole::SYSTEM_MANAGEMENT->value,
+                    UserRole::BLASTING->value,
+                ],
                 'active_routes' => ['admin.blast.whatsapp.manage', 'admin.blast.whatsapp.gateway-*'],
             ],
             [

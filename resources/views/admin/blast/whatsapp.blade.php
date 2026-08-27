@@ -658,8 +658,12 @@ body,
 
 <div class="wa-page">
     @php
-        $isSuperAdmin = auth()->check()
-            && auth()->user()->role === \App\Enums\User\UserRole::IT_SUPPORT->value;
+        $canManageWhatsappDevices = auth()->check()
+            && in_array(auth()->user()->role, [
+                \App\Enums\User\UserRole::IT_SUPPORT->value,
+                \App\Enums\User\UserRole::SYSTEM_MANAGEMENT->value,
+                \App\Enums\User\UserRole::BLASTING->value,
+            ], true);
     @endphp
 
     {{-- ── PAGE HEADER ── --}}
@@ -673,7 +677,7 @@ body,
             <div class="wa-header-title">{{ __('app.blast.whatsapp_title') }}</div>
             <div class="wa-header-sub">{{ __('app.blast.whatsapp_subtitle') }}</div>
         </div>
-        @if($isSuperAdmin)
+        @if($canManageWhatsappDevices)
             <div class="wa-header-actions">
                 <a href="{{ route('admin.blast.whatsapp.manage') }}" class="wa-header-btn">
                     <i class="fas fa-mobile-alt"></i> {{ __('app.blast.manage_devices') }}

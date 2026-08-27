@@ -138,7 +138,7 @@ class BlastController extends Controller
     public function whatsappManagePhone(WhatsAppProviderSelector $providerSelector)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             abort(403);
         }
 
@@ -161,7 +161,7 @@ class BlastController extends Controller
     public function whatsappProviderStatus(WhatsAppProviderSelector $providerSelector)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -183,7 +183,7 @@ class BlastController extends Controller
         WhatsAppProviderSelector $providerSelector
     ) {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -225,7 +225,7 @@ class BlastController extends Controller
             ], 403);
         }
 
-        $isSuperAdmin = $this->hasSystemOperatorAccess($user);
+        $canManageDevices = $this->hasWhatsappDeviceControlAccess($user);
         $deviceId = $this->sanitizeDeviceId(
             $request->query('device_id') ?? $request->query('deviceId')
         );
@@ -258,7 +258,7 @@ class BlastController extends Controller
         $payload = $response->json();
 
         $data = $payload['data'] ?? $payload;
-        if (!$isSuperAdmin) {
+        if (!$canManageDevices) {
             $data = [
                 'status' => $data['status'] ?? 'disconnected',
                 'activeDeviceId' => $data['activeDeviceId'] ?? null,
@@ -275,7 +275,7 @@ class BlastController extends Controller
     public function whatsappGatewayReconnect()
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -317,7 +317,7 @@ class BlastController extends Controller
     public function whatsappGatewayQueueStatus()
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -331,7 +331,7 @@ class BlastController extends Controller
     public function whatsappGatewayQueueClear()
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -403,10 +403,10 @@ class BlastController extends Controller
             ], 403);
         }
 
-        $isSuperAdmin = $this->hasSystemOperatorAccess($user);
+        $canManageDevices = $this->hasWhatsappDeviceControlAccess($user);
 
         try {
-            $payload = $deviceService->listDevices($isSuperAdmin);
+            $payload = $deviceService->listDevices($canManageDevices);
         } catch (\Throwable $exception) {
             return response()->json([
                 'success' => false,
@@ -425,7 +425,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceCreate(Request $request)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -478,7 +478,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceConnect(string $deviceId)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -529,7 +529,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceActivate(string $deviceId)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -580,7 +580,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceReconnect(string $deviceId)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -631,7 +631,7 @@ class BlastController extends Controller
     public function whatsappGatewayDeviceDisconnect(string $deviceId)
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -685,7 +685,7 @@ class BlastController extends Controller
     )
     {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -741,7 +741,7 @@ class BlastController extends Controller
         WhatsAppDeviceLabelStore $labelStore
     ) {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -783,7 +783,7 @@ class BlastController extends Controller
         WhatsAppDeviceLabelStore $labelStore
     ) {
         $user = Auth::user();
-        if (!$this->hasSystemOperatorAccess($user)) {
+        if (!$this->hasWhatsappDeviceControlAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden',
@@ -3916,6 +3916,16 @@ class BlastController extends Controller
             && in_array((string) $user->role, [
                 UserRole::IT_SUPPORT->value,
                 UserRole::SYSTEM_MANAGEMENT->value,
+            ], true);
+    }
+
+    private function hasWhatsappDeviceControlAccess(?object $user): bool
+    {
+        return $user !== null
+            && in_array((string) $user->role, [
+                UserRole::IT_SUPPORT->value,
+                UserRole::SYSTEM_MANAGEMENT->value,
+                UserRole::BLASTING->value,
             ], true);
     }
 
