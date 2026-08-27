@@ -26,6 +26,7 @@ class FinanceStatementBatch extends Model
 
     protected $fillable = [
         'statement_type',
+        'audit_status',
         'category_id',
         'source_type',
         'batch_name',

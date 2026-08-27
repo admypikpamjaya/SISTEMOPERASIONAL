@@ -50,6 +50,55 @@ class FinanceStatementController extends Controller
         return $this->renderProfitLossPage($request, false);
     }
 
+    public function auditComparison(FinanceStatementFilterRequest $request)
+    {
+        $dto = $request->toDTO();
+        $categoryId = $dto->categoryId;
+        
+        $batches = FinanceStatementBatch::query()
+            ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
+            ->whereIn('audit_status', ['PRE_AUDIT', 'AUDITED'])
+            ->orderByDesc('imported_at')
+            ->get();
+            
+        $preAuditFirst = $batches->where('audit_status', 'PRE_AUDIT')->first();
+        $auditedFirst = $batches->where('audit_status', 'AUDITED')->first();
+        $preAuditBatch = $preAuditFirst ? clone $preAuditFirst : null;
+        $auditedBatch = $auditedFirst ? clone $auditedFirst : null;
+        
+        $preAuditData = [];
+        $auditedData = [];
+        $statementType = $request->query('statement_type', 'BALANCE_SHEET');
+
+        if ($preAuditBatch) {
+            if ($statementType === 'BALANCE_SHEET') {
+                $preAuditData = $this->financeImportedStatementService->getImportedBalanceSheetReport($dto, $preAuditBatch->id);
+            } else {
+                $preAuditData = $this->financeImportedStatementService->getImportedProfitLossReport($dto, $preAuditBatch->id);
+            }
+        }
+        
+        if ($auditedBatch) {
+            if ($statementType === 'BALANCE_SHEET') {
+                $auditedData = $this->financeImportedStatementService->getImportedBalanceSheetReport($dto, $auditedBatch->id);
+            } else {
+                $auditedData = $this->financeImportedStatementService->getImportedProfitLossReport($dto, $auditedBatch->id);
+            }
+        }
+
+        $financeCategoryOptions = app(\App\Services\Finance\FinanceCategoryScopeService::class)->getAccessibleCategories();
+
+        return view('finance.audit-comparison', compact(
+            'preAuditBatch',
+            'auditedBatch',
+            'preAuditData',
+            'auditedData',
+            'statementType',
+            'dto',
+            'financeCategoryOptions'
+        ));
+    }
+
     public function manageBalanceSheet(FinanceStatementFilterRequest $request)
     {
         return $this->renderBalanceSheetPage($request, true);
@@ -662,7 +711,8 @@ class FinanceStatementController extends Controller
                 $request->validated()['category_id'],
                 $request->validated()['batch_name'] ?? null,
                 $request->validated()['notes'] ?? null,
-                auth()->id() ? (string) auth()->id() : null
+                auth()->id() ? (string) auth()->id() : null,
+                $request->validated()['audit_status'] ?? null
             );
 
             return redirect()

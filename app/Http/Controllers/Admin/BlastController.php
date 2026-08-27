@@ -1137,7 +1137,11 @@ class BlastController extends Controller
     )
     {
         $validated = $request->validate([
-            'channel' => 'required|in:email,whatsapp',
+            'channel'     => 'required|in:email,whatsapp',
+            'date_from'   => 'nullable|date',
+            'date_to'     => 'nullable|date',
+            'status'      => 'nullable|in:all,success,failed,pending',
+            'campaign_id' => 'nullable|string|max:80',
         ]);
 
         $channel = strtolower((string) $validated['channel']);
@@ -1147,10 +1151,19 @@ class BlastController extends Controller
             $jobStatusService->syncPendingLogs();
             $deviceLabels = $labelStore->getLabels();
         }
+
+        $filters = [
+            'date_from'   => $validated['date_from'] ?? null,
+            'date_to'     => $validated['date_to'] ?? null,
+            'status'      => $validated['status'] ?? 'all',
+            'campaign_id' => $validated['campaign_id'] ?? null,
+        ];
+
         $activityData = $this->buildChannelActivityData(
             strtoupper($channel),
             $recipients,
-            $deviceLabels
+            $deviceLabels,
+            $filters
         );
 
         return response()->json($activityData);
@@ -2457,6 +2470,7 @@ class BlastController extends Controller
 
     /**
      * @param iterable<BlastRecipient> $recipients
+     * @param array{date_from:?string, date_to:?string, status:?string, campaign_id:?string} $filters
      * @return array{
      *     stats: array{total:int, sent:int, failed:int, pending:int},
      *     logs: array<int, array<string, mixed>>
@@ -2465,20 +2479,60 @@ class BlastController extends Controller
     private function buildChannelActivityData(
         string $channel,
         iterable $recipients,
-        array $deviceLabels = []
+        array $deviceLabels = [],
+        array $filters = []
     ): array {
         $normalizedChannel = strtoupper($channel);
 
-        $logs = BlastLog::query()
+        $dateFrom   = trim((string) ($filters['date_from'] ?? ''));
+        $dateTo     = trim((string) ($filters['date_to'] ?? ''));
+        $statusFilter  = strtolower(trim((string) ($filters['status'] ?? 'all')));
+        $campaignId = trim((string) ($filters['campaign_id'] ?? ''));
+
+        $logsQuery = BlastLog::query()
             ->with([
                 'message:id,channel,subject',
                 'target:id,target',
             ])
             ->whereHas('message', function ($query) use ($normalizedChannel) {
                 $query->where('channel', $normalizedChannel);
-            })
-            ->latest('id')
-            ->get();
+            });
+
+        // Filter tanggal (gunakan created_at jika sent_at belum ada)
+        if ($dateFrom !== '') {
+            $logsQuery->where(function ($q) use ($dateFrom) {
+                $q->whereDate('sent_at', '>=', $dateFrom)
+                  ->orWhere(function ($q2) use ($dateFrom) {
+                      $q2->whereNull('sent_at')
+                         ->whereDate('created_at', '>=', $dateFrom);
+                  });
+            });
+        }
+        if ($dateTo !== '') {
+            $logsQuery->where(function ($q) use ($dateTo) {
+                $q->whereDate('sent_at', '<=', $dateTo)
+                  ->orWhere(function ($q2) use ($dateTo) {
+                      $q2->whereNull('sent_at')
+                         ->whereDate('created_at', '<=', $dateTo);
+                  });
+            });
+        }
+
+        // Filter status
+        if ($statusFilter === 'success') {
+            $logsQuery->where('status', 'SENT');
+        } elseif ($statusFilter === 'failed') {
+            $logsQuery->where('status', 'FAILED');
+        } elseif ($statusFilter === 'pending') {
+            $logsQuery->where('status', 'PENDING');
+        }
+
+        // Filter campaign
+        if ($campaignId !== '') {
+            $logsQuery->where('blast_message_id', $campaignId);
+        }
+
+        $logs = $logsQuery->latest('id')->get();
 
         $recipientMap = [];
         foreach ($recipients as $recipient) {
@@ -3754,10 +3808,17 @@ class BlastController extends Controller
         $eventName = trim((string) ($recipient->event_name ?? ''));
         $institution = trim((string) ($recipient->instansi ?? ''));
 
+        $kelasStr = 'Penerima Umum';
+        if ($eventName !== '') {
+            $kelasStr = $eventName;
+        } elseif ($institution !== '') {
+            $kelasStr = 'Instansi: ' . $institution;
+        }
+
         $pseudoRecipient = new BlastRecipient([
             'id' => $recipient->id,
             'nama_siswa' => (string) $recipient->nama,
-            'kelas' => $eventName !== '' ? $eventName : ($institution !== '' ? $institution : 'Umum'),
+            'kelas' => $kelasStr,
             'nama_wali' => (string) $recipient->nama,
             'wa_wali' => $recipient->whatsapp,
             'wa_wali_2' => null,
@@ -3923,6 +3984,7 @@ class BlastController extends Controller
     {
         return $user !== null
             && in_array((string) $user->role, [
+                UserRole::ADMIN->value,
                 UserRole::IT_SUPPORT->value,
                 UserRole::SYSTEM_MANAGEMENT->value,
                 UserRole::BLASTING->value,

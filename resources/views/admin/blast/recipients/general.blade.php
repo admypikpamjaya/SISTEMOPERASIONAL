@@ -661,16 +661,35 @@ body.dark-mode .general-table td {
                         </button>
                     </form>
                 </div>
-                <p class="general-import-hint"><strong>Format Excel yang disarankan:</strong> (Urutan kolom bebas, header harus ada)</p>
-                <ul class="general-import-list">
-                    <li><code>Nama*</code> : Nama Penerima <strong>(Wajib)</strong></li>
-                    <li><code>No WhatsApp*</code> : Nomor WA, diawali 0 atau 62 <strong>(Wajib)</strong></li>
-                    <li><code>Instansi</code> : Nama Instansi / Perusahaan</li>
-                    <li><code>Email</code> : Alamat Email</li>
-                    <li><code>Sertifikat</code> : Link Sertifikat</li>
-                    <li><code>Event</code> : Nama Event (diambil dari Excel jika kosong di form)</li>
-                    <li><code>Catatan</code> : Catatan tambahan</li>
-                </ul>
+                
+                <div style="background: var(--gen-surface-soft); border: 1px solid var(--gen-border); border-radius: 8px; padding: 16px; margin-top: 16px;">
+                    <p style="margin-top:0; margin-bottom: 12px; font-size: 13.5px; font-weight: 700; color: var(--gen-text-soft);">
+                        <i class="fas fa-info-circle" style="color: var(--gen-primary-strong); margin-right: 6px;"></i> Format Excel yang disarankan (Urutan kolom bebas, header harus ada):
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; font-size: 12px; color: var(--gen-text-muted);">
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">Nama*</code> : Nama Penerima <span style="color:var(--gen-danger); font-weight:600;">(Wajib)</span>
+                        </div>
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">No WhatsApp*</code> : Nomor WA <span style="color:var(--gen-danger); font-weight:600;">(Wajib)</span>
+                        </div>
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">Instansi</code> : Nama Instansi / Perusahaan
+                        </div>
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">Email</code> : Alamat Email
+                        </div>
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">Sertifikat</code> : Link Sertifikat
+                        </div>
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">Event</code> : Nama Event (Otomatis / Excel)
+                        </div>
+                        <div style="background: var(--gen-surface); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gen-border);">
+                            <code style="color: var(--gen-primary-strong); font-weight: bold; background: rgba(37,99,235,0.1); padding: 2px 6px; border-radius: 4px;">Catatan</code> : Catatan tambahan
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="general-table-wrap">

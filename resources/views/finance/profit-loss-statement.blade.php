@@ -692,6 +692,9 @@
                 <i class="fas fa-trash-alt"></i> Delete All Data
             </button>
         </form>
+        <a href="{{ route('finance.report.audit-comparison', array_merge($filterQuery, ['statement_type' => 'PROFIT_LOSS'])) }}" class="pl-nav-link muted">
+            <i class="fas fa-balance-scale-right"></i> Komparasi Audit
+        </a>
         <a href="{{ route('finance.report.balance-sheet', $filterQuery) }}" class="pl-nav-link muted">
             <i class="fas fa-balance-scale"></i> {{ __('app.finance.balance_sheet') }}
         </a>
@@ -885,6 +888,14 @@
                         <div class="fs-helper-text">
                             {{ __('app.finance.notes_help') }}
                         </div>
+                    </div>
+                    <div class="fs-field">
+                        <label class="fs-label" for="profit_import_audit_status"><i class="fas fa-check-double"></i> Status Audit</label>
+                        <select name="audit_status" id="profit_import_audit_status" class="fs-control">
+                            <option value="UNAUDITED">UNAUDITED</option>
+                            <option value="PRE_AUDIT">PRE-AUDIT</option>
+                            <option value="AUDITED">AUDITED</option>
+                        </select>
                     </div>
                     <div class="fs-field full pl-manage-actions">
                         <a href="{{ route('finance.report.profit-loss.template.download') }}" class="fs-btn fs-btn-muted">

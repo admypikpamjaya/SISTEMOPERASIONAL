@@ -21,6 +21,7 @@ class FinanceStatementImportRequest extends FormRequest
                 'uuid',
                 Rule::exists('finance_categories', 'id')->where('status', 'active'),
             ],
+            'audit_status' => ['nullable', Rule::in(['UNAUDITED', 'PRE_AUDIT', 'AUDITED'])],
             'batch_name' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:5000',
         ];

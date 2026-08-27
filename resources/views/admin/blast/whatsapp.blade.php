@@ -198,6 +198,24 @@ body,
 .wa-device-status-badge.disconnected { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
 .wa-device-status-badge.init { background: var(--blue-lighter); color: var(--blue-primary); border-color: var(--blue-border); }
 .wa-device-sub { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+/* ─── FILTER PANEL ──────────────────────────── */
+.activity-filter-panel { background: #f8fafc; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.activity-filter-row { display: flex; flex-wrap: wrap; gap: 14px; }
+.activity-filter-item { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+.activity-filter-label { font-size: 11.5px; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: .02em; }
+.activity-filter-input {
+    width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px;
+    font-size: 13px; font-family: inherit; color: var(--text-dark); background: var(--white);
+    transition: all .2s; outline: none;
+}
+.activity-filter-input:focus { border-color: var(--blue-primary); box-shadow: 0 0 0 3px var(--blue-light); }
+.active-filter-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+.filter-badge-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.filter-badge {
+    background: var(--blue-lighter); color: var(--blue-primary); border: 1px solid var(--blue-border);
+    padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+}
 .wa-device-meta { display: grid; gap: 6px; margin: 12px 0 14px; }
 .wa-device-meta-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
 .wa-device-meta-row .meta-label { color: var(--text-muted); font-weight: 600; }
@@ -1023,6 +1041,43 @@ body,
                         <input type="text" placeholder="{{ __('app.blast.search_activity') }}" class="search-input-small" id="searchInput">
                     </div>
                 </div>
+            </div>
+
+            {{-- ── FILTER PANEL ── --}}
+            <div class="activity-filter-panel" id="activityFilterPanel">
+                <div class="activity-filter-row">
+                    <div class="activity-filter-item">
+                        <label class="activity-filter-label">Dari Tanggal</label>
+                        <input type="date" id="filterDateFrom" class="activity-filter-input" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="activity-filter-item">
+                        <label class="activity-filter-label">Sampai Tanggal</label>
+                        <input type="date" id="filterDateTo" class="activity-filter-input" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="activity-filter-item">
+                        <label class="activity-filter-label">Status</label>
+                        <select id="filterStatus" class="activity-filter-input">
+                            <option value="all">Semua Status</option>
+                            <option value="success">✅ Terkirim</option>
+                            <option value="failed">❌ Gagal</option>
+                            <option value="pending">⏳ Pending</option>
+                        </select>
+                    </div>
+                    <div class="activity-filter-item">
+                        <label class="activity-filter-label">Campaign ID</label>
+                        <input type="text" id="filterCampaignId" class="activity-filter-input" placeholder="ID campaign...">
+                    </div>
+                    <div class="activity-filter-item" style="justify-content:flex-end; align-items:flex-end;">
+                        <button type="button" id="applyFilterBtn" class="campaign-btn primary tiny">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="margin-right:4px;vertical-align:middle;"><circle cx="11" cy="11" r="8" stroke="white" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                            Terapkan Filter
+                        </button>
+                        <button type="button" id="resetFilterBtn" class="campaign-btn tiny" style="margin-left:6px;">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+                <div id="activeFilterBadges" class="active-filter-badges" style="display:none;"></div>
             </div>
 
             <div class="activity-table">
@@ -2089,8 +2144,18 @@ body,
 
         function renderActivitiesWithCurrentFilter() {
             const searchTerm = (searchInput?.value || '').trim().toLowerCase();
-            if (searchTerm === '') { renderActivities(); return; }
-            const filtered = activities.filter(activity => String(activity.studentName || '').toLowerCase().includes(searchTerm) || String(activity.parentName || '').toLowerCase().includes(searchTerm) || String(activity.phone || '').toLowerCase().includes(searchTerm) || String(activity.studentClass || '').toLowerCase().includes(searchTerm) || String(activity.deviceLabel || '').toLowerCase().includes(searchTerm) || String(activity.deviceId || '').toLowerCase().includes(searchTerm) || String(activity.campaignId || '').toLowerCase().includes(searchTerm));
+            let filtered = [...activities];
+            if (searchTerm !== '') {
+                filtered = filtered.filter(activity =>
+                    String(activity.studentName || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.parentName || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.phone || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.studentClass || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.deviceLabel || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.deviceId || '').toLowerCase().includes(searchTerm) ||
+                    String(activity.campaignId || '').toLowerCase().includes(searchTerm)
+                );
+            }
             renderActivities(filtered);
         }
 
@@ -2103,25 +2168,89 @@ body,
             return payload;
         }
 
-        async function refreshActivityLogs() {
+        async function refreshActivityLogs(forceFilters) {
             if (isRefreshingActivities) return;
             isRefreshingActivities = true;
             try {
-                const response = await fetch(`${activityApiUrl}?channel=${encodeURIComponent(activityChannel)}`, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                const filterDateFrom   = document.getElementById('filterDateFrom')?.value || '';
+                const filterDateTo     = document.getElementById('filterDateTo')?.value || '';
+                const filterStatus     = document.getElementById('filterStatus')?.value || 'all';
+                const filterCampaignId = document.getElementById('filterCampaignId')?.value.trim() || '';
+
+                const params = new URLSearchParams({ channel: activityChannel });
+                if (filterDateFrom)   params.append('date_from',   filterDateFrom);
+                if (filterDateTo)     params.append('date_to',     filterDateTo);
+                if (filterStatus && filterStatus !== 'all') params.append('status', filterStatus);
+                if (filterCampaignId) params.append('campaign_id', filterCampaignId);
+
+                const response = await fetch(`${activityApiUrl}?${params.toString()}`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
                 if (!response.ok) return;
                 const payload = await response.json();
                 if (Array.isArray(payload.logs)) activities = payload.logs;
                 if (payload && typeof payload === 'object' && payload.stats) {
-                    if (statTotal) statTotal.textContent = Number(payload.stats.total ?? 0);
-                    if (statSent) statSent.textContent = Number(payload.stats.sent ?? 0);
-                    if (statFailed) statFailed.textContent = Number(payload.stats.failed ?? 0);
+                    if (statTotal)   statTotal.textContent   = Number(payload.stats.total   ?? 0);
+                    if (statSent)    statSent.textContent    = Number(payload.stats.sent    ?? 0);
+                    if (statFailed)  statFailed.textContent  = Number(payload.stats.failed  ?? 0);
                     if (statPending) statPending.textContent = Number(payload.stats.pending ?? 0);
                 } else { updateStats(); }
+
+                // Update badge filter aktif
+                updateActiveFilterBadges(filterDateFrom, filterDateTo, filterStatus, filterCampaignId);
+
                 renderActivitiesWithCurrentFilter();
             } catch (error) { } finally { isRefreshingActivities = false; }
         }
 
+        function updateActiveFilterBadges(dateFrom, dateTo, status, campaignId) {
+            const badgesEl = document.getElementById('activeFilterBadges');
+            if (!badgesEl) return;
+            const badges = [];
+            if (dateFrom)     badges.push(`<span class="filter-badge">📅 Dari: ${dateFrom}</span>`);
+            if (dateTo)       badges.push(`<span class="filter-badge">📅 Sampai: ${dateTo}</span>`);
+            if (status && status !== 'all') {
+                const label = { success:'✅ Terkirim', failed:'❌ Gagal', pending:'⏳ Pending' }[status] || status;
+                badges.push(`<span class="filter-badge">${label}</span>`);
+            }
+            if (campaignId)   badges.push(`<span class="filter-badge">🎯 Campaign: ${escapeHtml(campaignId)}</span>`);
+            if (badges.length > 0) {
+                badgesEl.innerHTML = `<span class="filter-badge-label">Filter aktif:</span> ${badges.join('')}`;
+                badgesEl.style.display = 'flex';
+            } else {
+                badgesEl.style.display = 'none';
+            }
+        }
+
         if (searchInput) searchInput.addEventListener('input', function() { renderActivitiesWithCurrentFilter(); });
+
+        // Apply filter button
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', function() {
+                isRefreshingActivities = false; // force reset agar bisa refresh
+                refreshActivityLogs(true);
+            });
+        }
+
+        // Reset filter button
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        if (resetFilterBtn) {
+            resetFilterBtn.addEventListener('click', function() {
+                const dateFrom = document.getElementById('filterDateFrom');
+                const dateTo   = document.getElementById('filterDateTo');
+                const status   = document.getElementById('filterStatus');
+                const cid      = document.getElementById('filterCampaignId');
+                if (dateFrom) dateFrom.value = '';
+                if (dateTo)   dateTo.value   = '';
+                if (status)   status.value   = 'all';
+                if (cid)      cid.value      = '';
+                const badgesEl = document.getElementById('activeFilterBadges');
+                if (badgesEl) badgesEl.style.display = 'none';
+                isRefreshingActivities = false;
+                refreshActivityLogs(true);
+            });
+        }
 
         if (activityLog) {
             activityLog.addEventListener('click', async function(event) {

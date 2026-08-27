@@ -255,7 +255,8 @@ class FinanceImportedStatementService
         string $categoryId,
         ?string $batchName,
         ?string $notes,
-        ?string $actorId
+        ?string $actorId,
+        ?string $auditStatus = null
     ): array {
         $spreadsheet = IOFactory::load($path);
         $statementType = strtoupper($statementType);
@@ -290,12 +291,14 @@ class FinanceImportedStatementService
             $categoryId,
             $notes,
             $actorId,
+            $auditStatus,
             $parsed,
             $sheet,
             $now
         ) {
             $batch = FinanceStatementBatch::query()->create([
                 'statement_type' => $statementType,
+                'audit_status' => $auditStatus ?? 'UNAUDITED',
                 'category_id' => $categoryId,
                 'source_type' => FinanceStatementBatch::SOURCE_IMPORT,
                 'batch_name' => $resolvedBatchName,
@@ -1042,6 +1045,7 @@ class FinanceImportedStatementService
             'id' => (string) $batch->id,
             'category_id' => $batch->category_id !== null ? (string) $batch->category_id : null,
             'statement_type' => (string) $batch->statement_type,
+            'audit_status' => (string) $batch->audit_status,
             'source_type' => (string) $batch->source_type,
             'batch_name' => (string) $batch->batch_name,
             'source_filename' => $batch->source_filename !== null ? (string) $batch->source_filename : null,

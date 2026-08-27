@@ -351,6 +351,14 @@ Route::prefix('finance')
             ->middleware('check_access:finance_balance_sheet.read')
             ->name('report.balance-sheet');
 
+        Route::get('/report/profit-loss', [FinanceStatementController::class, 'profitLoss'])
+            ->middleware('check_access:finance_profit_loss.read')
+            ->name('report.profit-loss');
+
+        Route::get('/report/audit-comparison', [FinanceStatementController::class, 'auditComparison'])
+            ->middleware('check_access:finance_report.read')
+            ->name('report.audit-comparison');
+
         Route::get('/report/balance-sheet/manage', [FinanceStatementController::class, 'manageBalanceSheet'])
             ->middleware('check_access:finance_balance_sheet.read')
             ->name('report.balance-sheet.manage');
