@@ -844,6 +844,9 @@ Route::prefix('admin')
                 Route::post('/activity/retry', [BlastController::class, 'retryActivityLog'])
                     ->middleware('check_access:admin_blast.send')
                     ->name('activity.retry');
+                Route::post('/activity/retry-all', [BlastController::class, 'retryAllActivityLogs'])
+                    ->middleware('check_access:admin_blast.send')
+                    ->name('activity.retry-all');
                 Route::get('/campaign-api', [BlastController::class, 'campaigns'])->name('campaigns');
                 Route::post('/campaign/pause', [BlastController::class, 'pauseCampaign'])
                     ->middleware('check_access:admin_blast.send')

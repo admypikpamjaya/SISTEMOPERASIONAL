@@ -49,6 +49,37 @@ class WablasWhatsappProviderTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_pending_wablas_response_remains_pending_and_keeps_message_reference(): void
+    {
+        config([
+            'services.wablas.token' => 'wablas-token',
+            'services.wablas.secret_key' => 'wablas-secret',
+            'services.wablas.base_url' => 'https://jkt.wablas.com',
+            'services.wablas.server' => null,
+        ]);
+
+        Http::fake([
+            'https://jkt.wablas.com/api/send-message' => Http::response([
+                'status' => true,
+                'message' => 'Message is pending and waiting to be processed',
+                'data' => [
+                    'messages' => [[
+                        'id' => 'wablas-message-123',
+                        'status' => 'pending',
+                    ]],
+                ],
+            ], 200),
+        ]);
+
+        $payload = new BlastPayload('Halo');
+        $result = (new WablasWhatsappProvider())->send('628123456789', $payload);
+
+        $this->assertTrue($result);
+        $this->assertSame('pending', $payload->meta['provider_delivery_status'] ?? null);
+        $this->assertSame('wablas-message-123', $payload->meta['provider_reference'] ?? null);
+        $this->assertSame('wablas-message-123', $payload->meta['provider_message_id'] ?? null);
+    }
+
     public function test_send_returns_false_when_wablas_token_is_missing(): void
     {
         config([

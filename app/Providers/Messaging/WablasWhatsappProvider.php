@@ -5,9 +5,9 @@ namespace App\Providers\Messaging;
 use App\Contracts\Messaging\WhatsappProviderInterface;
 use App\DataTransferObjects\BlastPayload;
 use App\DataTransferObjects\BlastAttachment;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Silvanix\Wablas\Message as WablasMessage;
 
 class WablasWhatsappProvider implements WhatsappProviderInterface
 {
@@ -23,13 +23,10 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
         }
 
         try {
-            $client = new WablasMessage();
-
             $response = null;
             if (!empty($payload->attachments)) {
                 $attachment = $payload->attachments[0];
                 $response = $this->dispatchAttachmentFromLocal(
-                    client: $client,
                     to: $to,
                     message: $payload->message,
                     attachment: $attachment
@@ -50,7 +47,6 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
                     }
 
                     $response = $this->dispatchAttachment(
-                        client: $client,
                         to: $to,
                         message: $payload->message,
                         attachmentUrl: $attachmentUrl,
@@ -64,7 +60,10 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
                     return false;
                 }
 
-                $response = $client->single_text($to, $message);
+                $response = $this->dispatchText(
+                    to: $to,
+                    message: $message
+                );
             }
 
             if ($this->isSuccessResponse($response)) {
@@ -75,12 +74,19 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
 
                 $deliveryStatus = $this->extractDeliveryStatus($response);
                 if ($deliveryStatus !== '') {
-                    if (in_array(strtolower($deliveryStatus), ['pending', 'queued', 'waiting'], true)) {
-                        $deliveryStatus = 'sent';
-                    }
                     $payload->setMeta('provider_delivery_status', $deliveryStatus);
                 } else {
                     $payload->setMeta('provider_delivery_status', 'sent');
+                }
+
+                $providerReference = $this->extractResponseReference($response);
+                if ($providerReference !== '') {
+                    $payload->setMeta('provider_reference', $providerReference);
+                }
+
+                $providerMessageId = $this->extractResponseMessageId($response);
+                if ($providerMessageId !== '') {
+                    $payload->setMeta('provider_message_id', $providerMessageId);
                 }
 
                 return true;
@@ -110,31 +116,40 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
     }
 
     private function dispatchAttachment(
-        WablasMessage $client,
         string $to,
         string $message,
         string $attachmentUrl,
         string $mime
     ): mixed {
         $normalizedMime = strtolower(trim($mime));
+        $endpoint = match (true) {
+            str_starts_with($normalizedMime, 'image/') => 'send-image',
+            str_starts_with($normalizedMime, 'video/') => 'send-video',
+            str_starts_with($normalizedMime, 'audio/') => 'send-audio',
+            default => 'send-document',
+        };
 
-        if (str_starts_with($normalizedMime, 'image/')) {
-            return $client->single_image($to, $attachmentUrl, $message ?: null);
+        $field = match ($endpoint) {
+            'send-image' => 'image',
+            'send-video' => 'video',
+            'send-audio' => 'audio',
+            default => 'document',
+        };
+
+        $body = [
+            'phone' => $to,
+            $field => $attachmentUrl,
+            'spintax' => true,
+        ];
+
+        if ($endpoint !== 'send-audio') {
+            $body['caption'] = $message !== '' ? $message : null;
         }
 
-        if (str_starts_with($normalizedMime, 'video/')) {
-            return $client->single_video($to, $attachmentUrl, $message ?: null);
-        }
-
-        if (str_starts_with($normalizedMime, 'audio/')) {
-            return $client->single_audio($to, $attachmentUrl);
-        }
-
-        return $client->single_document($to, $attachmentUrl, $message ?: null);
+        return $this->postJson($endpoint, $body);
     }
 
     private function dispatchAttachmentFromLocal(
-        WablasMessage $client,
         string $to,
         string $message,
         BlastAttachment $attachment
@@ -156,11 +171,63 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
             'data' => json_encode(['name' => $attachment->filename]),
         ];
 
-        $url = $client->api() . "send-{$type}-from-local";
-        return Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Authorization' => $client->token(),
-        ])->post($url, $payload)->json();
+        return $this->postJson("send-{$type}-from-local", $payload);
+    }
+
+    private function dispatchText(string $to, string $message): mixed
+    {
+        return $this->postJson('send-message', [
+            'phone' => $to,
+            'message' => $message,
+            'spintax' => true,
+        ]);
+    }
+
+    private function postJson(string $endpoint, array $body): mixed
+    {
+        $response = $this->client()->post($this->apiUrl($endpoint), $body);
+        $decoded = $response->json();
+
+        if ($response->successful()) {
+            return $decoded;
+        }
+
+        $message = is_array($decoded)
+            ? trim((string) ($decoded['message'] ?? $decoded['reason'] ?? ''))
+            : '';
+
+        return [
+            'status' => false,
+            'message' => $message !== ''
+                ? $message
+                : 'Wablas HTTP error (' . $response->status() . ').',
+        ];
+    }
+
+    private function client(): PendingRequest
+    {
+        $token = trim((string) config('services.wablas.token', ''));
+        $secret = trim((string) config('services.wablas.secret_key', ''));
+        $authorization = $secret !== '' ? $token . '.' . $secret : $token;
+
+        return Http::timeout((int) config('services.wablas.timeout', 30))
+            ->connectTimeout((int) config('services.wablas.connect_timeout', 10))
+            ->acceptJson()
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => $authorization,
+            ]);
+    }
+
+    private function apiUrl(string $endpoint): string
+    {
+        $server = trim((string) config('services.wablas.server', ''));
+        if ($server !== '') {
+            return 'https://' . $server . '.wablas.com/api/' . ltrim($endpoint, '/');
+        }
+
+        return rtrim((string) config('services.wablas.base_url', 'https://wablas.com'), '/')
+            . '/api/' . ltrim($endpoint, '/');
     }
 
     private function resolveAttachmentType(string $mime): ?string
@@ -205,6 +272,77 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
         }
 
         return '';
+    }
+
+    private function extractResponseReference(mixed $decoded): string
+    {
+        $message = $this->firstResponseMessage($decoded);
+        $reference = trim((string) (
+            $message['id']
+            ?? $message['messageId']
+            ?? $message['message_id']
+            ?? $message['reference']
+            ?? ''
+        ));
+
+        if ($reference !== '') {
+            return $reference;
+        }
+
+        if (is_array($decoded)) {
+            $data = is_array($decoded['data'] ?? null) ? $decoded['data'] : [];
+            return trim((string) (
+                $data['id']
+                ?? $data['messageId']
+                ?? $data['message_id']
+                ?? $data['reference']
+                ?? ''
+            ));
+        }
+
+        return '';
+    }
+
+    private function extractResponseMessageId(mixed $decoded): string
+    {
+        $message = $this->firstResponseMessage($decoded);
+        $messageId = trim((string) (
+            $message['messageId']
+            ?? $message['message_id']
+            ?? $message['id']
+            ?? ''
+        ));
+
+        if ($messageId !== '') {
+            return $messageId;
+        }
+
+        if (is_array($decoded)) {
+            return trim((string) (
+                $decoded['messageId']
+                ?? $decoded['message_id']
+                ?? data_get($decoded, 'data.messageId', '')
+                ?? data_get($decoded, 'data.message_id', '')
+                ?? ''
+            ));
+        }
+
+        return '';
+    }
+
+    /** @return array<string, mixed> */
+    private function firstResponseMessage(mixed $decoded): array
+    {
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $messages = data_get($decoded, 'data.messages');
+        if (is_array($messages) && is_array($messages[0] ?? null)) {
+            return $messages[0];
+        }
+
+        return [];
     }
 
     private function isSuccessResponse(mixed $decoded): bool
@@ -255,22 +393,17 @@ class WablasWhatsappProvider implements WhatsappProviderInterface
             return '';
         }
 
-        $data = $decoded['data'] ?? null;
-        if (!is_array($data)) {
-            return '';
+        $firstMessage = $this->firstResponseMessage($decoded);
+        $status = strtolower(trim((string) ($firstMessage['status'] ?? '')));
+        if ($status !== '') {
+            return $status;
         }
 
-        $messages = $data['messages'] ?? null;
-        if (!is_array($messages) || $messages === []) {
-            return '';
-        }
+        $dataStatus = data_get($decoded, 'data.deliveryStatus')
+            ?? data_get($decoded, 'data.delivery_status')
+            ?? data_get($decoded, 'data.status');
 
-        $firstMessage = $messages[0] ?? null;
-        if (!is_array($firstMessage)) {
-            return '';
-        }
-
-        return strtolower(trim((string) ($firstMessage['status'] ?? '')));
+        return strtolower(trim((string) $dataStatus));
     }
 
     private function resolveAttachmentUrl(string $path): ?string

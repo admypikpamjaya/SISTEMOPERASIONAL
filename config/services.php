@@ -44,6 +44,8 @@ return [
         'secret_key' => env('WABLAS_SECRET_KEY'),
         'base_url' => env('WABLAS_BASE_URL', 'https://wablas.com'),
         'server' => env('WABLAS_SERVER'),
+        'timeout' => max(5, (int) env('WABLAS_TIMEOUT', 30)),
+        'connect_timeout' => max(3, (int) env('WABLAS_CONNECT_TIMEOUT', 10)),
         'fallback_base_urls' => env(
             'WABLAS_FALLBACK_BASE_URLS',
             implode(',', [

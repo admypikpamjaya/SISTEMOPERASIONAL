@@ -32,7 +32,7 @@ return [
 
     'dispatch' => [
         'email_mode' => strtolower((string) env('BLAST_EMAIL_MODE', 'queue')),
-        'whatsapp_mode' => strtolower((string) env('BLAST_WHATSAPP_MODE', 'queue')),
+        'whatsapp_mode' => strtolower((string) env('BLAST_WHATSAPP_MODE', 'sync')),
     ],
 
     'email_accounts' => [

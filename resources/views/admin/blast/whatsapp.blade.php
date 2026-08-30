@@ -632,6 +632,63 @@ body,
 .gateway-status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
 .gateway-status-meta { color: var(--text-light); font-size: 9.5px; line-height: 1.35; word-break: break-all; }
 
+/* Keep every surface readable when the application theme is dark. */
+body.dark-mode .activity-filter-panel {
+    background: #111827 !important;
+    border-bottom-color: #243244 !important;
+}
+html[data-theme="dark"] .activity-filter-panel {
+    background: #111827 !important;
+    border-bottom-color: #243244 !important;
+}
+body.dark-mode .activity-filter-input,
+body.dark-mode .search-small,
+body.dark-mode .message-override-item,
+body.dark-mode .message-override-file-item {
+    background: #172132 !important;
+    border-color: #243244 !important;
+    color: #e2e8f0 !important;
+}
+body.dark-mode .activity-filter-label { color: #cbd5e1 !important; }
+body.dark-mode .activity-filter-input option { background: #172132; color: #e2e8f0; }
+body.dark-mode .search-input-small { color: #e2e8f0 !important; }
+html[data-theme="dark"] .activity-filter-input,
+html[data-theme="dark"] .search-small,
+html[data-theme="dark"] .message-override-item,
+html[data-theme="dark"] .message-override-file-item {
+    background: #172132 !important;
+    border-color: #243244 !important;
+    color: #e2e8f0 !important;
+}
+html[data-theme="dark"] .activity-filter-label { color: #cbd5e1 !important; }
+html[data-theme="dark"] .search-input-small { color: #e2e8f0 !important; }
+body.dark-mode .activity-filter-input::placeholder,
+body.dark-mode .search-input-small::placeholder,
+body.dark-mode .message-override-text::placeholder {
+    color: var(--text-light) !important;
+}
+body.dark-mode .message-override-item.mode-template {
+    background: #10281f !important;
+    border-color: #28634a !important;
+}
+body.dark-mode .message-override-text:disabled {
+    background: var(--blue-lighter) !important;
+    color: var(--text-light) !important;
+}
+body.dark-mode .activity-row:hover {
+    background: var(--blue-lighter) !important;
+}
+body.dark-mode .wa-alert.success {
+    background: #0d2a20;
+    color: #a7f3d0;
+    border-color: #166534;
+}
+body.dark-mode .wa-alert.error {
+    background: #321519;
+    color: #fecaca;
+    border-color: #7f1d1d;
+}
+
 /* ─── TIPS ──────────────────────────────────── */
 .wa-tips {
     background: var(--white); border: 1px solid var(--blue-border);
@@ -1028,6 +1085,10 @@ body,
                 </div>
                 <div class="activity-retry-note">Retry aktif untuk Failed dan Antrian Gateway.</div>
                 <div class="activity-header-actions">
+                    <button type="button" id="retryAllActivityBtn" class="campaign-btn info tiny" disabled>
+                        <i class="fas fa-redo" style="margin-right:4px;"></i>
+                        {{ __('app.blast.retry_all') }}
+                    </button>
                     <form method="POST" action="{{ route('admin.blast.activity.clear') }}" class="activity-clear-form" onsubmit="return confirm(@json(__('app.blast.clear_whatsapp_log_confirm')))">
                         @csrf
                         <input type="hidden" name="channel" value="whatsapp">
@@ -1062,10 +1123,6 @@ body,
                             <option value="failed">❌ Gagal</option>
                             <option value="pending">⏳ Pending</option>
                         </select>
-                    </div>
-                    <div class="activity-filter-item">
-                        <label class="activity-filter-label">Campaign ID</label>
-                        <input type="text" id="filterCampaignId" class="activity-filter-input" placeholder="ID campaign...">
                     </div>
                     <div class="activity-filter-item" style="justify-content:flex-end; align-items:flex-end;">
                         <button type="button" id="applyFilterBtn" class="campaign-btn primary tiny">
@@ -1169,6 +1226,10 @@ body,
             noRecipientSearchResults: @json(__('app.blast.no_recipient_search_results')),
             noActivity: @json(__('app.blast.no_activity')),
             noSearchResults: @json(__('app.blast.no_search_results')),
+            retryAll: @json(__('app.blast.retry_all')),
+            retryAllConfirm: @json(__('app.blast.retry_all_confirm')),
+            retryAllNone: @json(__('app.blast.retry_all_none')),
+            retryAllProcessing: @json(__('app.blast.retry_all_processing')),
             done: @json(__('app.blast.done')),
             sent: @json(__('app.blast.sent')),
             failed: @json(__('app.blast.failed')),
@@ -1266,6 +1327,8 @@ body,
         const activityApiUrl = @json(route('admin.blast.activity'));
         const activityDeleteApiUrl = @json(route('admin.blast.activity.delete'));
         const activityRetryApiUrl = @json(route('admin.blast.activity.retry'));
+        const activityRetryAllApiUrl = @json(route('admin.blast.activity.retry-all'));
+        const retryAllActivityBtn = document.getElementById('retryAllActivityBtn');
         const activityChannel = 'whatsapp';
         const providerState = @json($providerState ?? null);
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
@@ -2094,10 +2157,10 @@ body,
         function renderActivities(filteredActivities = activities) {
             activityLog.innerHTML = '';
             if (filteredActivities.length === 0) {
-                const el = document.createElement('div'); el.className = 'activity-empty'; el.textContent = activities.length === 0 ? blastText.noActivity : blastText.noSearchResults; activityLog.appendChild(el); return;
+                const el = document.createElement('div'); el.className = 'activity-empty'; el.textContent = activities.length === 0 ? blastText.noActivity : blastText.noSearchResults; activityLog.appendChild(el); updateRetryAllButton(); return;
             }
             filteredActivities.forEach(activity => {
-                const row = document.createElement('div'); row.className = 'activity-row'; row.setAttribute('data-campaign-id', String(activity.campaignId || ''));
+                const row = document.createElement('div'); row.className = 'activity-row';
                 const statusClass = activity.status === 'success' ? 'success' : activity.status === 'failed' ? 'failed' : 'pending';
                 const statusText = activity.status === 'success' ? blastText.done : activity.status === 'failed' ? blastText.failed : blastText.pending;
                 const providerStatus = String(activity.providerStatus || 'unknown').toLowerCase();
@@ -2140,6 +2203,16 @@ body,
                 row.innerHTML = `<div class="col-waktu"><div class="waktu-date">${escapeHtml(activity.date)}</div><div class="waktu-time">${escapeHtml(activity.time)}</div></div><div class="col-siswa"><div class="siswa-name">${escapeHtml(activity.studentName)}</div></div><div class="col-kelas">${escapeHtml(activity.studentClass)}</div><div class="col-wali"><div class="wali-name">${escapeHtml(activity.parentName)}</div></div><div class="col-wa">${escapeHtml(activity.phone)}</div><div class="col-device">${escapeHtml(deviceText)}</div><div class="col-status"><span class="status-badge ${statusClass}">${statusText}</span></div><div class="gateway-status-cell"><span class="status-badge ${providerStatusClass}">${providerStatusText}</span>${providerMeta}</div><div class="col-error">${escapeHtml(errorText)}</div><div class="col-action">${actionButtons.length > 0 ? actionButtons.join('') : '-'}</div>`;
                 activityLog.appendChild(row);
             });
+            updateRetryAllButton();
+        }
+
+        function updateRetryAllButton() {
+            if (!retryAllActivityBtn) return;
+            const retryableCount = activities.filter(activity => Boolean(activity.canRetry)).length;
+            retryAllActivityBtn.disabled = retryableCount === 0;
+            retryAllActivityBtn.title = retryableCount > 0
+                ? `${retryAllActivityBtn.dataset.label || blastText.retryAll} (${retryableCount})`
+                : blastText.retryAllNone;
         }
 
         function renderActivitiesWithCurrentFilter() {
@@ -2152,8 +2225,7 @@ body,
                     String(activity.phone || '').toLowerCase().includes(searchTerm) ||
                     String(activity.studentClass || '').toLowerCase().includes(searchTerm) ||
                     String(activity.deviceLabel || '').toLowerCase().includes(searchTerm) ||
-                    String(activity.deviceId || '').toLowerCase().includes(searchTerm) ||
-                    String(activity.campaignId || '').toLowerCase().includes(searchTerm)
+                    String(activity.deviceId || '').toLowerCase().includes(searchTerm)
                 );
             }
             renderActivities(filtered);
@@ -2168,6 +2240,31 @@ body,
             return payload;
         }
 
+        async function retryAllActivityLogs() {
+            const filterDateFrom = document.getElementById('filterDateFrom')?.value || '';
+            const filterDateTo = document.getElementById('filterDateTo')?.value || '';
+            const filterStatus = document.getElementById('filterStatus')?.value || 'all';
+            const response = await fetch(activityRetryAllApiUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    channel: activityChannel,
+                    date_from: filterDateFrom,
+                    date_to: filterDateTo,
+                    status: filterStatus,
+                }),
+            });
+            let payload = null;
+            try { payload = await response.json(); } catch (error) { payload = null; }
+            if (!response.ok) throw new Error(payload?.message || blastText.activityLogProcessFailed);
+            return payload;
+        }
+
         async function refreshActivityLogs(forceFilters) {
             if (isRefreshingActivities) return;
             isRefreshingActivities = true;
@@ -2175,13 +2272,11 @@ body,
                 const filterDateFrom   = document.getElementById('filterDateFrom')?.value || '';
                 const filterDateTo     = document.getElementById('filterDateTo')?.value || '';
                 const filterStatus     = document.getElementById('filterStatus')?.value || 'all';
-                const filterCampaignId = document.getElementById('filterCampaignId')?.value.trim() || '';
 
                 const params = new URLSearchParams({ channel: activityChannel });
                 if (filterDateFrom)   params.append('date_from',   filterDateFrom);
                 if (filterDateTo)     params.append('date_to',     filterDateTo);
                 if (filterStatus && filterStatus !== 'all') params.append('status', filterStatus);
-                if (filterCampaignId) params.append('campaign_id', filterCampaignId);
 
                 const response = await fetch(`${activityApiUrl}?${params.toString()}`, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -2195,15 +2290,16 @@ body,
                     if (statFailed)  statFailed.textContent  = Number(payload.stats.failed  ?? 0);
                     if (statPending) statPending.textContent = Number(payload.stats.pending ?? 0);
                 } else { updateStats(); }
+                updateRetryAllButton();
 
                 // Update badge filter aktif
-                updateActiveFilterBadges(filterDateFrom, filterDateTo, filterStatus, filterCampaignId);
+                updateActiveFilterBadges(filterDateFrom, filterDateTo, filterStatus);
 
                 renderActivitiesWithCurrentFilter();
             } catch (error) { } finally { isRefreshingActivities = false; }
         }
 
-        function updateActiveFilterBadges(dateFrom, dateTo, status, campaignId) {
+        function updateActiveFilterBadges(dateFrom, dateTo, status) {
             const badgesEl = document.getElementById('activeFilterBadges');
             if (!badgesEl) return;
             const badges = [];
@@ -2213,7 +2309,6 @@ body,
                 const label = { success:'✅ Terkirim', failed:'❌ Gagal', pending:'⏳ Pending' }[status] || status;
                 badges.push(`<span class="filter-badge">${label}</span>`);
             }
-            if (campaignId)   badges.push(`<span class="filter-badge">🎯 Campaign: ${escapeHtml(campaignId)}</span>`);
             if (badges.length > 0) {
                 badgesEl.innerHTML = `<span class="filter-badge-label">Filter aktif:</span> ${badges.join('')}`;
                 badgesEl.style.display = 'flex';
@@ -2240,15 +2335,39 @@ body,
                 const dateFrom = document.getElementById('filterDateFrom');
                 const dateTo   = document.getElementById('filterDateTo');
                 const status   = document.getElementById('filterStatus');
-                const cid      = document.getElementById('filterCampaignId');
                 if (dateFrom) dateFrom.value = '';
                 if (dateTo)   dateTo.value   = '';
                 if (status)   status.value   = 'all';
-                if (cid)      cid.value      = '';
                 const badgesEl = document.getElementById('activeFilterBadges');
                 if (badgesEl) badgesEl.style.display = 'none';
                 isRefreshingActivities = false;
                 refreshActivityLogs(true);
+            });
+        }
+
+        if (retryAllActivityBtn) {
+            retryAllActivityBtn.addEventListener('click', async function() {
+                const retryableCount = activities.filter(activity => Boolean(activity.canRetry)).length;
+                if (retryableCount === 0) {
+                    showResultAlert('error', blastText.retryAllNone);
+                    return;
+                }
+                if (!window.confirm(blastText.retryAllConfirm)) return;
+
+                retryAllActivityBtn.disabled = true;
+                const originalText = retryAllActivityBtn.textContent;
+                retryAllActivityBtn.textContent = blastText.retryAllProcessing;
+                try {
+                    const payload = await retryAllActivityLogs();
+                    showResultAlert('success', payload?.message || blastText.actionProcessed);
+                    await refreshActivityLogs();
+                } catch (error) {
+                    showResultAlert('error', error?.message || blastText.activityLogProcessFailed);
+                    updateRetryAllButton();
+                } finally {
+                    retryAllActivityBtn.textContent = originalText;
+                    updateRetryAllButton();
+                }
             });
         }
 

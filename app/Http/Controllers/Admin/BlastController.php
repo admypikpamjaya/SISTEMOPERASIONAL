@@ -1272,54 +1272,154 @@ class BlastController extends Controller
             );
         }
 
+        $result = $this->retryBlastLog($blastLog, $requestedChannel);
+        if (!$result['ok']) {
+            return $this->activityActionError($request, $result['message'], $result['status']);
+        }
+
+        return $this->activityActionSuccess($request, $result['message']);
+    }
+
+    public function retryAllActivityLogs(Request $request)
+    {
+        $validated = $request->validate([
+            'channel' => 'required|in:email,whatsapp',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date',
+            'status' => 'nullable|in:all,success,failed,pending',
+        ]);
+
+        $channel = strtoupper((string) $validated['channel']);
+        if ($channel === 'WHATSAPP') {
+            app(WhatsAppGatewayJobStatusService::class)->syncPendingLogs();
+        }
+
+        $logsQuery = BlastLog::query()
+            ->with([
+                'message:id,channel,subject,message,meta,priority,campaign_status',
+                'target:id,target',
+            ])
+            ->whereHas('message', function ($query) use ($channel) {
+                $query->where('channel', $channel);
+            });
+
+        $dateFrom = trim((string) ($validated['date_from'] ?? ''));
+        $dateTo = trim((string) ($validated['date_to'] ?? ''));
+        if ($dateFrom !== '') {
+            $logsQuery->where(function ($query) use ($dateFrom) {
+                $query->whereDate('sent_at', '>=', $dateFrom)
+                    ->orWhere(function ($query) use ($dateFrom) {
+                        $query->whereNull('sent_at')->whereDate('created_at', '>=', $dateFrom);
+                    });
+            });
+        }
+        if ($dateTo !== '') {
+            $logsQuery->where(function ($query) use ($dateTo) {
+                $query->whereDate('sent_at', '<=', $dateTo)
+                    ->orWhere(function ($query) use ($dateTo) {
+                        $query->whereNull('sent_at')->whereDate('created_at', '<=', $dateTo);
+                    });
+            });
+        }
+
+        $statusFilter = strtolower(trim((string) ($validated['status'] ?? 'all')));
+        if ($statusFilter === 'failed') {
+            $logsQuery->where('status', 'FAILED');
+        } elseif ($statusFilter === 'success') {
+            $logsQuery->where('status', 'SENT');
+        }
+
+        $retried = 0;
+        $skipped = 0;
+        $errors = [];
+
+        foreach ($logsQuery->latest('id')->get() as $blastLog) {
+            if (!$this->isRetryableActivityLog($blastLog, $channel)) {
+                $skipped++;
+                continue;
+            }
+
+            $result = $this->retryBlastLog($blastLog, $channel);
+            if ($result['ok']) {
+                $retried++;
+                continue;
+            }
+
+            $skipped++;
+            if (count($errors) < 5) {
+                $errors[] = $result['message'];
+            }
+        }
+
+        $message = $retried > 0
+            ? $retried . ' log berhasil dimasukkan kembali ke proses retry.'
+            : 'Tidak ada log gagal atau antrean gateway yang dapat di-retry.';
+
+        return $this->activityActionSuccess($request, $message, [
+            'retried' => $retried,
+            'skipped' => $skipped,
+            'errors' => $errors,
+        ]);
+    }
+
+    /**
+     * Retry one activity log and keep the same snapshot/device metadata used by the original send.
+     *
+     * @return array{ok:bool,message:string,status:int}
+     */
+    private function retryBlastLog(BlastLog $blastLog, string $requestedChannel): array
+    {
+        if ($blastLog->message === null) {
+            return [
+                'ok' => false,
+                'message' => 'Campaign untuk activity log ini sudah tidak tersedia.',
+                'status' => 404,
+            ];
+        }
+
         $currentStatus = strtoupper((string) $blastLog->status);
         $isRetryableWhatsappPending = $requestedChannel === 'WHATSAPP'
-            && $currentStatus === 'PENDING'
-            && $this->isRetryableWhatsappGatewayPendingLog($blastLog);
+            && $this->isRetryableActivityLog($blastLog, $requestedChannel);
 
         if ($currentStatus !== 'FAILED' && !$isRetryableWhatsappPending) {
-            $message = $requestedChannel === 'WHATSAPP' && $currentStatus === 'PENDING'
-                ? 'Log pending ini belum terdeteksi sebagai antrean gateway yang bisa di-retry.'
-                : 'Hanya activity log dengan status gagal yang bisa di-retry.';
-
-            return $this->activityActionError(
-                $request,
-                $message,
-                422
-            );
+            return [
+                'ok' => false,
+                'message' => $requestedChannel === 'WHATSAPP'
+                    ? 'Log ini bukan log gagal atau antrean gateway yang bisa di-retry.'
+                    : 'Hanya activity log dengan status gagal yang bisa di-retry.',
+                'status' => 422,
+            ];
         }
 
         if (strtoupper((string) $blastLog->message->campaign_status) === 'STOPPED') {
-            return $this->activityActionError(
-                $request,
-                'Campaign masih berstatus STOPPED. Resume campaign terlebih dahulu.',
-                422
-            );
+            return [
+                'ok' => false,
+                'message' => 'Campaign masih berstatus STOPPED. Resume campaign terlebih dahulu.',
+                'status' => 422,
+            ];
         }
 
         $channel = strtoupper((string) $blastLog->message->channel);
         $channelLabel = $channel === 'WHATSAPP' ? 'WhatsApp' : 'Email';
-
         $target = trim((string) optional($blastLog->target)->target);
         if ($target === '') {
-            return $this->activityActionError(
-                $request,
-                'Target penerima untuk retry tidak ditemukan.',
-                422
-            );
+            return [
+                'ok' => false,
+                'message' => 'Target penerima untuk retry tidak ditemukan.',
+                'status' => 422,
+            ];
         }
 
         $messageSnapshot = trim((string) $blastLog->message_snapshot);
         if ($messageSnapshot === '') {
             $messageSnapshot = trim((string) $blastLog->message->message);
         }
-
         if ($messageSnapshot === '') {
-            return $this->activityActionError(
-                $request,
-                'Isi pesan snapshot tidak tersedia untuk proses retry.',
-                422
-            );
+            return [
+                'ok' => false,
+                'message' => 'Isi pesan snapshot tidak tersedia untuk proses retry.',
+                'status' => 422,
+            ];
         }
 
         $campaignMeta = $this->extractCampaignMeta($blastLog->message->meta);
@@ -1332,7 +1432,6 @@ class BlastController extends Controller
             $campaignMeta['queue_name']
             ?? $this->resolveQueueName(strtolower($channel), $priority)
         ));
-
         $retryAttempts = max(
             1,
             (int) ($campaignMeta['retry_attempts'] ?? config('blast.retry.max_attempts', 3))
@@ -1340,9 +1439,6 @@ class BlastController extends Controller
         if ($channel === 'WHATSAPP') {
             $retryAttempts = 1;
         }
-        $retryBackoffSeconds = $this->normalizeRetryBackoffSeconds(
-            $campaignMeta['retry_backoff_seconds'] ?? null
-        );
 
         $payload = new BlastPayload($messageSnapshot);
         $payload->setMeta('channel', $channel);
@@ -1351,7 +1447,10 @@ class BlastController extends Controller
         $payload->setMeta('blast_message_id', $blastLog->blast_message_id);
         $payload->setMeta('queue_name', $queueName);
         $payload->setMeta('retry_attempts', $retryAttempts);
-        $payload->setMeta('retry_backoff_seconds', $retryBackoffSeconds);
+        $payload->setMeta('retry_backoff_seconds', $this->normalizeRetryBackoffSeconds(
+            $campaignMeta['retry_backoff_seconds'] ?? null
+        ));
+
         if ($channel === 'EMAIL') {
             $emailAccountId = trim((string) data_get($blastLog->message->meta, 'email_account.id', ''));
             if ($emailAccountId !== '') {
@@ -1359,15 +1458,11 @@ class BlastController extends Controller
             }
         }
 
-        $subject = $channel === 'EMAIL'
-            ? trim((string) $blastLog->message->subject)
-            : null;
-
         $blastLog->update([
             'status' => 'PENDING',
             'response' => 'Retry requested by operator.',
             'error_message' => null,
-            'provider_status' => 'pending',
+            'provider_status' => $channel === 'WHATSAPP' ? 'pending' : null,
             'provider_reference' => null,
             'provider_message_id' => null,
             'provider_sender_phone' => null,
@@ -1379,18 +1474,56 @@ class BlastController extends Controller
         $job = new QueueBlastDeliveryJob(
             $channel,
             $target,
-            $subject,
+            $channel === 'EMAIL' ? trim((string) $blastLog->message->subject) : null,
             $payload
         );
         if ($queueName !== '') {
             $job->onQueue($queueName);
         }
-        dispatch($job)->afterResponse();
 
-        return $this->activityActionSuccess(
-            $request,
-            'Retry blast ' . $channelLabel . ' diproses.'
-        );
+        if (
+            ($channel === 'WHATSAPP' && !$this->shouldQueueWhatsAppBlast())
+            || ($channel === 'EMAIL' && !$this->shouldQueueEmailBlast())
+        ) {
+            app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
+        } else {
+            dispatch($job)->afterResponse();
+        }
+
+        return [
+            'ok' => true,
+            'message' => 'Retry blast ' . $channelLabel . ' diproses.',
+            'status' => 200,
+        ];
+    }
+
+    private function isRetryableActivityLog(BlastLog $blastLog, string $channel): bool
+    {
+        if (strtoupper((string) $blastLog->status) === 'FAILED') {
+            return true;
+        }
+
+        if (strtoupper($channel) !== 'WHATSAPP') {
+            return false;
+        }
+
+        $providerStatus = strtolower(trim((string) ($blastLog->provider_status ?? '')));
+        $responseMessage = strtolower(trim((string) ($blastLog->response ?? '')));
+        if ($providerStatus === '' && str_contains($responseMessage, 'queued')) {
+            $providerStatus = 'legacy_queued';
+        }
+
+        if ($providerStatus === 'failed') {
+            return true;
+        }
+
+        $providerDone = in_array($providerStatus, self::WHATSAPP_GATEWAY_DONE_STATES, true);
+        $activityIsPending = strtoupper((string) $blastLog->status) !== 'FAILED' && !$providerDone;
+
+        return $activityIsPending
+            && ($providerStatus === ''
+                || $providerStatus === 'legacy_queued'
+                || in_array($providerStatus, self::WHATSAPP_GATEWAY_PENDING_STATES, true));
     }
 
     /* =======================
@@ -2400,11 +2533,13 @@ class BlastController extends Controller
 
     private function activityActionSuccess(
         Request $request,
-        string $message
+        string $message,
+        array $data = []
     ) {
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'message' => $message,
+                'data' => $data,
             ]);
         }
 
@@ -2592,12 +2727,7 @@ class BlastController extends Controller
             $pendingAgeSeconds = $statusKey === 'pending'
                 ? $this->pendingLogAgeSeconds($log)
                 : 0;
-            $canRetry = $status === 'FAILED'
-                || (
-                    $normalizedChannel === 'WHATSAPP'
-                    && $statusKey === 'pending'
-                    && $this->isRetryableWhatsappGatewayPendingLog($log)
-                );
+            $canRetry = $this->isRetryableActivityLog($log, $normalizedChannel);
 
             $row = [
                 'logId' => (int) $log->id,
@@ -2621,10 +2751,10 @@ class BlastController extends Controller
                     ->format('d/m/Y H:i:s'),
                 'pendingAgeSeconds' => $pendingAgeSeconds,
                 'retryAfterSeconds' => self::WHATSAPP_PENDING_RETRY_AFTER_SECONDS,
-                'campaignId' => (string) $log->blast_message_id,
             ];
 
             if ($normalizedChannel === 'EMAIL') {
+                $row['campaignId'] = (string) $log->blast_message_id;
                 $row['email'] = $target !== '' ? $target : '-';
                 $subject = trim((string) ($log->message?->subject ?? ''));
                 $row['subject'] = $subject !== '' ? $subject : '-';
@@ -2678,23 +2808,6 @@ class BlastController extends Controller
         }
 
         return max(0, (int) $timestamp->diffInSeconds(now()));
-    }
-
-    private function isRetryableWhatsappGatewayPendingLog(BlastLog $log): bool
-    {
-        $providerStatus = strtolower(trim((string) ($log->provider_status ?? '')));
-        $responseMessage = strtolower(trim((string) ($log->response ?? '')));
-
-        if ($providerStatus === '' && str_contains($responseMessage, 'queued')) {
-            $providerStatus = 'legacy_queued';
-        }
-
-        if ($providerStatus === '') {
-            return true;
-        }
-
-        return in_array($providerStatus, self::WHATSAPP_GATEWAY_PENDING_STATES, true)
-            || $providerStatus === 'legacy_queued';
     }
 
     private function getRecipientsByChannel(string $channel)
@@ -3239,7 +3352,10 @@ class BlastController extends Controller
         }
 
         if (in_array($normalizedChannel, ['WHATSAPP', 'EMAIL'], true)) {
-            dispatch($job)->afterResponse();
+            // "sync" must not depend on a Laravel queue worker. This is
+            // especially important on cPanel, while the Baileys gateway still
+            // keeps its own BullMQ queue after receiving the HTTP request.
+            app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatchSync($job);
             $dispatchIndex++;
             return;
         }
